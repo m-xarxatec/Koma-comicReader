@@ -1,7 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
 import { pool, withTransaction } from '../../db/pool.js';
 import { AppError } from '../../utils/app-error.js';
+import { logger } from '../../utils/logger.js';
 import { hashPassword, verifyPassword } from '../../utils/password.js';
 import * as audit from '../audit/audit.service.js';
 import * as usersRepository from '../users/users.repository.js';
@@ -73,11 +75,20 @@ export async function register(input: RegisterInput, ctx: RequestContext): Promi
   return { user, token: signSession(user) };
 }
 
+// Hash de una contraseña aleatoria con el mismo coste: se compara contra él cuando el correo no existe,
+// para que el login tarde lo mismo exista o no la cuenta. Se calcula al cargar el módulo: si se calculara
+// en el primer uso, el primer login con un correo inexistente tardaría el doble y lo delataría.
+const dummyHash = hashPassword(randomUUID());
+// Un fallo se registra en cuanto ocurre (sin manejador sería un unhandledRejection y el proceso terminaría);
+// el login que lo espere recibe el mismo error y responde 500.
+dummyHash.catch((err: unknown) => logger.error('No se pudo calcular el hash ficticio del login', { err }));
+
 // CU-08. Mismo mensaje exista o no el correo, y mismo tiempo (hash ficticio). La suspensión solo se
 // revela a quien conoce la contraseña. El correo intentado va solo en `after`, nunca en entity_id.
 export async function login(input: LoginInput, ctx: RequestContext): Promise<SessionResult> {
   const user = await usersRepository.findByEmail(pool, input.email);
-  const passwordOk = await verifyPassword(input.password, user?.passwordHash ?? null);
+  // Sin cuenta se compara igualmente (contra el ficticio); el resultado no cuenta, porque !user ya falla.
+  const passwordOk = await verifyPassword(input.password, user?.passwordHash ?? (await dummyHash));
 
   if (!user || !passwordOk) {
     await audit.record(pool, {
