@@ -113,7 +113,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - Permisos calculados en el servidor en cada petición con el usuario leído de la BD (`status`, `token_version`), nunca solo del JWT. La propiedad se comprueba en el servicio; el frontend solo oculta botones.
 - SQL siempre parametrizado (`$1, $2`), nunca concatenado.
 - La auditoría va en la misma transacción que el cambio; `audit_log` es solo inserción (triggers contra UPDATE, DELETE y TRUNCATE). Nunca contraseñas, hashes, tokens ni datos de pago en `before`/`after`.
-- CSRF: toda petición que modifica datos exige un `Origin` de `ALLOWED_ORIGINS` (por defecto, el origen de `APP_URL`; si no, 403 `CSRF`); solo el webhook de Stripe queda exento (se valida por firma). Ningún GET modifica datos. `next` solo acepta rutas que empiezan por `/` y no por `//`.
+- CSRF: toda petición que modifica datos exige un `Origin` de `ALLOWED_ORIGINS` (por defecto, el origen de `APP_URL`; si no, 403 `CSRF`); solo el webhook de Stripe queda exento (se valida por firma). Ningún GET modifica datos. `next` (`safeNext`, `utils/redirect.ts`) solo acepta rutas que empiezan por `/`; rechaza las que empiezan por `//` o `/\` y las que contienen caracteres de control.
 - Datos de usuario escapados al inyectarse en HTML (servidor) y pintados con `textContent` (cliente). Sin scripts en línea; CSP de helmet directiva a directiva.
 - JWT en cookie `httpOnly`, `SameSite=Lax`, `Secure` según `COOKIE_SECURE`; nada sensible en `localStorage`.
 - Imágenes siempre con URL firmada. Subidas comprobadas por firma de archivo, multer en disco, claves `UUID.ext` generadas por el servidor; `/files/:key` valida la clave con `^[0-9a-f-]{36}\.(jpg|png|webp)$` antes de tocar el disco.

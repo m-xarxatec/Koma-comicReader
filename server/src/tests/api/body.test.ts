@@ -1,34 +1,15 @@
 import assert from 'node:assert/strict';
-import { once } from 'node:events';
-import type { Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import { after, before, test } from 'node:test';
+import { test } from 'node:test';
+import { startTestServer } from './helpers.js';
 
 const KB = 1024;
-
-let server: Server;
-let baseUrl: string;
-let origin: string; // un origen de ALLOWED_ORIGINS, para pasar el control CSRF
-
-before(async () => {
-  const { app } = await import('../../app.js');
-  const { env } = await import('../../config/env.js');
-  origin = env.ALLOWED_ORIGINS[0]!;
-  server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-});
-
-after(async () => {
-  server.closeAllConnections();
-  await new Promise((resolve) => server.close(resolve));
-});
+const srv = startTestServer();
 
 // Aún no hay rutas POST: un cuerpo aceptado lleva al 404 de la API.
 const post = (body: string, headers: Record<string, string> = {}) =>
-  fetch(`${baseUrl}/api/health`, {
+  fetch(`${srv.baseUrl}/api/health`, {
     method: 'POST',
-    headers: { Origin: origin, 'Content-Type': 'application/json', ...headers },
+    headers: { Origin: srv.origin, 'Content-Type': 'application/json', ...headers },
     body,
   });
 const json = (bytes: number) => JSON.stringify({ text: 'a'.repeat(bytes) });

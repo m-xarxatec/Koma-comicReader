@@ -1,29 +1,14 @@
 import assert from 'node:assert/strict';
-import { once } from 'node:events';
-import type { Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import { after, before, test } from 'node:test';
+import { test } from 'node:test';
+import { startTestServer } from './helpers.js';
 
-// La lista de la demo en la LAN (docker-compose.yml). Se fija antes de importar `app`, porque
+// La lista de la demo en la LAN (docker-compose.yml). Se fija antes de que before() importe `app`, porque
 // config/env.ts lee las variables al cargarse; cada archivo de test corre en su propio proceso.
 process.env.ALLOWED_ORIGINS = 'http://koma.local,http://localhost';
 
-let server: Server;
-let baseUrl: string;
+const srv = startTestServer();
 
-before(async () => {
-  const { app } = await import('../../app.js');
-  server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-});
-
-after(async () => {
-  server.closeAllConnections();
-  await new Promise((resolve) => server.close(resolve));
-});
-
-const post = (origin: string) => fetch(`${baseUrl}/api/health`, { method: 'POST', headers: { Origin: origin } });
+const post = (origin: string) => fetch(`${srv.baseUrl}/api/health`, { method: 'POST', headers: { Origin: origin } });
 
 // Aún no hay rutas POST: superar el control CSRF lleva al 404 de la API.
 test('Seguridad: un POST con Origin http://koma.local de ALLOWED_ORIGINS pasa el control CSRF', async () => {

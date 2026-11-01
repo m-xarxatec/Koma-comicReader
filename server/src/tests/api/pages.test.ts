@@ -1,28 +1,11 @@
 import assert from 'node:assert/strict';
-import { once } from 'node:events';
-import { request, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import { after, before, test } from 'node:test';
+import { request } from 'node:http';
+import { test } from 'node:test';
+import { startTestServer } from './helpers.js';
 
-let server: Server;
-let baseUrl: string;
-let origin: string; // un origen de ALLOWED_ORIGINS, para pasar el control CSRF
+const srv = startTestServer();
 
-before(async () => {
-  const { app } = await import('../../app.js');
-  const { env } = await import('../../config/env.js');
-  origin = env.ALLOWED_ORIGINS[0]!;
-  server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-});
-
-after(async () => {
-  server.closeAllConnections();
-  await new Promise((resolve) => server.close(resolve));
-});
-
-const get = (path: string) => fetch(`${baseUrl}${path}`, { redirect: 'manual' });
+const get = (path: string) => fetch(`${srv.baseUrl}${path}`, { redirect: 'manual' });
 const title = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
 
 test('Seguridad: / sirve home.html con el requestId de la petición inyectado', async () => {
@@ -36,7 +19,7 @@ test('Seguridad: / sirve home.html con el requestId de la petición inyectado', 
 });
 
 test('Seguridad: Referrer-Policy es same-origin (con no-referrer, un formulario POST enviaría Origin: null)', async () => {
-  for (const path of ['/', '/api/health', '/no-existe']) {
+  for (const path of ['/', '/api/no-existe', '/no-existe']) { // página, error JSON de la API y página de error
     const res = await get(path);
     assert.equal(res.headers.get('referrer-policy'), 'same-origin', path);
   }
@@ -66,7 +49,7 @@ test('Seguridad: la barra final redirige con 301 a la ruta sin ella y conserva l
 // Ruta enviada tal cual, sin la normalización de fetch (que convierte `\` en `/`).
 function rawGet(path: string): Promise<{ status: number; location: string | undefined }> {
   return new Promise((resolve, reject) => {
-    const { hostname, port } = new URL(baseUrl);
+    const { hostname, port } = new URL(srv.baseUrl);
     request({ hostname, port, path, method: 'GET' }, (res) => {
       res.resume();
       resolve({ status: res.statusCode ?? 0, location: res.headers.location });
@@ -80,7 +63,7 @@ test('Seguridad: quitar la barra final nunca redirige a otro sitio', async () =>
   for (const path of ['//evil.com/', '///evil.com/', '/\\evil.com/', '/%5Cevil.com/', '/%2F%2Fevil.com/']) {
     const { status, location } = await rawGet(path);
     if (location !== undefined) {
-      assert.equal(new URL(location, baseUrl).origin, new URL(baseUrl).origin, `${path} → ${location}`);
+      assert.equal(new URL(location, srv.baseUrl).origin, new URL(srv.baseUrl).origin, `${path} → ${location}`);
     }
     if (path.startsWith('//') || path.startsWith('/\\')) assert.equal(status, 404, path);
   }
@@ -96,9 +79,9 @@ test('Seguridad: los estáticos de estilos e iconos se sirven con su tipo', asyn
 });
 
 test('Seguridad: un error sin plantilla usa la página genérica con el mismo layout', async () => {
-  const res = await fetch(`${baseUrl}/no-existe`, {
+  const res = await fetch(`${srv.baseUrl}/no-existe`, {
     method: 'POST',
-    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    headers: { Origin: srv.origin, 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: 'a'.repeat(101 * 1024) }),
   });
   const html = await res.text();

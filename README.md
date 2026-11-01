@@ -41,7 +41,7 @@ Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imág
    ```bash
    npm run build
    npm run seed:online
-   npm run content:import:online
+   npm run content:import:online   # (desde el bloque 2)
    ```
 
 3. Al empezar, cada comando muestra a qué base de datos y almacenamiento se conecta: confirma que son Neon y `r2`.
@@ -57,7 +57,7 @@ Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imág
 | `npm test` | Tests unitarios |
 | `npm run test:api` | Tests de la API (vacía y vuelve a llenar la base `koma_test`) |
 | `npm run migrate` · `npm run seed` | Tablas y datos demo en local |
-| `npm run seed:online` · `npm run content:import:online` | Lo mismo, hacia la versión online |
+| `npm run seed:online` · `npm run content:import:online` (desde el bloque 2) | Lo mismo, hacia la versión online |
 
 ## Variables
 

@@ -389,7 +389,7 @@ Módulos añadidos a la lista de `ideas_base.md`: `reading` (RN-01 a RN-03, anun
 - **Cookie de sesión:** `httpOnly`, `Secure` según `COOKIE_SECURE`, `SameSite=Lax`, 7 días.
 - **CSRF:** ningún GET modifica datos. Las peticiones que modifican datos deben traer un `Origin` incluido en `ALLOWED_ORIGINS` (lista separada por comas; sin la variable, el origen de `APP_URL`); si `Origin` falta o es ajeno → 403. Cada entrada es un origen exacto (`http` o `https`, sin ruta, barra final ni comodines); `env.ts` rechaza el resto. `APP_URL` solo se usa para URLs absolutas que salen de la app (retorno de Stripe); las redirecciones internas son relativas. El webhook de Stripe queda exento y se valida por firma.
 - **Cabeceras:** CSP de helmet definida directiva a directiva: `img-src` con `'self'` y el dominio de R2; `form-action` con `'self'`, `https://checkout.stripe.com` y `https://billing.stripe.com` (el navegador aplica `form-action` también a las redirecciones); sin `upgrade-insecure-requests`, HSTS ni `Cross-Origin-Opener-Policy` cuando `APP_URL` es `http` (desarrollo y demo en la LAN). `Referrer-Policy: same-origin`: con `no-referrer`, el valor de serie de helmet, un formulario POST nativo envía `Origin: null` y el control CSRF lo rechaza; `fetch()` (modo CORS) no se ve afectado (comprobado en Brave el 1-nov: formulario → 403 `CSRF`, `fetch` → aceptado). Sin scripts en línea.
-- **Redirecciones:** `next` solo acepta rutas que empiezan por `/` y no por `//`.
+- **Redirecciones:** `next` (`safeNext` en `utils/redirect.ts`) solo acepta rutas que empiezan por `/`; rechaza las que empiezan por `//` o `/\` (el navegador trata `\` como `/`) y las que contienen caracteres de control (el navegador elimina tabuladores y saltos de línea, así que `/\t/evil.com` acabaría en `//evil.com`). Si no es válido, se vuelve a `/`.
 
 ### Variables de entorno (`.env.example`)
 
@@ -444,6 +444,8 @@ La presentación se hace con el entorno que esté disponible ese día: online si
 | Acceso | Desarrollo: `http://localhost:3000` (solo `127.0.0.1`). Demo: `http://koma.local` desde la LAN de confianza (mDNS, puerto 80) | HTTPS; `ALLOWED_ORIGINS` = solo su URL |
 | Arranque | `docker compose up -d db` + `npm run dev` | Push a la rama principal |
 | Build | `npm run build` | `npm ci --include=dev && npm run build` |
+
+**Render (online):** `HOST=0.0.0.0`, porque Render espera la app en `0.0.0.0:$PORT`. En cada despliegue, comprobar en el log de build la línea "Using Node.js version…": debe ser 24.2 o superior, porque con una anterior `migrate` y `seed` terminarían sin hacer nada (`import.meta.main`).
 
 **Checklist del día de la demo:** abrir la web online 5 minutos antes (Render despierta en 30–60 s); tener el entorno local levantado en paralelo; comprobar `GET /api/health` en ambos; entrar desde el móvil en `http://koma.local`; tener preparada la zona wifi del portátil como plan B, por si la red aísla a los clientes; ensayar el local con la red apagada (sin recursos externos e imágenes Docker ya descargadas).
 

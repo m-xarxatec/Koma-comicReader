@@ -77,12 +77,9 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 ### 2026-11-01 · Bloque 1 · Andamiaje, fase E (tests, README y cierre) y correcciones de la auditoría
 - **Pedido a la IA:** aplicar la segunda auditoría y cerrar el andamiaje: test de `next`, test de `/api/health`, README con comandos y variables.
 - **Resultado:**
-  - `Referrer-Policy: same-origin` con test de API.
-  - `NETWORK_ERROR` documentado en el plan.
-  - `engines` pasa a `">=24.2 <25"` por `import.meta.main`.
-  - `utils/redirect.ts` (`safeNext`) con `redirect.test.ts`.
-  - `health.test.ts` (200) y `health-db-down.test.ts` (503 sin BD).
-  - README con "Comandos" y "Variables" en el estilo del desarrollador.
-- **Fallos:** el `no-referrer` de serie de helmet hacía que un formulario POST enviara `Origin: null`. El desarrollador lo comprobó en Brave: el formulario daba 403 `CSRF` y `fetch` era aceptado.
-- **Corrección:** `referrerPolicy: 'same-origin'`. La IA había supuesto que también afectaba a `fetch`; la especificación actual y la prueba del desarrollador lo desmienten (solo se anula sin modo CORS).
+  - Cabeceras y engines: `Referrer-Policy: same-origin` con test; `engines` `">=24.2 <25"` por `import.meta.main`.
+  - Código y tests: `safeNext` (`utils/redirect.ts`) con su test; `/api/health` probado con 200 y con 503 sin BD.
+  - Docs: `NETWORK_ERROR` en el plan; README con "Comandos" y "Variables" en el estilo del desarrollador.
+- **Fallos:** el `no-referrer` de serie de helmet hacía que un formulario POST enviara `Origin: null` (en Brave: formulario → 403 `CSRF`; `fetch` → aceptado). La IA supuso que también afectaba a `fetch`, y no era así: solo se anula sin modo CORS.
+- **Corrección:** `referrerPolicy: 'same-origin'`. Un test olvidaba cerrar el pool (10 s de espera): helper común `tests/api/helpers.ts` que cierra servidor y pool en `after()`.
 - **Aprendizaje:** las cabeceras de seguridad por defecto pueden romper otra defensa; se prueban en un navegador real, no solo con tests que fijan `Origin` a mano.
