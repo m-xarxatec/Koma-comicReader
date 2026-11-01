@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: koma
+      POSTGRES_PASSWORD: koma
+      POSTGRES_DB: koma
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Desde Postgres 18 la imagen guarda los datos en /var/lib/postgresql/<versión>/docker.
+      - pgdata:/var/lib/postgresql
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U koma -d koma"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    # Demo en la LAN de confianza (http://koma.local, mDNS): ver "Checklist del día de la demo" en docs/plan_mvp.md.
+    # Estos valores sustituyen a los de .env; NODE_ENV nunca production (env.ts rechaza el pago simulado).
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://koma:koma@db:5432/koma
+      HOST: 0.0.0.0
+      APP_URL: http://koma.local
+      ALLOWED_ORIGINS: http://koma.local,http://localhost
+      COOKIE_SECURE: "false"
+      PAYMENTS_DRIVER: fake
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/storage
+    ports:
+      - "80:3000" # todas las interfaces: accesible desde la LAN
+    volumes:
+      - ./storage:/app/storage
+
+volumes:
+  pgdata:

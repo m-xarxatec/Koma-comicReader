@@ -1,0 +1,10 @@
+.env
+.env.online
+node_modules/
+dist/
+storage/
+content/
+docs/credenciales.local.md
+docs/ideas_base.md
+docs/modelo_datos.md
+.claude
