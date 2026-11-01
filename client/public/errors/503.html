@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Servicio no disponible · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/error-page.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="site-header__brand" href="/">Koma</a>
+      <nav class="site-header__nav" aria-label="Principal">
+        <ul class="site-header__list">
+          <li><a class="site-header__link" href="/#catalogo">Catálogo</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="contenido" class="page error-page">
+    <p class="error-page__status">Error 503</p>
+    <h1 class="error-page__title">El servicio no está disponible</h1>
+    <p>No podemos atenderte en este momento. Inténtalo de nuevo en unos minutos.</p>
+    <ul class="error-page__actions">
+      <li><a class="error-page__action error-page__action--primary" href="/">Ir al inicio</a></li>
+      <li><a class="error-page__action" href="/#catalogo">Explorar el catálogo</a></li>
+    </ul>
+    <p class="error-page__ref">Código de referencia: <code>{{requestId}}</code></p>
+  </main>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <p>Koma — plataforma de cómics · Proyecto final de XarxaTec Activa</p>
+    </div>
+  </footer>
+</body>
+</html>

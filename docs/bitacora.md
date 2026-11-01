@@ -62,3 +62,14 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - `npm run test:api` pasa por primera vez (7/7).
 - **Comprobación:** migrate y seed dos veces sin duplicados (4 usuarios, 3 settings, 7 auditorías); DELETE, TRUNCATE y UPDATE de `audit_log` fallan.
 - **Aprendizaje:** el seed no pisa cuentas existentes: cambiar una contraseña `SEED_*` no afecta a una BD ya sembrada.
+
+### 2026-11-01 · Bloque 1 · Andamiaje, fase D (cliente base)
+- **Pedido a la IA:** estilos base, favicon, páginas de error, `home`, `api.ts` y mapa de rutas con `/`, la barra final y el 404 (constructor, fase D).
+- **Resultado:**
+  - Tokens con modo oscuro, reset con foco visible y "Saltar al contenido", y un CSS por componente (cabecera, pie y página de error).
+  - Las 5 páginas de error y la genérica del servidor comparten layout.
+  - `sendPage` y `fillTemplate` inyectan el `requestId` escapado.
+  - La barra final redirige con 301 a una ruta relativa y conserva la query.
+- **Fallos:** un test daba por peligrosa la barra invertida codificada (`/%5Cevil.com`), que es segura; la literal no llegaba a probarse porque `fetch` la normaliza.
+- **Corrección:** el test comprueba que la redirección nunca cambia de origen y envía la ruta tal cual con `node:http`.
+- **Aprendizaje:** quitar una barra final puede abrir una redirección a otro sitio (`//evil.com/`): se valida el destino, no solo el origen.

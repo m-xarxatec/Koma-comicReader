@@ -8,7 +8,9 @@ import { pingDatabase } from './db/pool.js';
 import { csrf } from './middlewares/csrf.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
+import { trailingSlash } from './middlewares/trailing-slash.js';
 import { AppError } from './utils/app-error.js';
+import { sendPage } from './utils/page.js';
 
 // URLs prefirmadas de R2: bucket como subdominio o en la ruta.
 const r2Hosts =
@@ -73,6 +75,10 @@ app.get('/api/health', async (_req, res) => {
   }
   res.json({ status: 'ok', db: 'ok' });
 });
+
+// Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
+app.use(trailingSlash);
+app.get('/', (_req, res) => sendPage(res, 'home'));
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');
