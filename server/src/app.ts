@@ -11,6 +11,7 @@ import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
 import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
+import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { AppError } from './utils/app-error.js';
 import { sendPage } from './utils/page.js';
 
@@ -63,7 +64,9 @@ app.use(
   }),
 );
 
-// (Bloque 4) El webhook de Stripe se registra aquí, con express.raw(), antes de csrf y express.json().
+// Webhook de Stripe, solo con PAYMENTS_DRIVER=stripe (con `fake` no hay secreto con el que verificar).
+// Después de requestId y antes de csrf, auth y los express.json (ver payments.routes.ts).
+if (env.PAYMENTS_DRIVER === 'stripe') app.use(paymentsWebhookRouter);
 app.use(csrf);
 // El primero que lee el cuerpo gana: el parser general ve la petición ya leída y no hace nada.
 app.use('/api/auth', express.json({ limit: AUTH_BODY_LIMIT }));

@@ -147,3 +147,12 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - Borrar un test de `server/src` no borra su `.js` de `server/dist` (`tsc` no limpia las salidas huérfanas), y `test:api` ejecuta todo lo que hay en `dist`.
 - **Corrección:** se borraron a mano `server/dist/tests/api/debug-ip.test.js` y su `.d.ts`.
 - **Aprendizaje:** una guía de despliegue se prueba siguiéndola tal cual, y una variable vacía cuenta como ausente; al borrar un archivo `.ts`, borrar también su salida en `dist`.
+
+### 2026-11-01 · Bloque 1 · Tarea 4: prueba mínima del webhook de Stripe
+- **Pedido a la IA:** `POST /api/stripe/webhook` con `express.raw()`, exento de CSRF, que verifique la firma, registre el evento y responda 200, sin BD (decisiones 1–5 del plan, aprobadas).
+- **Resultado:** módulo `payments` (routes, controller, service) e `integrations/payments/stripe.ts` con `Stripe.webhooks.constructEvent` estático (el cliente llega en el bloque 4). Solo con `PAYMENTS_DRIVER=stripe`, después de `request-id` y antes de `csrf`, `auth` y los `express.json`. Contrato, errores, riesgos y paso 7 de "Primer despliegue" en el plan.
+- **Comprobación:** 32 tests unitarios y 45 de API. Los de orden y de log fallan al montarlo tras `express.json` o al meter la cabecera en el `warn`. Con `curl`: sin firma, 400 y `warn`; firmado, 200, con las dos líneas bajo el mismo `requestId`.
+- **Fallos:** ninguno en el código; al revisar el SDK, su error de firma guarda la cabecera y el cuerpo en `header` y `payload`.
+- **Corrección:** el `warn` lleva solo `err.message`, y el error de Stripe nunca va como `cause`.
+- **Pendiente (desarrollador):** producto, precio, portal y webhook en Stripe; `STRIPE_WEBHOOK_SECRET` en Render; `stripe trigger` y revisar *Event deliveries* y el log.
+- **Aprendizaje:** antes de registrar un error de una librería, mirar qué guarda dentro, no solo su mensaje.

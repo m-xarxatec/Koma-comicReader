@@ -460,6 +460,10 @@ La presentación se hace con el entorno que esté disponible ese día: online si
    - Suplantación: `curl -s -H 'X-Forwarded-For: 203.0.113.7' …/api/debug/ip`. `ip` sigue siendo tu IP; `203.0.113.7` solo aparece a la izquierda de `xForwardedFor`. Si sale como `ip`, el valor es demasiado alto: el cliente elegiría su IP y se saltaría los límites. Demasiado bajo, todos los clientes comparten la IP de un proxy y los límites los bloquean a la vez.
    - Anotar el valor en la bitácora. Ya fijado (no antes: el endpoint hace falta para medirlo), borrar en un solo commit: el endpoint (`server/src/app.ts`), su test (`server/src/tests/api/debug-ip.test.ts`), su fila del contrato de la API del bloque 1, la nota bajo el contrato y la mención del endpoint en RN-13 (la regla se queda con el número de saltos verificado).
 6. **Comprobación:** `GET /api/health` → 200 con `X-Request-Id`; entrar con una cuenta demo desde el navegador (un 403 `CSRF` indica que `APP_URL` o `ALLOWED_ORIGINS` no coinciden con la URL real); los logs de Render, sin errores.
+7. **Webhook de Stripe (modo prueba):** después de desplegar el código con `PAYMENTS_DRIVER=stripe`.
+   - Producto "Koma Premium" con precio recurrente mensual en EUR (su `price_…` va a `STRIPE_PRICE_ID`) y portal de cliente con cancelación y cambio de método de pago.
+   - Workbench → Webhooks: destino `https://<servicio>.onrender.com/api/stripe/webhook`, versión de API `2026-10-28.endive` (la del SDK), formato *snapshot* y los eventos `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Su `whsec_…` va a `STRIPE_WEBHOOK_SECRET` en Render; volver a desplegar.
+   - Prueba: `stripe trigger customer.subscription.created` (CLI o Stripe Shell) → *Event deliveries* con 200 y, en el log, "Webhook de Stripe verificado" con `apiVersion` `2026-10-28.endive` y la línea `request` con el mismo `requestId`. Un `curl -X POST` sin firma → 400 (no 403: está fuera de CSRF).
 
 **Checklist del día de la demo:** abrir la web online 5 minutos antes (Render despierta en 30–60 s); tener el entorno local levantado en paralelo; comprobar `GET /api/health` en ambos; entrar desde el móvil en `http://koma.local`; tener preparada la zona wifi del portátil como plan B, por si la red aísla a los clientes; ensayar el local con la red apagada (sin recursos externos e imágenes Docker ya descargadas).
 
@@ -556,6 +560,7 @@ Los contratos de los bloques 2–4 se escriben aquí antes de empezar cada bloqu
 | `POST /api/auth/logout` | — | 204, borra la cookie | — |
 | `GET /api/me` | — | 200 `{ user }` o `{ user: null }` si es invitado | — |
 | `GET /api/health` | — | 200 `{ status: "ok", db: "ok" }` | 503 |
+| `POST /api/stripe/webhook` | Cuerpo crudo del evento, firmado en `Stripe-Signature` | 200 `{ received: true }` | 400 `VALIDATION_ERROR` (firma ausente o no válida), 413 |
 
 ```ts
 interface UserDto {
@@ -570,6 +575,8 @@ interface UserDto {
 ```
 
 `INVALID_CREDENTIALS` usa el mismo mensaje exista o no el correo.
+
+Webhook de Stripe (prueba mínima del bloque 1): solo existe con `PAYMENTS_DRIVER=stripe`. Va después de `request-id` (sus dos líneas de log comparten `requestId`) y antes de `csrf` (exento: se valida la firma con `STRIPE_WEBHOOK_SECRET` y 5 min de tolerancia), `auth` y los `express.json`: lee el cuerpo crudo con `express.raw()` y el límite general de 100 kB. No toca la BD: `payment_events` y `syncSubscription` (RN-04) llegan en el bloque 4. En el log van solo `eventId`, `type`, `livemode` y `apiVersion` del evento; nunca la cabecera `Stripe-Signature` ni el cuerpo, tampoco en el `warn` de firma no válida, que lleva solo el motivo que da Stripe.
 
 ## Convenciones, tests y definición de terminado
 
@@ -628,7 +635,7 @@ Todo error tiene un código HTTP correcto, un `code` estable para el cliente y u
 | 200 / 201 / 204 | — | Lectura correcta / recurso creado / borrado o acción sin cuerpo |
 | 301 | — | Ruta con `/` final; `/leer/:slug` sin número → capítulo 1 |
 | 302 / 303 | — | Página privada sin sesión → login; tras enviar un formulario o volver de Stripe |
-| 400 | `VALIDATION_ERROR` | zod rechaza los datos (incluye contraseña actual incorrecta y más de 60 imágenes); incluye `fields`. También cuerpo JSON mal formado o incompleto (sin `fields`) |
+| 400 | `VALIDATION_ERROR` | zod rechaza los datos (incluye contraseña actual incorrecta y más de 60 imágenes); incluye `fields`. También cuerpo JSON mal formado o incompleto y firma del webhook de Stripe ausente o no válida (sin `fields`) |
 | 401 | `UNAUTHENTICATED` | Sin sesión en la API. Páginas privadas: redirige a `/entrar?next=…`. Lector: muestra la invitación de RN-01 |
 | 401 | `INVALID_CREDENTIALS` | Correo o contraseña incorrectos |
 | 403 | `FORBIDDEN` | Sin permiso para la acción |
@@ -736,7 +743,7 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Entorno técnico | ESM, Node 24 LTS, Express 5, jsonwebtoken, `node:test` sobre JS compilado, un solo `package.json` |
 | Cuentas demo | Contraseñas por variables de entorno, anotadas en `docs/credenciales.local.md` (ignorado por git) |
 | Idioma | Código y API en inglés; interfaz, URLs de páginas y mensajes en español |
-| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores y rechazos; un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar) |
+| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores y rechazos; un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas |
 | Estado en el navegador | Lo que es preferencia o comodidad (advertencias aceptadas, ocultar iconos) vive en `localStorage`; permisos, saldo y límites, siempre en el servidor |
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |
