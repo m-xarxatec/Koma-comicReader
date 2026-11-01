@@ -36,7 +36,7 @@ Se abre en `http://koma.local` o `http://localhost`. Los pagos son simulados y l
    - Build: `npm ci --include=dev && npm run build`
    - Start: `npm start` (crea o actualiza las tablas al arrancar)
    - Health check: `/api/health`
-3. Pon las variables de la columna "Online" de la tabla de abajo. `PORT` la pone Render.
+3. Pon en Render todas las variables de `.env.example` salvo `PORT` (la pone Render) y `SEED_*`, con los valores de la columna "Online" de la tabla de abajo donde cambien. Si falta una, la app no arranca. Las vacías que no uses (`STRIPE_TEST_CLOCK_ID` y, con `STORAGE_DRIVER=local`, las `R2_*`) puedes omitirlas.
 4. Cuando arranque, abre `https://<tu-servicio>.onrender.com/api/health`: debe responder `ok`.
 
 El valor de `TRUST_PROXY` se comprueba en el primer despliegue; los pasos están en `docs/plan_mvp.md` ("Primer despliegue").
