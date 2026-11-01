@@ -52,3 +52,13 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - El desarrollador simplificó el README a propósito: solo se corrigieron el orden `build` → `migrate`, la URL de la demo en Docker y `mkdir -p storage`.
   - "Demo en la LAN" y el plan C (citados en las entradas anteriores como README) pasan al "Checklist del día de la demo" del plan, con lista de comandos.
 - **Aprendizaje:** un archivo que cambia en disco sin que lo edite la IA se toma como decisión del desarrollador: se pregunta, no se revierte.
+
+### 2026-11-01 · Bloque 1 · Andamiaje, fase C (base de datos y seeds)
+- **Pedido a la IA:** migraciones 001–003, `seed.ts` del bloque 1 y `reset-test-db.ts` (constructor, fase C).
+- **Resultado:**
+  - Migraciones idénticas al DDL de `modelo_datos.md`.
+  - Seed idempotente en una transacción, con `system.seed` por fila creada; valida las contraseñas `SEED_*` con RN-12 antes de crear nada.
+  - `reset-test-db` comprueba `current_database()` y se niega fuera de `_test`.
+  - `npm run test:api` pasa por primera vez (7/7).
+- **Comprobación:** migrate y seed dos veces sin duplicados (4 usuarios, 3 settings, 7 auditorías); DELETE, TRUNCATE y UPDATE de `audit_log` fallan.
+- **Aprendizaje:** el seed no pisa cuentas existentes: cambiar una contraseña `SEED_*` no afecta a una BD ya sembrada.

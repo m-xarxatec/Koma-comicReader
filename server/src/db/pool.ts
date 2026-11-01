@@ -39,3 +39,9 @@ export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>)
 export async function pingDatabase(): Promise<void> {
   await pool.query('SELECT 1');
 }
+
+// Host y base de datos de DATABASE_URL, sin credenciales: los scripts los imprimen al empezar.
+export function databaseTarget(): { dbHost: string; dbName: string } {
+  const url = new URL(env.DATABASE_URL);
+  return { dbHost: url.hostname, dbName: decodeURIComponent(url.pathname.slice(1)) };
+}
