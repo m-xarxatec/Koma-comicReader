@@ -29,13 +29,26 @@ docker compose up --build
 
 Se abre en `http://koma.local` o `http://localhost`. Los pagos son simulados y las imágenes se guardan en tu disco.
 
+## Publicar online (Render + Neon)
+
+1. En Neon, crea la base de datos y copia la conexión **directa** (sin `-pooler`). Cambia los parámetros del final por `?sslmode=verify-full`.
+2. En Render, crea un Web Service con este repositorio:
+   - Build: `npm ci --include=dev && npm run build`
+   - Start: `npm start` (crea o actualiza las tablas al arrancar)
+   - Health check: `/api/health`
+3. Pon las variables de la columna "Online" de la tabla de abajo. `PORT` la pone Render.
+4. Cuando arranque, abre `https://<tu-servicio>.onrender.com/api/health`: debe responder `ok`.
+
+El valor de `TRUST_PROXY` se comprueba en el primer despliegue; los pasos están en `docs/plan_mvp.md` ("Primer despliegue").
+
 ## Subir datos a la versión online
 
-Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imágenes):
+Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imágenes). Antes, la app tiene que haber arrancado una vez en Render: es la que crea las tablas.
 
-1. Copia `.env.example` como `.env.online` y pon los valores del entorno online.
-   - En `DATABASE_URL` usa la conexión **directa** de Neon (sin `-pooler`) y añade `?sslmode=require`.
-   - Usa `STORAGE_DRIVER=r2` y rellena las variables `R2_*`.
+1. Copia `.env.example` como `.env.online` y pon los mismos valores que en Render.
+   - En `DATABASE_URL`, la conexión **directa** de Neon (sin `-pooler`) con `?sslmode=verify-full`.
+   - `PORT` y `HOST` tienen que estar, aunque da igual su valor: el seed no abre ningún puerto.
+   - Añade las contraseñas `SEED_*` de las cuentas demo online.
 2. Ejecuta:
 
    ```bash
@@ -68,10 +81,10 @@ Todas están en `.env.example`, con una nota cada una. Estas son las que cambian
 | `NODE_ENV` | `development` | `development` | `production` |
 | `HOST` | `127.0.0.1` | `0.0.0.0` | `0.0.0.0` |
 | `APP_URL` | `http://localhost:3000` | `http://koma.local` | la URL de Render (HTTPS) |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | `http://koma.local,http://localhost` | solo la URL de Render |
-| `DATABASE_URL` | Postgres en Docker (`localhost`) | Postgres en Docker (`db`) | Neon, conexión directa |
+| `ALLOWED_ORIGINS` | `http://localhost:3000` | `http://koma.local,http://localhost` | solo la URL de Render, sin barra final |
+| `DATABASE_URL` | Postgres en Docker (`localhost`) | Postgres en Docker (`db`) | Neon, conexión directa + `?sslmode=verify-full` |
 | `COOKIE_SECURE` | `false` | `false` | `true` |
-| `TRUST_PROXY` | `0` | `0` | los saltos de proxy de Render |
+| `TRUST_PROXY` | `0` | `0` | los saltos de proxy de Render (`0` hasta comprobarlo) |
 | `STORAGE_DRIVER` | `local` | `local` | `r2` |
 | `PAYMENTS_DRIVER` | `fake` | `fake` | `stripe` |
 

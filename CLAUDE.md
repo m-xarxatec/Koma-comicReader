@@ -105,7 +105,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - **R2 con AWS SDK v3:** `region: 'auto'`, endpoint `https://<account>.r2.cloudflarestorage.com`, `requestChecksumCalculation: 'WHEN_REQUIRED'` y `responseChecksumValidation: 'WHEN_REQUIRED'`.
 - **`trust proxy`:** número de saltos (`TRUST_PROXY`), nunca `true` (RN-13).
 - **bcrypt:** límite de 72 bytes (`Buffer.byteLength`), no caracteres (RN-12).
-- **Neon:** SSL obligatorio; migrar por la conexión directa, no la agrupada (`-pooler`).
+- **Neon:** SSL obligatorio con `sslmode=verify-full` (con `require`, `pg` 8 avisa de que cambiará en la v9); migrar por la conexión directa, no la agrupada (`-pooler`).
 - **Render:** build con `npm ci --include=dev` o falta `typescript`; disco efímero (imágenes en R2); sin *pre-deploy*: las migraciones corren al arrancar.
 
 ## Seguridad obligatoria
