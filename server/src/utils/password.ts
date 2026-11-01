@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcrypt';
 
 // RN-12: de 10 caracteres a 72 bytes. bcrypt ignora lo que pase de 72 bytes: se mide con Buffer.byteLength.
@@ -19,15 +18,8 @@ export function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
-// Hash de una contraseña aleatoria con el mismo coste: se compara contra él cuando el correo no existe,
-// para que el login tarde lo mismo exista o no la cuenta. Se calcula al cargar el módulo: si se calculara
-// en el primer uso, el primer login con un correo inexistente tardaría el doble y lo delataría.
-const dummyHash = hashPassword(randomUUID());
-// Si fallara, lo recibe quien lo espera (verifyPassword → 500); sin esto sería un unhandledRejection al arrancar.
-dummyHash.catch(() => {});
-
-// Compara con el hash guardado o, si no hay cuenta (null), con el ficticio; en ese caso siempre es false.
-export async function verifyPassword(password: string, hash: string | null): Promise<boolean> {
-  const matches = await bcrypt.compare(password, hash ?? (await dummyHash));
-  return hash !== null && matches;
+// El hash ficticio del login (mismo tiempo exista o no la cuenta) vive en auth.service.ts: necesita el logger,
+// y este archivo no puede cargar `env` (lo importan el seed y los tests unitarios, que corren sin variables).
+export function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
 }

@@ -86,6 +86,18 @@ app.get('/api/health', async (_req, res) => {
   res.json({ status: 'ok', db: 'ok' });
 });
 
+// TEMPORAL (bloque 1, RN-13): verificar TRUST_PROXY en Render (procedimiento en docs/plan_mvp.md,
+// "Primer despliegue"). Devuelve lo que Express ve de la IP del cliente. Se borra, con su test, en cuanto el
+// valor esté verificado. Solo lectura y sin sesión; no-store para que ningún proxy guarde la de otro cliente.
+app.get('/api/debug/ip', (req, res) => {
+  res.set('Cache-Control', 'no-store').json({
+    ip: req.ip ?? null,
+    xForwardedFor: req.get('x-forwarded-for') ?? null,
+    remoteAddress: req.socket.remoteAddress ?? null,
+    trustProxy: env.TRUST_PROXY,
+  });
+});
+
 // Sesión: a partir de aquí, res.locals.user es el usuario de la BD (o null). Va después de los
 // estáticos y de /api/health, que no la necesitan, para no consultar la BD en cada CSS.
 app.use(auth);
