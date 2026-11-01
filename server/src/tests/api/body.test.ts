@@ -31,6 +31,22 @@ test('Seguridad: un cuerpo JSON de menos de 100 kB pasa el límite', async () =>
   assert.equal(res.status, 404);
 });
 
+// /api/auth/* tiene su propio límite, mucho menor (RN-13): acota lo que una petición gasta antes de validar.
+const postAuth = (body: string) =>
+  fetch(`${srv.baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { Origin: srv.origin, 'Content-Type': 'application/json' },
+    body,
+  });
+
+test('Seguridad: en /api/auth, un cuerpo JSON de más de 4 kB devuelve 413 PAYLOAD_TOO_LARGE', async () => {
+  await assertError(await postAuth(json(5 * KB)), 413, 'PAYLOAD_TOO_LARGE', 'La petición es demasiado grande');
+});
+
+test('Seguridad: en /api/auth, un cuerpo JSON de menos de 4 kB pasa el límite y llega a la validación', async () => {
+  await assertError(await postAuth(json(3 * KB)), 400, 'VALIDATION_ERROR', 'Revisa los datos enviados');
+});
+
 // Los otros 400 de body-parser (request.aborted, request.size.invalid) no se pueden provocar desde
 // un cliente HTTP: en el primero nadie recibe la respuesta y el segundo lo impide el parser de Node.
 test('Seguridad: un JSON mal formado devuelve 400 VALIDATION_ERROR', async () => {

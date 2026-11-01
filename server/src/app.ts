@@ -26,6 +26,9 @@ const r2Hosts =
 // envían: el navegador ignora HSTS y COOP fuera de un contexto seguro, y COOP deja un aviso en la consola.
 const isHttps = new URL(env.APP_URL).protocol === 'https:';
 const JSON_BODY_LIMIT = '100kb'; // más → 413 PAYLOAD_TOO_LARGE
+// /api/auth/*: correo (254), contraseña (72 bytes) y nombre (30) caben de sobra, incluso escritos con
+// escapes \uXXXX. Un cuerpo pequeño acota lo que una petición puede hacer gastar antes de validar.
+const AUTH_BODY_LIMIT = '4kb';
 
 // Sin `listen` ni migraciones: los tests de API importan `app` y lo levantan con listen(0).
 export const app = express();
@@ -62,6 +65,8 @@ app.use(
 
 // (Bloque 4) El webhook de Stripe se registra aquí, con express.raw(), antes de csrf y express.json().
 app.use(csrf);
+// El primero que lee el cuerpo gana: el parser general ve la petición ya leída y no hace nada.
+app.use('/api/auth', express.json({ limit: AUTH_BODY_LIMIT }));
 app.use(express.json({ limit: JSON_BODY_LIMIT }));
 app.use(cookieParser(env.COOKIE_SECRET));
 

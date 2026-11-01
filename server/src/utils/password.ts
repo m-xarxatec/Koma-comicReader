@@ -20,12 +20,14 @@ export function hashPassword(password: string): Promise<string> {
 }
 
 // Hash de una contraseña aleatoria con el mismo coste: se compara contra él cuando el correo no existe,
-// para que el login tarde lo mismo exista o no la cuenta. Se calcula una vez, al primer uso.
-let dummyHash: Promise<string> | undefined;
+// para que el login tarde lo mismo exista o no la cuenta. Se calcula al cargar el módulo: si se calculara
+// en el primer uso, el primer login con un correo inexistente tardaría el doble y lo delataría.
+const dummyHash = hashPassword(randomUUID());
+// Si fallara, lo recibe quien lo espera (verifyPassword → 500); sin esto sería un unhandledRejection al arrancar.
+dummyHash.catch(() => {});
 
 // Compara con el hash guardado o, si no hay cuenta (null), con el ficticio; en ese caso siempre es false.
 export async function verifyPassword(password: string, hash: string | null): Promise<boolean> {
-  dummyHash ??= hashPassword(randomUUID());
   const matches = await bcrypt.compare(password, hash ?? (await dummyHash));
   return hash !== null && matches;
 }

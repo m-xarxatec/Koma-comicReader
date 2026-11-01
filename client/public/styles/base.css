@@ -100,7 +100,7 @@ code {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
   font-weight: var(--font-weight-semibold);
-  transform: translateY(-200%);
+  transform: translateY(var(--skip-link-hidden-offset));
 }
 
 .skip-link:focus {

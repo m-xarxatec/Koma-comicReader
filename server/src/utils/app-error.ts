@@ -20,6 +20,9 @@ export type ErrorCode =
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE';
 
+// Mensaje de todo 500: el detalle va en `cause`, que solo llega al log.
+export const INTERNAL_ERROR_MESSAGE = 'Ha ocurrido un error inesperado';
+
 export interface AppErrorDetails {
   fields?: Record<string, string>; // errores por campo (400)
   retryAt?: Date; // READING_LIMIT y RATE_LIMITED

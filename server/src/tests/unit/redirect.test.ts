@@ -24,7 +24,7 @@ test('Seguridad: next rechaza URL absolutas y esquemas', () => {
 });
 
 test('Seguridad: next rechaza caracteres de control, que el navegador elimina de la URL', () => {
-  for (const next of ['/\t/evil.com', '/\n/evil.com', '/perfil\r\nSet-Cookie: x=1', '/\u0000']) {
+  for (const next of ['/\t/evil.com', '/\n/evil.com', '/\r/evil.com', '/perfil\r\nSet-Cookie: x=1', '/\u0000', '/perfil\u007f']) {
     assert.equal(safeNext(next), DEFAULT_NEXT, JSON.stringify(next));
   }
 });

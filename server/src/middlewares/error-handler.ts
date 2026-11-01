@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ErrorRequestHandler, Request } from 'express';
 import { paths } from '../config/paths.js';
-import { AppError, type ErrorCode } from '../utils/app-error.js';
+import { AppError, INTERNAL_ERROR_MESSAGE, type ErrorCode } from '../utils/app-error.js';
 import { FOOTER_MARKER, HEADER_MARKER, renderTemplate } from '../utils/layout.js';
 import { logger } from '../utils/logger.js';
 
@@ -37,7 +37,7 @@ function toAppError(err: unknown): AppError {
   ) {
     return new AppError(503, 'SERVICE_UNAVAILABLE', 'El servicio no está disponible; inténtalo en unos minutos', { cause: err });
   }
-  return new AppError(500, 'INTERNAL_ERROR', 'Ha ocurrido un error inesperado', { cause: err });
+  return new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, { cause: err });
 }
 
 function isApi(req: Request): boolean {

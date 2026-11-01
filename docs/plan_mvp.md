@@ -177,7 +177,7 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 
 - **RN-11 Comentarios:** 1–500 caracteres, texto plano escapado al mostrarse. Su autor puede borrarlo; el admin puede ocultarlo o eliminarlo. Un comentario oculto no lo ve nadie, tampoco su autor. Borrado siempre lógico; actuar sobre uno ya eliminado → 409.
 - **RN-12 Registro:** correo único sin distinguir mayúsculas; contraseña de 10 caracteres a 72 **bytes** (`Buffer.byteLength`, límite de bcrypt); nombre visible de 3 a 30 caracteres. `EMAIL_TAKEN` revela que el correo existe: riesgo aceptado (registro limitado a 3/h).
-- **RN-13 Límites de peticiones:** login 5 intentos / 15 min por IP y correo; registro 3 / h por IP; subidas 100 imágenes / h por usuario; comentarios 5 / min. Online, `trust proxy` = número de saltos de Render (se verifica en el primer despliegue con un endpoint temporal que devuelve `req.ip` y `X-Forwarded-For`), nunca `true`.
+- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario; comentarios 5 / min. Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = número de saltos de Render (se verifica en el primer despliegue con un endpoint temporal que devuelve `req.ip` y `X-Forwarded-For`), nunca `true`.
 - **RN-14 Administración:** un admin no puede suspenderse ni quitarse el rol; siempre debe quedar al menos un admin activo.
 - **RN-15 Sesión:** suspender, cambiar rol o cambiar contraseña incrementa `token_version`. Al cambiar la propia contraseña se emite un JWT nuevo en la misma respuesta; las demás sesiones se cierran. El contenido de un suspendido sigue visible.
 - **RN-16 Parámetros:** periodo de espera 1–1440 min (demo: 1), saldo máximo 1–20 (por defecto 5), recarga 1–10 (por defecto 2); fuera de rango → 400.
@@ -627,7 +627,7 @@ Todo error tiene un código HTTP correcto, un `code` estable para el cliente y u
 | 409 | `CONFLICT` | Acción ya realizada (p. ej. comentario ya eliminado) |
 | 410 | `GONE` | Obra o capítulo retirado (RN-06) |
 | 413 | `FILE_TOO_LARGE` | Imagen de más de 5 MB |
-| 413 | `PAYLOAD_TOO_LARGE` | Cuerpo de la petición de más de 100 kB |
+| 413 | `PAYLOAD_TOO_LARGE` | Cuerpo de la petición de más de 100 kB (4 kB en `/api/auth/*`) |
 | 415 | `UNSUPPORTED_FILE` | Firma de archivo no permitida |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | Charset o codificación (`Content-Encoding`) del cuerpo no admitidos |
 | 429 | `RATE_LIMITED` | Límite de peticiones; cabecera `Retry-After` y `retryAt` |

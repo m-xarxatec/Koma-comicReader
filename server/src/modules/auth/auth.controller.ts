@@ -22,7 +22,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 
 export async function login(req: Request, res: Response): Promise<void> {
   const { user, token } = await authService.login(res.locals.validated.body as LoginInput, context(req, res));
-  await resetLoginAttempts(req); // RN-13: un login correcto pone a cero los fallos de esta IP y correo
+  await resetLoginAttempts(req, res); // RN-13: un login correcto pone a cero los fallos de esta IP y correo
   res.locals.user = user; // la línea de log de esta petición lleva ya su userId
   setSessionCookie(res, token);
   res.json({ user: toUserDto(user) });

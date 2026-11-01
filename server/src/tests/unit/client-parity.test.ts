@@ -3,7 +3,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { paths } from '../../config/paths.js';
-import { registerBody } from '../../modules/auth/auth.schema.js';
+import { EMAIL_MAX_CHARS, registerBody } from '../../modules/auth/auth.schema.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
 
@@ -30,7 +30,12 @@ test('RN-12: el cliente valida la contraseña igual que el servidor, con los mis
 });
 
 test('RN-12: el cliente acepta y rechaza los mismos correos que zod en el servidor', () => {
-  const cases = ['ana@demo.test', '  Ana@Demo.TEST ', 'a@b', 'a b@c.de', 'ñ@demo.test', 'a..b@c.de', '', `${'x'.repeat(250)}@d.es`, 'o\'brien+koma@demo.test'];
+  // Frontera de EMAIL_MAX_CHARS: 254 caracteres es válido; 255, no.
+  const longest = `${'x'.repeat(EMAIL_MAX_CHARS - 5)}@d.es`;
+  const tooLong = `x${longest}`;
+  assert.equal(longest.length, EMAIL_MAX_CHARS);
+  assert.ok(registerBody.shape.email.safeParse(longest).success, 'el servidor acepta 254 caracteres');
+  const cases = ['ana@demo.test', '  Ana@Demo.TEST ', 'a@b', 'a b@c.de', 'ñ@demo.test', 'a..b@c.de', '', longest, tooLong, 'o\'brien+koma@demo.test'];
   for (const value of cases) {
     assert.equal(client.emailProblem(value) === null, registerBody.shape.email.safeParse(value).success, JSON.stringify(value));
   }
@@ -44,6 +49,6 @@ test('RN-12: el cliente acepta y rechaza los mismos nombres visibles que el serv
 });
 
 test('Seguridad: safeNext del cliente devuelve lo mismo que el del servidor', () => {
-  const cases: unknown[] = ['/', '/perfil', '/leer/pimienta/3#v-4', '//evil', '/\\evil.com', 'https://x', 'javascript:alert(1)', '/\t/evil.com', '/\u0000', '', 'perfil', undefined, null, 42, ['/perfil']];
+  const cases: unknown[] = ['/', '/perfil', '/leer/pimienta/3#v-4', '//evil', '/\\evil.com', 'https://x', 'javascript:alert(1)', '/\t/evil.com', '/\n/evil.com', '/\r/evil.com', '/perfil\u007f', '/\u0000', '', 'perfil', undefined, null, 42, ['/perfil']];
   for (const value of cases) assert.equal(clientRedirect.safeNext(value), safeNext(value), JSON.stringify(value));
 });

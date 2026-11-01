@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
+import { LOGIN_LIMIT, loginStore } from '../../middlewares/rate-limit.js';
 import { api, startTestServer } from './helpers.js';
 
 // RN-13. Cada archivo de test corre en su propio proceso: los contadores en memoria empiezan a cero.
@@ -45,6 +46,21 @@ test('RN-13: un login correcto pone a cero los fallos de su IP y correo', async 
     assert.equal((await login(PREMIUM.email, WRONG)).status, 401, `fallo ${attempt} tras el reinicio`);
   }
   await assertRateLimited(await login(PREMIUM.email, WRONG), 15 * 60);
+});
+
+test('RN-13: un login con un correo enorme da 400 sin llegar al limitador ni crear una clave en memoria', async () => {
+  const keysInStore = () => loginStore.current.size + loginStore.previous.size;
+  const huge = `${'a'.repeat(3000)}@demo.test`; // cabe en el cuerpo de 4 kB de /api/auth
+  const keysBefore = keysInStore();
+  // Más intentos que el límite: si contaran, el último sería un 429.
+  for (let attempt = 1; attempt <= LOGIN_LIMIT + 1; attempt++) {
+    const res = await login(huge, WRONG);
+    const body = (await res.json()) as { code: string; fields: Record<string, string> };
+    assert.equal(res.status, 400, `intento ${attempt}`);
+    assert.equal(body.code, 'VALIDATION_ERROR');
+    assert.ok(body.fields['email'], 'el error es del correo');
+  }
+  assert.equal(keysInStore(), keysBefore, 'ninguna clave nueva');
 });
 
 test('RN-13: el registro admite 3 por hora e IP; los 400 de validación no cuentan y los 409 sí', async () => {

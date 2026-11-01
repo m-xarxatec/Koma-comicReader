@@ -54,6 +54,7 @@
   --content-width: 64rem;
   --reader-width: 50rem;
   --form-width: 28rem;
+  --skip-link-hidden-offset: -200%; /* "Saltar al contenido" fuera de la vista hasta recibir el foco */
 
   /* Estados */
   --opacity-disabled: 0.6;

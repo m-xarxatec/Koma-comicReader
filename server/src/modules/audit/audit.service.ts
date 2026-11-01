@@ -1,4 +1,5 @@
 import type { Queryable } from '../../db/pool.js';
+import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import * as auditRepository from './audit.repository.js';
 
 // Nombres exactos de la tabla de auditoría de docs/plan_mvp.md ("Registro de auditoría y reversión").
@@ -47,9 +48,10 @@ export interface AuditEntry {
 }
 
 // Nunca contraseñas, hashes, tokens ni datos de pago en before/after (CLAUDE.md, "Seguridad obligatoria").
-// No se descarta en silencio: es un fallo de programación, se lanza un Error (500) y la transacción del
-// cambio se deshace entera. Ojo: el fragmento `token` también atrapa `token_version`; si algún día hubiera
-// que auditarlo, se renombra el campo en before/after (p. ej. `sessionVersion`), no se relaja el filtro.
+// No se descarta en silencio: es un fallo de programación, se lanza un AppError 500 con el mensaje genérico
+// (el campo culpable va en `cause`, que solo llega al log) y la transacción del cambio se deshace entera.
+// Ojo: el fragmento `token` también atrapa `token_version`; si algún día hubiera que auditarlo, se renombra
+// el campo en before/after (p. ej. `sessionVersion`), no se relaja el filtro.
 const FORBIDDEN_KEY = /pass|hash|token|secret|card|cvc|iban/i;
 
 function findForbiddenKey(value: unknown, path: string): string | null {
@@ -68,6 +70,10 @@ export async function record(db: Queryable, entry: AuditEntry): Promise<void> {
   const before = entry.before ?? null;
   const after = entry.after ?? null;
   const forbidden = findForbiddenKey(before, 'before') ?? findForbiddenKey(after, 'after');
-  if (forbidden) throw new Error(`Auditoría ${entry.action}: el campo ${forbidden} no puede guardarse`);
+  if (forbidden) {
+    throw new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, {
+      cause: new Error(`Auditoría ${entry.action}: el campo ${forbidden} no puede guardarse`),
+    });
+  }
   await auditRepository.insert(db, { ...entry, before, after });
 }

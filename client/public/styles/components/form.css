@@ -75,3 +75,12 @@
 .form__alt {
   color: var(--color-text-muted);
 }
+
+/* "Crea una" / "Entra": enlace dentro de la frase, con área táctil de 44 px */
+.form__alt-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
