@@ -177,7 +177,7 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 
 - **RN-11 Comentarios:** 1–500 caracteres, texto plano escapado al mostrarse. Su autor puede borrarlo; el admin puede ocultarlo o eliminarlo. Un comentario oculto no lo ve nadie, tampoco su autor. Borrado siempre lógico; actuar sobre uno ya eliminado → 409.
 - **RN-12 Registro:** correo único sin distinguir mayúsculas; contraseña de 10 caracteres a 72 **bytes** (`Buffer.byteLength`, límite de bcrypt); nombre visible de 3 a 30 caracteres. `EMAIL_TAKEN` revela que el correo existe: riesgo aceptado (registro limitado a 3/h).
-- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario; comentarios 5 / min. Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = número de saltos de Render (se verifica en el primer despliegue con el endpoint temporal `GET /api/debug/ip`, que devuelve `req.ip` y `X-Forwarded-For`; procedimiento en "Primer despliegue"), nunca `true`.
+- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario; comentarios 5 / min. Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = 3, los saltos de Render: `X-Forwarded-For` llega con tres entradas (cliente, Cloudflare y proxy interno). Verificado el 1-nov en el primer despliegue: `req.ip` es la del cliente y una `X-Forwarded-For` falsa se ignora. Nunca `true`.
 - **RN-14 Administración:** un admin no puede suspenderse ni quitarse el rol; siempre debe quedar al menos un admin activo.
 - **RN-15 Sesión:** suspender, cambiar rol o cambiar contraseña incrementa `token_version`. Al cambiar la propia contraseña se emite un JWT nuevo en la misma respuesta; las demás sesiones se cierran. El contenido de un suspendido sigue visible.
 - **RN-16 Parámetros:** periodo de espera 1–1440 min (demo: 1), saldo máximo 1–20 (por defecto 5), recarga 1–10 (por defecto 2); fuera de rango → 400.
@@ -403,7 +403,7 @@ DATABASE_URL=postgres://koma:koma@localhost:5432/koma  # en Compose: host "db"; 
 JWT_SECRET=cambia-esto
 COOKIE_SECRET=cambia-esto     # cookies firmadas (invitado, anuncio)
 COOKIE_SECURE=false           # true online (HTTPS)
-TRUST_PROXY=0                 # número de saltos; online el verificado en Render ("Primer despliegue")
+TRUST_PROXY=0                 # número de saltos; online, 3 (verificado en Render, "Primer despliegue")
 AD_MIN_SECONDS=5
 SIGNED_URL_TTL_SECONDS=7200
 LOG_LEVEL=info
@@ -451,9 +451,9 @@ La presentación se hace con el entorno que esté disponible ese día: online si
 
 1. **Neon:** la misma versión mayor de Postgres que el contenedor `db` (`postgres:18`) y, si se puede, la misma región que Render. `DATABASE_URL` = conexión **directa** (sin `-pooler`; las migraciones corren al arrancar) terminada en `?sslmode=verify-full`, en lugar de los parámetros que trae Neon (`sslmode=require`, `channel_binding=…`). `pg` 8 ya trata `require` como `verify-full`, pero lo avisa en el log y la v9 lo cambiará a la semántica de libpq, que no comprueba el certificado; `channel_binding` no lo lee.
 2. **Render:** Web Service del repositorio, rama principal. Build `npm ci --include=dev && npm run build`; start `npm start`; *Health Check Path* `/api/health`.
-3. **Variables en Render:** todas las de `.env.example` salvo `PORT` (la pone Render) y `SEED_*` (solo las usa el seed, desde local), con los valores de la columna "Online" del README donde cambien. `env.ts` también exige las que no cambian (`AD_MIN_SECONDS`, `SIGNED_URL_TTL_SECONDS`, `LOG_LEVEL`, `CONTENT_DIR`, `STORAGE_LOCAL_DIR`): si falta una, la app no arranca. `APP_URL` = `https://<servicio>.onrender.com`; `ALLOWED_ORIGINS`, ese mismo origen exacto, sin ruta ni barra final (`env.ts` rechaza otra forma y la app no arranca), o sin definir (toma el de `APP_URL`). `COOKIE_SECURE=true`; `JWT_SECRET` y `COOKIE_SECRET`, nuevos y distintos de los locales. Con `NODE_ENV=production`, `env.ts` no arranca sin `PAYMENTS_DRIVER=stripe` y sus tres `STRIPE_*`, ni, con `STORAGE_DRIVER=r2`, sin las cuatro `R2_*`. Las opcionales que no se usan (`STRIPE_TEST_CLOCK_ID` y, con `STORAGE_DRIVER=local`, las cuatro `R2_*`) se pueden omitir: `env.ts` trata igual una variable vacía y una ausente. `TRUST_PROXY=0` hasta el paso 5.
+3. **Variables en Render:** todas las de `.env.example` salvo `PORT` (la pone Render) y `SEED_*` (solo las usa el seed, desde local), con los valores de la columna "Online" del README donde cambien. `env.ts` también exige las que no cambian (`AD_MIN_SECONDS`, `SIGNED_URL_TTL_SECONDS`, `LOG_LEVEL`, `CONTENT_DIR`, `STORAGE_LOCAL_DIR`): si falta una, la app no arranca. `APP_URL` = `https://<servicio>.onrender.com`; `ALLOWED_ORIGINS`, ese mismo origen exacto, sin ruta ni barra final (`env.ts` rechaza otra forma y la app no arranca), o sin definir (toma el de `APP_URL`). `COOKIE_SECURE=true`; `JWT_SECRET` y `COOKIE_SECRET`, nuevos y distintos de los locales. Con `NODE_ENV=production`, `env.ts` no arranca sin `PAYMENTS_DRIVER=stripe` y sus tres `STRIPE_*`, ni, con `STORAGE_DRIVER=r2`, sin las cuatro `R2_*`. Las opcionales que no se usan (`STRIPE_TEST_CLOCK_ID` y, con `STORAGE_DRIVER=local`, las cuatro `R2_*`) se pueden omitir: `env.ts` trata igual una variable vacía y una ausente. `TRUST_PROXY=3` (verificado en el paso 5).
 4. **Seed online**, desde local y después del primer arranque correcto en Render (es el que crea las tablas; sin ellas el seed falla). `.env.online` lleva los valores de Render (mismo `DATABASE_URL`, `NODE_ENV=production` y `PAYMENTS_DRIVER=stripe`, con el que la cuenta premium nace sin `premium_until`), un `PORT` y un `HOST` cualesquiera (`env.ts` los exige aunque el seed no abra puerto) y los `SEED_*` online, anotados en `docs/credenciales.local.md`. `npm run build && npm run seed:online`; la primera línea debe mostrar el host de Neon sin `-pooler`. Es idempotente.
-5. **Verificación de `trust proxy` (RN-13)** con `GET /api/debug/ip`:
+5. **Verificación de `trust proxy` (RN-13)**. Hecha el 1-nov: 3 saltos (cliente, Cloudflare y proxy interno). El endpoint temporal `GET /api/debug/ip` ya está retirado; si hubiera que repetirla (otro servicio o cambios en la red de Render), se recupera de la historia de git (`git log -S /api/debug/ip`). Procedimiento:
    - Con `TRUST_PROXY=0`, `curl -s https://<servicio>.onrender.com/api/debug/ip`. Sin cabecera propia, la primera entrada de `xForwardedFor` es tu IP pública y `ip` todavía es la del último proxy (`remoteAddress`).
    - `TRUST_PROXY` = número de entradas de `xForwardedFor` en esa respuesta (Express cuenta los saltos desde el socket hacia la izquierda). Repetirlo varias veces: el número debe ser estable.
    - Fijarlo en Render y repetir: `ip` debe ser tu IP pública.
@@ -556,7 +556,6 @@ Los contratos de los bloques 2–4 se escriben aquí antes de empezar cada bloqu
 | `POST /api/auth/logout` | — | 204, borra la cookie | — |
 | `GET /api/me` | — | 200 `{ user }` o `{ user: null }` si es invitado | — |
 | `GET /api/health` | — | 200 `{ status: "ok", db: "ok" }` | 503 |
-| `GET /api/debug/ip` (temporal) | — | 200 `{ ip, xForwardedFor, remoteAddress, trustProxy }`, `Cache-Control: no-store` | — |
 
 ```ts
 interface UserDto {
@@ -570,7 +569,7 @@ interface UserDto {
 }
 ```
 
-`INVALID_CREDENTIALS` usa el mismo mensaje exista o no el correo. `GET /api/debug/ip` solo existe para verificar `TRUST_PROXY` en Render (RN-13): se borra, con su test, en cuanto el valor está verificado.
+`INVALID_CREDENTIALS` usa el mismo mensaje exista o no el correo.
 
 ## Convenciones, tests y definición de terminado
 

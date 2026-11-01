@@ -39,7 +39,7 @@ Se abre en `http://koma.local` o `http://localhost`. Los pagos son simulados y l
 3. Pon en Render todas las variables de `.env.example` salvo `PORT` (la pone Render) y `SEED_*`, con los valores de la columna "Online" de la tabla de abajo donde cambien. Si falta una, la app no arranca. Las vacías que no uses (`STRIPE_TEST_CLOCK_ID` y, con `STORAGE_DRIVER=local`, las `R2_*`) puedes omitirlas.
 4. Cuando arranque, abre `https://<tu-servicio>.onrender.com/api/health`: debe responder `ok`.
 
-El valor de `TRUST_PROXY` se comprueba en el primer despliegue; los pasos están en `docs/plan_mvp.md` ("Primer despliegue").
+En Render, `TRUST_PROXY=3`: los saltos de proxy, comprobados en el primer despliegue (cómo se midió, en `docs/plan_mvp.md`, "Primer despliegue").
 
 ## Subir datos a la versión online
 
@@ -84,7 +84,7 @@ Todas están en `.env.example`, con una nota cada una. Estas son las que cambian
 | `ALLOWED_ORIGINS` | `http://localhost:3000` | `http://koma.local,http://localhost` | solo la URL de Render, sin barra final |
 | `DATABASE_URL` | Postgres en Docker (`localhost`) | Postgres en Docker (`db`) | Neon, conexión directa + `?sslmode=verify-full` |
 | `COOKIE_SECURE` | `false` | `false` | `true` |
-| `TRUST_PROXY` | `0` | `0` | los saltos de proxy de Render (`0` hasta comprobarlo) |
+| `TRUST_PROXY` | `0` | `0` | `3` (saltos de proxy de Render, verificado) |
 | `STORAGE_DRIVER` | `local` | `local` | `r2` |
 | `PAYMENTS_DRIVER` | `fake` | `fake` | `stripe` |
 
