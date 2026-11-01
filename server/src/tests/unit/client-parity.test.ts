@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { paths } from '../../config/paths.js';
+import { registerBody } from '../../modules/auth/auth.schema.js';
+import { passwordProblem } from '../../utils/password.js';
+import { safeNext } from '../../utils/redirect.js';
+
+// El cliente duplica de forma explícita las reglas del servidor (no hay bundler: zod no llega al navegador).
+// Este test carga el JS compilado del cliente (client/dist, lo genera `tsc -b`) y le pasa los mismos casos.
+
+type Problem = (value: string) => string | null;
+interface ClientValidate {
+  emailProblem: Problem;
+  displayNameProblem: Problem;
+  passwordProblem: Problem;
+}
+interface ClientRedirect {
+  safeNext: (value: unknown) => string;
+}
+
+const load = <T>(file: string) => import(pathToFileURL(path.join(paths.clientDistDir, file)).href) as Promise<T>;
+const client = await load<ClientValidate>('utils/validate.js');
+const clientRedirect = await load<ClientRedirect>('utils/redirect.js');
+
+test('RN-12: el cliente valida la contraseña igual que el servidor, con los mismos mensajes', () => {
+  const cases = ['', '123456789', '1234567890', 'a'.repeat(72), 'a'.repeat(73), 'ñ'.repeat(36), 'ñ'.repeat(37), '🙂'.repeat(9), '🙂'.repeat(10), '🙂'.repeat(19)];
+  for (const value of cases) assert.equal(client.passwordProblem(value), passwordProblem(value), JSON.stringify(value));
+});
+
+test('RN-12: el cliente acepta y rechaza los mismos correos que zod en el servidor', () => {
+  const cases = ['ana@demo.test', '  Ana@Demo.TEST ', 'a@b', 'a b@c.de', 'ñ@demo.test', 'a..b@c.de', '', `${'x'.repeat(250)}@d.es`, 'o\'brien+koma@demo.test'];
+  for (const value of cases) {
+    assert.equal(client.emailProblem(value) === null, registerBody.shape.email.safeParse(value).success, JSON.stringify(value));
+  }
+});
+
+test('RN-12: el cliente acepta y rechaza los mismos nombres visibles que el servidor', () => {
+  const cases = ['Al', 'Ana', '  Ana  ', '   ', 'a'.repeat(30), 'a'.repeat(31), '🙂'.repeat(3), '🙂'.repeat(30), '🙂'.repeat(31)];
+  for (const value of cases) {
+    assert.equal(client.displayNameProblem(value) === null, registerBody.shape.displayName.safeParse(value).success, JSON.stringify(value));
+  }
+});
+
+test('Seguridad: safeNext del cliente devuelve lo mismo que el del servidor', () => {
+  const cases: unknown[] = ['/', '/perfil', '/leer/pimienta/3#v-4', '//evil', '/\\evil.com', 'https://x', 'javascript:alert(1)', '/\t/evil.com', '/\u0000', '', 'perfil', undefined, null, 42, ['/perfil']];
+  for (const value of cases) assert.equal(clientRedirect.safeNext(value), safeNext(value), JSON.stringify(value));
+});

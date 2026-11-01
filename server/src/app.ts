@@ -10,7 +10,7 @@ import { csrf } from './middlewares/csrf.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
-import { authRouter } from './modules/auth/auth.routes.js';
+import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
 import { AppError } from './utils/app-error.js';
 import { sendPage } from './utils/page.js';
 
@@ -89,6 +89,7 @@ app.use('/api', authRouter);
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);
 app.get('/', (_req, res) => sendPage(res, 'home'));
+app.use(authPagesRouter);
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');

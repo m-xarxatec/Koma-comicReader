@@ -1,7 +1,7 @@
 /* Pie del sitio. */
 
 .site-footer {
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

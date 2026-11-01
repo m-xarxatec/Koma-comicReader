@@ -1,12 +1,75 @@
 import assert from 'node:assert/strict';
 import { request } from 'node:http';
 import { test } from 'node:test';
-import { startTestServer } from './helpers.js';
+import { api, sessionCookie, startTestServer } from './helpers.js';
 
 const srv = startTestServer();
 
-const get = (path: string) => fetch(`${srv.baseUrl}${path}`, { redirect: 'manual' });
+const get = (path: string, cookie?: string) =>
+  fetch(`${srv.baseUrl}${path}`, { redirect: 'manual', ...(cookie && { headers: { Cookie: cookie } }) });
 const title = (html: string) => /<title>([^<]*)<\/title>/.exec(html)?.[1];
+const h1s = (html: string) => [...html.matchAll(/<h1[^>]*>([^<]*)<\/h1>/g)].map((m) => m[1]);
+
+// Cuenta demo que ningún otro archivo de test modifica (auth.test suspende a author y cambia a admin).
+const PREMIUM = { email: 'premium@demo.test', password: process.env['SEED_PREMIUM_PASSWORD'] ?? '' };
+
+test('Seguridad: /entrar y /registro sirven auth.html con su título, su único h1 y su modo', async () => {
+  for (const [path, mode, heading] of [
+    ['/entrar', 'login', 'Entrar'],
+    ['/registro', 'register', 'Crear cuenta'],
+  ] as const) {
+    const res = await get(path);
+    const html = await res.text();
+    assert.equal(res.status, 200, path);
+    assert.equal(title(html), `${heading} · Koma`, path);
+    assert.deepEqual(h1s(html), [heading], path);
+    assert.ok(html.includes(`<body data-mode="${mode}">`), path);
+    assert.ok(!html.includes('{{'), `${path}: sin marcadores sin rellenar`);
+    // Nunca GET: sin JS, la contraseña no puede acabar en la URL ni en los logs.
+    assert.equal(html.match(/<form [^>]*method="post"/g)?.length, 2, path);
+  }
+});
+
+test('Seguridad: ninguna página servida sale con un marcador sin sustituir', async () => {
+  const pages: [string, Response][] = [
+    ['/', await get('/')],
+    ['/entrar', await get('/entrar')],
+    ['/registro', await get('/registro')],
+    ['/no-existe (404)', await get('/no-existe')],
+    [
+      'POST 413 (página genérica)',
+      await fetch(`${srv.baseUrl}/no-existe`, {
+        method: 'POST',
+        headers: { Origin: srv.origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'a'.repeat(101 * 1024) }),
+      }),
+    ],
+  ];
+  for (const [name, res] of pages) {
+    const html = await res.text();
+    assert.equal(html.split('<!-- @').length - 1, 0, `${name}: marcador de layout`);
+    assert.equal(html.split('{{').length - 1, 0, `${name}: valor sin rellenar`);
+    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'data-login-link']) {
+      assert.equal(html.split(part).length - 1, 1, `${name}: ${part}`);
+    }
+  }
+});
+
+test('Seguridad: con sesión, /entrar y /registro redirigen con 303 a next si es seguro y, si no, a /', async () => {
+  const cookie = sessionCookie(await api(srv, 'POST', '/api/auth/login', { body: PREMIUM }));
+  assert.notEqual(cookie, '');
+  for (const [path, location] of [
+    ['/entrar', '/'],
+    ['/registro?next=/perfil', '/perfil'],
+    ['/entrar?next=%2Fleer%2Fpimienta%2F3%23v-4', '/leer/pimienta/3#v-4'],
+    ['/entrar?next=//evil.com', '/'],
+    ['/entrar?next=https://evil.com', '/'],
+  ] as const) {
+    const res = await get(path, cookie);
+    assert.equal(res.status, 303, path);
+    assert.equal(res.headers.get('location'), location, path);
+  }
+});
 
 test('Seguridad: / sirve home.html con el requestId de la petición inyectado', async () => {
   const res = await get('/');

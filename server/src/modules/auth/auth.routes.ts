@@ -12,3 +12,9 @@ authRouter.post('/auth/register', registerRateLimit, validate({ body: registerBo
 authRouter.post('/auth/login', loginRateLimit, validate({ body: loginBody }), controller.login);
 authRouter.post('/auth/logout', controller.logout);
 authRouter.get('/me', controller.me);
+
+// Páginas del mapa de rutas HTML. Se montan en la raíz, después de `auth` (necesitan saber si hay sesión).
+export const authPagesRouter = Router();
+
+authPagesRouter.get('/entrar', controller.loginPage);
+authPagesRouter.get('/registro', controller.registerPage);

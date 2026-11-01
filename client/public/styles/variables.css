@@ -1,4 +1,5 @@
-/* Tokens de diseño: todos los colores, espacios y tipografías salen de aquí. */
+/* Tokens: todo valor visual sale de aquí. El diseño final sustituye este archivo sin tocar HTML,
+   TypeScript ni los componentes, que solo usan estas custom properties. */
 :root {
   color-scheme: light dark;
 
@@ -8,9 +9,12 @@
   --color-text: #1d1b22;
   --color-text-muted: #5c5866;
   --color-border: #e3e0e8;
+  --color-border-strong: #767180; /* bordes de campos: contraste ≥ 3:1 con la superficie */
+  --color-danger: #b3261e;
   --color-accent: #5b3fd1;
   --color-accent-contrast: #ffffff;
   --color-focus: #5b3fd1;
+  --color-hover: color-mix(in srgb, var(--color-accent) 12%, transparent);
 
   /* Tipografía del sistema (sin fuentes externas) */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -20,8 +24,14 @@
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.75rem;
   --font-size-2xl: 2.25rem;
+  --font-size-code: 0.95em;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 800;
   --line-height: 1.6;
   --line-height-tight: 1.2;
+  --letter-spacing-brand: 0.02em;
+  --letter-spacing-label: 0.08em;
+  --text-transform-label: uppercase;
 
   /* Espacios */
   --space-1: 0.25rem;
@@ -32,12 +42,21 @@
   --space-8: 2rem;
   --space-12: 3rem;
 
-  /* Formas y medidas */
-  --radius: 0.5rem;
-  --touch-target: 44px;
+  /* Bordes, foco y subrayado */
+  --border-width: 1px;
+  --radius-md: 0.5rem;
   --focus-ring: 3px;
+  --focus-offset: 2px;
+  --underline-offset: 0.15em;
+
+  /* Medidas */
+  --touch-target: 44px;
   --content-width: 64rem;
   --reader-width: 50rem;
+  --form-width: 28rem;
+
+  /* Estados */
+  --opacity-disabled: 0.6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +66,8 @@
     --color-text: #ece9f1;
     --color-text-muted: #a9a3b4;
     --color-border: #34303c;
+    --color-border-strong: #8a8496;
+    --color-danger: #ffb4ab;
     --color-accent: #a493ff;
     --color-accent-contrast: #141218;
     --color-focus: #a493ff;

@@ -1,0 +1,7 @@
+/* Página auth: /entrar y /registro comparten plantilla. El servidor inyecta data-mode en <body> y aquí
+   se muestra solo su formulario, también sin JavaScript. */
+
+[data-mode="login"] .auth__form--register,
+[data-mode="register"] .auth__form--login {
+  display: none;
+}

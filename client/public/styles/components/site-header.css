@@ -1,7 +1,7 @@
 /* Cabecera del sitio: marca Koma y navegación principal. */
 
 .site-header {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-surface);
 }
 
@@ -22,8 +22,8 @@
   min-height: var(--touch-target);
   color: var(--color-text);
   font-size: var(--font-size-lg);
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-brand);
   text-decoration: none;
 }
 
@@ -39,13 +39,29 @@
   align-items: center;
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   color: var(--color-text);
   text-decoration: none;
 }
 
 .site-header__link:hover {
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  background: var(--color-hover);
+}
+
+/* "Salir" es un <button> (hace POST): se ve como los enlaces de la cabecera. */
+.site-header__button {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.site-header__user {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  color: var(--color-text-muted);
 }
 
 @media (min-width: 40rem) {

@@ -291,15 +291,15 @@ Cada página HTML funciona y se entiende sin JavaScript a nivel de estructura; T
 | Premium | 21 | `<section>` con precio y `<form method="post">` hacia la API |
 | Panel de autor y admin | 28–40 | `<nav>` lateral, `<table>` con `<caption>` y `<th scope>` |
 
-Común: `<title>` "Koma" o "<página> · Koma" (también en las páginas de error) y el nombre Koma en la cabecera y el pie; un solo `<h1>` por página, `<header>`/`<nav>`/`<main>`/`<footer>`, enlace "Saltar al contenido", `lang="es"`, imágenes con `loading="lazy"` salvo la primera, y `<link rel="icon" href="/icons/favicon.svg">` (sin él, el navegador pide `/favicon.ico` y cada página genera un 404 en los logs).
+Común: `<title>` "Koma" o "<página> · Koma" (también en las páginas de error) y el nombre Koma en la cabecera y el pie, que salen de una sola plantilla (`server/src/utils/layout.ts`, marcadores `<!-- @header -->` y `<!-- @footer -->`, también en las páginas de error); un solo `<h1>` por página, `<header>`/`<nav>`/`<main>`/`<footer>`, enlace "Saltar al contenido", `lang="es"`, imágenes con `loading="lazy"` salvo la primera, y `<link rel="icon" href="/icons/favicon.svg">` (sin él, el navegador pide `/favicon.ico` y cada página genera un 404 en los logs).
 
 **Imagen que no carga (CU-03):** el lector muestra un mensaje en la viñeta y un botón "Recargar", que vuelve a pedir el capítulo (URLs firmadas nuevas).
 
 ### CSS responsivo sin framework
 
-- Los CSS viven en `client/public/styles/` (no se compilan): `variables.css`, `base.css` y `components/`.
+- Los CSS viven en `client/public/styles/` (no se compilan): `variables.css`, `layers.css` (capas de `z-index`), `base.css` y `components/`.
 - Mobile-first: estilos base para móvil y `@media (min-width: 40rem)` y `(min-width: 64rem)`.
-- `variables.css` concentra colores, espacios y tipografía en custom properties; modo oscuro con `prefers-color-scheme`. Tipografía del sistema.
+- `variables.css` concentra todo valor visual (colores, espacios, tipografía, bordes, desplazamientos) en custom properties semánticas: el diseño lo sustituye sin tocar HTML, TypeScript ni componentes; modo oscuro con `prefers-color-scheme`. Tipografía del sistema.
 - Nombres de clase BEM (`comic-card__title--featured`); un archivo por componente.
 - Layout con Grid y Flexbox; lector a una columna, `max-width: 50rem`, imágenes `width: 100%`.
 - Foco visible siempre (`:focus-visible`) y áreas táctiles de 44 px mínimo.
@@ -520,7 +520,7 @@ Cada ruta sirve un HTML estático de `client/public/`; Express comprueba antes l
 | `/obra/:slug` | `comic` | Obra existe, aprobada y no retirada (autor dueño y admin ven `pending`) | 200, 404, 410 |
 | `/leer/:slug` | — | Obra existe | 301 a `/leer/:slug/1` |
 | `/leer/:slug/:numero` | `reader` | Obra aprobada y no retirada; capítulo `approved` y no retirado (autor dueño y admin ven `draft`/`pending`) | 200, 404, 410 |
-| `/entrar`, `/registro` | `auth` | Si ya hay sesión, a `/` | 200, 303 |
+| `/entrar`, `/registro` | `auth` | Si ya hay sesión, 303 a `next` validado con `safeNext` (si no vale, a `/`) | 200, 303 |
 | `/perfil` | `profile` | Sesión | 200, 302 a `/entrar?next=` |
 | `/premium` | `premium` | — | 200 |
 | `/premium/gracias` | `premium` | Sesión; la página consulta `/api/me` hasta ver premium | 200, 302 |
