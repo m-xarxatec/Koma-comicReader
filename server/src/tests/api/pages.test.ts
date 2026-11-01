@@ -35,6 +35,13 @@ test('Seguridad: / sirve home.html con el requestId de la petición inyectado', 
   assert.ok(!html.includes('{{'), 'sin marcadores sin rellenar');
 });
 
+test('Seguridad: Referrer-Policy es same-origin (con no-referrer, un formulario POST enviaría Origin: null)', async () => {
+  for (const path of ['/', '/api/health', '/no-existe']) {
+    const res = await get(path);
+    assert.equal(res.headers.get('referrer-policy'), 'same-origin', path);
+  }
+});
+
 test('Seguridad: una ruta inexistente responde 404 con su página de error', async () => {
   const res = await get('/no-existe');
   const html = await res.text();

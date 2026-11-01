@@ -5,7 +5,9 @@ export const PASSWORD_MIN_CHARS = 10;
 export const PASSWORD_MAX_BYTES = 72;
 export const BCRYPT_ROUNDS = 12;
 
-// Función pura (sin `env`): la usan el seed, el registro y sus tests. null = válida.
+// Única fuente de RN-12 en el servidor (el schema de registro la reutiliza; el cliente la duplica de forma
+// explícita en utils/validate.ts). Cuenta puntos de código, no unidades UTF-16 como `z.string().min()` o
+// `minlength`. Función pura (sin `env`): la usan el seed, el registro y sus tests. null = válida.
 export function passwordProblem(password: string): string | null {
   if ([...password].length < PASSWORD_MIN_CHARS) return `Debe tener al menos ${PASSWORD_MIN_CHARS} caracteres`;
   if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) return `No puede pasar de ${PASSWORD_MAX_BYTES} bytes`;

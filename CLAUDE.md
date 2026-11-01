@@ -8,7 +8,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 
 - Congelación de funciones: **20-nov-2026**; entrega: 25-nov-2026. Vibecoding: la IA genera el código; el desarrollador lo especifica, revisa y corrige.
 - Bloque actual: **1 · Base y despliegue (30 oct – 3 nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
-- Stack: Node 24 LTS, Express 5, TypeScript estricto (ESM, `module: NodeNext`), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: 24.x`).
+- Stack: Node 24 LTS, Express 5, TypeScript estricto (ESM, `module: NodeNext`), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos
 
@@ -44,7 +44,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts
-│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage)
+│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), redirect.ts (next)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, base.css, components/), icons/ (favicon.svg)

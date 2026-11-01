@@ -323,6 +323,8 @@ interface ApiError {
 }
 ```
 
+- **Sin respuesta del servidor** (red caída o servidor apagado): `api.ts` devuelve `{ ok: false, status: 0, error: { code: 'NETWORK_ERROR', message, requestId: '' } }`. `NETWORK_ERROR` es un código solo del cliente y no está en la tabla de errores del servidor. Una respuesta de error sin cuerpo JSON (p. ej. de un proxy) llega como `INTERNAL_ERROR`.
+
 - **Formularios:** un helper `bindForm(form, rules, onSubmit)` valida en cliente con reglas por campo (objeto de funciones que devuelven el mensaje de error o `null`), desactiva el botón durante el envío y pinta `fields` del servidor junto a cada `<input>` con `aria-invalid` y `aria-describedby`.
 - **Estado:** un `store` mínimo por página (objeto + `subscribe`/`set`); la sesión se obtiene de `GET /api/me`. Nada sensible en `localStorage`; solo preferencias (p. ej. ocultar iconos de comentarios).
 - El JWT nunca es accesible desde JavaScript (cookie httpOnly).
@@ -333,7 +335,7 @@ El mismo código corre en dos entornos que solo cambian por variables de entorno
 
 ### Proyecto y comandos
 
-Un solo `package.json` en la raíz, con `"type": "module"` y `"engines": { "node": "24.x" }`. Dos proyectos TypeScript (`server/tsconfig.json`, `client/tsconfig.json`) unidos por un `tsconfig.json` raíz con referencias (`tsc -b`). Salidas: `server/dist` y `client/dist`.
+Un solo `package.json` en la raíz, con `"type": "module"` y `"engines": { "node": ">=24.2 <25" }` (24.2 es la primera con `import.meta.main`, que usan `migrate` y `seed`). Dos proyectos TypeScript (`server/tsconfig.json`, `client/tsconfig.json`) unidos por un `tsconfig.json` raíz con referencias (`tsc -b`). Salidas: `server/dist` y `client/dist`.
 
 | Comando | Qué hace |
 | --- | --- |
@@ -373,7 +375,7 @@ Módulos añadidos a la lista de `ideas_base.md`: `reading` (RN-01 a RN-03, anun
 
 ### Decisiones del servidor
 
-- **Entorno base:** Node 24 LTS (misma versión en `engines`, imagen Docker `node:24-slim` y Render), módulos ESM (`module: NodeNext`) en cliente y servidor, Express 5. Versiones exactas fijadas en `package.json` y copiadas a `ideas_base.md`. Variables con `--env-file` nativo de Node (sin dotenv).
+- **Entorno base:** Node 24 LTS, 24.2 o posterior (misma versión en `engines`, imagen Docker `node:24-slim` y Render), módulos ESM (`module: NodeNext`) en cliente y servidor, Express 5. Versiones exactas fijadas en `package.json` y copiadas a `ideas_base.md`. Variables con `--env-file` nativo de Node (sin dotenv).
 - **Estáticos:** `express.static` solo sirve `client/public/styles` (`/styles`), `client/public/icons` (`/icons`) y `client/dist` (`/js`). Las páginas (`client/public/pages/<página>.html`, con su script en `client/src/pages/<página>.ts`) y las de error se sirven por el mapa de rutas, nunca por `express.static`.
 - **Dependencias:** las del stack + `pg`, `cookie-parser`, `jsonwebtoken`, `stripe`, `@aws-sdk/client-s3` y `@aws-sdk/s3-request-presigner`. Ninguna otra sin aprobación.
 - **Drivers:** `STORAGE_DRIVER` (`local` | `r2`) y `PAYMENTS_DRIVER` (`fake` | `stripe`) con la misma interfaz en `integrations/`.
@@ -386,7 +388,7 @@ Módulos añadidos a la lista de `ideas_base.md`: `reading` (RN-01 a RN-03, anun
 - **Configuración:** `config/env.ts` valida las variables con zod al arrancar; si falta una, el proceso termina con un mensaje claro.
 - **Cookie de sesión:** `httpOnly`, `Secure` según `COOKIE_SECURE`, `SameSite=Lax`, 7 días.
 - **CSRF:** ningún GET modifica datos. Las peticiones que modifican datos deben traer un `Origin` incluido en `ALLOWED_ORIGINS` (lista separada por comas; sin la variable, el origen de `APP_URL`); si `Origin` falta o es ajeno → 403. Cada entrada es un origen exacto (`http` o `https`, sin ruta, barra final ni comodines); `env.ts` rechaza el resto. `APP_URL` solo se usa para URLs absolutas que salen de la app (retorno de Stripe); las redirecciones internas son relativas. El webhook de Stripe queda exento y se valida por firma.
-- **Cabeceras:** CSP de helmet definida directiva a directiva: `img-src` con `'self'` y el dominio de R2; `form-action` con `'self'`, `https://checkout.stripe.com` y `https://billing.stripe.com` (el navegador aplica `form-action` también a las redirecciones); sin `upgrade-insecure-requests`, HSTS ni `Cross-Origin-Opener-Policy` cuando `APP_URL` es `http` (desarrollo y demo en la LAN). Sin scripts en línea.
+- **Cabeceras:** CSP de helmet definida directiva a directiva: `img-src` con `'self'` y el dominio de R2; `form-action` con `'self'`, `https://checkout.stripe.com` y `https://billing.stripe.com` (el navegador aplica `form-action` también a las redirecciones); sin `upgrade-insecure-requests`, HSTS ni `Cross-Origin-Opener-Policy` cuando `APP_URL` es `http` (desarrollo y demo en la LAN). `Referrer-Policy: same-origin`: con `no-referrer`, el valor de serie de helmet, un formulario POST nativo envía `Origin: null` y el control CSRF lo rechaza; `fetch()` (modo CORS) no se ve afectado (comprobado en Brave el 1-nov: formulario → 403 `CSRF`, `fetch` → aceptado). Sin scripts en línea.
 - **Redirecciones:** `next` solo acepta rutas que empiezan por `/` y no por `//`.
 
 ### Variables de entorno (`.env.example`)

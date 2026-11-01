@@ -52,6 +52,9 @@ app.use(
     },
     strictTransportSecurity: isHttps,
     crossOriginOpenerPolicy: isHttps,
+    // Con `no-referrer` (el de serie de helmet), un POST de formulario nativo envía `Origin: null`
+    // y el control CSRF lo rechazaría. `same-origin` conserva el Origin propio y no envía nada a otros sitios.
+    referrerPolicy: { policy: 'same-origin' },
   }),
 );
 

@@ -16,7 +16,7 @@ test('RN-12: el máximo son 72 bytes, no 72 caracteres', () => {
   assert.notEqual(passwordProblem('🙂'.repeat(19)), null); // 19 caracteres = 76 bytes
 });
 
-test('RN-12: los caracteres se cuentan como el usuario los ve, no en unidades UTF-16', () => {
+test('RN-12: el mínimo se cuenta en puntos de código Unicode, no en unidades UTF-16', () => {
   assert.equal(passwordProblem('🙂'.repeat(10)), null); // 10 caracteres, 40 bytes
   assert.notEqual(passwordProblem('🙂'.repeat(9)), null); // 9 caracteres aunque sean 18 unidades UTF-16
 });
