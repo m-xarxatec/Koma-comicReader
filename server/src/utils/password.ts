@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcrypt';
 
 // RN-12: de 10 caracteres a 72 bytes. bcrypt ignora lo que pase de 72 bytes: se mide con Buffer.byteLength.
@@ -16,4 +17,15 @@ export function passwordProblem(password: string): string | null {
 
 export function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
+// Hash de una contraseña aleatoria con el mismo coste: se compara contra él cuando el correo no existe,
+// para que el login tarde lo mismo exista o no la cuenta. Se calcula una vez, al primer uso.
+let dummyHash: Promise<string> | undefined;
+
+// Compara con el hash guardado o, si no hay cuenta (null), con el ficticio; en ese caso siempre es false.
+export async function verifyPassword(password: string, hash: string | null): Promise<boolean> {
+  dummyHash ??= hashPassword(randomUUID());
+  const matches = await bcrypt.compare(password, hash ?? (await dummyHash));
+  return hash !== null && matches;
 }

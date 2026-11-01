@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { env } from '../config/env.js';
 import { databaseTarget, pool, withTransaction } from '../db/pool.js';
+import * as audit from '../modules/audit/audit.service.js';
 import { logger } from '../utils/logger.js';
 import { hashPassword, passwordProblem } from '../utils/password.js';
 
@@ -57,12 +58,9 @@ function readPasswords(): Map<PasswordVar, string> {
 }
 
 // Auditoría system.seed: actor NULL, entity_type = tabla, after = ids o claves creados (nunca contraseñas).
+// Pasa por audit.service, como el resto: misma lista de acciones y mismo filtro de campos prohibidos.
 async function auditSeed(client: PoolClient, entityType: string, entityId: string, after: object, requestId: string) {
-  await client.query(
-    `INSERT INTO audit_log (actor_id, action, entity_type, entity_id, after, request_id)
-     VALUES (NULL, 'system.seed', $1, $2, $3::jsonb, $4)`,
-    [entityType, entityId, JSON.stringify(after), requestId],
-  );
+  await audit.record(client, { action: 'system.seed', actorId: null, entityType, entityId, after, ip: null, requestId });
 }
 
 export async function seed(requestId: string): Promise<SeedResult> {

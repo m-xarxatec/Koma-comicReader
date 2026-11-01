@@ -37,3 +37,27 @@ export function startTestServer(): TestServer {
 
   return state;
 }
+
+export const SESSION_COOKIE = 'koma_session';
+
+// Petición JSON con el Origin permitido (control CSRF) y, si se da, la cookie de sesión.
+export function api(srv: TestServer, method: string, path: string, options: { body?: unknown; cookie?: string } = {}) {
+  const headers: Record<string, string> = { Origin: srv.origin };
+  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (options.cookie) headers['Cookie'] = options.cookie;
+  return fetch(`${srv.baseUrl}${path}`, {
+    method,
+    headers,
+    ...(options.body !== undefined && { body: JSON.stringify(options.body) }),
+  });
+}
+
+// Cabecera Set-Cookie de la sesión ('' si la respuesta no la toca).
+export function sessionSetCookie(res: Response): string {
+  return res.headers.getSetCookie().find((cookie) => cookie.startsWith(`${SESSION_COOKIE}=`)) ?? '';
+}
+
+// "koma_session=<jwt>", lista para enviarla en la cabecera Cookie.
+export function sessionCookie(res: Response): string {
+  return sessionSetCookie(res).split(';')[0] ?? '';
+}

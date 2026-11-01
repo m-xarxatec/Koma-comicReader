@@ -27,7 +27,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
 - Tests en `server/src/tests/unit/` y `server/src/tests/api/`, archivos `<tema>.test.ts`; el nombre de cada test empieza por su RN (`'RN-02: recarga 2 por periodo'`) o, si no tiene, por `'Seguridad:'`. Un solo test: `npm run build && node --test server/dist/tests/unit/<tema>.test.js`, o filtrar con `--test-name-pattern="RN-02"`.
-- Pruebas de API: BD `koma_test` (`.env.test` solo sobrescribe `DATABASE_URL`); `reset-test-db.ts` hace `DROP SCHEMA` + migraciones + seed y aborta si la BD no termina en `_test`. Importan `app` de `app.ts`, `listen(0)` en `before()` y cierre en `after()`.
+- Pruebas de API: BD `koma_test` (`.env.test` solo sobrescribe `DATABASE_URL`); `reset-test-db.ts` hace `DROP SCHEMA` + migraciones + seed y aborta si la BD no termina en `_test`. Usan `startTestServer()` de `tests/api/helpers.ts`: importa `app` de `app.ts`, `listen(0)` en `before()` y cierra servidor y pool en `after()`.
 - Online (Neon + R2), el seed y la importación se ejecutan desde local con `seed:online` y `content:import:online`: leen `.env.online` (ignorado por git y Docker) e imprimen al empezar el host de la BD y `STORAGE_DRIVER`.
 - Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test`; contraseñas en `docs/credenciales.local.md` (ignorado por git).
 
@@ -39,7 +39,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 │   ├── app.ts · server.ts      # server.ts → server/dist/server.js
 │   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, payments, audit, admin
 │   │   └── auth/permissions.ts # ÚNICO archivo con las reglas de permisos
-│   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, upload, csrf, error-handler
+│   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts

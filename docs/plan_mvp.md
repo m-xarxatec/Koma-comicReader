@@ -578,7 +578,7 @@ interface UserDto {
 - `npm run test:api` (`node:test` + `fetch`): login, 403 sin permiso, límite de lectura y, en el bloque 4, webhook repetido.
   - BD propia: `koma_test`, en el mismo contenedor (la crea `docker/initdb/01-test-db.sql` al iniciar el volumen por primera vez; con un volumen ya existente, `docker compose down -v`). `.env.test` (versionado) solo sobrescribe `DATABASE_URL`; se carga después de `.env` (`--env-file=.env --env-file=.env.test`).
   - Antes de las pruebas, `scripts/reset-test-db.ts` ejecuta `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`, migraciones y seed. Se niega a actuar si el nombre de la BD no termina en `_test`.
-  - Cada archivo importa `app` de `app.ts` (sin `listen` ni migraciones), lo levanta con `listen(0)` en `before()` y lo cierra en `after()`. Datos únicos por ejecución (correos con `randomUUID()`).
+  - Cada archivo usa `startTestServer()` de `tests/api/helpers.ts`: importa `app` de `app.ts` (sin `listen` ni migraciones), lo levanta con `listen(0)` en `before()` y cierra el servidor y el pool de la BD en `after()` (si no, las conexiones inactivas mantienen vivo el proceso unos 10 s). Datos únicos por ejecución (correos con `randomUUID()`).
 - Cada regla RN con cálculo tiene sus ejemplos en el test antes de cerrar su bloque.
 
 ### Revisión del código generado
@@ -722,7 +722,7 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Entorno técnico | ESM, Node 24 LTS, Express 5, jsonwebtoken, `node:test` sobre JS compilado, un solo `package.json` |
 | Cuentas demo | Contraseñas por variables de entorno, anotadas en `docs/credenciales.local.md` (ignorado por git) |
 | Idioma | Código y API en inglés; interfaz, URLs de páginas y mensajes en español |
-| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores y rechazos; un invitado que borra cookies vuelve a contar |
+| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores y rechazos; un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`) |
 | Estado en el navegador | Lo que es preferencia o comodidad (advertencias aceptadas, ocultar iconos) vive en `localStorage`; permisos, saldo y límites, siempre en el servidor |
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |

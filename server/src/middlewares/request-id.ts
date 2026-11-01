@@ -24,7 +24,7 @@ export const requestId: RequestHandler = (req, res, next) => {
       route: req.originalUrl.split('?')[0], // sin query: las URLs firmadas llevan la firma
       status: res.statusCode,
       ms: Math.round(Number(process.hrtime.bigint() - start) / 1e5) / 10,
-      userId: null, // lo rellenará el middleware `auth`
+      userId: res.locals.user?.id ?? null, // lo deja el middleware `auth` (no corre en estáticos ni /api/health)
       code: res.locals.errorCode,
     });
   });

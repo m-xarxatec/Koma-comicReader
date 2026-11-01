@@ -114,6 +114,10 @@ export const errorHandler: ErrorRequestHandler = async (err, req, res, next) => 
   if (error.status >= 500) logger.error(error.message, { requestId, code: error.code, err: error.cause ?? error });
 
   res.status(error.status);
+  // 429: cuántos segundos esperar (RN-13). READING_LIMIT (403) lleva solo retryAt en el cuerpo.
+  if (error.status === 429 && error.retryAt) {
+    res.set('Retry-After', String(Math.max(1, Math.ceil((error.retryAt.getTime() - Date.now()) / 1000))));
+  }
   if (isApi(req)) {
     res.json({
       code: error.code,
