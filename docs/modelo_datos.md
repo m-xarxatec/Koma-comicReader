@@ -166,10 +166,14 @@ CREATE TABLE panels (
   chapter_id INTEGER NOT NULL REFERENCES chapters(id),
   position   INTEGER NOT NULL CHECK (position >= 1),
   image_key  TEXT NOT NULL UNIQUE CHECK (image_key ~ '^[0-9a-f-]{36}\.(jpg|png|webp)$'),
+  width      INTEGER NOT NULL CHECK (width > 0),        -- px, leídos de la cabecera del archivo
+  height     INTEGER NOT NULL CHECK (height > 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT panels_chapter_position_uq UNIQUE (chapter_id, position) DEFERRABLE INITIALLY IMMEDIATE
 );
 ```
+
+**Medidas de la viñeta:** el ancho y el alto se leen de la cabecera del archivo (JPEG, PNG o WebP, sin dependencias) al importar (RN-18) y al subir (RN-10). El lector los pone en `<img width height>` para reservar el hueco y que la página no salte mientras cargan.
 
 **Viñetas en borrador (RN-05):** solo mientras el capítulo está en `draft`, el autor puede eliminar una viñeta. Es un borrado físico, porque nunca fue pública, y su imagen se borra del almacenamiento. Las posiciones posteriores se recompactan en la misma transacción:
 
