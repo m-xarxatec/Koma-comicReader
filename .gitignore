@@ -2,7 +2,7 @@
 .env.online
 node_modules/
 dist/
-storage/
+/storage/
 content/
 docs/credenciales.local.md
 docs/ideas_base.md
