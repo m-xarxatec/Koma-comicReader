@@ -245,7 +245,7 @@ CREATE TABLE chapter_read_counts (
 ```
 
 **Saldo (RN-02):**
-- La fila de `reading_credits` se crea en el primer consumo; si no existe, el saldo es el máximo vigente.
+- La fila de `reading_credits` se crea en la primera lectura de cualquier capítulo (también de los caps. 1–2, que cuentan para `reads_since_ad`, RN-03), con `balance` = máximo vigente y `period_started_at` NULL; si no existe, el saldo es el máximo vigente. `period_started_at` NULL significa siempre «lleno con el máximo vigente»: si el admin sube el máximo, el saldo lleno sube con él.
 - El cálculo de recarga se hace en una función pura y la fila se actualiza con `SELECT ... FOR UPDATE` para evitar dobles consumos simultáneos.
 
 **Estadísticas** (invitados y registrados por separado):
