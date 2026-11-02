@@ -63,7 +63,7 @@ Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imág
 
 ## Cargar obras (`content/`)
 
-Las obras no se suben desde la web: se preparan en una carpeta y se cargan con un comando. El comando `npm run content:import` llega en el bloque 2; esta guía sirve para dejar tus obras listas desde ya.
+Las obras no se suben desde la web: se preparan en una carpeta y se cargan con `npm run content:import` (en tu ordenador) o `npm run content:import:online` (en la versión online).
 
 La carpeta se llama `content/` y va en la raíz del proyecto. Git la ignora: tus imágenes nunca acaban en GitHub.
 
@@ -167,13 +167,13 @@ npm run seed              # solo la primera vez: cuentas demo y etiquetas base
 npm run content:import
 ```
 
-Al terminar verás un resumen con las obras creadas, los capítulos añadidos y lo que se ha omitido por algún error. Después, con `npm run dev`, abre:
+Cada obra deja una línea (`Obra importada`, `Obra sin cambios` u `Obra omitida` con su motivo) y al final verás un resumen (`Importación terminada`) con las obras creadas, los capítulos añadidos, los ya existentes y las obras con errores. Si alguna tiene errores, el comando termina con código 1. Después, con `npm run dev`, abre:
 
 - `http://localhost:3000`: la obra aparece en el catálogo con su portada.
 - `http://localhost:3000/obra/el-amante-de-las-princesas`: título, sinopsis, autor, "Publicado por la plataforma", licencia "Obra propia", etiquetas y el capítulo 1.
 - `http://localhost:3000/leer/el-amante-de-las-princesas/1`: las cuatro páginas seguidas, sin huecos.
 
-Puedes repetir la carga sin miedo: no duplica nada. Para añadir un capítulo más adelante, crea la carpeta `002`, añade su título en `comic.json` si quieres y vuelve a ejecutar `npm run content:import`.
+Puedes repetir la carga sin miedo: no duplica nada. Para añadir un capítulo más adelante, crea la carpeta `002`, añade su título en `comic.json` si quieres y vuelve a ejecutar `npm run content:import`. Los datos de una obra ya cargada (título, sinopsis, etiquetas, portada) no cambian al repetir la carga: solo se añaden capítulos nuevos.
 
 Con un solo capítulo, cualquiera puede leer la obra entera: los capítulos 1 y 2 son libres. Para ver en la demo el anuncio (capítulo 3), la invitación a registrarse (capítulo 4) y el saldo de capítulos, la obra necesita al menos cuatro capítulos.
 
@@ -212,6 +212,9 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | Imagen rechazada | Pasa de 5 MB, no es JPG, PNG ni WebP, o su nombre no es solo un número | Redúcela, conviértela o renómbrala (`001.webp`) |
 | Capítulo rechazado | La carpeta no es un número o tiene más de 60 imágenes | Renómbrala (`001`) o divide el capítulo |
 | Error al leer `comic.json` | Falta una coma o unas comillas, o sobra una coma al final | Revisa el formato con el ejemplo de arriba |
+| `comic.json` no válido | Falta un campo, sobra uno (p. ej. mal escrito) o `licenseUrl` no empieza por `http://` o `https://` | Corrige el campo que nombra el mensaje |
+| Archivo no esperado | En la carpeta de la obra hay algo que no es `comic.json`, `cover.*` ni una carpeta de capítulo | Quítalo de la carpeta |
+| El nombre ya lo usa una obra de un autor, o la obra está retirada | Esa dirección es de una obra subida desde la web o retirada por un admin | Usa otro nombre de carpeta |
 | Online: las tablas no existen | La versión online aún no ha arrancado con el código del bloque 2 | Despliega, espera a que arranque y repite |
 | Online: las imágenes no se ven | `STORAGE_DRIVER=local` en `.env.online`, o faltan las `R2_*` | Corrige `.env.online` y repite la carga |
 

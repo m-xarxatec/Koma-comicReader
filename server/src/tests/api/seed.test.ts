@@ -5,19 +5,27 @@ import { pool } from '../../db/pool.js';
 import { seed } from '../../scripts/seed.js';
 
 // reset-test-db.ts ya ejecutó el seed una vez sobre koma_test. Aquí se comprueba lo que dejó y que repetirlo
-// no cambia nada (docs/modelo_datos.md, "Seeds"). Ningún otro test crea etiquetas ni anuncios.
+// no cambia nada (docs/modelo_datos.md, "Seeds"). Los archivos de test corren en paralelo y otros crean
+// etiquetas propias (importación, catálogo): solo se miran las 12 base. Ningún otro test crea anuncios.
 
 after(() => pool.end());
 
+const BASE_GENRES = ['fantasia', 'aventura', 'comedia', 'drama', 'horror', 'misterio', 'romance', 'ciencia-ficcion'];
+const BASE_THEMES = ['magia', 'psicologico', 'sobrenatural', 'slice-of-life'];
+const BASE_TAGS = [...BASE_GENRES, ...BASE_THEMES];
+
 test('RN-03: el seed deja las 12 etiquetas base y 3 anuncios de solo texto, cada fila auditada con system.seed', async () => {
-  const { rows: tags } = await pool.query<{ slug: string; type: string }>('SELECT slug, type FROM tags ORDER BY id');
+  const { rows: tags } = await pool.query<{ slug: string; type: string }>(
+    'SELECT slug, type FROM tags WHERE slug = ANY($1::text[]) ORDER BY id',
+    [BASE_TAGS],
+  );
   assert.deepEqual(
     tags.filter((tag) => tag.type === 'genre').map((tag) => tag.slug),
-    ['fantasia', 'aventura', 'comedia', 'drama', 'horror', 'misterio', 'romance', 'ciencia-ficcion'],
+    BASE_GENRES,
   );
   assert.deepEqual(
     tags.filter((tag) => tag.type === 'theme').map((tag) => tag.slug),
-    ['magia', 'psicologico', 'sobrenatural', 'slice-of-life'],
+    BASE_THEMES,
   );
 
   const { rows: ads } = await pool.query<{ brand: string; image_key: string | null; active: boolean }>(
@@ -45,9 +53,9 @@ test('Seguridad: repetir el seed no crea etiquetas, anuncios ni entradas de audi
   assert.deepEqual(created, { users: 0, settings: 0, tags: 0, ads: 0 });
 
   const { rows } = await pool.query<{ tags: number; ads: number; audits: number }>(
-    `SELECT (SELECT count(*)::int FROM tags) AS tags, (SELECT count(*)::int FROM ads) AS ads,
+    `SELECT (SELECT count(*)::int FROM tags WHERE slug = ANY($2::text[])) AS tags, (SELECT count(*)::int FROM ads) AS ads,
             (SELECT count(*)::int FROM audit_log WHERE request_id = $1) AS audits`,
-    [requestId],
+    [requestId, BASE_TAGS],
   );
   assert.deepEqual(rows[0], { tags: 12, ads: 3, audits: 0 });
 });
