@@ -78,25 +78,24 @@ function inputsOf(form: HTMLFormElement): HTMLInputElement[] {
   return [...form.elements].filter((element): element is HTMLInputElement => element instanceof HTMLInputElement && element.name !== '');
 }
 
-// Pinta los errores por campo (cliente o `fields` del servidor) con aria-invalid y lleva el foco al primero.
-// Devuelve los nombres de campo que no tienen <input> en el formulario.
+// Pinta los errores por campo (cliente o `fields` del servidor) con aria-invalid y lleva el foco al primero
+// en el orden del formulario, venga como venga el orden de `errors`. Devuelve los nombres de campo que no
+// tienen <input> (o su elemento de error) en el formulario.
 function showFieldErrors(form: HTMLFormElement, errors: Readonly<Record<string, string>>): string[] {
-  const unknown: string[] = [];
+  const shown = new Set<string>();
   let first: HTMLInputElement | null = null;
-  for (const [name, message] of Object.entries(errors)) {
-    const input = inputsOf(form).find((candidate) => candidate.name === name);
-    const error = input && errorElement(input);
-    if (!input || !error) {
-      unknown.push(name);
-      continue;
-    }
+  for (const input of inputsOf(form)) {
+    const message = Object.hasOwn(errors, input.name) ? errors[input.name] : undefined;
+    const error = errorElement(input);
+    if (message === undefined || !error) continue;
     input.setAttribute('aria-invalid', 'true');
     error.textContent = message;
     error.hidden = false;
+    shown.add(input.name);
     first ??= input;
   }
   first?.focus();
-  return unknown;
+  return Object.keys(errors).filter((name) => !shown.has(name));
 }
 
 function showFormError(form: HTMLFormElement, message: string): void {

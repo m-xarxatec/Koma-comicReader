@@ -47,7 +47,7 @@ if (loginForm) {
 
 const registerForm = document.querySelector<HTMLFormElement>('#register-form');
 if (registerForm) {
-  // En el orden del formulario: el foco va al primer campo con error.
+  // Mismo orden que el formulario (el foco lo decide showFieldErrors, que recorre los campos en orden).
   const rules = {
     displayName: displayNameProblem,
     email: emailProblem,

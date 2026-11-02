@@ -117,8 +117,7 @@
 }
 
 .error-scene--error .error-scene__frame {
-  /* Parada del 54 % en el tema oscuro y del 55 % (--scene-glow-stop) en el claro, como en la maqueta */
-  background: radial-gradient(ellipse at center, var(--color-scene-glow-error) 0%, var(--color-scene-glow-error-edge) max(54%, var(--scene-glow-stop)), transparent 75%);
+  background: radial-gradient(ellipse at center, var(--color-scene-glow-error) 0%, var(--color-scene-glow-error-edge) var(--scene-glow-error-stop), transparent 75%);
 }
 
 .error-scene--pause .error-scene__cat {
@@ -215,7 +214,7 @@
   font-size: var(--font-size-xs);
 }
 
-.error-copy__reference code {
+.error-copy__reference-code {
   color: var(--color-secondary);
 }
 

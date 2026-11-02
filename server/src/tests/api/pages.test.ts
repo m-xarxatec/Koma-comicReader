@@ -94,7 +94,7 @@ test('Seguridad: una ruta inexistente responde 404 con su página de error', asy
   const html = await res.text();
   assert.equal(res.status, 404);
   assert.equal(title(html), 'Página perdida · Koma');
-  assert.ok(html.includes(`<code>${res.headers.get('x-request-id')}</code>`));
+  assert.ok(html.includes(`<code class="error-copy__reference-code">${res.headers.get('x-request-id')}</code>`));
   assert.ok(!html.includes('aria-current'), 'una ruta que no existe no marca ninguna página como activa');
 });
 
@@ -166,7 +166,12 @@ test('Seguridad: un error sin plantilla usa la página genérica con el mismo la
   const html = await res.text();
   assert.equal(res.status, 413);
   assert.equal(title(html), 'Error 413 · Koma');
-  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'name="theme-color"', '/styles/layers.css', '/styles/base.css', `<code>${res.headers.get('x-request-id')}</code>`]) {
+  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'name="theme-color"', '/styles/layers.css', '/styles/base.css', `<code class="error-copy__reference-code">${res.headers.get('x-request-id')}</code>`]) {
     assert.ok(html.includes(part), part);
   }
+  // Mismo orden de hojas que las plantillas de client/public (lo comprueba layout.test.ts): tokens, capas y base.
+  const tokens = html.indexOf('href="/styles/variables.css"');
+  const layers = html.indexOf('href="/styles/layers.css"');
+  const base = html.indexOf('href="/styles/base.css"');
+  assert.ok(tokens >= 0 && tokens < layers && layers < base, 'orden variables → layers → base');
 });

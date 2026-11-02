@@ -79,7 +79,7 @@
   letter-spacing: var(--letter-spacing-story);
 }
 
-.auth__story-title em {
+.auth__story-accent {
   color: var(--color-accent-soft);
   font-style: normal;
 }

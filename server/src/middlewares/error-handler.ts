@@ -81,7 +81,7 @@ const GENERIC_PAGE = `<!doctype html>
           <a class="button button--primary" href="/">Ir al inicio</a>
           <a class="button button--outline" href="/#catalogo">Explorar el catálogo</a>
         </div>
-        <p class="error-copy__reference">Código de referencia: <code>{{requestId}}</code></p>
+        <p class="error-copy__reference">Código de referencia: <code class="error-copy__reference-code">{{requestId}}</code></p>
       </div>
     </section>
   </main>

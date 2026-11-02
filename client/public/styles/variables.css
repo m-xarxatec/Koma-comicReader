@@ -182,6 +182,7 @@
   --scene-ratio: 1.18 / 1;
   --scene-glow-center: 50% 55%; /* centro y parada del degradado del marco de la escena de error */
   --scene-glow-stop: 50%;
+  --scene-glow-error-stop: 54%; /* ídem, marco del error (500) */
   --story-min-height: 240px;
   --story-ring-size: 210px;
   --skip-link-hidden-offset: -160%;
@@ -228,5 +229,6 @@
     --color-scene-number: #6a2f9640;
     --scene-glow-center: center;
     --scene-glow-stop: 55%;
+    --scene-glow-error-stop: 55%;
   }
 }
