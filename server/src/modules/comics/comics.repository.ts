@@ -84,3 +84,72 @@ export async function addComicTags(db: Queryable, comicId: number, tagSlugs: rea
     [comicId, tagSlugs],
   );
 }
+
+// --- Catálogo (CU-01) ---
+
+// ILIKE trata % y _ como comodines y \ como escape: se escapan para buscar el texto tal cual.
+export function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
+
+// Etiquetas de una obra como JSON, por tipo (géneros primero) y nombre. `c` es el alias de `comics`.
+const COMIC_TAGS_JSON = `COALESCE((
+    SELECT json_agg(json_build_object('slug', t.slug, 'name', t.name, 'type', t.type) ORDER BY t.type, t.name)
+    FROM comic_tags ct JOIN tags t ON t.id = ct.tag_id
+    WHERE ct.comic_id = c.id
+  ), '[]'::json)`;
+
+// Obras públicas que cumplen la búsqueda: $1 = texto ya escapado ('' = sin filtro), $2 = slugs de etiquetas
+// combinados con Y (vacío = sin filtro; uno que no existe deja la lista vacía). Fragmento fijo, sin datos.
+const CATALOG_WHERE = `c.status = 'approved' AND c.deleted_at IS NULL
+  AND ($1 = '' OR c.title ILIKE '%' || $1 || '%' OR c.author_credit ILIKE '%' || $1 || '%')
+  AND (cardinality($2::text[]) = 0 OR c.id IN (
+    SELECT ct.comic_id FROM comic_tags ct JOIN tags t ON t.id = ct.tag_id
+    WHERE t.slug = ANY($2::text[])
+    GROUP BY ct.comic_id
+    HAVING count(*) = cardinality($2::text[])
+  ))`;
+
+export interface ComicCardRow {
+  slug: string;
+  title: string;
+  authorCredit: string;
+  coverKey: string | null;
+  tags: TagInput[];
+}
+
+export interface CatalogSearch {
+  q: string; // sin escapar: se escapa aquí
+  tagSlugs: readonly string[]; // sin repetidos
+  limit: number;
+  offset: number;
+}
+
+export async function listTags(db: Queryable): Promise<TagInput[]> {
+  const { rows } = await db.query<TagInput>('SELECT slug, name, type FROM tags ORDER BY type, name');
+  return rows;
+}
+
+// De la más reciente a la más antigua (el id desempata: la paginación es estable).
+export async function searchApprovedComics(db: Queryable, search: CatalogSearch): Promise<{ total: number; comics: ComicCardRow[] }> {
+  // Una tras otra: con un PoolClient (transacción) no se lanzan dos consultas a la vez.
+  const params = [escapeLike(search.q), search.tagSlugs];
+  const count = await db.query<{ total: number }>(`SELECT count(*)::int AS total FROM comics c WHERE ${CATALOG_WHERE}`, params);
+  const page = await db.query<{ slug: string; title: string; author_credit: string; cover_key: string | null; tags: TagInput[] }>(
+    `SELECT c.slug, c.title, c.author_credit, c.cover_key, ${COMIC_TAGS_JSON} AS tags
+     FROM comics c WHERE ${CATALOG_WHERE}
+     ORDER BY c.created_at DESC, c.id DESC
+     LIMIT $3 OFFSET $4`,
+    [...params, search.limit, search.offset],
+  );
+  return {
+    total: count.rows[0]?.total ?? 0,
+    comics: page.rows.map((row) => ({
+      slug: row.slug,
+      title: row.title,
+      authorCredit: row.author_credit,
+      coverKey: row.cover_key,
+      tags: row.tags,
+    })),
+  };
+}
