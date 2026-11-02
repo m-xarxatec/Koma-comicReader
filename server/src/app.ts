@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import { env, JSON_BODY_LIMIT } from './config/env.js';
 import { paths } from './config/paths.js';
 import { pingDatabase } from './db/pool.js';
+import { filesHandler } from './integrations/storage/index.js';
+import { r2ImageHosts } from './integrations/storage/r2.js';
 import { auth } from './middlewares/auth.js';
 import { csrf } from './middlewares/csrf.js';
 import { errorHandler } from './middlewares/error-handler.js';
@@ -15,14 +17,8 @@ import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { AppError } from './utils/app-error.js';
 import { sendPage } from './utils/page.js';
 
-// URLs prefirmadas de R2: bucket como subdominio o en la ruta.
-const r2Hosts =
-  env.STORAGE_DRIVER === 'r2'
-    ? [
-        `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        `https://${env.R2_BUCKET}.${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      ]
-    : [];
+// URLs prefirmadas de R2: bucket como subdominio o en la ruta (los mismos orígenes que firma r2.ts).
+const r2Hosts = env.STORAGE_DRIVER === 'r2' ? r2ImageHosts(env.R2_ACCOUNT_ID!, env.R2_BUCKET!) : [];
 // HSTS, COOP y upgrade-insecure-requests solo con HTTPS (online). Sobre http (desarrollo y demo en la LAN) no se
 // envían: el navegador ignora HSTS y COOP fuera de un contexto seguro, y COOP deja un aviso en la consola.
 const isHttps = new URL(env.APP_URL).protocol === 'https:';
@@ -78,6 +74,8 @@ app.use('/icons', express.static(path.join(paths.publicDir, 'icons'), staticOpti
 // client/dist también contiene .d.ts y tsbuildinfo: solo se sirven los .js.
 const serveJs = express.static(paths.clientDistDir, staticOptions);
 app.use('/js', (req, res, next) => (req.path.endsWith('.js') ? serveJs(req, res, next) : next()));
+// Imágenes con URL firmada del driver local (contrato del bloque 2); con r2 no existe y da 404.
+if (filesHandler) app.get('/files/:key', filesHandler);
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -89,7 +87,7 @@ app.get('/api/health', async (_req, res) => {
 });
 
 // Sesión: a partir de aquí, res.locals.user es el usuario de la BD (o null). Va después de los
-// estáticos y de /api/health, que no la necesitan, para no consultar la BD en cada CSS.
+// estáticos, /files y /api/health, que no la necesitan, para no consultar la BD en cada CSS o imagen.
 app.use(auth);
 app.use('/api', authRouter);
 
