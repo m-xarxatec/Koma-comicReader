@@ -174,9 +174,10 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Corrección:** `requestPath`; el test cuenta Entrar y Registrarse; el 403 lleva "Explorar el catálogo" (aprobado); `register` envía solo los tres campos del contrato.
 - **Aprendizaje:** las medidas `width`/`height` de una maqueta se comprueban contra la imagen real: copiadas tal cual deforman o hacen saltar la página.
 
-### 2026-11-02 · Bloque 2 · Agente frontend y correcciones de su primera revisión
+### 2026-11-02 · Bloque 2 · Agente frontend y correcciones de sus revisiones
 - **Pedido a la IA:** crear `.claude/agents/frontend.md` (solo lectura, mismo formato que el auditor), añadirlo a CLAUDE.md, pasarlo sobre la base y aplicar los hallazgos aprobados.
-- **Resultado:** primera revisión APTO con observaciones (12 hallazgos, uno alto). Corregidos: buscador con 44 px útiles, sin `@import` (`layers.css` enlazado en cada plantilla), `--line-height-none`, foco al primer error en el orden del formulario, escalón más cercano en la cabecera, "Saltar al contenido" sin negrita, "Navegación principal", icono de acción solo en los errores, clases BEM y degradado del marco en el tema claro. Revisión de lo corregido: APTO.
+- **Resultado:** primera revisión APTO con observaciones (12 hallazgos, uno alto). Corregidos: buscador con 44 px útiles, sin `@import` (`layers.css` enlazado en cada plantilla), `--line-height-none`, escalón más cercano en la cabecera, "Saltar al contenido" sin negrita, "Navegación principal", icono de acción solo en los errores, clases BEM y degradado del marco en el tema claro.
+- **Segunda y tercera revisión (solo lo corregido):** APTO. Después, el token `--scene-glow-error-stop` (sin `max()`), el orden de las hojas también en la página genérica, el foco en el orden del formulario con errores del cliente o del servidor y clases BEM en `<code>` y `<em>`: APTO, sin regresiones.
 - **Decisiones del desarrollador:** sin `lazy` en la ilustración de error (primera pantalla); foco de 3 px en todo el sitio; en el 500 y el 503, el catálogo se enlaza desde el menú.
 - **Comprobación:** typecheck, 37 tests unitarios (nuevo: `layers.css` en orden y ningún `@import`) y 48 de API; lo visual, el desarrollador en el navegador.
 - **Fallos:** la primera prueba corrió como agente general (un tipo nuevo no se carga hasta la sesión siguiente) y con navegador sin interfaz, que el desarrollador descartó: el agente compara solo en código. Al invocarlo faltó una decisión aprobada (la línea de XarxaTec) y la marcó como desvío.
