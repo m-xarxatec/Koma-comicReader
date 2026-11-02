@@ -87,3 +87,7 @@ function loadEnv() {
 
 export const env = loadEnv();
 export type Env = typeof env;
+
+// Límite general del cuerpo (no es una variable de entorno): express.json en app.ts y express.raw del webhook
+// de Stripe, que según el contrato del bloque 1 usa el mismo. Más → 413 PAYLOAD_TOO_LARGE.
+export const JSON_BODY_LIMIT = '100kb';

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test, type Mock } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import Stripe from 'stripe';
+import { INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import { SESSION_COOKIE, startTestServer } from './helpers.js';
 
 // Prueba mínima del webhook de Stripe (bloque 1). Driver `stripe` con valores inventados, que no son de
@@ -129,5 +130,59 @@ test('Seguridad: el log del webhook lleva id, tipo, livemode y apiVersion del ev
   const logged = okLog.raw + badLog.raw;
   for (const secret of [signature, signature.split('v1=')[1] ?? signature, forged, CUSTOMER_EMAIL, 'sub_koma_test', WEBHOOK_SECRET]) {
     assert.ok(!logged.includes(secret), `el log no contiene ${secret.slice(0, 24)}…`);
+  }
+});
+
+test('Seguridad: un fallo después de verificar la firma (evento "thin" de v2) da 500 genérico; la causa va solo al log, sin firma ni cuerpo', async (t) => {
+  const spies = [t.mock.method(process.stdout, 'write'), t.mock.method(process.stderr, 'write')] as unknown as Mock<
+    (...args: never[]) => unknown
+  >[];
+  // Firmado y JSON válido, pero el SDK rechaza los eventos "thin" en constructEvent: no es un error de firma.
+  const payload = JSON.stringify({
+    id: 'evt_koma_thin',
+    object: 'v2.core.event',
+    type: 'v1.billing.meter.no_meter_found',
+    created: new Date().toISOString(),
+    related_object: { id: 'sub_koma_thin', type: 'subscription', url: '/v1/subscriptions/sub_koma_thin' },
+  });
+  const signature = sign(payload);
+
+  const res = await postWebhook(payload, { 'Stripe-Signature': signature });
+  assert.equal(res.status, 500);
+  const requestId = res.headers.get('x-request-id') ?? '';
+  // La respuesta lleva solo code, message y requestId: nada de cause, stack ni el mensaje del SDK.
+  assert.deepEqual(await res.json(), { code: 'INTERNAL_ERROR', message: INTERNAL_ERROR_MESSAGE, requestId });
+
+  const log = await logLines(spies, requestId);
+  const failure = log.lines.find((line) => line['level'] === 'error');
+  const cause = failure?.['err'] as { name?: unknown; message?: unknown } | undefined;
+  assert.equal(failure?.['code'], 'INTERNAL_ERROR');
+  assert.equal(cause?.name, 'Error', 'en el log va el error original del SDK, no el AppError');
+  assert.match(String(cause?.message), /thin event/);
+  for (const secret of [signature, signature.split('v1=')[1] ?? signature, WEBHOOK_SECRET, 'sub_koma_thin', 'evt_koma_thin']) {
+    assert.ok(!log.raw.includes(secret), `el log no contiene ${secret.slice(0, 24)}…`);
+  }
+});
+
+test('Seguridad: un cuerpo bien firmado que no es JSON da 500 genérico; en el log, un error fijo sin ningún trozo del cuerpo ni de la firma', async (t) => {
+  const spies = [t.mock.method(process.stdout, 'write'), t.mock.method(process.stderr, 'write')] as unknown as Mock<
+    (...args: never[]) => unknown
+  >[];
+  // JSON.parse copiaría el principio del cuerpo en el mensaje de su SyntaxError.
+  const payload = `xyzzy-koma-sin-json ${CUSTOMER_EMAIL}`;
+  const signature = sign(payload);
+
+  const res = await postWebhook(payload, { 'Stripe-Signature': signature });
+  assert.equal(res.status, 500);
+  const requestId = res.headers.get('x-request-id') ?? '';
+  assert.deepEqual(await res.json(), { code: 'INTERNAL_ERROR', message: INTERNAL_ERROR_MESSAGE, requestId });
+
+  const log = await logLines(spies, requestId);
+  const failure = log.lines.find((line) => line['level'] === 'error');
+  const cause = failure?.['err'] as { message?: unknown } | undefined;
+  assert.equal(failure?.['code'], 'INTERNAL_ERROR');
+  assert.equal(cause?.message, 'El cuerpo firmado no es JSON válido');
+  for (const fragment of [payload, 'xyzzy', 'koma-sin-json', CUSTOMER_EMAIL, signature, signature.split('v1=')[1] ?? signature, WEBHOOK_SECRET]) {
+    assert.ok(!log.raw.includes(fragment), `el log no contiene ${fragment.slice(0, 24)}…`);
   }
 });

@@ -1,5 +1,5 @@
 import { isSignatureError, verifyWebhookEvent, type StripeEvent } from '../../integrations/payments/stripe.js';
-import { AppError } from '../../utils/app-error.js';
+import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import { logger } from '../../utils/logger.js';
 
 export interface WebhookContext {
@@ -7,6 +7,7 @@ export interface WebhookContext {
 }
 
 const INVALID_SIGNATURE = 'Firma del webhook no válida';
+const SIGNED_BODY_NOT_JSON = 'El cuerpo firmado no es JSON válido'; // solo para el log
 
 // 400 sin procesar nada. El warn lleva solo el motivo; nunca la cabecera Stripe-Signature ni el cuerpo
 // (tampoco como `cause`: el error de Stripe los guarda dentro).
@@ -28,7 +29,12 @@ export function handleStripeWebhook(payload: unknown, signature: string | undefi
     event = verifyWebhookEvent(payload, signature);
   } catch (err) {
     if (isSignatureError(err)) rejectSignature(ctx, err.message);
-    throw err; // cualquier otro fallo es nuestro: 500
+    if (err instanceof AppError) throw err; // falta STRIPE_WEBHOOK_SECRET: ya es un 500 con su causa
+    // Cualquier otro fallo es nuestro: 500 genérico; el original va en `cause`, solo al log. Aquí ya no llega
+    // el error de firma, el único que guarda la cabecera y el cuerpo. Excepción: el SyntaxError de JSON.parse
+    // (cuerpo bien firmado que no es JSON) copia un trozo del cuerpo en su mensaje; en su lugar, uno fijo.
+    const cause = err instanceof SyntaxError ? new Error(SIGNED_BODY_NOT_JSON) : err;
+    throw new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, { cause });
   }
 
   logger.info('Webhook de Stripe verificado', {

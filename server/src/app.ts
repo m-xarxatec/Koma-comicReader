@@ -2,7 +2,7 @@ import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
-import { env } from './config/env.js';
+import { env, JSON_BODY_LIMIT } from './config/env.js';
 import { paths } from './config/paths.js';
 import { pingDatabase } from './db/pool.js';
 import { auth } from './middlewares/auth.js';
@@ -26,7 +26,6 @@ const r2Hosts =
 // HSTS, COOP y upgrade-insecure-requests solo con HTTPS (online). Sobre http (desarrollo y demo en la LAN) no se
 // envían: el navegador ignora HSTS y COOP fuera de un contexto seguro, y COOP deja un aviso en la consola.
 const isHttps = new URL(env.APP_URL).protocol === 'https:';
-const JSON_BODY_LIMIT = '100kb'; // más → 413 PAYLOAD_TOO_LARGE
 // /api/auth/*: correo (254), contraseña (72 bytes) y nombre (30) caben de sobra, incluso escritos con
 // escapes \uXXXX. Un cuerpo pequeño acota lo que una petición puede hacer gastar antes de validar.
 const AUTH_BODY_LIMIT = '4kb';
