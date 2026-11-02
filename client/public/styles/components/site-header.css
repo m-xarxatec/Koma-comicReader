@@ -1,71 +1,212 @@
-/* Cabecera del sitio: marca Koma y navegación principal. */
+/* Cabecera del sitio (server/src/utils/layout.ts): logotipo, navegación, búsqueda y cuenta. Fija arriba y
+   translúcida. Móvil: logotipo y cuenta, con la búsqueda debajo; 40rem: en una fila; 64rem: con la
+   navegación (en móvil la navegación va abajo, en mobile-nav.css). */
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--layer-header);
   border-bottom: var(--border-width) solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-bar);
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
 }
 
 .site-header__inner {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "brand account"
+    "search search";
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
-  max-width: var(--content-width);
-  margin-inline: auto;
-  padding: var(--space-1) var(--space-4);
+  gap: var(--space-1) var(--space-4);
+  min-height: var(--header-height);
+  padding-block: var(--space-1) var(--space-3);
 }
 
+/* El logotipo es blanco: en el tema claro lleva un apoyo oscuro (--color-logo-backdrop). */
 .site-header__brand {
+  grid-area: brand;
   display: inline-flex;
   align-items: center;
+  justify-self: start;
   min-height: var(--touch-target);
-  color: var(--color-text);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: var(--letter-spacing-brand);
-  text-decoration: none;
+  padding: var(--logo-backdrop-padding);
+  border-radius: var(--radius-sm);
+  background: var(--color-logo-backdrop);
 }
 
-.site-header__list {
+.site-header__logo {
+  width: var(--logo-width);
+  height: auto;
+}
+
+.site-nav {
+  display: none;
+}
+
+.site-header__account {
+  grid-area: account;
   display: flex;
-  gap: var(--space-2);
-  padding: 0;
-  list-style: none;
-}
-
-.site-header__link {
-  display: inline-flex;
   align-items: center;
-  min-height: var(--touch-target);
+  gap: var(--space-2);
+}
+
+.site-header__login,
+.site-header__logout {
+  padding-inline: var(--space-2);
+}
+
+.site-header__signup {
+  display: none;
+}
+
+/* Con sesión: nombre (textContent, recortado si es largo) y "Salir" */
+.site-header__user {
+  overflow: hidden;
+  max-width: var(--header-user-max);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-search {
+  grid-area: search;
+  display: flex;
+  align-items: center;
+  height: calc(var(--touch-target) + 2 * var(--border-width)); /* 44 px útiles dentro del borde */
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+/* El campo no lleva contorno propio: el foco se ve en todo el buscador. */
+.site-search:focus-within {
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+.site-search__icon {
+  margin-left: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.site-search__input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.site-header__link:hover {
-  background: var(--color-hover);
-}
-
-/* "Salir" es un <button> (hace POST): se ve como los enlaces de la cabecera. */
-.site-header__button {
   border: 0;
-  background: none;
-  font: inherit;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.site-search__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.site-search__submit {
+  display: grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 
-.site-header__user {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-3);
-  color: var(--color-text-muted);
+.site-search__submit:hover {
+  color: var(--color-accent);
 }
 
 @media (min-width: 40rem) {
   .site-header__inner {
-    padding-inline: var(--space-6);
+    grid-template-columns: auto minmax(var(--header-search-min), 1fr) auto;
+    grid-template-areas: "brand search account";
+    gap: var(--space-4);
+    min-height: var(--header-height-wide);
+    padding-block: var(--space-2);
+  }
+
+  .site-header__logo {
+    width: var(--logo-width-wide);
+  }
+
+  .site-header__signup {
+    display: inline-flex;
+  }
+
+  .site-header__user {
+    max-width: var(--header-user-max-wide);
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-header__inner {
+    grid-template-columns: auto auto minmax(var(--header-search-min-wide), 1fr) auto;
+    grid-template-areas: "brand nav search account";
+    gap: var(--header-gap-wide);
+  }
+
+  .site-nav {
+    grid-area: nav;
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    gap: var(--space-1);
+  }
+
+  .site-nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    padding: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .site-nav__link .icon {
+    width: var(--icon-size-nav);
+    height: var(--icon-size-nav);
+  }
+
+  /* Indicador de la página activa: además del color, una barra (no solo color) */
+  .site-nav__link::after {
+    content: "";
+    position: absolute;
+    right: var(--space-2);
+    bottom: var(--space-1);
+    left: var(--space-2);
+    height: var(--nav-indicator-height);
+    border-radius: var(--radius-pill);
+    background: transparent;
+  }
+
+  .site-nav__link:hover,
+  .site-nav__link--active {
+    color: var(--color-text);
+  }
+
+  .site-nav__link--active::after {
+    background: var(--color-accent);
+  }
+
+  .site-search {
+    justify-self: end;
+    width: 100%;
+    max-width: var(--header-search-max);
   }
 }

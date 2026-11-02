@@ -1,19 +1,27 @@
-/* Pie del sitio. */
+/* Pie del sitio (server/src/utils/layout.ts). Hasta 64rem deja aire abajo para la navegación móvil fija. */
 
 .site-footer {
   border-top: var(--border-width) solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
 }
 
 .site-footer__inner {
-  max-width: var(--content-width);
-  margin-inline: auto;
-  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-6) 0 var(--mobile-nav-clearance);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
 }
 
 @media (min-width: 40rem) {
   .site-footer__inner {
-    padding-inline: var(--space-6);
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-footer__inner {
+    padding-bottom: var(--space-8);
   }
 }

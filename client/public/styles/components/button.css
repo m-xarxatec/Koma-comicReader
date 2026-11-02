@@ -1,0 +1,56 @@
+/* Botón (enlace o <button>): principal, con contorno y grande. Área táctil mínima de 44 px. */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast),
+    transform var(--duration-fast);
+}
+
+.button:hover {
+  transform: translateY(var(--lift-hover));
+}
+
+.button:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: progress;
+  transform: none;
+}
+
+.button--primary {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.button--primary:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-accent-hover-contrast);
+}
+
+.button--outline {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.button--outline:hover {
+  border-color: var(--color-secondary);
+  background: var(--color-surface-raised);
+}
+
+.button--large {
+  min-height: var(--control-height);
+}

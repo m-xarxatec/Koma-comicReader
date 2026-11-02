@@ -1,76 +1,232 @@
-/* Tokens: todo valor visual sale de aquí. El diseño final sustituye este archivo sin tocar HTML,
-   TypeScript ni los componentes, que solo usan estas custom properties. */
+/* Tokens: todo valor visual sale de aquí. El diseño se sustituye cambiando este archivo, sin tocar HTML,
+   TypeScript ni los componentes, que solo usan estas custom properties.
+   Paleta y escalas de la maqueta (koma_home) con los nombres del proyecto. Tema oscuro por defecto; el claro,
+   cuando el sistema lo pide. Contraste AA comprobado en los dos temas: texto ≥ 4.5:1; bordes de campos y foco
+   ≥ 3:1. --color-border (2,2–2,4:1) es solo decorativo: los campos usan --color-border-strong.
+   Excepción: theme-color va en <meta> (server/src/utils/layout.ts) y repite --color-bg; un test lo compara.
+   Criterio: colores, tipografía, espacios, radios, sombras, bordes, medidas y duraciones viven aquí. La
+   geometría interna de una composición (posiciones en % de la escena de error, fracciones de una rejilla,
+   trayectoria de una animación) se queda en su componente. */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  /* Colores (contraste AA comprobado: texto y acento sobre el fondo ≥ 4.5:1) */
-  --color-bg: #fbfaf8;
-  --color-surface: #ffffff;
-  --color-text: #1d1b22;
-  --color-text-muted: #5c5866;
-  --color-border: #e3e0e8;
-  --color-border-strong: #767180; /* bordes de campos: contraste ≥ 3:1 con la superficie */
-  --color-danger: #b3261e;
-  --color-accent: #5b3fd1;
-  --color-accent-contrast: #ffffff;
-  --color-focus: #5b3fd1;
-  --color-hover: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  /* Colores */
+  --color-bg: #0b0716;
+  --color-surface: #151027;
+  --color-surface-raised: #1c1530;
+  --color-surface-soft: #211936;
+  --color-text: #f9f7ff;
+  --color-text-muted: #c7beda;
+  --color-border: #554574;
+  --color-border-strong: #8b77ae;
+  --color-accent: #ff2e93;
+  --color-accent-contrast: #190014; /* texto sobre --color-accent */
+  --color-accent-hover: #ff62ac; /* botón principal al pasar el puntero (igual en los dos temas) */
+  --color-accent-hover-contrast: #190014;
+  --color-accent-soft: #ffc0e0;
+  --color-secondary: #bd98ff;
+  --color-highlight: #00e5ff;
+  --color-success: #61dbaf;
+  --color-warning: #ffd47b;
+  --color-danger: #ff8b9a;
+  --color-info: #8bdcff;
+  --color-focus: #00e5ff;
+  --color-shadow: #00000088;
+  --color-selection-text: #170019;
+  --color-bar: color-mix(in srgb, var(--color-bg) 92%, transparent); /* cabecera y navegación móvil */
+
+  /* El logotipo es blanco: en el tema claro necesita un apoyo oscuro. */
+  --color-logo-backdrop: transparent;
+  --logo-backdrop-padding: 0;
+
+  /* Escena de las páginas de error */
+  --color-scene-glow: #35224f;
+  --color-scene-glow-edge: #1b1031;
+  --color-scene-glow-error: #53213f;
+  --color-scene-glow-error-edge: #20102d;
+  --color-scene-halo: #b884ff30;
+  --color-scene-halo-warning: #ffbc6330;
+  --color-scene-halo-outer: #ae46fb16;
+  --color-scene-halo-inner: #941fd31b;
+  --color-scene-number: #ac80f51d;
+  --color-scene-shadow: #0302088a;
+
+  /* Panel de bienvenida de /entrar y /registro (oscuro también en el tema claro, como en la maqueta) */
+  --color-story-glow: #5c2c7766;
+  --color-story-from: #1c1234;
+  --color-story-to: #100c20;
+  --color-story-ring: #ff2e9380;
+  --color-story-ring-glow: #ff2e9329;
+  --color-story-line: #bd98ff;
+  --color-story-glyph: #ffffff;
+  --color-story-glyph-accent: #ff2e93;
 
   /* Tipografía del sistema (sin fuentes externas) */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-size-2xs: 0.65rem;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.75rem;
-  --font-size-2xl: 2.25rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: clamp(1.85rem, 4vw, 3.45rem);
+  --font-size-title: clamp(1.8rem, 4vw, 2.3rem); /* título de un panel */
+  --font-size-3xl: clamp(2.3rem, 4.6vw, 4rem); /* titular del panel de bienvenida */
+  --font-size-glyph: 5rem; /* コマ del panel de bienvenida */
+  --font-size-giant: clamp(5rem, 21vw, 9rem); /* número de las páginas de error */
+  --font-size-spark: 1.5rem;
   --font-size-code: 0.95em;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 800;
-  --line-height: 1.6;
-  --line-height-tight: 1.2;
-  --letter-spacing-brand: 0.02em;
-  --letter-spacing-label: 0.08em;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 650;
+  --font-weight-bold: 700;
+  --font-weight-heavy: 800;
+  --font-weight-black: 900;
+  --line-height-none: 1;
+  --line-height: 1.5;
+  --line-height-tight: 1.13;
+  --line-height-snug: 1.2;
+  --line-height-relaxed: 1.65;
+  --letter-spacing-label: 0.12em;
+  --letter-spacing-wide: 0.18em;
+  --letter-spacing-title: -0.045em; /* títulos grandes (páginas de error) */
+  --letter-spacing-heading: -0.035em; /* título de un panel */
+  --letter-spacing-story: -0.055em; /* titular del panel de bienvenida */
+  --letter-spacing-display: -0.1em; /* número de las páginas de error */
+  --letter-spacing-glyph: -0.12em; /* コマ del panel de bienvenida */
   --text-transform-label: uppercase;
+  --measure-title: 15ch;
+  --measure-text: 47ch;
+  --measure-story: 38ch;
+  --measure-story-title: 11ch;
 
   /* Espacios */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
+  --space-5: 1.25rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
+  --space-10: 2.5rem;
   --space-12: 3rem;
+  --space-16: 4rem;
+  --space-section: clamp(2rem, 6vw, 5rem); /* aire superior de una página de cuenta */
+  --space-gap-wide: clamp(3rem, 7vw, 6rem); /* separación de dos columnas en escritorio */
+  --space-gap-auth: clamp(2.5rem, 6vw, 6rem); /* ídem en /entrar y /registro */
+  --space-panel: clamp(1.4rem, 4vw, 2.3rem); /* relleno de un panel */
 
-  /* Bordes, foco y subrayado */
+  /* Bordes, radios y foco */
   --border-width: 1px;
-  --radius-md: 0.5rem;
+  --border-width-strong: 2px;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.8rem;
+  --radius-lg: 1.15rem;
+  --radius-pill: 999px;
+  /* Foco de 3 px en todo el sitio: la maqueta usaba 2 px en el buscador y en el desplazamiento del foco de
+     los campos; se unifica en 3 px (decisión del desarrollador, 2-nov). */
   --focus-ring: 3px;
-  --focus-offset: 2px;
-  --underline-offset: 0.15em;
+  --focus-offset: 3px;
+  --underline-offset: 3px;
+
+  /* Sombras y desenfoque */
+  --shadow-panel: 0 12px 32px var(--color-shadow);
+  --shadow-illustration: 0 18px 16px var(--color-scene-shadow);
+  --shadow-scene-halo: 0 0 66px var(--color-scene-halo-outer), inset 0 0 55px var(--color-scene-halo-inner);
+  --shadow-story-ring: 0 0 45px var(--color-story-ring-glow);
+  --blur-bar: 16px;
+
+  /* Movimiento (se anula con prefers-reduced-motion en base.css) */
+  --duration-fast: 160ms;
+  --duration-normal: 220ms;
+  --duration-breathe: 3.8s;
+  --duration-sleep: 4s;
+  --duration-spark: 3.2s;
+  --delay-spark: 0.85s;
+  --lift-hover: -1px; /* botón al pasar el puntero */
 
   /* Medidas */
   --touch-target: 44px;
-  --content-width: 64rem;
+  --control-height: 48px; /* campos y botones grandes */
+  --body-min-width: 320px;
+  --gutter: 1rem;
+  --gutter-wide: 1.5rem;
+  --content-width: 1440px;
+  --auth-layout-width: 1080px;
+  --error-layout-width: 1040px;
+  --form-width: 480px;
   --reader-width: 50rem;
-  --form-width: 28rem;
-  --skip-link-hidden-offset: -200%; /* "Saltar al contenido" fuera de la vista hasta recibir el foco */
+  --header-height: 76px;
+  --header-height-wide: 78px;
+  --header-search-min: 240px;
+  --header-search-min-wide: 180px;
+  --header-search-max: 330px;
+  --header-gap-wide: clamp(0.65rem, 1.3vw, 1.35rem);
+  --header-user-max: 6rem; /* nombre de la sesión en la cabecera (se recorta con …) */
+  --header-user-max-wide: 12rem;
+  --logo-width: 128px;
+  --logo-width-wide: 155px;
+  --mobile-nav-height: 65px;
+  --mobile-nav-item-height: 56px;
+  --mobile-nav-clearance: 6rem; /* aire bajo el pie para que la navegación móvil fija no lo tape */
+  --scroll-offset: 6rem; /* anclas por debajo de la cabecera fija */
+  --nav-indicator-height: 3px;
+  --icon-size: 1.25rem;
+  --icon-size-sm: 1rem;
+  --icon-size-nav: 1.1rem;
+  --icon-size-action: 1.15rem;
+  --icon-stroke: 1.8;
+  --dot-size: 7px;
+  --scene-width: 440px;
+  --scene-width-wide: 490px;
+  --scene-ratio: 1.18 / 1;
+  --scene-glow-center: 50% 55%; /* centro y parada del degradado del marco de la escena de error */
+  --scene-glow-stop: 50%;
+  --story-min-height: 240px;
+  --story-ring-size: 210px;
+  --skip-link-hidden-offset: -160%;
 
   /* Estados */
   --opacity-disabled: 0.6;
+  --opacity-placeholder: 0.85;
+  --opacity-signal: 0.8;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --color-bg: #141218;
-    --color-surface: #1d1b22;
-    --color-text: #ece9f1;
-    --color-text-muted: #a9a3b4;
-    --color-border: #34303c;
-    --color-border-strong: #8a8496;
-    --color-danger: #ffb4ab;
-    --color-accent: #a493ff;
-    --color-accent-contrast: #141218;
-    --color-focus: #a493ff;
+    color-scheme: light;
+
+    --color-bg: #f8f6fc;
+    --color-surface: #ffffff;
+    --color-surface-raised: #f1ebfa;
+    --color-surface-soft: #e9e1f5;
+    --color-text: #20142f;
+    --color-text-muted: #594b6c;
+    --color-border: #aea0c4;
+    --color-border-strong: #725b97;
+    --color-accent: #bb0067;
+    --color-accent-contrast: #ffffff;
+    --color-accent-soft: #7e0047;
+    --color-selection-text: #ffffff; /* #170019 de la maqueta daba 3,15:1 sobre el acento claro */
+    --color-secondary: #6840a7;
+    --color-highlight: #006b84;
+    --color-success: #176b48;
+    --color-warning: #815100;
+    --color-danger: #a0203a;
+    --color-info: #005f87;
+    --color-focus: #006b84;
+    --color-shadow: #27143921;
+
+    --color-logo-backdrop: #0b0716;
+    --logo-backdrop-padding: 0.2rem 0.35rem;
+
+    --color-scene-glow: #e5d5f5;
+    --color-scene-glow-edge: #f5edfb;
+    --color-scene-glow-error: #f8d8e7;
+    --color-scene-glow-error-edge: #f7eaf4;
+    --color-scene-halo: #ab69cf50;
+    --color-scene-number: #6a2f9640;
+    --scene-glow-center: center;
+    --scene-glow-stop: 55%;
   }
 }

@@ -6,6 +6,7 @@ import {
   currentPasswordProblem,
   displayNameProblem,
   emailProblem,
+  passwordConfirmProblem,
   passwordProblem,
   type SubmitOutcome,
 } from '../utils/validate.js';
@@ -46,7 +47,15 @@ if (loginForm) {
 
 const registerForm = document.querySelector<HTMLFormElement>('#register-form');
 if (registerForm) {
-  bindForm(registerForm, { email: emailProblem, displayName: displayNameProblem, password: passwordProblem }, async (values) => {
+  // En el orden del formulario: el foco va al primer campo con error.
+  const rules = {
+    displayName: displayNameProblem,
+    email: emailProblem,
+    password: passwordProblem,
+    passwordConfirm: passwordConfirmProblem,
+  };
+  bindForm(registerForm, rules, async (values) => {
+    // Solo los campos del contrato: passwordConfirm se queda en el cliente.
     const result = await register({
       email: values['email'] ?? '',
       password: values['password'] ?? '',

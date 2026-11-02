@@ -3,25 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Página no encontrada · Koma</title>
+  <!-- @head -->
+  <meta name="description" content="Koma · Error 404: página perdida.">
+  <title>Página perdida · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
   <link rel="stylesheet" href="/styles/components/error-page.css">
 </head>
 <body>
   <!-- @header -->
-  <main id="contenido" class="page error-page">
-    <p class="error-page__status">Error 404</p>
-    <h1 class="error-page__title">No encontramos esta página</h1>
-    <p>La dirección no existe o ha cambiado.</p>
-    <ul class="error-page__actions">
-      <li><a class="error-page__action error-page__action--primary" href="/">Ir al inicio</a></li>
-      <li><a class="error-page__action" href="/#catalogo">Explorar el catálogo</a></li>
-    </ul>
-    <p class="error-page__ref">Código de referencia: <code>{{requestId}}</code></p>
+  <main class="error-page container" id="contenido">
+    <section class="error-page__layout" aria-labelledby="error-title">
+      <div class="error-scene error-scene--search">
+        <div class="error-scene__frame" aria-hidden="true"></div>
+        <div class="error-scene__halo" aria-hidden="true"></div>
+        <span class="error-scene__number" aria-hidden="true">404</span>
+        <span class="error-scene__signal" aria-hidden="true">SEÑAL PERDIDA</span>
+        <img class="error-scene__cat" src="/icons/error-404.webp" alt="La mascota de Koma mira una tableta buscando una página que no aparece." width="452" height="303">
+        <span class="error-scene__spark error-scene__spark--one" aria-hidden="true">✦</span>
+        <span class="error-scene__spark error-scene__spark--two" aria-hidden="true">✧</span>
+      </div>
+      <div class="error-copy">
+        <p class="eyebrow"><span class="error-copy__dot" aria-hidden="true"></span>Página perdida</p>
+        <p class="error-copy__code">404<span aria-hidden="true"> / </span><span class="error-copy__code-label">Ruta no encontrada</span></p>
+        <h1 class="error-copy__title" id="error-title">Esta página se salió de la viñeta.</h1>
+        <p class="error-copy__lead">No encontramos la dirección que buscas.</p>
+        <p class="error-copy__body">Quizá el enlace cambió, hubo una errata o esta página nunca existió.</p>
+        <div class="error-copy__actions">
+          <a class="button button--primary" href="/#catalogo">Explorar cómics<svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+          <a class="button button--outline" href="/">Ir al inicio</a>
+        </div>
+        <p class="error-copy__hint">Prueba con el catálogo: puede que la historia que buscas esté ahí.</p>
+        <p class="error-copy__reference">Código de referencia: <code>{{requestId}}</code></p>
+      </div>
+    </section>
   </main>
   <!-- @footer -->
 </body>

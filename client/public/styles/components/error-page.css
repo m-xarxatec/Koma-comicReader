@@ -1,43 +1,301 @@
-/* Páginas de error (client/public/errors/*.html y la página genérica del servidor). */
+/* Páginas de error (client/public/errors/*.html y la genérica de error-handler.ts): escena con la mascota y
+   texto. Mobile-first: escena arriba y texto centrado; 64rem: dos columnas. Cada error tiene su matiz
+   (--warning, --search, --removed, --error, --pause), pero nunca se comunica solo con color: lo dicen el
+   título, el código y el texto. */
 
-.error-page__status {
-  color: var(--color-text-muted);
+.error-page {
+  display: grid;
+  align-items: center;
+  padding-block: var(--space-8) var(--space-10);
+}
+
+.error-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-5);
+  width: min(100%, var(--error-layout-width));
+  margin-inline: auto;
+}
+
+/* Escena: marco, halo, número, mascota y chispas. Las posiciones en % son la composición de la maqueta. */
+.error-scene {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: min(100%, var(--scene-width));
+  margin: auto;
+  overflow: hidden;
+  aspect-ratio: var(--scene-ratio);
+}
+
+.error-scene__frame {
+  position: absolute;
+  inset: 12% 8% 10%;
+  z-index: var(--layer-behind);
+  border-radius: 35% 35% 26% 26%;
+  background: radial-gradient(ellipse at var(--scene-glow-center), var(--color-scene-glow) 0%, var(--color-scene-glow-edge) var(--scene-glow-stop), transparent 75%);
+}
+
+.error-scene__halo {
+  position: absolute;
+  inset: 15% 13% 13%;
+  z-index: var(--layer-back);
+  border: var(--border-width) solid var(--color-scene-halo);
+  border-radius: 50%;
+  box-shadow: var(--shadow-scene-halo);
+}
+
+.error-scene__number {
+  position: absolute;
+  top: 5%;
+  left: 8%;
+  color: var(--color-scene-number);
+  font-size: var(--font-size-giant);
+  font-weight: var(--font-weight-black);
+  line-height: var(--line-height-none);
+  letter-spacing: var(--letter-spacing-display);
+  user-select: none;
+}
+
+.error-scene__cat {
+  position: relative;
+  z-index: var(--layer-raised);
+  width: 83%;
+  max-height: 89%;
+  object-fit: contain;
+  filter: drop-shadow(var(--shadow-illustration));
+  animation: error-breathe var(--duration-breathe) ease-in-out infinite;
+}
+
+.error-scene__signal {
+  position: absolute;
+  right: 3%;
+  bottom: 11%;
+  color: var(--color-secondary);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-wide);
+  opacity: var(--opacity-signal);
+  transform: rotate(-8deg);
+}
+
+.error-scene__spark {
+  position: absolute;
+  color: var(--color-accent);
+  font-size: var(--font-size-spark);
+  animation: error-spark var(--duration-spark) ease-in-out infinite;
+}
+
+.error-scene__spark--one {
+  top: 23%;
+  right: 12%;
+}
+
+.error-scene__spark--two {
+  bottom: 25%;
+  left: 5%;
+  color: var(--color-highlight);
+  animation-delay: var(--delay-spark);
+}
+
+.error-scene--warning .error-scene__halo {
+  border-color: var(--color-scene-halo-warning);
+}
+
+.error-scene--warning .error-scene__spark--two {
+  color: var(--color-warning);
+}
+
+.error-scene--search .error-scene__spark--one {
+  color: var(--color-highlight);
+}
+
+.error-scene--removed .error-scene__spark--two {
+  color: var(--color-secondary);
+}
+
+.error-scene--error .error-scene__frame {
+  /* Parada del 54 % en el tema oscuro y del 55 % (--scene-glow-stop) en el claro, como en la maqueta */
+  background: radial-gradient(ellipse at center, var(--color-scene-glow-error) 0%, var(--color-scene-glow-error-edge) max(54%, var(--scene-glow-stop)), transparent 75%);
+}
+
+.error-scene--pause .error-scene__cat {
+  animation-name: error-sleep;
+  animation-duration: var(--duration-sleep);
+}
+
+/* Página genérica (400, 413, 415, 429…): sin mascota, el número es el protagonista. */
+.error-scene--generic .error-scene__number {
+  position: static;
+  color: var(--color-secondary);
+}
+
+.error-copy {
+  min-width: 0;
+  text-align: center;
+}
+
+.error-copy .eyebrow {
+  justify-content: center;
+}
+
+.error-copy__dot {
+  display: inline-block;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.error-copy__code {
+  margin-bottom: var(--space-2);
+  color: var(--color-secondary);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-heavy);
   letter-spacing: var(--letter-spacing-label);
   text-transform: var(--text-transform-label);
 }
 
-.error-page__status + .error-page__title {
-  margin-top: var(--space-2);
-}
-
-.error-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-
-.error-page__action {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+.error-copy__code-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  text-decoration: none;
 }
 
-.error-page__action--primary {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+.error-copy__title {
+  max-width: var(--measure-title);
+  margin: var(--space-1) auto var(--space-4);
+  letter-spacing: var(--letter-spacing-title);
 }
 
-.error-page__ref {
+.error-copy__lead {
+  max-width: var(--measure-text);
+  margin: 0 auto var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.error-copy__body {
+  max-width: var(--measure-text);
+  margin: 0 auto var(--space-8);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+}
+
+.error-copy__actions {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.error-copy__actions .button {
+  width: 100%;
+  min-height: var(--control-height);
+}
+
+.error-copy__actions .icon {
+  width: var(--icon-size-action);
+  height: var(--icon-size-action);
+}
+
+.error-copy__hint {
+  max-width: var(--measure-text);
+  margin: var(--space-6) auto 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.error-copy__reference {
+  margin: var(--space-4) auto 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.error-copy__reference code {
+  color: var(--color-secondary);
+}
+
+@keyframes error-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes error-sleep {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+
+  50% {
+    transform: translateY(4px) rotate(1deg);
+  }
+}
+
+@keyframes error-spark {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.12);
+  }
+}
+
+@media (min-width: 40rem) {
+  .error-page {
+    padding-block: var(--space-12);
+  }
+
+  .error-page__layout {
+    gap: var(--space-10);
+  }
+
+  .error-copy__actions {
+    flex-direction: row;
+  }
+
+  .error-copy__actions .button {
+    width: auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  .error-page__layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: var(--space-gap-wide);
+  }
+
+  .error-scene {
+    width: min(100%, var(--scene-width-wide));
+  }
+
+  .error-copy {
+    text-align: left;
+  }
+
+  .error-copy .eyebrow,
+  .error-copy__actions {
+    justify-content: flex-start;
+  }
+
+  .error-copy__title,
+  .error-copy__lead,
+  .error-copy__body,
+  .error-copy__hint,
+  .error-copy__reference {
+    margin-left: 0;
+  }
 }

@@ -1,30 +1,42 @@
-/* Formularios: solo estructura y accesibilidad (etiquetas, foco, 44 px, errores por campo).
-   Todo valor visual viene de variables.css. */
+/* Formularios: etiquetas, campos de 48 px con borde de contraste AA (--color-border-strong), foco visible,
+   pistas y errores por campo (aria-invalid). Todo valor visual viene de variables.css. */
 
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: var(--form-width);
+  display: grid;
+  gap: var(--space-5);
 }
 
 .form__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .form__label {
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
 }
 
 .form__input {
-  min-height: var(--touch-target);
-  padding: var(--space-2) var(--space-3);
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: var(--color-bg);
   color: var(--color-text);
+}
+
+.form__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: var(--opacity-placeholder);
+}
+
+.form__input:focus-visible {
+  border-color: var(--color-focus);
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 .form__input[aria-invalid="true"] {
@@ -33,7 +45,7 @@
 
 .form__hint,
 .form__error {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
 }
 
 .form__hint {
@@ -47,8 +59,9 @@
 .form__error--form,
 .form__notice {
   padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
 }
 
 .form__error--form {
@@ -56,31 +69,6 @@
 }
 
 .form__submit {
-  align-self: flex-start;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-6);
-  border: var(--border-width) solid var(--color-accent);
-  border-radius: var(--radius-md);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.form__submit:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: progress;
-}
-
-.form__alt {
-  color: var(--color-text-muted);
-}
-
-/* "Crea una" / "Entra": enlace dentro de la frase, con área táctil de 44 px */
-.form__alt-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
+  width: 100%;
+  margin-top: var(--space-1);
 }

@@ -49,9 +49,10 @@ test('Seguridad: ninguna página servida sale con un marcador sin sustituir', as
     const html = await res.text();
     assert.equal(html.split('<!-- @').length - 1, 0, `${name}: marcador de layout`);
     assert.equal(html.split('{{').length - 1, 0, `${name}: valor sin rellenar`);
-    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'data-login-link']) {
+    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"']) {
       assert.equal(html.split(part).length - 1, 1, `${name}: ${part}`);
     }
+    assert.equal(html.split('data-login-link').length - 1, 2, `${name}: Entrar y Registrarse`);
   }
 });
 
@@ -92,8 +93,16 @@ test('Seguridad: una ruta inexistente responde 404 con su página de error', asy
   const res = await get('/no-existe');
   const html = await res.text();
   assert.equal(res.status, 404);
-  assert.equal(title(html), 'Página no encontrada · Koma');
+  assert.equal(title(html), 'Página perdida · Koma');
   assert.ok(html.includes(`<code>${res.headers.get('x-request-id')}</code>`));
+  assert.ok(!html.includes('aria-current'), 'una ruta que no existe no marca ninguna página como activa');
+});
+
+test('Seguridad: el servidor marca la página activa (aria-current) en la cabecera y en la navegación móvil', async () => {
+  const home = await (await get('/')).text();
+  assert.equal(home.split('aria-current="page"').length - 1, 2, '/');
+  const login = await (await get('/entrar')).text();
+  assert.equal(login.split('aria-current="page"').length - 1, 0, '/entrar no está en la navegación');
 });
 
 test('Seguridad: los HTML de client/public no se sirven directamente', async () => {
@@ -136,9 +145,16 @@ test('Seguridad: los estáticos de estilos e iconos se sirven con su tipo', asyn
   const css = await get('/styles/base.css');
   assert.equal(css.status, 200);
   assert.match(css.headers.get('content-type') ?? '', /^text\/css/);
-  const icon = await get('/icons/favicon.svg');
-  assert.equal(icon.status, 200);
-  assert.match(icon.headers.get('content-type') ?? '', /^image\/svg\+xml/);
+  for (const [path, type] of [
+    ['/icons/favicon.svg', /^image\/svg\+xml/],
+    ['/icons/sprite.svg', /^image\/svg\+xml/],
+    ['/icons/koma-logo.webp', /^image\/webp/],
+    ['/icons/error-404.webp', /^image\/webp/],
+  ] as const) {
+    const icon = await get(path);
+    assert.equal(icon.status, 200, path);
+    assert.match(icon.headers.get('content-type') ?? '', type, path);
+  }
 });
 
 test('Seguridad: un error sin plantilla usa la página genérica con el mismo layout', async () => {
@@ -150,7 +166,7 @@ test('Seguridad: un error sin plantilla usa la página genérica con el mismo la
   const html = await res.text();
   assert.equal(res.status, 413);
   assert.equal(title(html), 'Error 413 · Koma');
-  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', '/styles/base.css']) {
+  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'name="theme-color"', '/styles/layers.css', '/styles/base.css', `<code>${res.headers.get('x-request-id')}</code>`]) {
     assert.ok(html.includes(part), part);
   }
 });

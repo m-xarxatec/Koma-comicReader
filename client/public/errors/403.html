@@ -3,25 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Acceso denegado · Koma</title>
+  <!-- @head -->
+  <meta name="description" content="Koma · Error 403: acceso restringido.">
+  <title>Acceso restringido · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
   <link rel="stylesheet" href="/styles/components/error-page.css">
 </head>
 <body>
   <!-- @header -->
-  <main id="contenido" class="page error-page">
-    <p class="error-page__status">Error 403</p>
-    <h1 class="error-page__title">No tienes permiso para ver esta página</h1>
-    <p>Si crees que es un error, entra con otra cuenta o vuelve al inicio.</p>
-    <ul class="error-page__actions">
-      <li><a class="error-page__action error-page__action--primary" href="/">Ir al inicio</a></li>
-      <li><a class="error-page__action" href="/#catalogo">Explorar el catálogo</a></li>
-    </ul>
-    <p class="error-page__ref">Código de referencia: <code>{{requestId}}</code></p>
+  <main class="error-page container" id="contenido">
+    <section class="error-page__layout" aria-labelledby="error-title">
+      <div class="error-scene error-scene--warning">
+        <div class="error-scene__frame" aria-hidden="true"></div>
+        <div class="error-scene__halo" aria-hidden="true"></div>
+        <span class="error-scene__number" aria-hidden="true">403</span>
+        <span class="error-scene__signal" aria-hidden="true">TRAZO DENEGADO</span>
+        <img class="error-scene__cat" src="/icons/error-403.webp" alt="La mascota de Koma frunce el ceño mientras dibuja: aquí hay una restricción de acceso." width="398" height="394">
+        <span class="error-scene__spark error-scene__spark--one" aria-hidden="true">✦</span>
+        <span class="error-scene__spark error-scene__spark--two" aria-hidden="true">✧</span>
+      </div>
+      <div class="error-copy">
+        <p class="eyebrow"><span class="error-copy__dot" aria-hidden="true"></span>Acceso restringido</p>
+        <p class="error-copy__code">403<span aria-hidden="true"> / </span><span class="error-copy__code-label">Sin permiso</span></p>
+        <h1 class="error-copy__title" id="error-title">Esta viñeta tiene acceso limitado.</h1>
+        <p class="error-copy__lead">No tienes permiso para entrar en esta página.</p>
+        <p class="error-copy__body">Puede que necesites iniciar sesión o utilizar una cuenta con los permisos adecuados.</p>
+        <div class="error-copy__actions">
+          <a class="button button--primary" href="/">Volver al inicio<svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+          <a class="button button--outline" href="/#catalogo">Explorar el catálogo</a>
+        </div>
+        <p class="error-copy__hint">Si crees que deberías poder entrar, revisa tu cuenta o consulta con el equipo de Koma.</p>
+        <p class="error-copy__reference">Código de referencia: <code>{{requestId}}</code></p>
+      </div>
+    </section>
   </main>
   <!-- @footer -->
 </body>

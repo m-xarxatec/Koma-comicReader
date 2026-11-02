@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { ErrorRequestHandler, Request } from 'express';
 import { paths } from '../config/paths.js';
 import { AppError, INTERNAL_ERROR_MESSAGE, type ErrorCode } from '../utils/app-error.js';
-import { FOOTER_MARKER, HEADER_MARKER, renderTemplate } from '../utils/layout.js';
+import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate } from '../utils/layout.js';
 import { logger } from '../utils/logger.js';
 
 const ERROR_PAGES = new Set([403, 404, 410, 500, 503]); // client/public/errors/<código>.html
@@ -44,54 +44,69 @@ function isApi(req: Request): boolean {
   return req.path === '/api' || req.path.startsWith('/api/');
 }
 
-// Para los códigos sin plantilla (400, 413, 415, 429…). Cabecera y pie salen de layout.ts, como en
-// client/public/errors/*.html; los valores se inyectan escapados.
+// Para los códigos sin plantilla (400, 413, 415, 429…): el diseño de client/public/errors/*.html sin
+// ilustración, con el número grande. Cabecera y pie salen de layout.ts; los valores se inyectan escapados.
 const GENERIC_PAGE = `<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  ${HEAD_MARKER}
   <title>Error {{status}} · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
   <link rel="stylesheet" href="/styles/components/error-page.css">
 </head>
 <body>
   ${HEADER_MARKER}
-  <main id="contenido" class="page error-page">
-    <p class="error-page__status">Error {{status}}</p>
-    <h1 class="error-page__title">{{message}}</h1>
-    <ul class="error-page__actions">
-      <li><a class="error-page__action error-page__action--primary" href="/">Ir al inicio</a></li>
-      <li><a class="error-page__action" href="/#catalogo">Explorar el catálogo</a></li>
-    </ul>
-    <p class="error-page__ref">Código de referencia: <code>{{requestId}}</code></p>
+  <main class="error-page container" id="contenido">
+    <section class="error-page__layout" aria-labelledby="error-title">
+      <div class="error-scene error-scene--generic" aria-hidden="true">
+        <div class="error-scene__frame"></div>
+        <div class="error-scene__halo"></div>
+        <span class="error-scene__number">{{status}}</span>
+        <span class="error-scene__spark error-scene__spark--one">✦</span>
+        <span class="error-scene__spark error-scene__spark--two">✧</span>
+      </div>
+      <div class="error-copy">
+        <p class="eyebrow"><span class="error-copy__dot" aria-hidden="true"></span>Error {{status}}</p>
+        <h1 class="error-copy__title" id="error-title">{{message}}</h1>
+        <div class="error-copy__actions">
+          <a class="button button--primary" href="/">Ir al inicio</a>
+          <a class="button button--outline" href="/#catalogo">Explorar el catálogo</a>
+        </div>
+        <p class="error-copy__reference">Código de referencia: <code>{{requestId}}</code></p>
+      </div>
+    </section>
   </main>
   ${FOOTER_MARKER}
 </body>
 </html>
 `;
 
-function genericPage(error: AppError, requestId: string): string {
-  return renderTemplate(GENERIC_PAGE, { status: String(error.status), message: error.message, requestId });
+function genericPage(error: AppError, requestId: string, requestPath: string): string {
+  return renderTemplate(GENERIC_PAGE, { status: String(error.status), message: error.message, requestId }, requestPath);
 }
 
 // Página del código (o 500.html para otros 5xx), con cabecera, pie y {{requestId}} escapado; si no
 // existe, la genérica.
-async function renderErrorPage(error: AppError, requestId: string): Promise<string> {
+async function renderErrorPage(error: AppError, requestId: string, requestPath: string): Promise<string> {
   const page = ERROR_PAGES.has(error.status) ? error.status : error.status >= 500 ? 500 : null;
   if (page !== null) {
     try {
       const template = await readFile(path.join(paths.publicDir, 'errors', `${page}.html`), 'utf8');
-      return renderTemplate(template, { requestId });
+      return renderTemplate(template, { requestId }, requestPath);
     } catch (err) {
       if ((err as { code?: unknown }).code !== 'ENOENT') logger.warn('Plantilla de error ilegible', { requestId, page, err });
     }
   }
-  return genericPage(error, requestId);
+  return genericPage(error, requestId, requestPath);
 }
 
 // Decide código y formato de cualquier error: JSON en /api/*, página HTML en el resto; nunca 200.
@@ -117,5 +132,5 @@ export const errorHandler: ErrorRequestHandler = async (err, req, res, next) => 
     });
     return;
   }
-  res.set('Cache-Control', 'no-store').type('html').send(await renderErrorPage(error, requestId));
+  res.set('Cache-Control', 'no-store').type('html').send(await renderErrorPage(error, requestId, req.path));
 };

@@ -3,25 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Servicio no disponible · Koma</title>
+  <!-- @head -->
+  <meta name="description" content="Koma · Error 503: pausa técnica.">
+  <title>Pausa técnica · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
   <link rel="stylesheet" href="/styles/components/error-page.css">
 </head>
 <body>
   <!-- @header -->
-  <main id="contenido" class="page error-page">
-    <p class="error-page__status">Error 503</p>
-    <h1 class="error-page__title">El servicio no está disponible</h1>
-    <p>No podemos atenderte en este momento. Inténtalo de nuevo en unos minutos.</p>
-    <ul class="error-page__actions">
-      <li><a class="error-page__action error-page__action--primary" href="/">Ir al inicio</a></li>
-      <li><a class="error-page__action" href="/#catalogo">Explorar el catálogo</a></li>
-    </ul>
-    <p class="error-page__ref">Código de referencia: <code>{{requestId}}</code></p>
+  <main class="error-page container" id="contenido">
+    <section class="error-page__layout" aria-labelledby="error-title">
+      <div class="error-scene error-scene--pause">
+        <div class="error-scene__frame" aria-hidden="true"></div>
+        <div class="error-scene__halo" aria-hidden="true"></div>
+        <span class="error-scene__number" aria-hidden="true">503</span>
+        <span class="error-scene__signal" aria-hidden="true">MODO DESCANSO</span>
+        <img class="error-scene__cat" src="/icons/error-503.webp" alt="La mascota de Koma duerme en una almohada junto a sus cómics." width="411" height="367">
+        <span class="error-scene__spark error-scene__spark--one" aria-hidden="true">✦</span>
+        <span class="error-scene__spark error-scene__spark--two" aria-hidden="true">✧</span>
+      </div>
+      <div class="error-copy">
+        <p class="eyebrow"><span class="error-copy__dot" aria-hidden="true"></span>Pausa técnica</p>
+        <p class="error-copy__code">503<span aria-hidden="true"> / </span><span class="error-copy__code-label">Temporalmente fuera de servicio</span></p>
+        <h1 class="error-copy__title" id="error-title">Koma está descansando un momento.</h1>
+        <p class="error-copy__lead">El servicio no está disponible ahora mismo.</p>
+        <p class="error-copy__body">Puede que estemos haciendo mantenimiento o que el servicio esté ocupado. Inténtalo un poco más tarde.</p>
+        <div class="error-copy__actions">
+          <!-- href vacío: vuelve a pedir la misma URL -->
+          <a class="button button--primary" href=""><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-refresh"/></svg>Intentarlo otra vez</a>
+          <a class="button button--outline" href="/">Volver al inicio</a>
+        </div>
+        <p class="error-copy__hint">Tus historias seguirán aquí cuando el servicio vuelva.</p>
+        <p class="error-copy__reference">Código de referencia: <code>{{requestId}}</code></p>
+      </div>
+    </section>
   </main>
   <!-- @footer -->
 </body>

@@ -15,6 +15,7 @@ interface ClientValidate {
   emailProblem: Problem;
   displayNameProblem: Problem;
   passwordProblem: Problem;
+  passwordConfirmProblem: (value: string, values: Readonly<Record<string, string>>) => string | null;
 }
 interface ClientRedirect {
   safeNext: (value: unknown) => string;
@@ -51,4 +52,13 @@ test('RN-12: el cliente acepta y rechaza los mismos nombres visibles que el serv
 test('Seguridad: safeNext del cliente devuelve lo mismo que el del servidor', () => {
   const cases: unknown[] = ['/', '/perfil', '/leer/pimienta/3#v-4', '//evil', '/\\evil.com', 'https://x', 'javascript:alert(1)', '/\t/evil.com', '/\n/evil.com', '/\r/evil.com', '/perfil\u007f', '/\u0000', '', 'perfil', undefined, null, 42, ['/perfil']];
   for (const value of cases) assert.equal(clientRedirect.safeNext(value), safeNext(value), JSON.stringify(value));
+});
+
+// "Repite la contraseña" (maqueta): solo en el cliente, sin equivalente en el servidor ni en el contrato.
+test('RN-12: repetir la contraseña se comprueba solo en el cliente: vacía u otra distinta → error', () => {
+  const password = 'contraseña-larga-1';
+  assert.equal(client.passwordConfirmProblem(password, { password }), null);
+  assert.equal(client.passwordConfirmProblem('', { password }), 'Este campo es obligatorio');
+  assert.equal(client.passwordConfirmProblem(`${password} `, { password }), 'Las contraseñas no coinciden');
+  assert.equal(client.passwordConfirmProblem(password, {}), 'Las contraseñas no coinciden');
 });

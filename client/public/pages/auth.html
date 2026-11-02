@@ -3,12 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
   <meta name="request-id" content="{{requestId}}">
   <title>{{title}} · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
   <link rel="stylesheet" href="/styles/components/form.css">
   <link rel="stylesheet" href="/styles/components/auth.css">
@@ -16,52 +20,79 @@
 </head>
 <body data-mode="{{mode}}">
   <!-- @header -->
-  <main id="contenido" class="page auth">
-    <h1>{{heading}}</h1>
-    <noscript>
-      <p class="form__notice">Para entrar o crear una cuenta hay que activar JavaScript en el navegador.</p>
-    </noscript>
+  <main id="contenido" class="auth">
+    <div class="auth__layout">
+      <!-- /entrar y /registro comparten plantilla: auth.css muestra lo de su data-mode, también sin JS. -->
+      <section class="auth__panel" aria-labelledby="auth-title">
+        <p class="eyebrow auth__eyebrow">Koma / Cuenta</p>
+        <h1 class="auth__title" id="auth-title">{{heading}}</h1>
+        <p class="auth__subtitle auth__only-login">Accede a tu espacio de lectura.</p>
+        <p class="auth__subtitle auth__only-register">Descubre nuevas obras, lee más capítulos y forma parte de la comunidad.</p>
+        <noscript>
+          <p class="form__notice">Para entrar o crear una cuenta hay que activar JavaScript en el navegador.</p>
+        </noscript>
 
-    <!-- Entrar (CU-08). Los dos formularios están en la página; auth.css muestra el de data-mode. -->
-    <form class="form auth__form auth__form--login" id="login-form" method="post" action="/api/auth/login">
-      <div class="form__field">
-        <label class="form__label" for="login-email">Correo</label>
-        <input class="form__input" id="login-email" name="email" type="email" autocomplete="username" required maxlength="254" aria-describedby="login-email-error">
-        <p class="form__error" id="login-email-error" hidden></p>
-      </div>
-      <div class="form__field">
-        <label class="form__label" for="login-password">Contraseña</label>
-        <input class="form__input" id="login-password" name="password" type="password" autocomplete="current-password" required aria-describedby="login-password-error">
-        <p class="form__error" id="login-password-error" hidden></p>
-      </div>
-      <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
-      <button class="form__submit" type="submit">Entrar</button>
-      <p class="form__alt">¿No tienes cuenta? <a class="form__alt-link" href="/registro" data-keep-next>Crea una</a></p>
-    </form>
+        <!-- Entrar (CU-08) -->
+        <form class="form auth__only-login" id="login-form" method="post" action="/api/auth/login">
+          <div class="form__field">
+            <label class="form__label" for="login-email">Correo electrónico</label>
+            <input class="form__input" id="login-email" name="email" type="email" placeholder="tu@correo.com" autocomplete="username" required maxlength="254" aria-describedby="login-email-error">
+            <p class="form__error" id="login-email-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="login-password">Contraseña</label>
+            <input class="form__input" id="login-password" name="password" type="password" placeholder="Escribe tu contraseña" autocomplete="current-password" required aria-describedby="login-password-error">
+            <p class="form__error" id="login-password-error" hidden></p>
+          </div>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <button class="button button--primary button--large form__submit" type="submit">Entrar en Koma</button>
+        </form>
+        <p class="auth__switch auth__only-login">¿Todavía no tienes cuenta? <a class="auth__link" href="/registro" data-keep-next>Crear cuenta</a></p>
 
-    <!-- Crear cuenta (CU-07 · RN-12) -->
-    <form class="form auth__form auth__form--register" id="register-form" method="post" action="/api/auth/register">
-      <div class="form__field">
-        <label class="form__label" for="register-email">Correo</label>
-        <input class="form__input" id="register-email" name="email" type="email" autocomplete="username" required maxlength="254" aria-describedby="register-email-error">
-        <p class="form__error" id="register-email-error" hidden></p>
-      </div>
-      <div class="form__field">
-        <label class="form__label" for="register-display-name">Nombre visible</label>
-        <input class="form__input" id="register-display-name" name="displayName" type="text" autocomplete="nickname" required minlength="3" maxlength="30" aria-describedby="register-display-name-hint register-display-name-error">
-        <p class="form__hint" id="register-display-name-hint">De 3 a 30 caracteres. Es el nombre que verán los demás.</p>
-        <p class="form__error" id="register-display-name-error" hidden></p>
-      </div>
-      <div class="form__field">
-        <label class="form__label" for="register-password">Contraseña</label>
-        <input class="form__input" id="register-password" name="password" type="password" autocomplete="new-password" required minlength="10" aria-describedby="register-password-hint register-password-error">
-        <p class="form__hint" id="register-password-hint">Al menos 10 caracteres.</p>
-        <p class="form__error" id="register-password-error" hidden></p>
-      </div>
-      <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
-      <button class="form__submit" type="submit">Crear cuenta</button>
-      <p class="form__alt">¿Ya tienes cuenta? <a class="form__alt-link" href="/entrar" data-keep-next>Entra</a></p>
-    </form>
+        <!-- Crear cuenta (CU-07 · RN-12). "Repite la contraseña" se comprueba solo en el cliente y no se envía. -->
+        <form class="form auth__only-register" id="register-form" method="post" action="/api/auth/register">
+          <div class="form__field">
+            <label class="form__label" for="register-display-name">Nombre de usuario</label>
+            <input class="form__input" id="register-display-name" name="displayName" type="text" placeholder="Tu nombre en Koma" autocomplete="nickname" required minlength="3" maxlength="30" aria-describedby="register-display-name-hint register-display-name-error">
+            <p class="form__hint" id="register-display-name-hint">De 3 a 30 caracteres. Así te verá la comunidad.</p>
+            <p class="form__error" id="register-display-name-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="register-email">Correo electrónico</label>
+            <input class="form__input" id="register-email" name="email" type="email" placeholder="tu@correo.com" autocomplete="username" required maxlength="254" aria-describedby="register-email-error">
+            <p class="form__error" id="register-email-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="register-password">Contraseña</label>
+            <input class="form__input" id="register-password" name="password" type="password" placeholder="Crea una contraseña" autocomplete="new-password" required minlength="10" aria-describedby="register-password-hint register-password-error">
+            <p class="form__hint" id="register-password-hint">Mínimo 10 caracteres.</p>
+            <p class="form__error" id="register-password-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="register-password-confirm">Repite la contraseña</label>
+            <input class="form__input" id="register-password-confirm" name="passwordConfirm" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" required aria-describedby="register-password-confirm-error">
+            <p class="form__error" id="register-password-confirm-error" hidden></p>
+          </div>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <button class="button button--primary button--large form__submit" type="submit">Registrarme</button>
+        </form>
+        <p class="auth__switch auth__only-register">¿Ya formas parte de Koma? <a class="auth__link" href="/entrar" data-keep-next>Ya tengo cuenta</a></p>
+      </section>
+
+      <!-- Panel de bienvenida: decorativo, solo desde 64rem. Va después del formulario para que el h1 sea lo primero. -->
+      <aside class="auth__story auth__only-login" aria-label="Bienvenida a Koma">
+        <p class="eyebrow">Tu espacio entre viñetas</p>
+        <h2 class="auth__story-title">Vuelve a tus <em>historias.</em></h2>
+        <p class="auth__story-text">Inicia sesión para leer más capítulos, comentar cada viñeta y pasarte a Premium cuando quieras.</p>
+        <div class="auth__visual" aria-hidden="true"><span class="auth__glyph">コ<span class="auth__glyph-accent">マ</span></span></div>
+      </aside>
+      <aside class="auth__story auth__only-register" aria-label="Bienvenida a Koma">
+        <p class="eyebrow">Únete a Koma</p>
+        <h2 class="auth__story-title">Las mejores historias <em>se comparten.</em></h2>
+        <p class="auth__story-text">Crea un perfil para comentar viñetas, leer más capítulos y disfrutar de Premium sin anuncios ni límites.</p>
+        <div class="auth__visual" aria-hidden="true"><span class="auth__glyph">コ<span class="auth__glyph-accent">マ</span></span></div>
+      </aside>
+    </div>
   </main>
   <!-- @footer -->
 </body>

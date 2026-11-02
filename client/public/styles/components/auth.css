@@ -1,7 +1,161 @@
-/* Página auth: /entrar y /registro comparten plantilla. El servidor inyecta data-mode en <body> y aquí
-   se muestra solo su formulario, también sin JavaScript. */
+/* /entrar y /registro (auth.html): panel con el formulario y, desde 64rem, panel de bienvenida a su
+   izquierda. El servidor inyecta data-mode en <body> y aquí se muestra solo lo de ese modo, también sin JS. */
 
-[data-mode="login"] .auth__form--register,
-[data-mode="register"] .auth__form--login {
+[data-mode="login"] .auth__only-register,
+[data-mode="register"] .auth__only-login {
   display: none;
+}
+
+.auth {
+  padding-block: var(--space-section) var(--space-16);
+}
+
+.auth__layout {
+  display: grid;
+  grid-template-areas: "panel";
+  align-items: center;
+  gap: var(--space-8);
+  width: min(100% - 2 * var(--gutter), var(--auth-layout-width));
+  margin-inline: auto;
+}
+
+.auth__panel {
+  grid-area: panel;
+  justify-self: center;
+  width: 100%;
+  max-width: var(--form-width);
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.auth__eyebrow {
+  margin-bottom: var(--space-2);
+}
+
+.auth__title {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-title);
+  letter-spacing: var(--letter-spacing-heading);
+}
+
+.auth__subtitle {
+  margin-bottom: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.auth__switch {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* Enlace dentro de la frase, con área táctil de 44 px */
+.auth__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+}
+
+/* Panel de bienvenida (decorativo) */
+.auth__story {
+  display: none;
+  grid-area: story;
+}
+
+.auth__story-title {
+  max-width: var(--measure-story-title);
+  font-size: var(--font-size-3xl);
+  letter-spacing: var(--letter-spacing-story);
+}
+
+.auth__story-title em {
+  color: var(--color-accent-soft);
+  font-style: normal;
+}
+
+.auth__story-text {
+  max-width: var(--measure-story);
+  margin: var(--space-4) 0 var(--space-8);
+  color: var(--color-text-muted);
+}
+
+.auth__visual {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: var(--story-min-height);
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(ellipse at 80% 12%, var(--color-story-glow), transparent 54%),
+    linear-gradient(145deg, var(--color-story-from), var(--color-story-to));
+}
+
+/* Aro y línea: la composición (posiciones en %) es la de la maqueta */
+.auth__visual::before {
+  content: "";
+  position: absolute;
+  width: var(--story-ring-size);
+  height: var(--story-ring-size);
+  border: var(--border-width-strong) solid var(--color-story-ring);
+  border-radius: 50%;
+  box-shadow: var(--shadow-story-ring);
+}
+
+.auth__visual::after {
+  content: "";
+  position: absolute;
+  right: 12%;
+  bottom: 18%;
+  left: 12%;
+  height: var(--border-width-strong);
+  background: linear-gradient(90deg, transparent, var(--color-story-line), transparent);
+}
+
+.auth__glyph {
+  position: relative;
+  z-index: var(--layer-raised);
+  color: var(--color-story-glyph);
+  font-size: var(--font-size-glyph);
+  font-weight: var(--font-weight-black);
+  letter-spacing: var(--letter-spacing-glyph);
+}
+
+.auth__glyph-accent {
+  color: var(--color-story-glyph-accent);
+}
+
+@media (min-width: 40rem) {
+  .auth__layout {
+    width: min(100% - 2 * var(--gutter-wide), var(--auth-layout-width));
+  }
+}
+
+@media (min-width: 64rem) {
+  .auth__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--form-width));
+    grid-template-areas: "story panel";
+    gap: var(--space-gap-auth);
+  }
+
+  .auth__story {
+    display: block;
+  }
+
+  .auth__panel {
+    max-width: none;
+  }
 }

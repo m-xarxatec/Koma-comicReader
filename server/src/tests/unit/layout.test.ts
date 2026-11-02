@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 import { paths } from '../../config/paths.js';
-import { FOOTER_MARKER, HEADER_MARKER, renderTemplate } from '../../utils/layout.js';
+import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate, THEME_COLORS } from '../../utils/layout.js';
 
 // Todas las plantillas que sirve el servidor: páginas (sendPage) y errores (error-handler).
 async function templates(): Promise<{ file: string; html: string }[]> {
@@ -24,10 +24,29 @@ test('Seguridad: cada plantilla lleva una vez cada marcador y ninguna copia prop
   const all = await templates();
   assert.ok(all.length >= 7, `plantillas encontradas: ${all.length}`);
   for (const { file, html } of all) {
+    assert.equal(count(html, HEAD_MARKER), 1, `${file}: ${HEAD_MARKER}`);
+    assert.ok(html.indexOf(HEAD_MARKER) < html.indexOf('</head>'), `${file}: ${HEAD_MARKER} fuera de <head>`);
     assert.equal(count(html, HEADER_MARKER), 1, `${file}: ${HEADER_MARKER}`);
     assert.equal(count(html, FOOTER_MARKER), 1, `${file}: ${FOOTER_MARKER}`);
     assert.equal(count(html, 'class="site-header"'), 0, `${file}: cabecera copiada`);
     assert.equal(count(html, 'class="site-footer"'), 0, `${file}: pie copiado`);
+  }
+});
+
+// Sin @import (las hojas se cargan en serie): cada plantilla enlaza las capas entre los tokens y la base.
+test('Seguridad: cada plantilla enlaza layers.css después de variables.css y antes de base.css, y ningún CSS usa @import', async () => {
+  for (const { file, html } of await templates()) {
+    const tokens = html.indexOf('href="/styles/variables.css"');
+    const layers = html.indexOf('href="/styles/layers.css"');
+    const base = html.indexOf('href="/styles/base.css"');
+    assert.equal(count(html, 'href="/styles/layers.css"'), 1, `${file}: layers.css`);
+    assert.ok(tokens >= 0 && tokens < layers && layers < base, `${file}: orden variables → layers → base`);
+  }
+  const stylesDir = path.join(paths.publicDir, 'styles');
+  const sheets = (await readdir(stylesDir, { recursive: true })).filter((name) => name.endsWith('.css'));
+  assert.ok(sheets.length >= 10, `hojas encontradas: ${sheets.length}`);
+  for (const name of sheets) {
+    assert.ok(!(await readFile(path.join(stylesDir, name), 'utf8')).includes('@import'), `${name}: @import`);
   }
 });
 
@@ -36,8 +55,29 @@ test('Seguridad: ninguna plantilla sale con un marcador sin sustituir', async ()
     const rendered = renderTemplate(html, VALUES);
     assert.equal(count(rendered, '<!-- @'), 0, `${file}: marcador de layout`);
     assert.equal(count(rendered, '{{'), 0, `${file}: valor sin rellenar`);
-    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'src="/js/components/header.js"']) {
+    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'src="/js/components/header.js"']) {
       assert.equal(count(rendered, part), 1, `${file}: ${part}`);
     }
+    assert.equal(count(rendered, 'name="theme-color"'), 2, `${file}: theme-color`);
   }
+});
+
+test('Seguridad: aria-current marca solo la página de la ruta, en la cabecera y en la navegación móvil', () => {
+  const html = `<head>${HEAD_MARKER}</head><body>${HEADER_MARKER}${FOOTER_MARKER}</body>`;
+  assert.equal(count(renderTemplate(html, {}, '/'), 'aria-current="page"'), 2, '/');
+  assert.equal(count(renderTemplate(html, {}, '/'), 'site-nav__link--active'), 1, '/');
+  for (const path of ['', '/entrar', '/no-existe', '/obra/x']) {
+    assert.equal(count(renderTemplate(html, {}, path), 'aria-current'), 0, path);
+  }
+});
+
+// Excepción a "todo valor visual en variables.css": theme-color va en un <meta> de layout.ts y repite el
+// --color-bg de cada tema. Este test es el que mantiene los dos sitios iguales.
+test('Seguridad: theme-color de layout.ts coincide con --color-bg de variables.css en los dos temas', async () => {
+  const css = await readFile(path.join(paths.publicDir, 'styles', 'variables.css'), 'utf8');
+  const light = css.indexOf('@media (prefers-color-scheme: light)');
+  assert.ok(light > 0, 'variables.css tiene el bloque del tema claro');
+  const bg = (part: string) => /--color-bg:\s*(#[0-9a-f]{6})/i.exec(part)?.[1]?.toLowerCase();
+  assert.equal(bg(css.slice(0, light)), THEME_COLORS.dark, 'tema oscuro (por defecto)');
+  assert.equal(bg(css.slice(light)), THEME_COLORS.light, 'tema claro');
 });

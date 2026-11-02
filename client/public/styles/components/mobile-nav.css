@@ -1,0 +1,39 @@
+/* Navegación móvil (server/src/utils/layout.ts): barra fija abajo hasta 64rem, donde la sustituye la
+   navegación de la cabecera. Una columna por enlace; el pie deja aire para no quedar tapado. */
+
+.mobile-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: var(--layer-mobile-nav);
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  min-height: var(--mobile-nav-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: var(--border-width) solid var(--color-border);
+  background: var(--color-bar);
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
+}
+
+.mobile-nav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--mobile-nav-item-height);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mobile-nav__link[aria-current="page"] {
+  color: var(--color-accent);
+}
+
+@media (min-width: 64rem) {
+  .mobile-nav {
+    display: none;
+  }
+}

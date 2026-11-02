@@ -15,8 +15,9 @@ const REQUIRED = 'Este campo es obligatorio';
 const encoder = new TextEncoder();
 const chars = (value: string) => [...value].length; // puntos de código, como el servidor
 
-// Una regla devuelve el mensaje de error o null si el valor es válido.
-export type Rule = (value: string) => string | null;
+// Una regla devuelve el mensaje de error o null si el valor es válido. Recibe también el resto de valores
+// del formulario, para las que comparan dos campos (repetir la contraseña).
+export type Rule = (value: string, values: Readonly<Record<string, string>>) => string | null;
 
 // Como el servidor: sin espacios en los extremos y en minúsculas.
 export function emailProblem(value: string): string | null {
@@ -46,6 +47,13 @@ export function passwordProblem(value: string): string | null {
 export function currentPasswordProblem(value: string): string | null {
   if (value === '') return REQUIRED;
   if (encoder.encode(value).length > PASSWORD_MAX_BYTES) return `No puede pasar de ${PASSWORD_MAX_BYTES} bytes`;
+  return null;
+}
+
+// Solo en el cliente: "Repite la contraseña" no se envía a la API ni forma parte del contrato (RN-12).
+export function passwordConfirmProblem(value: string, values: Readonly<Record<string, string>>): string | null {
+  if (value === '') return REQUIRED;
+  if (value !== (values['password'] ?? '')) return 'Las contraseñas no coinciden';
   return null;
 }
 
@@ -121,7 +129,7 @@ export function bindForm(
     const values = Object.fromEntries(inputsOf(form).map((input) => [input.name, input.value]));
     const errors: Record<string, string> = {};
     for (const [name, rule] of Object.entries(rules)) {
-      const problem = rule(values[name] ?? '');
+      const problem = rule(values[name] ?? '', values);
       if (problem) errors[name] = problem;
     }
     if (Object.keys(errors).length > 0) {

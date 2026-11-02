@@ -1,5 +1,13 @@
 /* Capas: el orden de apilamiento (z-index) de toda la interfaz, en un solo sitio. No es diseño,
    por eso no va en variables.css. Los componentes usan z-index: var(--layer-…). */
 :root {
-  --layer-skip-link: 10;
+  /* Dentro de un bloque con isolation: isolate (escena de error, panel de bienvenida) */
+  --layer-behind: -2;
+  --layer-back: -1;
+  --layer-raised: 1;
+
+  /* Página */
+  --layer-header: 40;
+  --layer-mobile-nav: 60;
+  --layer-skip-link: 200;
 }

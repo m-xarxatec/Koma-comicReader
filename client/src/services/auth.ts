@@ -25,5 +25,7 @@ export interface RegisterInput extends LoginInput {
 
 export const getMe = () => api.get<{ user: UserDto | null }>('/api/me');
 export const login = (input: LoginInput) => api.post<{ user: UserDto }>('/api/auth/login', input);
-export const register = (input: RegisterInput) => api.post<{ user: UserDto }>('/api/auth/register', input);
+// Solo los campos del contrato, aunque `input` traiga más (p. ej. "Repite la contraseña", que no sale del cliente).
+export const register = ({ email, password, displayName }: RegisterInput) =>
+  api.post<{ user: UserDto }>('/api/auth/register', { email, password, displayName });
 export const logout = () => api.post<void>('/api/auth/logout');
