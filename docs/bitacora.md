@@ -182,3 +182,17 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Comprobación:** typecheck, 37 tests unitarios (nuevo: `layers.css` en orden y ningún `@import`) y 48 de API; lo visual, el desarrollador en el navegador.
 - **Fallos:** la primera prueba corrió como agente general (un tipo nuevo no se carga hasta la sesión siguiente) y con navegador sin interfaz, que el desarrollador descartó: el agente compara solo en código. Al invocarlo faltó una decisión aprobada (la línea de XarxaTec) y la marcó como desvío.
 - **Aprendizaje:** al invocar un revisor, pasarle todas las decisiones aprobadas: lo que no consta por escrito lo marca como desvío sin justificar.
+
+### 2026-11-02 · Bloque 2 · Guía "Cargar obras (content/)" con una obra real
+- **Pedido a la IA:** guía sencilla en el README con una obra del desarrollador como ejemplo y su `content/` preparado; antes, que el test de la página genérica compruebe que `layers.css` no se repite.
+- **Resultado:** sección nueva en el README (carpetas, `comic.json`, `tags.json`, imágenes con ffmpeg, carga local y online, errores frecuentes) con *El amante de las princesas*: autor «KOMA Original», etiquetas humor, harem, romance y aventura (humor y harem, nuevas en `tags.json`), sin aviso, cap. 1 «El amante». `content/` (ignorado por git) preparado con los comandos de la guía: 4 páginas y portada en WebP, 1,25 MB frente a 15 MB.
+- **Diferencias con el plan:** carpeta con mayúsculas y guiones bajos, sin carpeta de capítulo, nombres `pagina-01.png` y portada sin llamarse `cover`; sin archivo de datos.
+- **Fallos:** el filtro `scale=…:-2` de la guía estiraba 1 px las páginas de alto impar (2369 → 2370).
+- **Corrección:** `:-1` conserva el alto exacto; comprobado con ffprobe. La ruta del ejemplo usa `$HOME`, para no dejar el usuario del equipo en el README.
+- **Comprobación:** 48 tests de API; JSON validados (formato de las etiquetas, que existan en `tags.json`, `isAdult: false`). Originales sin tocar; nada cargado en la BD.
+- **Pendiente:** con un solo capítulo, la demo no enseña el anuncio, la invitación a registrarse ni el saldo (hacen falta 4).
+
+### 2026-11-02 · Bloque 2 · Contrato de la API (borrador)
+- **Pedido a la IA:** redactar en el plan el contrato de la API del bloque 2 antes de escribir código.
+- **Resultado:** etiquetas, catálogo (título o autor, etiquetas en Y, páginas de 24), ficha con el acceso de cada capítulo, token de anuncio, lectura por `POST` (registra la lectura y pasa el control CSRF) y `/files/:key`, con sus DTO y errores.
+- **Pendiente:** aprobación del desarrollador y sus decisiones abiertas (método de la lectura, búsqueda por autor, caducidad del token, claves derivadas de `COOKIE_SECRET`).
