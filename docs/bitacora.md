@@ -196,3 +196,9 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Pedido a la IA:** redactar en el plan el contrato de la API del bloque 2 antes de escribir código.
 - **Resultado:** etiquetas, catálogo (título o autor, etiquetas en Y, páginas de 24), ficha con el acceso de cada capítulo, token de anuncio, lectura por `POST` (registra la lectura y pasa el control CSRF) y `/files/:key`, con sus DTO y errores.
 - **Pendiente:** aprobación del desarrollador y sus decisiones abiertas (método de la lectura, búsqueda por autor, caducidad del token, claves derivadas de `COOKIE_SECRET`).
+
+### 2026-11-02 · Bloque 2 · Contrato de la API aprobado
+- **Pedido a la IA:** incorporar al contrato las decisiones del desarrollador sobre el borrador.
+- **Resultado:** aprobado. Lectura por `POST`; búsqueda por título y autor; token de anuncio de 30 min en la cabecera `X-Ad-Token` (`api.ts` aceptará cabeceras opcionales sin cambiar el resto de llamadas); claves de firma derivadas de `COOKIE_SECRET` por etiqueta; páginas de 24 obras; `access` y `read` por capítulo en la ficha; sin orden por tendencias; `width` y `height` en las viñetas, leídos del archivo al importar.
+- **Corrección:** el género `humor` se cambia por el de la base `comedia` (en `content/` y en la guía), para no duplicar géneros en el catálogo.
+- **Pendiente (desarrollador):** añadir `width` y `height` a `panels` en `modelo_datos.md` y en la tabla del modelo de datos del plan.
