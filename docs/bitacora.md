@@ -243,3 +243,20 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Resultado:** solo con `STORAGE_DRIVER=local`, antes de `auth`. La clave se valida con la regex antes que la firma y que el disco (404); firma o caducidad, 403; `exp` solo en forma canónica; `sendFile` con `root` y `Cache-Control: private` hasta `exp`. Sin zod a propósito: el contrato fija 404 y 403, no 400. La CSP toma los hosts de R2 de `r2.ts`.
 - **Comprobación (IA):** `files.test.ts` (6) y `files-r2.test.ts` (2, con credenciales ficticias): con r2 la ruta no existe y la CSP admite justo el origen de las URLs prefirmadas. 62 tests de API, 52 unitarios y typecheck.
 - **Comprobación manual (IA):** `curl` al servidor de desarrollo: 200 `image/webp` con `max-age=7200`, 403 y 404. Los logs guardan la ruta sin `sig`.
+
+### 2026-11-02 · Bloque 2 · T6: importación de content/
+- **Pedido a la IA:** `npm run content:import` (RN-18), con las reglas de RN-10 y RN-17 y la decisión D5 (una obra existente solo recibe capítulos nuevos).
+- **Resultado:** `scripts/import-content.ts` valida cada obra entera antes de subir nada: `comic.json` y `tags.json` con zod estricto, `licenseUrl` solo http(s), nombres solo con dígitos, firma, 5 MB, 60 imágenes y una sola portada. Después sube las imágenes y hace una transacción por obra con `content.import`. Repositorios de obras y capítulos, `config/limits.ts` y la guía del README al día.
+- **Comprobación (IA):** 8 tests de API con `content/` y almacenamiento temporales: alta completa, repetición, 15 errores de estructura, límites en el borde, +18, enlaces, obra de autor o retirada y `tags.json`. Dos mutaciones hacen fallar sus tests. En local, *El amante de las princesas*: 4 viñetas con medidas y portada; la segunda carga no cambia nada.
+- **Fallos:** `seed.test.ts` contaba todas las etiquetas y fallaría en paralelo con la importación; un test no creaba la carpeta vacía (`path.dirname` de `002/`).
+- **Corrección:** el test del seed solo mira las 12 base; `mkdir` directo para las carpetas vacías.
+- **Pendiente de confirmar:** un capítulo "ya existente" es cualquier fila con ese número, también retirada o rechazada; la carpeta de una obra de autor o retirada se omite con error; una entrada de `comic.json` sin carpeta solo avisa; con errores, el comando sale con código 1.
+- **Aprendizaje:** `node --test` ejecuta los archivos en paralelo sobre la misma `koma_test`: cada test acota sus datos con un sufijo propio y no cuenta filas de toda la tabla.
+
+### 2026-11-02 · Bloque 2 · T7: catálogo y etiquetas
+- **Pedido a la IA:** `GET /api/tags` y `GET /api/comics` del contrato (CU-01).
+- **Resultado:** módulo `comics` (schema, repository, service, controller y routes). Búsqueda en título y autor con `ILIKE` escapado (`%`, `_` y `\`), etiquetas en Y sin repetidos y páginas de 24 con `total`, de la más reciente a la más antigua; solo aprobadas y no retiradas; portada firmada o `null`. SQL fijo: los filtros vacíos se resuelven con parámetros, sin concatenar datos.
+- **Comprobación (IA):** 5 tests unitarios (escape y query) y 8 de API con marcadores propios; con el escape anulado, el de comodines falla. `curl` en local con la obra real: búsqueda, etiquetas en Y, portada 200 y 400 con `fields`. 57 unitarios, 78 de API y typecheck.
+- **Fallos:** el recuento y la página iban en `Promise.all` sobre el mismo `Queryable`: con un `PoolClient` serían dos consultas a la vez en un cliente.
+- **Corrección:** una tras otra.
+- **Commits:** T6 y T7 comparten `comics.repository.ts`. La versión de T6 va en un parche para el índice (`git apply --cached`), comprobado compilando T6 aislado.
