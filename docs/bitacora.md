@@ -202,3 +202,44 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Resultado:** aprobado. Lectura por `POST`; búsqueda por título y autor; token de anuncio de 30 min en la cabecera `X-Ad-Token` (`api.ts` aceptará cabeceras opcionales sin cambiar el resto de llamadas); claves de firma derivadas de `COOKIE_SECRET` por etiqueta; páginas de 24 obras; `access` y `read` por capítulo en la ficha; sin orden por tendencias; `width` y `height` en las viñetas, leídos del archivo al importar.
 - **Corrección:** el género `humor` se cambia por el de la base `comedia` (en `content/` y en la guía), para no duplicar géneros en el catálogo.
 - **Pendiente (desarrollador):** añadir `width` y `height` a `panels` en `modelo_datos.md` y en la tabla del modelo de datos del plan.
+
+### 2026-11-02 · Bloque 2 · Desglose y decisiones aprobados
+- **Pedido a la IA:** desglose del bloque (T1–T18, 36 h del 4 al 9-nov, intersticial al final) y decisiones abiertas con recomendación.
+- **Lectura:** fila de `reading_credits` en la primera lectura (NULL = lleno con el máximo vigente); premium y admin en `chapter_reads`, sin saldo; admin y autor dueño fuera de las estadísticas; cookie `koma_guest_reads` (HMAC `guest-reads`, 30 días); HKDF por etiqueta; reimportar solo añade capítulos; `/ad` con `ad: null` sin anuncios (contrato actualizado); título y advertencia inyectados y escapados en la página del lector.
+- **Home:** `/explorar` → `/#catalogo`; «Tendencias» con las 5 primeras de la petición del catálogo; filtros con casillas desde `/api/tags`; géneros sin «ICONO» ni +18; hero sin texto; Crear en el bloque 3 y Premium en el 4; paginación y estado vacío propios.
+- **Ficha:** sin subtítulo ni «En publicación»; todos los capítulos enlazados con su estado; «Autor original»; «Cómo funciona» con las reglas reales.
+- **Lector:** barra propia sin cabecera ni pie del sitio (excepción en el test); `#v-N`; «Saltar al contenido»; «Recargar» repite el POST; comentarios en el bloque 3; pantalla completa funcional (API Fullscreen, `aria-pressed`, `fullscreenchange`, `disabled` sin soporte, con test); pantallas sin diseño con piezas aprobadas.
+- **Desarrollador:** prepara la segunda obra de demostración y el bucket y el token de R2; la IA no ejecuta nada online.
+- **Pendiente (desarrollador):** cambiar en `modelo_datos.md` la línea de creación de la fila de `reading_credits` (D1).
+
+### 2026-11-02 · Bloque 2 · T1: migraciones 004, 005, 007 y 008
+- **Pedido a la IA:** las cuatro migraciones del bloque, copiadas de `modelo_datos.md`, con tests de sus restricciones.
+- **Resultado:** SQL idéntico al documento (`diff` contra sus bloques). La 006 llega en el bloque 3: `migrate.ts` aplica las pendientes aunque haya huecos.
+- **Tests:** `schema.test.ts`, en transacciones que se deshacen: +18 aprobada (RN-17), número único entre capítulos vivos (RN-09), medidas positivas y posición única (RN-18) y claves `UUID.ext`.
+- **Comprobación (IA):** `migrate` dos veces en local (4 aplicadas y 0); 52 tests de API.
+
+### 2026-11-02 · Bloque 2 · T2: seed de etiquetas y anuncios
+- **Pedido a la IA:** seed del bloque 2: 12 etiquetas base y 3 anuncios de solo texto, idempotente y auditado con `system.seed`.
+- **Resultado:** etiquetas con `ON CONFLICT (slug) DO NOTHING`; anuncios en una sola sentencia que solo inserta si `ads` está vacía; cada fila creada, auditada con su id y su slug o marca.
+- **Comprobación (IA):** en local, 12 + 3 la primera vez y 0 la segunda; `seed.test.ts` (contenido, auditoría y repetición sin cambios); 54 tests de API.
+- **Pendiente:** los nombres visibles no están en `docs/`: se usan los de la maqueta («Terror» para `horror`, «Slice of Life»), a confirmar.
+
+### 2026-11-02 · Bloque 2 · T3: firma y medidas de imagen
+- **Pedido a la IA:** tipo por firma y ancho y alto de JPEG, PNG y WebP sin dependencias (RN-10, RN-18).
+- **Resultado:** `utils/image.ts`: PNG (IHDR), JPEG (segmentos hasta el SOF, con rellenos; DHT, JPG y DAC no son SOF; SOS o EOI antes, no válido) y WebP VP8, VP8L y VP8X; además, la regex de claves, los Content-Type y `newImageKey`.
+- **Comprobación (IA):** 7 tests unitarios con cabeceras hechas byte a byte. Contra `ffprobe`, iguales en 21 archivos reales (`content/`, maqueta e iconos) y en 3 generados (JPEG y WebP sin pérdida y con alfa).
+- **Fallos:** ffmpeg no genera JPEG progresivos: el SOF2 solo lo cubre el test unitario.
+
+### 2026-11-02 · Bloque 2 · T4: firmas y drivers de almacenamiento
+- **Pedido a la IA:** firmas HMAC con claves derivadas por uso y drivers local y R2 con URLs firmadas.
+- **Resultado:** `utils/signing.ts` (HKDF-SHA256; etiquetas `ad-token`, `files` y `guest-reads`; compara el texto de la firma con `timingSafeEqual`; firma con caducidad). `integrations/storage/` (`driver`, `local`, `r2`, `index`): `put` desde disco y `signedUrl`; el local no sobrescribe; R2 según las trampas conocidas.
+- **Comprobación (IA):** 8 tests unitarios: clave distinta por uso, firma alterada o con basura, caducidad, claves no válidas rechazadas antes del disco o la red, y URL prefirmada de R2 calculada sin red.
+- **Fallos:** la regla `storage/` del `.gitignore` también ignoraba `server/src/integrations/storage/`: git no lo veía y Render no compilaría.
+- **Corrección:** pendiente del desarrollador: anclar la regla a la raíz (`/storage/`).
+- **Aprendizaje:** tras crear una carpeta, mirar `git status`: una regla sin `/` inicial ignora ese nombre a cualquier profundidad.
+
+### 2026-11-02 · Bloque 2 · T5: GET /files/:key
+- **Pedido a la IA:** `GET /files/:key?exp=&sig=` del driver local (contrato del bloque 2).
+- **Resultado:** solo con `STORAGE_DRIVER=local`, antes de `auth`. La clave se valida con la regex antes que la firma y que el disco (404); firma o caducidad, 403; `exp` solo en forma canónica; `sendFile` con `root` y `Cache-Control: private` hasta `exp`. Sin zod a propósito: el contrato fija 404 y 403, no 400. La CSP toma los hosts de R2 de `r2.ts`.
+- **Comprobación (IA):** `files.test.ts` (6) y `files-r2.test.ts` (2, con credenciales ficticias): con r2 la ruta no existe y la CSP admite justo el origen de las URLs prefirmadas. 62 tests de API, 52 unitarios y typecheck.
+- **Comprobación manual (IA):** `curl` al servidor de desarrollo: 200 `image/webp` con `max-age=7200`, 403 y 404. Los logs guardan la ruta sin `sig`.
