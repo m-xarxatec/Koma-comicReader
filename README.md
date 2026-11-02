@@ -103,7 +103,7 @@ Así queda el de *El amante de las princesas*:
   "licenseUrl": null,
   "isAdult": false,
   "contentWarning": null,
-  "tags": ["humor", "harem", "romance", "aventura"],
+  "tags": ["comedia", "harem", "romance", "aventura"],
   "chapters": {
     "1": { "title": "El amante" }
   }
@@ -120,13 +120,13 @@ Cada etiqueta de `tags` tiene que estar en `content/tags.json`. Las etiquetas ba
 - géneros: `fantasia`, `aventura`, `comedia`, `drama`, `horror`, `misterio`, `romance`, `ciencia-ficcion`;
 - temáticas: `magia`, `psicologico`, `sobrenatural`, `slice-of-life`.
 
-`humor` y `harem` no están en esa lista, así que se añaden en `content/tags.json` como géneros nuevos (al cargar, se crean o se actualizan):
+`harem` no está en esa lista, así que se añade en `content/tags.json` como género nuevo (al cargar, las etiquetas de ese archivo se crean o se actualizan):
 
 ```json
 [
   { "slug": "romance", "name": "Romance", "type": "genre" },
   { "slug": "aventura", "name": "Aventura", "type": "genre" },
-  { "slug": "humor", "name": "Humor", "type": "genre" },
+  { "slug": "comedia", "name": "Comedia", "type": "genre" },
   { "slug": "harem", "name": "Harem", "type": "genre" }
 ]
 ```
