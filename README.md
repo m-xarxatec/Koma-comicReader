@@ -91,3 +91,14 @@ Todas están en `.env.example`, con una nota cada una. Estas son las que cambian
 - `JWT_SECRET` y `COOKIE_SECRET`: al menos 32 caracteres aleatorios, distintos en cada entorno.
 - `SEED_*_PASSWORD`: contraseñas de las cuentas demo, de 10 caracteres a 72 bytes. Las locales están en `docs/credenciales.local.md`.
 - La demo en Docker ya fija sus valores en `docker-compose.yml`; el resto los toma de `.env`.
+
+### Pagos con Stripe (modo prueba)
+
+Estas tres variables salen del panel de Stripe, en el entorno de prueba (sandbox):
+
+- `STRIPE_SECRET_KEY`: la clave secreta de prueba (empieza por `sk_test_`), en Desarrolladores → Claves de API.
+- `STRIPE_PRICE_ID`: el identificador del precio mensual de "Koma Premium" (empieza por `price_`).
+- `STRIPE_WEBHOOK_SECRET`: se muestra al crear el webhook (empieza por `whsec_`).
+
+Los pasos para crear el producto, el portal y el webhook están en el paso 7 de "Primer despliegue" de `docs/plan_mvp.md`.
+Estas claves nunca se suben al repositorio ni se comparten en chats.
