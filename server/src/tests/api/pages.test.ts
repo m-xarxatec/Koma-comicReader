@@ -166,10 +166,12 @@ test('Seguridad: un error sin plantilla usa la página genérica con el mismo la
   const html = await res.text();
   assert.equal(res.status, 413);
   assert.equal(title(html), 'Error 413 · Koma');
-  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'name="theme-color"', '/styles/layers.css', '/styles/base.css', `<code class="error-copy__reference-code">${res.headers.get('x-request-id')}</code>`]) {
+  for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'name="theme-color"', `<code class="error-copy__reference-code">${res.headers.get('x-request-id')}</code>`]) {
     assert.ok(html.includes(part), part);
   }
-  // Mismo orden de hojas que las plantillas de client/public (lo comprueba layout.test.ts): tokens, capas y base.
+  // Como las plantillas de client/public (lo comprueba layout.test.ts): layers.css una sola vez, y tokens,
+  // capas y base en ese orden (si falta alguna, indexOf da -1 y el orden falla).
+  assert.equal(html.split('href="/styles/layers.css"').length - 1, 1, 'layers.css una sola vez');
   const tokens = html.indexOf('href="/styles/variables.css"');
   const layers = html.indexOf('href="/styles/layers.css"');
   const base = html.indexOf('href="/styles/base.css"');
