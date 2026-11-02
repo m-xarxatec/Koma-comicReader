@@ -44,10 +44,10 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts
-│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (cabecera y pie), redirect.ts (next)
+│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
-│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg)
+│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo e ilustraciones de error)
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
@@ -65,7 +65,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 5. `repository`: único lugar con SQL (parametrizado); recibe como primer parámetro un `Queryable` (`Pool | PoolClient`: `pool` o el `client` de la transacción); convierte snake_case ↔ camelCase.
 6. `error-handler`: decide código y formato de cualquier error.
 
-- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, cabecera y pie de `layout.ts` con los marcadores `<!-- @header -->`/`<!-- @footer -->` e inyección de `requestId`), nunca por `express.static`.
+- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, e inyección de `requestId`), nunca por `express.static`.
 - Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`.
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
 - Local y online son el mismo código; solo cambian `STORAGE_DRIVER` y `PAYMENTS_DRIVER`. `env.ts` rechaza `PAYMENTS_DRIVER=fake` con `NODE_ENV=production`.
@@ -91,7 +91,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - `requestId` (`crypto.randomUUID()`) va en `X-Request-Id`, en cada log, en la auditoría y en la respuesta de error; los scripts generan el suyo.
 - Cliente: peticiones solo por `services/api.ts` (`ApiResult<T>`, nunca lanza por errores HTTP); formularios con `bindForm(form, rules, onSubmit)`; un `store` mínimo por página; sesión desde `GET /api/me`; preferencias de interfaz (advertencias aceptadas, ocultar iconos) en `localStorage` con `try/catch`, nunca permisos ni límites. zod en el servidor es la fuente de verdad; el cliente duplica sus constantes de forma explícita.
 - HTML semántico que se entiende sin JS: `<title>` `Koma` o `<página> · Koma`, un solo `<h1>`, `header`/`nav`/`main`/`footer`, enlace "Saltar al contenido", `lang="es"`, `loading="lazy"` salvo la primera imagen, `<link rel="icon" href="/icons/favicon.svg">`.
-- CSS mobile-first (`min-width: 40rem` y `64rem`), BEM, un archivo por componente, todo valor visual en `variables.css` (el diseño lo sustituye sin tocar HTML, TS ni componentes) y `z-index` en `layers.css`, modo oscuro con `prefers-color-scheme`, fuentes del sistema, `:focus-visible` y áreas táctiles de 44 px.
+- CSS mobile-first (`min-width: 40rem` y `64rem`), BEM, un archivo por componente, todo valor visual en `variables.css` (el diseño lo sustituye sin tocar HTML, TS ni componentes; única excepción: los dos `<meta name="theme-color">` de `layout.ts`, que repiten `--color-bg` y un test los compara) y `z-index` en `layers.css`, tema oscuro por defecto y claro con `prefers-color-scheme: light`, fuentes del sistema, `:focus-visible` y áreas táctiles de 44 px.
 - `ILIKE` escapa `%` y `_`; el orden dinámico usa lista blanca de columnas. Antes de redirigir al login, el cliente guarda el fragmento `#v-n`.
 - Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app (retorno de Stripe).
 
@@ -148,3 +148,8 @@ Un bloque está cerrado solo cuando:
 - [ ] Sus acciones sensibles aparecen en la auditoría.
 - [ ] Variables nuevas en `.env.example` y en el README.
 - [ ] Entrada del bloque en `docs/bitacora.md`.
+
+Agente `frontend` (`.claude/agents/frontend.md`): revisa el cliente frente a CLAUDE.md, `docs/` y la maqueta `koma_home`.
+- Alcance: `client/public`, `client/src`, `layout.ts`, `page.ts` y las plantillas de error; la seguridad del servidor y las RN siguen siendo del `auditor`.
+- Solo lectura: no modifica archivos; informa de hallazgos (archivo, línea, gravedad, corrección propuesta) y de lo que hay que mirar a mano en el navegador.
+- Se ejecuta al terminar cada página o conjunto de páginas integradas, y antes del `auditor` del cierre del bloque.
