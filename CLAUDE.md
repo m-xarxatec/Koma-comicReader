@@ -7,7 +7,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 **Koma**: plataforma de cómics estilo webtoon (proyecto final de XarxaTec Activa). MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible.
 
 - Congelación de funciones: **20-nov-2026**; entrega: 25-nov-2026. Vibecoding: la IA genera el código; el desarrollador lo especifica, revisa y corrige.
-- Bloque actual: **1 · Base y despliegue (30 oct – 3 nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **2 · Catálogo y lector (4 – 9 nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto (ESM, `module: NodeNext`), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos
