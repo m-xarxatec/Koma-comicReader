@@ -578,6 +578,81 @@ interface UserDto {
 
 Webhook de Stripe (prueba mínima del bloque 1): solo existe con `PAYMENTS_DRIVER=stripe`. Va después de `request-id` (sus dos líneas de log comparten `requestId`) y antes de `csrf` (exento: se valida la firma con `STRIPE_WEBHOOK_SECRET` y 5 min de tolerancia), `auth` y los `express.json`: lee el cuerpo crudo con `express.raw()` y el límite general de 100 kB. No toca la BD: `payment_events` y `syncSubscription` (RN-04) llegan en el bloque 4. En el log van solo `eventId`, `type`, `livemode` y `apiVersion` del evento; nunca la cabecera `Stripe-Signature` ni el cuerpo, tampoco en el `warn` de firma no válida, que lleva solo el motivo que da Stripe.
 
+## Contrato de la API del bloque 2 (borrador, pendiente de aprobación)
+
+Catálogo, ficha y lector (CU-01 a CU-04, CU-12 y CU-24; RN-01 a RN-03 y RN-06 a RN-09). Solo se ven obras y capítulos `approved` y no retirados; el autor dueño y el admin verán también los suyos en `pending` o `draft` cuando lleguen en el bloque 3. Toda imagen va con URL firmada de `SIGNED_URL_TTL_SECONDS`.
+
+| Método y ruta | Entrada | Éxito | Errores |
+| --- | --- | --- | --- |
+| `GET /api/tags` | — | 200 `{ tags: TagDto[] }` | — |
+| `GET /api/comics` | Query: `q` (0–100 caracteres), `tags` (slugs separados por comas, hasta 10), `page` (≥ 1) | 200 `{ comics: ComicCardDto[], page, pageSize, total }`, de la más reciente a la más antigua | 400 |
+| `GET /api/comics/:slug` | — | 200 `{ comic: ComicDto }` | 404 `NOT_FOUND`, 410 `GONE` |
+| `GET /api/comics/:slug/ad` | — | 200 `{ ad: AdDto, adToken, minSeconds }` | 404, 410 |
+| `POST /api/comics/:slug/chapters/:number/read` | Cabecera `X-Ad-Token` (solo invitado en el cap. 3) | 200 `{ reading: ReadingDto }` | 401 `UNAUTHENTICATED`, 403 `AD_NOT_COMPLETED`, 403 `READING_LIMIT` (+ `retryAt`), 404, 410 |
+| `GET /files/:key?exp=&sig=` | Solo con `STORAGE_DRIVER=local` | 200 imagen, en caché privada hasta `exp` | 403 (firma o caducidad), 404 (clave no válida o inexistente) |
+
+```ts
+interface TagDto {
+  slug: string;
+  name: string;
+  type: 'genre' | 'theme';
+}
+
+interface ComicCardDto {
+  slug: string;
+  title: string;
+  authorCredit: string;
+  coverUrl: string | null; // firmada; null si no tiene portada
+  tags: TagDto[];
+}
+
+interface ComicDto extends ComicCardDto {
+  synopsis: string;
+  publishedBy: string | null; // nombre visible del autor; null = "la plataforma" (obra importada, RN-07)
+  license: string;
+  licenseUrl: string | null;
+  contentWarning: string | null; // RN-08
+  chapters: ChapterSummaryDto[]; // por número
+}
+
+interface ChapterSummaryDto {
+  number: number;
+  title: string;
+  publishedAt: string; // ISO 8601
+  access: 'free' | 'ad' | 'account' | 'balance'; // qué exige leerlo a quien consulta (RN-01, RN-02)
+  read: boolean; // ya leído por este usuario (chapter_reads); false para el invitado
+}
+
+interface AdDto {
+  brand: string;
+  body: string;
+  imageUrl: string | null; // firmada; null = tarjeta de texto
+}
+
+interface ReadingDto {
+  comic: { slug: string; title: string; contentWarning: string | null };
+  chapter: { number: number; title: string; prev: number | null; next: number | null };
+  panels: { position: number; url: string }[]; // la viñeta n es #v-n (RN-09)
+  ads: { interstitial: AdDto | null; end: AdDto | null }; // RN-03; los dos null para invitado, premium y admin
+  balance: { balance: number; max: number; retryAt: string | null } | null; // solo registrado sin premium
+}
+```
+
+- **Catálogo (CU-01):** `q` busca en el título y en el autor (`author_credit`) con `ILIKE`, escapando `%` y `_`. `tags` combina con Y (consulta de `modelo_datos.md`); un slug que no existe deja la lista vacía. Página de 24 obras (constante).
+- **Ficha (CU-02):** 404 si la obra no existe o no está aprobada; 410 si está retirada (RN-06). `access` vale `free` (caps. 1–2, ya leído, premium o admin), `ad` (invitado, cap. 3), `account` (invitado, cap. 4 en adelante) o `balance` (registrado, gasta 1 de saldo).
+- **Lectura (CU-03, CU-04, CU-12, CU-24):** es `POST` porque registra la lectura (ningún GET modifica datos; pasa el control CSRF). Se decide en este orden:
+  1. Obra y capítulo existen y están aprobados (404) y no retirados (410).
+  2. Admin y premium leen siempre, sin anuncios ni saldo.
+  3. Caps. 1–2: libres para todos y sin consumo.
+  4. Invitado: el cap. 3 exige un `X-Ad-Token` válido (misma obra, emitido hace al menos `AD_MIN_SECONDS` y como mucho 30 min); si no, 403 `AD_NOT_COMPLETED`. Del cap. 4 en adelante, 401 `UNAUTHENTICATED`: el lector muestra la invitación a registrarse y no redirige.
+  5. Registrado: si ya lo leyó, no consume; si no, gasta 1 del saldo recalculado (RN-02, fila con `SELECT … FOR UPDATE`). Sin saldo, 403 `READING_LIMIT` con `retryAt`.
+- **Efectos de la lectura,** en una transacción: `chapter_reads` (primera lectura o `last_read_at`), `reading_credits` (saldo y `reads_since_ad`) y `chapter_read_counts` (`user_reads` en la primera lectura; `guest_reads` si el capítulo no está en la cookie firmada del invitado, con sus últimos 50 ids). No cuentan el autor dueño ni el admin. "Recargar" (CU-03) repite la petición: URLs firmadas nuevas, sin volver a consumir.
+- **Anuncios (RN-03):** el registrado recibe `ads.end` en cada capítulo y `ads.interstitial` cuando `reads_since_ad` llega a 5 primeras lecturas, que lo pone a 0. Se eligen al azar entre los activos. El intersticial va al final del bloque (recortable).
+- **Token de anuncio (RN-01):** lo da `GET /api/comics/:slug/ad`, que no guarda nada. Es `comicId.startedAt` en base64url más su HMAC-SHA256, con una clave derivada de `COOKIE_SECRET` (etiqueta `ad-token`), sin variable nueva.
+- **`/files/:key` (driver local):** la firma es un HMAC-SHA256 de `key` y `exp` (segundos Unix) con una clave derivada de `COOKIE_SECRET` (etiqueta `files`). La clave se valida con la regex del plan antes de tocar el disco. Con `r2`, las URLs son prefirmadas de R2.
+- **Páginas:** `/obra/:slug` y `/leer/:slug/:numero` hacen las comprobaciones del mapa de rutas (404, 410) y piden los datos a la API; `/leer/:slug` → 301 a `/leer/:slug/1`.
+- **Importación (RN-18):** en `comic.json`, `licenseUrl` y `contentWarning` admiten `null` y el título de capítulo es opcional.
+
 ## Convenciones, tests y definición de terminado
 
 ### Convenciones
