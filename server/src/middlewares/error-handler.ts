@@ -25,6 +25,9 @@ const DB_UNAVAILABLE_MESSAGES = /timeout exceeded when trying to connect|Connect
 
 function toAppError(err: unknown): AppError {
   if (err instanceof AppError) return err;
+  // El router no puede decodificar un parámetro de ruta con un % mal formado (/files/%E0%A4%A): ningún
+  // recurso tiene ese nombre, así que es un 404, no un fallo del servidor.
+  if (err instanceof URIError) return new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe', { cause: err });
   const { type, code, message } = (err ?? {}) as { type?: unknown; code?: unknown; message?: unknown };
   const bodyError = typeof type === 'string' && Object.hasOwn(BODY_PARSER_ERRORS, type) ? BODY_PARSER_ERRORS[type] : undefined;
   if (bodyError) {

@@ -88,6 +88,14 @@ test('Seguridad: /files valida la clave antes que la firma y antes de tocar el d
   }
 });
 
+test('Seguridad: /files responde 404 (no 500) a una clave con una codificación % mal formada', async () => {
+  for (const candidate of ['%E0%A4%A', '%C0%AF', '%']) {
+    const res = await get(`/files/${candidate}?exp=${nowSeconds() + 60}&sig=x`);
+    assert.equal(res.status, 404, candidate);
+    assert.match(res.headers.get('content-type') ?? '', /^text\/html/, candidate);
+  }
+});
+
 test('Seguridad: /files responde 404 a una clave válida y bien firmada que no existe', async () => {
   const missing = newImageKey('webp');
   const exp = nowSeconds() + 60;
