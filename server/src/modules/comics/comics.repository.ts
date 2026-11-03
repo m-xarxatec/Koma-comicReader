@@ -63,6 +63,14 @@ export async function insertComic(db: Queryable, comic: NewComic): Promise<numbe
   return rows[0]!.id;
 }
 
+// Etiquetas existentes con esos slugs, bloqueadas hasta el final de la transacción: la importación compara
+// con ellas qué crea y qué cambia, y lo audita.
+export async function findTagsBySlugsForUpdate(db: Queryable, slugs: readonly string[]): Promise<TagInput[]> {
+  if (slugs.length === 0) return [];
+  const { rows } = await db.query<TagInput>('SELECT slug, name, type FROM tags WHERE slug = ANY($1::text[]) FOR UPDATE', [slugs]);
+  return rows;
+}
+
 // Etiquetas de content/tags.json: se crean o se actualizan su nombre y su tipo (modelo_datos.md, "Seeds").
 export async function upsertTags(db: Queryable, tags: readonly TagInput[]): Promise<void> {
   if (tags.length === 0) return;

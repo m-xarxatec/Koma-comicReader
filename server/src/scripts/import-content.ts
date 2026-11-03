@@ -269,6 +269,45 @@ async function applyPlan(plan: Plan, storage: StorageDriver, requestId: string):
   });
 }
 
+type Tag = comicsRepository.TagInput;
+
+// Crea o actualiza las etiquetas de tags.json en una transacción con su entrada content.import (entidad
+// `tags`, sin id): en `after`, las creadas y los campos cambiados de las actualizadas; en `before`, esos
+// mismos campos como estaban. Sin cambios, ni escritura ni auditoría.
+async function applyTags(tags: readonly Tag[], requestId: string): Promise<void> {
+  await withTransaction(async (client) => {
+    const current = new Map((await comicsRepository.findTagsBySlugsForUpdate(client, tags.map((tag) => tag.slug))).map((tag) => [tag.slug, tag]));
+    const created: Tag[] = [];
+    const before: Partial<Tag>[] = [];
+    const updated: Partial<Tag>[] = [];
+    for (const tag of [...tags].sort((a, b) => a.slug.localeCompare(b.slug))) {
+      const old = current.get(tag.slug);
+      if (!old) {
+        created.push(tag);
+        continue;
+      }
+      if (old.name === tag.name && old.type === tag.type) continue;
+      before.push({ slug: tag.slug, ...(old.name !== tag.name && { name: old.name }), ...(old.type !== tag.type && { type: old.type }) });
+      updated.push({ slug: tag.slug, ...(old.name !== tag.name && { name: tag.name }), ...(old.type !== tag.type && { type: tag.type }) });
+    }
+    if (created.length === 0 && updated.length === 0) return;
+
+    const changedSlugs = new Set([...created, ...updated].map((tag) => tag.slug));
+    await comicsRepository.upsertTags(client, tags.filter((tag) => changedSlugs.has(tag.slug)));
+    await audit.record(client, {
+      action: 'content.import',
+      actorId: null,
+      entityType: 'tags',
+      entityId: null,
+      before: updated.length > 0 ? { updated: before } : null,
+      after: { created, updated },
+      ip: null,
+      requestId,
+    });
+    logger.info('Etiquetas importadas', { requestId, created: created.map((tag) => tag.slug), updated: updated.map((tag) => tag.slug) });
+  });
+}
+
 export interface ImportOptions {
   contentDir: string; // ruta absoluta
   storage: StorageDriver;
@@ -288,7 +327,7 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
     if (err instanceof ContentError) throw new Error(`Importación cancelada: ${err.message}`);
     throw err;
   }
-  await comicsRepository.upsertTags(pool, tags);
+  await applyTags(tags, requestId);
   const knownTags = new Set(tags.map((tag) => tag.slug));
 
   const summary: ImportSummary = { comicsCreated: 0, chaptersAdded: 0, chaptersSkipped: 0, errors: [] };

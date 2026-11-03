@@ -161,7 +161,7 @@ test('RN-18: importa una obra nueva aprobada, con etiquetas, capítulos, viñeta
   assert.ok(stored.every((key) => IMAGE_KEY_PATTERN.test(key)));
 
   const { rows: audits } = await pool.query(
-    'SELECT action, actor_id, entity_type, entity_id, after, ip FROM audit_log WHERE request_id = $1',
+    `SELECT action, actor_id, entity_type, entity_id, after, ip FROM audit_log WHERE request_id = $1 AND entity_type = 'comics'`,
     [requestId],
   );
   assert.deepEqual(audits, [
@@ -311,6 +311,69 @@ test('Seguridad: la importación no añade capítulos a una obra de un autor ni 
     [[authored, withdrawn]],
   );
   assert.equal(chapters[0]?.n, 0);
+});
+
+test('RN-18: las etiquetas creadas o cambiadas desde tags.json quedan en content.import; sin cambios, no hay entrada', async () => {
+  const [a, b, c] = [slugOf('etq-a'), slugOf('etq-b'), slugOf('etq-c')];
+  const tagAudits = async (requestId: string) =>
+    (
+      await pool.query(
+        `SELECT action, actor_id, entity_id, before, after, ip FROM audit_log WHERE request_id = $1 AND entity_type = 'tags'`,
+        [requestId],
+      )
+    ).rows;
+  const { contentDir, run } = await fixture(
+    {},
+    JSON.stringify([
+      { slug: b, name: 'Be', type: 'theme' },
+      { slug: a, name: 'A', type: 'genre' },
+    ]),
+  );
+
+  const first = randomUUID();
+  await run(first);
+  assert.deepEqual(await tagAudits(first), [
+    {
+      action: 'content.import',
+      actor_id: null,
+      entity_id: null,
+      before: null,
+      after: { created: [{ slug: a, name: 'A', type: 'genre' }, { slug: b, name: 'Be', type: 'theme' }], updated: [] },
+      ip: null,
+    },
+  ]);
+
+  const same = randomUUID();
+  await run(same);
+  assert.deepEqual(await tagAudits(same), [], 'sin cambios, sin auditoría');
+
+  // a cambia de nombre, b de tipo y c es nueva: before y after llevan solo los campos cambiados.
+  await writeFile(
+    path.join(contentDir, 'tags.json'),
+    JSON.stringify([
+      { slug: a, name: 'A bis', type: 'genre' },
+      { slug: b, name: 'Be', type: 'genre' },
+      { slug: c, name: 'Ce', type: 'theme' },
+    ]),
+  );
+  const changed = randomUUID();
+  await run(changed);
+  assert.deepEqual(await tagAudits(changed), [
+    {
+      action: 'content.import',
+      actor_id: null,
+      entity_id: null,
+      before: { updated: [{ slug: a, name: 'A' }, { slug: b, type: 'theme' }] },
+      after: { created: [{ slug: c, name: 'Ce', type: 'theme' }], updated: [{ slug: a, name: 'A bis' }, { slug: b, type: 'genre' }] },
+      ip: null,
+    },
+  ]);
+  const { rows } = await pool.query('SELECT slug, name, type FROM tags WHERE slug = ANY($1::text[]) ORDER BY slug', [[a, b, c]]);
+  assert.deepEqual(rows, [
+    { slug: a, name: 'A bis', type: 'genre' },
+    { slug: b, name: 'Be', type: 'genre' },
+    { slug: c, name: 'Ce', type: 'theme' },
+  ]);
 });
 
 test('Seguridad: sin un tags.json válido no se importa nada', async () => {
