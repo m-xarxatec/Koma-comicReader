@@ -40,6 +40,68 @@ export async function findComicRefBySlug(db: Queryable, slug: string): Promise<C
   return row ? { id: row.id, authorId: row.author_id, deletedAt: row.deleted_at } : null;
 }
 
+// Ficha de una obra (CU-02), en cualquier estado: el servicio decide 404 o 410. `publishedBy` es el nombre
+// visible de su autor (NULL = importada: "la plataforma", RN-07).
+export interface ComicRow {
+  id: number;
+  slug: string;
+  title: string;
+  synopsis: string;
+  authorId: number | null;
+  authorCredit: string;
+  publishedBy: string | null;
+  license: string;
+  licenseUrl: string | null;
+  contentWarning: string | null;
+  coverKey: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  deletedAt: Date | null;
+  tags: TagInput[];
+}
+
+export async function findComicBySlug(db: Queryable, slug: string): Promise<ComicRow | null> {
+  const { rows } = await db.query<{
+    id: number;
+    slug: string;
+    title: string;
+    synopsis: string;
+    author_id: number | null;
+    author_credit: string;
+    published_by: string | null;
+    license: string;
+    license_url: string | null;
+    content_warning: string | null;
+    cover_key: string | null;
+    status: ComicRow['status'];
+    deleted_at: Date | null;
+    tags: TagInput[];
+  }>(
+    `SELECT c.id, c.slug, c.title, c.synopsis, c.author_id, c.author_credit, u.display_name AS published_by, c.license,
+            c.license_url, c.content_warning, c.cover_key, c.status, c.deleted_at, ${COMIC_TAGS_JSON} AS tags
+     FROM comics c LEFT JOIN users u ON u.id = c.author_id
+     WHERE c.slug = $1`,
+    [slug],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    synopsis: row.synopsis,
+    authorId: row.author_id,
+    authorCredit: row.author_credit,
+    publishedBy: row.published_by,
+    license: row.license,
+    licenseUrl: row.license_url,
+    contentWarning: row.content_warning,
+    coverKey: row.cover_key,
+    status: row.status,
+    deletedAt: row.deleted_at,
+    tags: row.tags,
+  };
+}
+
 export async function insertComic(db: Queryable, comic: NewComic): Promise<number> {
   const { rows } = await db.query<{ id: number }>(
     `INSERT INTO comics (slug, title, synopsis, author_id, author_credit, license, license_url, is_adult,

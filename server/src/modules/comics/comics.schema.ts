@@ -4,7 +4,8 @@ import { CATALOG_MAX_TAGS, CATALOG_QUERY_MAX_LENGTH } from '../../config/limits.
 // Entrada de la API de obras (contrato del bloque 2). zod es la fuente de verdad; el cliente duplica estas
 // constantes de forma explícita.
 
-const TAG_SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+// Slug de obra y de etiqueta (el mismo CHECK en la BD).
+export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // GET /api/comics: un parámetro repetido llega como array y da 400 (no es un único texto).
 export const catalogQuery = z.object({
@@ -22,7 +23,7 @@ export const catalogQuery = z.object({
     .transform((value) => (value === '' ? [] : [...new Set(value.split(','))]))
     .pipe(
       z
-        .array(z.string().regex(TAG_SLUG, { error: 'Etiqueta no válida' }))
+        .array(z.string().regex(SLUG_PATTERN, { error: 'Etiqueta no válida' }))
         .max(CATALOG_MAX_TAGS, { error: `Puedes combinar como mucho ${CATALOG_MAX_TAGS} etiquetas` }),
     )
     .default([]),

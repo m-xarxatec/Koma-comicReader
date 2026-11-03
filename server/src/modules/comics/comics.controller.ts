@@ -11,3 +11,7 @@ export async function listTags(_req: Request, res: Response): Promise<void> {
 export async function listComics(_req: Request, res: Response): Promise<void> {
   res.json(await comicsService.searchCatalog(res.locals.validated.query as CatalogQuery));
 }
+
+export async function getComic(req: Request, res: Response): Promise<void> {
+  res.json({ comic: await comicsService.getComic(req.params['slug'] as string, res.locals.user) });
+}
