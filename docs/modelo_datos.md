@@ -360,7 +360,7 @@ Las contraseñas salen de `SEED_*_PASSWORD`. Si falta alguna, el script termina 
 ## Riesgos aceptados
 
 - Al reemplazar un capítulo, sus comentarios quedan en las viñetas antiguas y el nuevo empieza sin comentarios.
-- Los borradores descartados y los capítulos rechazados dejan sus imágenes en el almacenamiento. En fase 2 se puede añadir un script de limpieza de claves sin referencia.
+- Los borradores descartados, los capítulos rechazados y las obras cuya importación falla dentro de la transacción (RN-18) dejan sus imágenes en el almacenamiento. En fase 2 se puede añadir un script de limpieza de claves sin referencia.
 - Un invitado que borra sus cookies vuelve a sumar en `guest_reads`.
 - Releer un capítulo que reemplazó a otro (nuevo `chapter_id`) vuelve a consumir saldo.
 - Logout sin revocación: cerrar sesión borra la cookie, pero el JWT no se revoca en el servidor (no hay tabla de sesiones). Un token robado sigue valiendo hasta que caduca (7 días) o hasta que cambia `token_version` (contraseña, rol o estado, RN-15).
