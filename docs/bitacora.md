@@ -270,3 +270,11 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Comprobación (IA):** los dos 500 reproducidos antes y 404, 404 y 400 después; typecheck, 58 unitarios y 84 de API.
 - **Commits:** uno por hallazgo, con parches para el índice (`git apply --cached`), porque varios tocan `import-content.ts`.
 - **Aprendizaje:** `JSON.parse` cita el texto cercano al error: el mensaje de una librería que lee archivos ajenos no se reenvía tal cual.
+
+### 2026-11-03 · Bloque 2 · T8: reglas puras de la lectura
+- **Pedido a la IA:** las reglas puras de RN-01 y RN-02 con sus tests (desglose aprobado).
+- **Resultado:** `modules/reading/reading.rules.ts`. RN-02: saldo recalculado al consultar y consumo; sin fila o con periodo NULL, lleno con el máximo vigente; un reloj atrasado no resta. RN-01: token `payload.firma`, con la hora en ms, forma canónica y 30 min como máximo. Constantes en `limits.ts`.
+- **Desvío del desglose:** `chapterAccess` va en `permissions.ts`, no en `reading.rules.ts`, porque CLAUDE.md lo fija como único archivo de permisos.
+- **Tests:** 14 unitarios: 8 de RN-02 (lleno, primer consumo, recarga por periodos, tope, sin saldo con `retryAt`, parámetros cambiados, reloj atrasado y máximo 1), 3 del token y 3 de `access` por rol y número.
+- **Comprobación (IA):** typecheck, 72 unitarios y 84 de API.
+- **Pendiente:** RN-03 (`reads_since_ad` e intersticial) sigue en T11b y T17, como en el desglose.
