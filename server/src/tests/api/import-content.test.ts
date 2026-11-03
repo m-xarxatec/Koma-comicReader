@@ -222,6 +222,10 @@ test('RN-18: una obra con errores se omite entera con su motivo, sin subir imág
     [slugOf('dos-portadas')]: [{ ...ok, 'cover.png': png(1, 1), 'cover.webp': webp(1, 1) }, /^Hay dos portadas/],
     [slugOf('archivo-raro')]: [{ ...ok, 'notas.txt': 'hola' }, /^Archivo no esperado: notas\.txt/],
     [slugOf('parcial')]: [{ ...ok, '002/001.webp': gif }, /^Imagen rechazada \(capítulo 2, 001\.webp\)/], // el cap. 1 era válido
+    // Errores que antes solo aparecían en la transacción, con las imágenes ya subidas.
+    [slugOf('nul-texto')]: [{ ...ok, 'comic.json': comicJson({ synopsis: 'a\u0000b' }) }, /^comic\.json no válido: synopsis: Contiene un carácter nulo/],
+    [slugOf('nul-licencia')]: [{ ...ok, 'comic.json': comicJson({ licenseUrl: 'https://x.test/a\u0000b' }) }, /^comic\.json no válido: licenseUrl: Contiene un carácter nulo/],
+    [slugOf('png-enorme')]: [{ ...ok, '002/001.png': png(2 ** 31, 10) }, /^Imagen rechazada \(capítulo 2, 001\.png\): mide 2147483648 × 10 px/],
   };
   const good = slugOf('buena');
   const comics: Record<string, Files> = { [good]: ok };

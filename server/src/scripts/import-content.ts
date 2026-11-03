@@ -30,7 +30,11 @@ const MAX_INT = 2_147_483_647; // INTEGER de PostgreSQL
 const COMIC_FILE = 'comic.json';
 const TAGS_FILE = 'tags.json';
 
-const text = z.string().trim().min(1, { error: 'No puede estar vacío' });
+// PostgreSQL no admite el carácter nulo en un texto: sin esta comprobación, la obra fallaría ya dentro de la
+// transacción, después de subir sus imágenes.
+const noNul = (value: string) => !value.includes('\u0000');
+const NUL_ERROR = 'Contiene un carácter nulo (\\u0000), que no se puede guardar';
+const text = z.string().trim().min(1, { error: 'No puede estar vacío' }).refine(noNul, { error: NUL_ERROR });
 const slug = z.string().regex(SLUG, { error: 'Solo minúsculas, números y guiones entre palabras' });
 
 const tagsFileSchema = z
@@ -49,7 +53,7 @@ const comicFileSchema = z.strictObject({
   authorCredit: text,
   license: text,
   // Se pinta como enlace en la ficha: solo http(s), nunca javascript: ni data:.
-  licenseUrl: z.url({ protocol: /^https?$/, error: 'Debe ser una URL http(s)' }).nullable(),
+  licenseUrl: z.url({ protocol: /^https?$/, error: 'Debe ser una URL http(s)' }).refine(noNul, { error: NUL_ERROR }).nullable(),
   isAdult: z.boolean(),
   contentWarning: text.nullable(),
   tags: z.array(slug),
@@ -120,6 +124,10 @@ async function readImage(file: string, label: string): Promise<ImageFile> {
   if (size > MAX_IMAGE_BYTES) throw new ContentError(`Imagen rechazada (${label}): pasa de ${MAX_IMAGE_BYTES / 1024 / 1024} MB`);
   const info = readImageInfo(await readFile(file));
   if (!info) throw new ContentError(`Imagen rechazada (${label}): no es un JPG, PNG ni WebP válido`);
+  // Un PNG declara hasta 2^32 − 1 px por lado; panels.width y height son INTEGER.
+  if (info.width > MAX_INT || info.height > MAX_INT) {
+    throw new ContentError(`Imagen rechazada (${label}): mide ${info.width} × ${info.height} px y el máximo por lado es ${MAX_INT}`);
+  }
   return { file, ...info };
 }
 
