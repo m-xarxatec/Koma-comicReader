@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
@@ -374,6 +374,71 @@ test('RN-18: las etiquetas creadas o cambiadas desde tags.json quedan en content
     { slug: b, name: 'Be', type: 'genre' },
     { slug: c, name: 'Ce', type: 'theme' },
   ]);
+});
+
+test('Seguridad: ningún enlace simbólico de content/ se sigue, ni obra, ni comic.json, ni portada, ni capítulo, ni viñeta', async () => {
+  // Fuera de content/: lo que un enlace dejaría leer o copiar al almacenamiento.
+  const outside = await mkdtemp(path.join(workDir, 'fuera-'));
+  const SECRET = `SECRETO-${RUN}`;
+  await writeFiles(outside, {
+    'secreto.json': `{"title": ${SECRET}`,
+    'comic.json': comicJson(),
+    'imagen.webp': webp(10, 10),
+    'capitulo/001.webp': webp(10, 10),
+    [`${slugOf('obra-fuera')}/comic.json`]: comicJson(),
+    [`${slugOf('obra-fuera')}/001/001.webp`]: webp(10, 10),
+  });
+  const ok = { 'comic.json': comicJson(), '001/001.webp': webp(10, 10) };
+  const [json, cover, chapter, panel, linked] = ['enl-json', 'enl-portada', 'enl-capitulo', 'enl-vineta', 'obra-fuera'].map(slugOf) as [string, string, string, string, string];
+  const { contentDir, storageDir, run } = await fixture({
+    [json]: { '001/001.webp': webp(10, 10) },
+    [cover]: ok,
+    [chapter]: ok,
+    [panel]: ok,
+  });
+  await symlink(path.join(outside, 'secreto.json'), path.join(contentDir, json, 'comic.json'));
+  await symlink(path.join(outside, 'imagen.webp'), path.join(contentDir, cover, 'cover.webp'));
+  await symlink(path.join(outside, 'capitulo'), path.join(contentDir, chapter, '002'));
+  await symlink(path.join(outside, 'imagen.webp'), path.join(contentDir, panel, '001', '002.webp'));
+  await symlink(path.join(outside, linked), path.join(contentDir, linked));
+
+  const summary = await run();
+  const reasons = Object.fromEntries(summary.errors.map((error) => [error.slug, error.message]));
+  assert.equal(reasons[json], 'Enlace simbólico rechazado: comic.json (copia el archivo o la carpeta dentro de content/)');
+  assert.match(reasons[cover] ?? '', /^Enlace simbólico rechazado: cover\.webp/);
+  assert.match(reasons[chapter] ?? '', /^Enlace simbólico rechazado: 002/);
+  assert.match(reasons[panel] ?? '', /^Enlace simbólico rechazado: capítulo 1, 002\.webp/);
+  assert.match(reasons[linked] ?? '', /^Enlace simbólico rechazado/, 'una obra enlazada es un error (código de salida 1), no un aviso');
+  assert.equal(summary.errors.length, 5);
+  assert.equal(summary.comicsCreated, 0);
+  assert.deepEqual(await storedFiles(storageDir), []);
+  for (const slug of [json, cover, chapter, panel, linked]) assert.equal(await comicExists(slug), false, slug);
+
+  // tags.json enlazado: se cancela todo.
+  const tags = await fixture({}, null);
+  await symlink(path.join(outside, 'secreto.json'), path.join(tags.contentDir, 'tags.json'));
+  await assert.rejects(tags.run(), /^Error: Importación cancelada: Enlace simbólico rechazado: tags\.json/);
+});
+
+// JSON.parse cita el texto cerca de un token inesperado ('Unexpected token…, "{"title": SECRETO…" is not valid
+// JSON'); solo algunos errores dan línea y columna.
+test('Seguridad: un JSON roto nunca muestra un trozo del archivo; da línea y columna cuando JSON.parse las conoce', async () => {
+  const SECRET = `SECRETO-${RUN}`;
+  const [token, cut] = [slugOf('json-secreto'), slugOf('json-cortado')];
+  const summary = await (
+    await fixture({
+      [token]: { 'comic.json': `{"title": ${SECRET}}`, '001/001.webp': webp(1, 1) },
+      [cut]: { 'comic.json': '{"title": "x",', '001/001.webp': webp(1, 1) },
+    })
+  ).run();
+  const reasons = Object.fromEntries(summary.errors.map((error) => [error.slug, error.message]));
+  assert.equal(reasons[token], 'Error al leer comic.json: no es un JSON válido');
+  assert.match(reasons[cut] ?? '', /^Error al leer comic\.json: no es un JSON válido \(línea 1, columna \d+\)$/);
+  await assert.rejects((await fixture({}, `[${SECRET}]`)).run(), (err: Error) => {
+    assert.match(err.message, /^Importación cancelada: Error al leer tags\.json: no es un JSON válido/);
+    assert.ok(!err.message.includes(SECRET), err.message);
+    return true;
+  });
 });
 
 test('Seguridad: sin un tags.json válido no se importa nada', async () => {

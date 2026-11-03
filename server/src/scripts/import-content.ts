@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import { env } from '../config/env.js';
@@ -19,6 +19,8 @@ import { logger } from '../utils/logger.js';
 //   los capítulos nuevos; uno ya existente (en cualquier estado) se omite.
 // - Imágenes: firma, 5 MB y 60 por capítulo (RN-10); ancho y alto de la cabecera; claves UUID.ext.
 // - Una transacción por obra, con su entrada content.import (actor NULL = sistema), solo si añade algo.
+// - Ningún enlace simbólico, en ningún nivel: todo lo que se lee está dentro de content/. Los tipos de
+//   readdir({ withFileTypes }) no siguen los enlaces (son los de lstat); los archivos sueltos, con lstat.
 
 z.config(z.locales.es());
 
@@ -94,21 +96,28 @@ export interface ImportSummary {
 // Motivo legible de una obra omitida; el resto de errores (BD, almacenamiento) se relanzan tal cual.
 class ContentError extends Error {}
 
+const symlinkError = (name: string) =>
+  new ContentError(`Enlace simbólico rechazado: ${name} (copia el archivo o la carpeta dentro de content/)`);
+
 const zodMessage = (error: z.ZodError) =>
   error.issues.map((issue) => (issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message)).join('; ');
 
 async function readJson(file: string, label: string): Promise<unknown> {
-  let raw: string;
   try {
-    raw = await readFile(file, 'utf8');
+    const info = await lstat(file);
+    if (info.isSymbolicLink()) throw symlinkError(label);
+    if (!info.isFile()) throw new ContentError(`${label} no es un archivo`);
   } catch (err) {
     if ((err as { code?: unknown }).code === 'ENOENT') throw new ContentError(`Falta ${label}`);
     throw err;
   }
+  const raw = await readFile(file, 'utf8');
   try {
     return JSON.parse(raw);
   } catch (err) {
-    throw new ContentError(`Error al leer ${label}: ${(err as Error).message}`);
+    // El mensaje de JSON.parse puede citar un trozo del archivo: solo se conserva la línea y la columna.
+    const where = /\(line (\d+) column (\d+)\)/.exec((err as Error).message);
+    throw new ContentError(`Error al leer ${label}: no es un JSON válido${where ? ` (línea ${where[1]}, columna ${where[2]})` : ''}`);
   }
 }
 
@@ -120,8 +129,9 @@ function parseNumber(digits: string, what: string): number {
 }
 
 async function readImage(file: string, label: string): Promise<ImageFile> {
-  const { size } = await stat(file);
-  if (size > MAX_IMAGE_BYTES) throw new ContentError(`Imagen rechazada (${label}): pasa de ${MAX_IMAGE_BYTES / 1024 / 1024} MB`);
+  const stats = await lstat(file); // readdir ya descartó los enlaces; se repite por si cambió entre medias
+  if (stats.isSymbolicLink()) throw symlinkError(label);
+  if (stats.size > MAX_IMAGE_BYTES) throw new ContentError(`Imagen rechazada (${label}): pasa de ${MAX_IMAGE_BYTES / 1024 / 1024} MB`);
   const info = readImageInfo(await readFile(file));
   if (!info) throw new ContentError(`Imagen rechazada (${label}): no es un JPG, PNG ni WebP válido`);
   // Un PNG declara hasta 2^32 − 1 px por lado; panels.width y height son INTEGER.
@@ -135,6 +145,7 @@ async function readChapter(dir: string, number: number): Promise<ImageFile[]> {
   const byNumber = new Map<number, string>();
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue; // .DS_Store y similares
+    if (entry.isSymbolicLink()) throw symlinkError(`capítulo ${number}, ${entry.name}`);
     const match = PANEL_FILE.exec(entry.name);
     if (!entry.isFile() || !match) {
       throw new ContentError(`Imagen rechazada (capítulo ${number}, ${entry.name}): el nombre debe ser solo un número con extensión .jpg, .png o .webp`);
@@ -163,7 +174,9 @@ async function planComic(contentDir: string, slugName: string, knownTags: Readon
   const chapterDirs = new Map<number, string>();
   let coverName: string | null = null;
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('.') || entry.name === COMIC_FILE) continue;
+    if (entry.name.startsWith('.')) continue;
+    if (entry.isSymbolicLink()) throw symlinkError(entry.name);
+    if (entry.name === COMIC_FILE) continue;
     if (entry.isFile() && COVER_FILE.test(entry.name)) {
       if (coverName) throw new ContentError(`Hay dos portadas: ${coverName} y ${entry.name}`);
       coverName = entry.name;
@@ -334,7 +347,13 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
   const entries = await readdir(contentDir, { withFileTypes: true });
   const comicDirs = entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.')).map((entry) => entry.name).sort();
   for (const entry of entries) {
-    if (!entry.isDirectory() && entry.name !== TAGS_FILE && !entry.name.startsWith('.')) {
+    if (entry.isDirectory() || entry.name === TAGS_FILE || entry.name.startsWith('.')) continue;
+    if (entry.isSymbolicLink()) {
+      // Una obra enlazada desde fuera cuenta como error (el comando sale con código 1), no como aviso.
+      const { message } = symlinkError(entry.name);
+      summary.errors.push({ slug: entry.name, message });
+      logger.warn('Obra omitida', { requestId, slug: entry.name, reason: message });
+    } else {
       logger.warn('Archivo ignorado en la raíz de content/', { requestId, file: entry.name });
     }
   }
