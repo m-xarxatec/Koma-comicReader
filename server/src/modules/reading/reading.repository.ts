@@ -12,3 +12,18 @@ export async function findReadChapterIds(db: Queryable, userId: number, chapterI
   );
   return new Set(rows.map((row) => row.chapter_id));
 }
+
+export interface AdRow {
+  brand: string;
+  body: string;
+  imageKey: string | null; // null = tarjeta de texto
+}
+
+// Un anuncio activo al azar (RN-03); null si no hay ninguno (solo sin el seed).
+export async function pickActiveAd(db: Queryable): Promise<AdRow | null> {
+  const { rows } = await db.query<{ brand: string; body: string; image_key: string | null }>(
+    'SELECT brand, body, image_key FROM ads WHERE active ORDER BY random() LIMIT 1',
+  );
+  const row = rows[0];
+  return row ? { brand: row.brand, body: row.body, imageKey: row.image_key } : null;
+}
