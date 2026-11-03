@@ -260,3 +260,13 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Fallos:** el recuento y la página iban en `Promise.all` sobre el mismo `Queryable`: con un `PoolClient` serían dos consultas a la vez en un cliente.
 - **Corrección:** una tras otra.
 - **Commits:** T6 y T7 comparten `comics.repository.ts`. La versión de T6 va en un parche para el índice (`git apply --cached`), comprobado compilando T6 aislado.
+
+### 2026-11-03 · Bloque 2 · Auditoría de T4–T7 y correcciones
+- **Pedido a la IA:** pasar el auditor limitado a T4–T7 (firmas, `/files/:key`, importación y catálogo) y aplicar las decisiones del desarrollador.
+- **Auditoría:** APTO CON OBSERVACIONES. Dos altos: `/files/%E0%A4%A` y `?q=%00` daban 500. Tres bajos: huérfanas si falla la transacción, `\u0000` y PNG > INTEGER detectados ya en la transacción, etiquetas sin auditar. Además, enlaces simbólicos sin regla.
+- **Decisiones del desarrollador:** aprobados los cuatro criterios de T6 (capítulo existente en cualquier estado, obra de autor o retirada omitida con error, capítulo de `comic.json` sin carpeta solo avisa, código de salida 1). Huérfanas por fallo de la transacción: riesgo aceptado (lo anota el desarrollador). Lo demás se corrige.
+- **Corrección:** `URIError` → 404; `\u0000` → 400 en la búsqueda y obra omitida en `comic.json`; medidas > INTEGER rechazadas antes de subir; etiquetas creadas o cambiadas en su propia entrada `content.import` (entidad `tags`, solo los campos cambiados); ningún enlace simbólico en `content/` (`lstat`); el error de `JSON.parse` sin trozos del archivo.
+- **Tests nuevos:** `exp` negativo y de 16 cifras, página `MAX_SAFE_INTEGER` y `../` sin normalizar con `node:http`: con `fetch`, la petición nunca llegaba a la ruta.
+- **Comprobación (IA):** los dos 500 reproducidos antes y 404, 404 y 400 después; typecheck, 58 unitarios y 84 de API.
+- **Commits:** uno por hallazgo, con parches para el índice (`git apply --cached`), porque varios tocan `import-content.ts`.
+- **Aprendizaje:** `JSON.parse` cita el texto cercano al error: el mensaje de una librería que lee archivos ajenos no se reenvía tal cual.
