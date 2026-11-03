@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { consumeCredit, createAdToken, recalculateCredits, verifyAdToken, type ReadingSettings } from '../../modules/reading/reading.rules.js';
+import {
+  addGuestRead,
+  buildAdStart,
+  consumeCredit,
+  createAdToken,
+  parseGuestReads,
+  recalculateCredits,
+  serializeGuestReads,
+  verifyAdToken,
+  type ReadingSettings,
+} from '../../modules/reading/reading.rules.js';
 import { deriveKey, sign } from '../../utils/signing.js';
 
 // Reglas puras de la lectura (RN-01 y RN-02), con la hora fijada en cada caso.
@@ -129,4 +139,55 @@ test('Seguridad: un token de anuncio alterado, ajeno o mal formado no vale', () 
   ] as const) {
     assert.equal(verifyAdToken(adKey, candidate, 42, at(1), MIN_SECONDS), 'invalid', name);
   }
+});
+
+// --- Respuesta de /ad (la usa readingService.startAd con lo que devuelve el repositorio) ---
+
+const fakeSign = async (key: string) => `/firmada/${key}`;
+
+test('RN-01: sin anuncios activos, /ad responde ad null y emite el token igual (el cap. 3 no se bloquea)', async () => {
+  const token = createAdToken(adKey, 42, T0);
+  assert.deepEqual(await buildAdStart(null, token, MIN_SECONDS, fakeSign), { ad: null, adToken: token, minSeconds: MIN_SECONDS });
+});
+
+test('RN-01: un anuncio con imagen sale con su URL firmada; uno de texto, con imageUrl null', async () => {
+  const withImage = await buildAdStart({ brand: 'Marca', body: 'Texto', imageKey: 'clave.webp' }, 't', MIN_SECONDS, fakeSign);
+  assert.deepEqual(withImage.ad, { brand: 'Marca', body: 'Texto', imageUrl: '/firmada/clave.webp' });
+  const textOnly = await buildAdStart({ brand: 'Marca', body: 'Texto', imageKey: null }, 't', MIN_SECONDS, fakeSign);
+  assert.deepEqual(textOnly.ad, { brand: 'Marca', body: 'Texto', imageUrl: null });
+});
+
+// --- Cookie koma_guest_reads (estadísticas del invitado) ---
+
+const guestKey = deriveKey(SECRET, 'guest-reads');
+
+test('Seguridad: la cookie del invitado guarda los capítulos contados firmados y se lee igual', () => {
+  const cookie = serializeGuestReads(guestKey, [3, 17, 2]);
+  assert.match(cookie, /^3-17-2\.[\w-]{43}$/);
+  assert.deepEqual(parseGuestReads(guestKey, cookie), [3, 17, 2]);
+});
+
+test('Seguridad: una cookie del invitado alterada, de otro uso o mal formada cuenta como vacía', () => {
+  const cookie = serializeGuestReads(guestKey, [3, 17]);
+  const [payload, signature] = cookie.split('.') as [string, string];
+  for (const [name, candidate] of [
+    ['capítulo añadido con la firma original', `3-17-9.${signature}`],
+    ['firma de otro uso', `${payload}.${serializeGuestReads(deriveKey(SECRET, 'files'), [3, 17]).split('.')[1]}`],
+    ['cero a la izquierda bien firmado', serializeGuestReads(guestKey, [3]).replace(/^3/, '03')],
+    ['sin firma', payload],
+    ['vacía', ''],
+    ['ausente', undefined],
+    ['51 capítulos bien firmados', serializeGuestReads(guestKey, Array.from({ length: 51 }, (_, i) => i + 1))],
+  ] as const) {
+    assert.deepEqual(parseGuestReads(guestKey, candidate), [], name);
+  }
+});
+
+test('Seguridad: la cookie del invitado conserva solo los últimos 50 capítulos, sin repetir', () => {
+  assert.deepEqual(addGuestRead([1, 2, 3], 2), [1, 3, 2]);
+  const full = Array.from({ length: 50 }, (_, i) => i + 1);
+  const next = addGuestRead(full, 99);
+  assert.equal(next.length, 50);
+  assert.deepEqual([next[0], next.at(-1)], [2, 99]);
+  assert.deepEqual(parseGuestReads(guestKey, serializeGuestReads(guestKey, next)), next);
 });

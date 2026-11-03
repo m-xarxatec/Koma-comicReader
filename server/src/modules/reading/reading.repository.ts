@@ -27,3 +27,71 @@ export async function pickActiveAd(db: Queryable): Promise<AdRow | null> {
   const row = rows[0];
   return row ? { brand: row.brand, body: row.body, imageKey: row.image_key } : null;
 }
+
+// --- Saldo (RN-02) y anuncios del registrado (RN-03) ---
+
+export const READING_SETTING_KEYS = ['reading.max_balance', 'reading.refill', 'reading.wait_minutes'] as const;
+export type ReadingSettingKey = (typeof READING_SETTING_KEYS)[number];
+
+// Valores en bruto (JSONB) de los parámetros de lectura de `settings` (RN-16); el servicio los valida.
+export async function findReadingSettings(db: Queryable): Promise<Partial<Record<ReadingSettingKey, unknown>>> {
+  const { rows } = await db.query<{ key: ReadingSettingKey; value: unknown }>('SELECT key, value FROM settings WHERE key = ANY($1::text[])', [
+    READING_SETTING_KEYS,
+  ]);
+  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+}
+
+export interface CreditsRow {
+  balance: number;
+  periodStartedAt: Date | null; // NULL = lleno con el máximo vigente
+  readsSinceAd: number;
+}
+
+// Fila de saldo del usuario, creada si no existe (primera lectura de cualquier capítulo: lleno con el máximo
+// vigente, D1) y bloqueada hasta el final de la transacción: dos lecturas a la vez del mismo usuario se
+// hacen una tras otra y no gastan dos veces el mismo saldo.
+export async function lockCredits(db: Queryable, userId: number, maxBalance: number): Promise<CreditsRow> {
+  await db.query('INSERT INTO reading_credits (user_id, balance) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING', [userId, maxBalance]);
+  const { rows } = await db.query<{ balance: number; period_started_at: Date | null; reads_since_ad: number }>(
+    'SELECT balance, period_started_at, reads_since_ad FROM reading_credits WHERE user_id = $1 FOR UPDATE',
+    [userId],
+  );
+  const row = rows[0]!;
+  return { balance: row.balance, periodStartedAt: row.period_started_at, readsSinceAd: row.reads_since_ad };
+}
+
+export async function updateCredits(db: Queryable, userId: number, credits: { balance: number; periodStartedAt: Date | null }): Promise<void> {
+  await db.query('UPDATE reading_credits SET balance = $2, period_started_at = $3 WHERE user_id = $1', [userId, credits.balance, credits.periodStartedAt]);
+}
+
+// RN-03: cuenta las primeras lecturas (caps. 1–2 incluidos; relecturas no) para el anuncio intersticial.
+export async function incrementReadsSinceAd(db: Queryable, userId: number): Promise<void> {
+  await db.query('UPDATE reading_credits SET reads_since_ad = reads_since_ad + 1 WHERE user_id = $1', [userId]);
+}
+
+// Registra la lectura en chapter_reads: true si es la primera de ese usuario (fila nueva); si no, solo
+// actualiza last_read_at. Seguro con lecturas simultáneas: la clave primaria decide cuál es la primera.
+export async function recordChapterRead(db: Queryable, userId: number, chapterId: number): Promise<boolean> {
+  const inserted = await db.query(
+    'INSERT INTO chapter_reads (user_id, chapter_id) VALUES ($1, $2) ON CONFLICT (user_id, chapter_id) DO NOTHING RETURNING 1',
+    [userId, chapterId],
+  );
+  if (inserted.rowCount === 1) return true;
+  await db.query('UPDATE chapter_reads SET last_read_at = now() WHERE user_id = $1 AND chapter_id = $2', [userId, chapterId]);
+  return false;
+}
+
+// Estadísticas por capítulo y día de Europe/Madrid, con suma atómica (modelo_datos.md, "Estadísticas"). La
+// columna sale de una lista fija, nunca de la entrada.
+const COUNT_READ_SQL = {
+  user: `INSERT INTO chapter_read_counts (chapter_id, day, user_reads)
+         VALUES ($1, (now() AT TIME ZONE 'Europe/Madrid')::date, 1)
+         ON CONFLICT (chapter_id, day) DO UPDATE SET user_reads = chapter_read_counts.user_reads + 1`,
+  guest: `INSERT INTO chapter_read_counts (chapter_id, day, guest_reads)
+          VALUES ($1, (now() AT TIME ZONE 'Europe/Madrid')::date, 1)
+          ON CONFLICT (chapter_id, day) DO UPDATE SET guest_reads = chapter_read_counts.guest_reads + 1`,
+} as const;
+
+export async function countRead(db: Queryable, chapterId: number, reader: keyof typeof COUNT_READ_SQL): Promise<void> {
+  await db.query(COUNT_READ_SQL[reader], [chapterId]);
+}

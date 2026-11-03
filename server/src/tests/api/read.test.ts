@@ -32,7 +32,6 @@ let comic: TestComic;
 let other: TestComic;
 let pending: TestComic;
 let withdrawn: TestComic;
-let authored: TestComic;
 const users = {} as Record<'reader' | 'premium' | 'admin' | 'author', TestUser>;
 
 before(async () => {
@@ -57,7 +56,6 @@ before(async () => {
   other = await createComic({ name: 'lectura-otra', chapters: [{ number: 3 }] });
   pending = await createComic({ name: 'lectura-pendiente', status: 'pending', chapters: [{ number: 1 }] });
   withdrawn = await createComic({ name: 'lectura-retirada', withdrawn: true, chapters: [{ number: 1 }] });
-  authored = await createComic({ name: 'lectura-autora', authorId: users.author.id, chapters: [{ number: 1 }, { number: 6 }] });
 });
 
 function read(slug: string, number: string | number, options: { cookie?: string; adToken?: string; origin?: string | null } = {}) {
@@ -153,15 +151,25 @@ test('RN-01: desde el cap. 4, el invitado recibe 401 UNAUTHENTICATED aunque trai
   await assertError(await read(comic.slug, 4, { cookie: 'koma_session=no-es-un-jwt' }), 401, 'UNAUTHENTICATED', 'sesión no válida');
 });
 
-test('Seguridad: admin, premium y la autora en su obra leen cualquier capítulo sin anuncio ni saldo', async () => {
-  for (const [label, slug, cookie] of [
-    ['admin', comic.slug, users.admin.cookie],
-    ['premium', comic.slug, users.premium.cookie],
-    ['autora en su obra', authored.slug, users.author.cookie],
+test('Seguridad: admin y premium leen cualquier capítulo sin anuncio ni saldo', async () => {
+  for (const [label, cookie] of [
+    ['admin', users.admin.cookie],
+    ['premium', users.premium.cookie],
   ] as const) {
-    const reading = await readOk(slug, 6, { cookie });
+    const reading = await readOk(comic.slug, 6, { cookie });
     assert.deepEqual([reading.chapter.number, reading.ads, reading.balance], [6, { interstitial: null, end: null }, null], label);
   }
+});
+
+test('Seguridad: la autora lee su obra sin gastar saldo, pero con el anuncio final de una registrada sin premium', async () => {
+  const author = await createUser('author');
+  const own = await createComic({ name: 'lectura-propia', authorId: author.id, chapters: [{ number: 6 }] });
+  const reading = await readOk(own.slug, 6, { cookie: author.cookie });
+  assert.equal(reading.chapter.number, 6);
+  assert.ok(reading.ads.end, 'anuncio final (RN-03)');
+  const balance = reading.balance as { balance: number; max: number; retryAt: string | null };
+  assert.equal(balance.balance, balance.max, 'no gasta saldo en su obra');
+  assert.equal(balance.retryAt, null);
 });
 
 test('RN-02: el registrado lee libres los caps. 1–2 y los que ya leyó, sin token de anuncio', async () => {

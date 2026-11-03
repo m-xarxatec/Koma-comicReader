@@ -1,8 +1,9 @@
-import { AD_TOKEN_MAX_AGE_SECONDS } from '../../config/limits.js';
+import { AD_TOKEN_MAX_AGE_SECONDS, GUEST_READS_MAX } from '../../config/limits.js';
 import { sign, verify } from '../../utils/signing.js';
 
-// Reglas puras de la lectura: saldo de capítulos (RN-02) y token del anuncio del invitado (RN-01). Sin BD ni
-// reloj: la hora, los parámetros y la clave llegan por parámetro. Qué exige cada capítulo según quién lee
+// Reglas puras de la lectura: saldo de capítulos (RN-02), token y respuesta del anuncio del invitado (RN-01)
+// y cookie de sus lecturas contadas. Sin BD ni reloj: la hora, los parámetros, las claves y la firma de
+// URLs llegan por parámetro. Qué exige cada capítulo según quién lee
 // (`access`) es un permiso y vive en modules/auth/permissions.ts.
 
 // --- RN-02: saldo de capítulos ---
@@ -90,4 +91,60 @@ export function verifyAdToken(key: Buffer, token: unknown, comicId: number, now:
   if (elapsedMs < minSeconds * 1000) return 'too-soon';
   if (elapsedMs > AD_TOKEN_MAX_AGE_SECONDS * 1000) return 'expired';
   return 'valid';
+}
+
+// Respuesta de GET /api/comics/:slug/ad. Sin anuncios activos (solo si no se ejecutó el seed), `ad` es null y
+// el token se emite igual: el lector muestra la cuenta atrás sin tarjeta y el cap. 3 no se bloquea (aprobado
+// el 2-nov). La imagen, si la hay, con URL firmada.
+export interface AdInput {
+  brand: string;
+  body: string;
+  imageKey: string | null;
+}
+
+export interface AdDto {
+  brand: string;
+  body: string;
+  imageUrl: string | null; // firmada; null = tarjeta de texto
+}
+
+export interface AdStartDto {
+  ad: AdDto | null;
+  adToken: string;
+  minSeconds: number;
+}
+
+export async function toAdDto(ad: AdInput, signUrl: (key: string) => Promise<string>): Promise<AdDto> {
+  return { brand: ad.brand, body: ad.body, imageUrl: ad.imageKey ? await signUrl(ad.imageKey) : null };
+}
+
+export async function buildAdStart(
+  ad: AdInput | null,
+  adToken: string,
+  minSeconds: number,
+  signUrl: (key: string) => Promise<string>,
+): Promise<AdStartDto> {
+  return { ad: ad ? await toAdDto(ad, signUrl) : null, adToken, minSeconds };
+}
+
+// --- Estadísticas del invitado: cookie koma_guest_reads ---
+
+// "<ids>.<firma>": ids de capítulo ya contados, separados por guiones (los últimos GUEST_READS_MAX), y su
+// HMAC-SHA256 con la clave `guest-reads`. Una cookie ausente, alterada o mal formada cuenta como vacía.
+const GUEST_READS = new RegExp(`^([1-9]\\d{0,9}(?:-[1-9]\\d{0,9}){0,${GUEST_READS_MAX - 1}})\\.([A-Za-z0-9_-]{43})$`);
+
+export function parseGuestReads(key: Buffer, cookie: unknown): number[] {
+  const parts = typeof cookie === 'string' ? GUEST_READS.exec(cookie) : null;
+  if (!parts || !verify(key, parts[1]!, parts[2]!)) return [];
+  return parts[1]!.split('-').map(Number);
+}
+
+// Añade el capítulo al final y conserva solo los últimos GUEST_READS_MAX.
+export function addGuestRead(ids: readonly number[], chapterId: number): number[] {
+  return [...ids.filter((id) => id !== chapterId), chapterId].slice(-GUEST_READS_MAX);
+}
+
+export function serializeGuestReads(key: Buffer, ids: readonly number[]): string {
+  const payload = ids.join('-');
+  return `${payload}.${sign(key, payload)}`;
 }

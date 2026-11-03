@@ -7,7 +7,7 @@ import * as chaptersRepository from '../chapters/chapters.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
-import { SLUG_PATTERN, type CatalogQuery } from './comics.schema.js';
+import type { CatalogQuery } from './comics.schema.js';
 
 // Catálogo, etiquetas y ficha (CU-01, CU-02; contrato del bloque 2). Solo obras aprobadas y no retiradas;
 // toda imagen sale con URL firmada (SIGNED_URL_TTL_SECONDS).
@@ -79,11 +79,11 @@ export interface ComicDto extends ComicCardDto {
   chapters: ChapterSummaryDto[]; // por número
 }
 
-// La obra de esa URL si es pública: 404 si no existe o no está aprobada (también un slug que no puede
-// existir, antes de consultar la BD); 410 si se retiró (RN-06). Lo usan la ficha, el anuncio y la lectura.
-// (El autor dueño y el admin verán las suyas en pending al llegar el bloque 3.)
+// La obra de esa URL si es pública: 404 si no existe o no está aprobada; 410 si se retiró (RN-06). Lo usan
+// la ficha, el anuncio y la lectura, con el slug ya validado por comicParams. (El autor dueño y el admin
+// verán las suyas en pending al llegar el bloque 3.)
 export async function requirePublicComic(slug: string): Promise<comicsRepository.ComicRow> {
-  const comic = SLUG_PATTERN.test(slug) ? await comicsRepository.findComicBySlug(pool, slug) : null;
+  const comic = await comicsRepository.findComicBySlug(pool, slug);
   if (!comic || comic.status !== 'approved') throw new AppError(404, 'NOT_FOUND', 'La obra no existe');
   if (comic.deletedAt) throw new AppError(410, 'GONE', 'La obra se ha retirado');
   return comic;

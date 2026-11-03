@@ -34,3 +34,10 @@ export const catalogQuery = z.object({
     .default(1),
 });
 export type CatalogQuery = z.infer<typeof catalogQuery>;
+
+// :slug de las rutas de una obra. Uno que no cumple el patrón no puede existir: 404 (validate con
+// `notFound: ['params']`), no 400; y nunca llega a la BD (un %00 sería un 500 de PostgreSQL).
+export const comicParams = z.object({
+  slug: z.string().regex(SLUG_PATTERN, { error: 'La obra no existe' }),
+});
+export type ComicParams = z.infer<typeof comicParams>;
