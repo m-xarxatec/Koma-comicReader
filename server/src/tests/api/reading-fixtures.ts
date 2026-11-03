@@ -46,6 +46,7 @@ export interface ChapterSpec {
 
 export interface ComicSpec {
   name: string; // slug = c<RUN>-<name>
+  title?: string; // por defecto "Obra <name>"
   status?: 'approved' | 'pending';
   withdrawn?: boolean;
   authorId?: number;
@@ -70,7 +71,7 @@ export async function createComic(spec: ComicSpec): Promise<TestComic> {
      VALUES ($1, $2, 'Sinopsis de prueba', $3::int, $3::int IS NOT NULL, 'Autoría original', 'CC BY 4.0',
              'https://creativecommons.org/licenses/by/4.0/', $4, $5, $6, CASE WHEN $7::boolean THEN now() END)
      RETURNING id`,
-    [slug, `Obra ${spec.name}`, spec.authorId ?? null, spec.contentWarning ?? null, spec.coverKey ?? null, spec.status ?? 'approved', spec.withdrawn ?? false],
+    [slug, spec.title ?? `Obra ${spec.name}`, spec.authorId ?? null, spec.contentWarning ?? null, spec.coverKey ?? null, spec.status ?? 'approved', spec.withdrawn ?? false],
   );
   const comic: TestComic = { id: rows[0]!.id, slug, chapterIds: new Map(), panelKeys: new Map() };
   for (const chapter of spec.chapters ?? []) {

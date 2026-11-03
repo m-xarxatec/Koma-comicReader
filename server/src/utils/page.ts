@@ -5,7 +5,7 @@ import { paths } from '../config/paths.js';
 import { renderTemplate } from './layout.js';
 
 // Páginas de client/public/pages/ que puede servir el mapa de rutas (lista cerrada: nunca un nombre de la URL).
-export type PageName = 'home' | 'auth';
+export type PageName = 'home' | 'auth' | 'comic' | 'reader';
 
 // Los HTML salen siempre por aquí, nunca por express.static. Se ponen la cabecera y el pie comunes
 // (layout.ts, con la página activa según la ruta) y se inyectan el requestId y los valores de la página,

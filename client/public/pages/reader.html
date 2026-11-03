@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>{{comicTitle}} · Capítulo {{number}} · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+</head>
+<body>
+  <!-- @header -->
+  <!-- Lector (CU-03). Base de T12: la barra propia, la tira, el anuncio, la invitación y el muro de saldo
+       llegan en T15. El título y la advertencia (RN-08) los inyecta el servidor, escapados. -->
+  <main id="contenido" class="page">
+    <h1>{{comicTitle}}</h1>
+    <p>Capítulo {{number}}: {{chapterTitle}}</p>
+    <p data-content-warning hidden>{{contentWarning}}</p>
+  </main>
+  <!-- @footer -->
+</body>
+</html>

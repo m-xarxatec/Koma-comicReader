@@ -11,3 +11,8 @@ export const comicsRouter = Router();
 comicsRouter.get('/tags', controller.listTags);
 comicsRouter.get('/comics', validate({ query: catalogQuery }), controller.listComics);
 comicsRouter.get('/comics/:slug', validate({ params: comicParams }, { notFound: ['params'] }), controller.getComic);
+
+// Página de la ficha (mapa de rutas HTML).
+export const comicsPagesRouter = Router();
+
+comicsPagesRouter.get('/obra/:slug', validate({ params: comicParams }, { notFound: ['params'] }), controller.comicPage);

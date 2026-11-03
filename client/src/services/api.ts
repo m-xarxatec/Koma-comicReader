@@ -12,6 +12,11 @@ export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; 
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
+// Opciones por petición. Las llamadas que no las pasan no cambian.
+export interface RequestOptions {
+  headers?: Readonly<Record<string, string>>; // p. ej. X-Ad-Token en la lectura del cap. 3 (RN-01)
+}
+
 // Sin respuesta del servidor (red caída, servidor apagado): status 0 y un código propio del cliente.
 const NETWORK_ERROR: ApiError = {
   code: 'NETWORK_ERROR',
@@ -25,13 +30,13 @@ function isApiError(value: unknown): value is ApiError {
   return typeof code === 'string' && typeof message === 'string';
 }
 
-async function request<T>(method: Method, path: string, body?: unknown): Promise<ApiResult<T>> {
+async function request<T>(method: Method, path: string, body?: unknown, options: RequestOptions = {}): Promise<ApiResult<T>> {
   let res: Response;
   try {
     res = await fetch(path, {
       method,
       credentials: 'same-origin', // cookie de sesión httpOnly; el navegador añade Origin (control CSRF)
-      headers: { Accept: 'application/json', ...(body !== undefined && { 'Content-Type': 'application/json' }) },
+      headers: { ...options.headers, Accept: 'application/json', ...(body !== undefined && { 'Content-Type': 'application/json' }) },
       ...(body !== undefined && { body: JSON.stringify(body) }),
     });
   } catch {
@@ -59,9 +64,9 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>('GET', path),
-  post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
-  patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
-  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
-  delete: <T>(path: string) => request<T>('DELETE', path),
+  get: <T>(path: string, options?: RequestOptions) => request<T>('GET', path, undefined, options),
+  post: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('POST', path, body, options),
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('PATCH', path, body, options),
+  put: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('PUT', path, body, options),
+  delete: <T>(path: string, options?: RequestOptions) => request<T>('DELETE', path, undefined, options),
 };

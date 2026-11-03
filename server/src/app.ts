@@ -13,9 +13,9 @@ import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
 import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
-import { comicsRouter } from './modules/comics/comics.routes.js';
+import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
 import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
-import { readingRouter } from './modules/reading/reading.routes.js';
+import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
 import { AppError } from './utils/app-error.js';
 import { sendPage } from './utils/page.js';
 
@@ -99,6 +99,8 @@ app.use('/api', readingRouter);
 app.use(trailingSlash);
 app.get('/', (_req, res) => sendPage(res, 'home'));
 app.use(authPagesRouter);
+app.use(comicsPagesRouter);
+app.use(readingPagesRouter);
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');

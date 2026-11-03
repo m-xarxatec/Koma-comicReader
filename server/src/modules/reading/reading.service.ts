@@ -96,12 +96,33 @@ export async function readChapter(
   user: User | null,
   input: { adToken: string | undefined; guestReadsCookie: unknown },
 ): Promise<ReadResult> {
+  const { comic, chapter } = await requirePublicChapter(slug, number);
+  const now = new Date();
+  return user ? readAsUser(comic, chapter, user, now) : readAsGuest(comic, chapter, input, now);
+}
+
+// Obra y capítulo públicos: 404 si no existen o no están aprobados; 410 si se retiraron (RN-06). Lo usan la
+// lectura y la página del lector. (El autor dueño y el admin verán draft y pending en el bloque 3.)
+async function requirePublicChapter(slug: string, number: number): Promise<{ comic: ComicRow; chapter: chaptersRepository.ChapterRow }> {
   const comic = await requirePublicComic(slug);
   const chapter = await chaptersRepository.findChapterForReading(pool, comic.id, number);
   if (!chapter) throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
   if (chapter.withdrawn) throw new AppError(410, 'GONE', 'El capítulo se ha retirado');
-  const now = new Date();
-  return user ? readAsUser(comic, chapter, user, now) : readAsGuest(comic, chapter, input, now);
+  return { comic, chapter };
+}
+
+// Datos de la página /leer/:slug/:numero, que el servidor inyecta escapados (título y advertencia, para
+// que se vean antes de pedir el capítulo a la API). El permiso de lectura lo decide después la API.
+export interface ReaderPageValues {
+  comicTitle: string;
+  chapterTitle: string;
+  number: string;
+  contentWarning: string; // '' sin advertencia (RN-08)
+}
+
+export async function getReaderPage(slug: string, number: number): Promise<ReaderPageValues> {
+  const { comic, chapter } = await requirePublicChapter(slug, number);
+  return { comicTitle: comic.title, chapterTitle: chapter.title, number: String(chapter.number), contentWarning: comic.contentWarning ?? '' };
 }
 
 async function readAsGuest(

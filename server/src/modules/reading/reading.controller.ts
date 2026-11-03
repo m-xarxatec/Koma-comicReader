@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { env } from '../../config/env.js';
 import { GUEST_READS_COOKIE_DAYS } from '../../config/limits.js';
+import { sendPage } from '../../utils/page.js';
 import type { ComicParams } from '../comics/comics.schema.js';
-import type { ChapterParams } from './reading.schema.js';
+import { requirePublicComic } from '../comics/comics.service.js';
+import type { ChapterParams, ReaderPageParams } from './reading.schema.js';
 import * as readingService from './reading.service.js';
 
 // Traduce HTTP ↔ servicio; sin lógica de negocio.
@@ -33,4 +35,19 @@ export async function readChapter(req: Request, res: Response): Promise<void> {
     });
   }
   res.set('Cache-Control', 'no-store').json({ reading }); // URLs firmadas nuevas en cada lectura
+}
+
+// --- Páginas ---
+
+// /leer/:slug → 301 al primer capítulo, si la obra es pública (404 o 410 si no). El slug ya cumple el patrón:
+// la redirección es relativa y local.
+export async function readerStart(_req: Request, res: Response): Promise<void> {
+  const { slug } = res.locals.validated.params as ComicParams;
+  await requirePublicComic(slug);
+  res.redirect(301, `/leer/${slug}/1`);
+}
+
+export async function readerPage(_req: Request, res: Response): Promise<void> {
+  const { slug, numero } = res.locals.validated.params as ReaderPageParams;
+  await sendPage(res, 'reader', { ...(await readingService.getReaderPage(slug, numero)) });
 }

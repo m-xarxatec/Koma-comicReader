@@ -17,7 +17,17 @@ async function templates(): Promise<{ file: string; html: string }[]> {
 }
 
 // Todos los valores que inyecta el servidor en alguna plantilla.
-const VALUES = { requestId: '00000000-0000-4000-8000-000000000000', mode: 'login', title: 'Entrar', heading: 'Entrar' };
+// Todos los valores que inyecta el servidor en alguna plantilla (auth, comic y reader).
+const VALUES = {
+  requestId: '00000000-0000-4000-8000-000000000000',
+  mode: 'login',
+  title: 'Entrar',
+  heading: 'Entrar',
+  comicTitle: 'Obra',
+  chapterTitle: 'Capítulo 1',
+  number: '1',
+  contentWarning: '',
+};
 const count = (html: string, text: string) => html.split(text).length - 1;
 
 test('Seguridad: cada plantilla lleva una vez cada marcador y ninguna copia propia de la cabecera o el pie', async () => {
