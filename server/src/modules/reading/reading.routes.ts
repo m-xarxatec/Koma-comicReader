@@ -7,3 +7,7 @@ export const readingRouter = Router();
 
 // Público, como la ficha: no guarda nada (ningún GET modifica datos).
 readingRouter.get('/comics/:slug/ad', controller.startAd);
+
+// POST porque registra la lectura (T11b) y así pasa el control CSRF por Origin. Pública: el servicio decide
+// por rol y número (invitado incluido), no un middleware de permisos.
+readingRouter.post('/comics/:slug/chapters/:number/read', controller.readChapter);
