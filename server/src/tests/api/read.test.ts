@@ -161,15 +161,20 @@ test('Seguridad: admin y premium leen cualquier capítulo sin anuncio ni saldo',
   }
 });
 
-test('Seguridad: la autora lee su obra sin gastar saldo, pero con el anuncio final de una registrada sin premium', async () => {
+test('Seguridad: la autora lee su propia obra sin anuncios ni saldo; en una ajena, como cualquier registrada', async () => {
   const author = await createUser('author');
-  const own = await createComic({ name: 'lectura-propia', authorId: author.id, chapters: [{ number: 6 }] });
-  const reading = await readOk(own.slug, 6, { cookie: author.cookie });
-  assert.equal(reading.chapter.number, 6);
-  assert.ok(reading.ads.end, 'anuncio final (RN-03)');
-  const balance = reading.balance as { balance: number; max: number; retryAt: string | null };
-  assert.equal(balance.balance, balance.max, 'no gasta saldo en su obra');
-  assert.equal(balance.retryAt, null);
+  const own = await createComic({ name: 'lectura-propia', authorId: author.id, chapters: [{ number: 1 }, { number: 6 }] });
+  for (const number of [1, 6]) {
+    const reading = await readOk(own.slug, number, { cookie: author.cookie });
+    assert.deepEqual([reading.chapter.number, reading.ads, reading.balance], [number, { interstitial: null, end: null }, null], `cap. ${number}`);
+  }
+  const { pool } = await import('../../db/pool.js');
+  const credits = await pool.query('SELECT 1 FROM reading_credits WHERE user_id = $1', [author.id]);
+  assert.equal(credits.rowCount, 0, 'su obra no crea fila de saldo ni cuenta para el intersticial');
+
+  const elsewhere = await readOk(comic.slug, 1, { cookie: author.cookie });
+  assert.ok(elsewhere.ads.end, 'en una obra ajena, anuncio final (RN-03)');
+  assert.ok(elsewhere.balance, 'y su saldo');
 });
 
 test('RN-02: el registrado lee libres los caps. 1–2 y los que ya leyó, sin token de anuncio', async () => {

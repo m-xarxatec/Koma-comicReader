@@ -129,8 +129,9 @@ async function readAsGuest(
 
 async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRow, user: User, now: Date): Promise<ReadResult> {
   const ownsComic = comic.authorId === user.id;
-  // Saldo y anuncios: solo el registrado sin premium (también un autor, en su obra o en otra). RN-03.
-  const settings = isAdmin(user) || isPremium(user, now) ? null : await loadReadingSettings();
+  // Saldo y anuncios (RN-02, RN-03): solo el registrado sin premium, y no en su propia obra (aprobado el
+  // 3-nov: la autora la lee sin anuncios ni saldo, y esas lecturas no cuentan para el intersticial).
+  const settings = isAdmin(user) || isPremium(user, now) || ownsComic ? null : await loadReadingSettings();
 
   // Una transacción: saldo, chapter_reads, reads_since_ad y estadísticas; un error lo deshace todo.
   const balance = await withTransaction(async (client): Promise<BalanceDto | null> => {
