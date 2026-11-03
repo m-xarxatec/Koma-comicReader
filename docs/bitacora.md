@@ -304,3 +304,10 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Tests:** 9 de API en `read-credits.test.ts` y 5 unitarios. La prueba HTTP de lecturas simultáneas pasaba también sin `FOR UPDATE`; la del bloqueo con `lock_timeout` sí falla sin él (comprobado).
 - **Comprobación (IA):** typecheck, 77 unitarios y 112 de API. En local, `reader` con anuncio y saldo 5/5; cookie del invitado con sus atributos; 0 errores en el log.
 - **Aprendizaje:** un `INSERT … ON CONFLICT` sobre una fila recién insertada por otra transacción ya espera: para probar un `FOR UPDATE`, la fila tiene que existir antes.
+
+### 2026-11-03 · Bloque 2 · T12: rutas HTML del catálogo y del lector, y cabeceras en api.ts
+- **Decisión previa (desarrollador):** la autora lee su propia obra sin anuncios (ni final ni intersticial) ni saldo. Esas lecturas no crean la fila de saldo ni cuentan para `reads_since_ad`. Commit aparte, con su test.
+- **Pedido a la IA:** `/obra/:slug`, `/leer/:slug` (301) y `/leer/:slug/:numero`, `page.ts` y cabeceras opcionales en `api.ts`.
+- **Resultado:** páginas con las comprobaciones del mapa de rutas: 404 y 410 en HTML; parámetros con zod y `notFound`, también en las URLs en español (`:numero`). El título, el capítulo y la advertencia (RN-08) se inyectan escapados. `comic.html` y `reader.html` son plantillas mínimas que T14 y T15 sustituyen con la maqueta. `api.ts` acepta `{ headers }` por petición, sin dejar que tapen `Accept` ni el `Content-Type` del JSON.
+- **Tests:** `reading-pages.test.ts` (6, con un título hostil), `client-api.test.ts` (2) y `layout.test.ts` con los valores nuevos.
+- **Comprobación (IA):** typecheck, 79 unitarios y 118 de API; `curl` en local: ficha, 301 al cap. 1, lector, 404 y 0 errores en el log.
