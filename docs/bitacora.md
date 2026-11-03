@@ -295,3 +295,12 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Resultado:** orden del contrato con `chapterAccess`: token en `X-Ad-Token` (403 `AD_NOT_COMPLETED`), 401 desde el cap. 4. Número de capítulo canónico. Un capítulo retirado y publicado da 410; uno sustituido sirve el nuevo; anterior y siguiente saltan los no públicos. `no-store`. Sin efectos en la BD todavía.
 - **Pendiente (T11b):** el registrado sin premium en un capítulo de pago recibe un 500 provisional, para que nadie lea sin gastar saldo; también faltan `ads.end`, `balance` y las escrituras.
 - **Tests:** `read.test.ts` (8), con el CSRF incluido. **Comprobación (IA):** typecheck, 72 unitarios y 102 de API; `curl` en local: viñeta 200, sin `Origin` 403 y 0 errores en el log.
+
+### 2026-11-03 · Bloque 2 · T11b: lectura, parte 2 (saldo, anuncio final y estadísticas)
+- **Pedido a la IA:** quitar el 500 provisional de T11a con RN-02, RN-03 y los efectos de la lectura. Además, validar slug y número con zod respondiendo 404 y un test del anuncio sin anuncios activos.
+- **Resultado:** el registrado sin premium lee en una transacción. La fila de saldo se crea si falta (D1) y se bloquea con `FOR UPDATE`; el saldo se recalcula y gasta 1 en la primera lectura de pago; sin saldo, 403 `READING_LIMIT` con `retryAt` y sin efectos. También en la transacción: `chapter_reads`, `reads_since_ad` y `user_reads` (sin el admin ni el autor dueño). Premium y admin, sin saldo ni anuncios. El invitado tiene la cookie `koma_guest_reads` (HMAC `guest-reads`, últimos 50, 30 días) y `guest_reads`. `ads.end` al azar para el registrado sin premium, también para un autor en su propia obra.
+- **Zod en los parámetros:** `validate` admite `notFound: ['params']`, que da 404 con el mensaje del schema (`comicParams`, `chapterParams`). Es el paso `schema` del recorrido de CLAUDE.md.
+- **Anuncio sin anuncios activos:** `buildAdStart` es una función pura que usa el servicio; el test unitario la prueba con `null`, porque `npm test` no carga `.env` y el servicio sí.
+- **Tests:** 9 de API en `read-credits.test.ts` y 5 unitarios. La prueba HTTP de lecturas simultáneas pasaba también sin `FOR UPDATE`; la del bloqueo con `lock_timeout` sí falla sin él (comprobado).
+- **Comprobación (IA):** typecheck, 77 unitarios y 112 de API. En local, `reader` con anuncio y saldo 5/5; cookie del invitado con sus atributos; 0 errores en el log.
+- **Aprendizaje:** un `INSERT … ON CONFLICT` sobre una fila recién insertada por otra transacción ya espera: para probar un `FOR UPDATE`, la fila tiene que existir antes.
