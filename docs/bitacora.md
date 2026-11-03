@@ -278,3 +278,20 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Tests:** 14 unitarios: 8 de RN-02 (lleno, primer consumo, recarga por periodos, tope, sin saldo con `retryAt`, parámetros cambiados, reloj atrasado y máximo 1), 3 del token y 3 de `access` por rol y número.
 - **Comprobación (IA):** typecheck, 72 unitarios y 84 de API.
 - **Pendiente:** RN-03 (`reads_since_ad` e intersticial) sigue en T11b y T17, como en el desglose.
+
+### 2026-11-03 · Bloque 2 · T9: ficha de la obra
+- **Pedido a la IA:** `GET /api/comics/:slug` del contrato (CU-02, RN-06, RN-07).
+- **Resultado:** `requirePublicComic` en `comics.service.ts`, compartida con el anuncio y la lectura: 404 si la obra no existe o no está aprobada, 410 si se retiró. Un slug que no cumple la regex da 404 sin consultar la BD (con `%00` habría sido un 500). `ComicDto` con los capítulos públicos por número, `access` (de `chapterAccess`) y `read` (de `chapter_reads`).
+- **Tests:** `comic.test.ts` (7) y `reading-fixtures.ts`, que crea usuarios con su sesión firmada (sin login, fuera de RN-13) y obras con capítulos en cada estado.
+- **Comprobación (IA):** 102 de API; `curl` con la obra real en local.
+
+### 2026-11-03 · Bloque 2 · T10: anuncio del invitado
+- **Pedido a la IA:** `GET /api/comics/:slug/ad` (RN-01).
+- **Resultado:** módulo `reading` (repository, service, controller y routes). Anuncio activo al azar o `null`, token firmado con la clave `ad-token` y `minSeconds`; `Cache-Control: no-store`; no guarda nada.
+- **Tests:** `ad.test.ts` (3): forma, token válido solo para esa obra y pasados los segundos mínimos, token nuevo en cada petición, 404 y 410. Sin test de `ad: null`: desactivar los anuncios afectaría a los tests que corren en paralelo.
+
+### 2026-11-03 · Bloque 2 · T11a: lectura, parte 1
+- **Pedido a la IA:** `POST /api/comics/:slug/chapters/:number/read`: 404 y 410, admin y premium, caps. 1–2, invitado, viñetas firmadas y anterior y siguiente.
+- **Resultado:** orden del contrato con `chapterAccess`: token en `X-Ad-Token` (403 `AD_NOT_COMPLETED`), 401 desde el cap. 4. Número de capítulo canónico. Un capítulo retirado y publicado da 410; uno sustituido sirve el nuevo; anterior y siguiente saltan los no públicos. `no-store`. Sin efectos en la BD todavía.
+- **Pendiente (T11b):** el registrado sin premium en un capítulo de pago recibe un 500 provisional, para que nadie lea sin gastar saldo; también faltan `ads.end`, `balance` y las escrituras.
+- **Tests:** `read.test.ts` (8), con el CSRF incluido. **Comprobación (IA):** typecheck, 72 unitarios y 102 de API; `curl` en local: viñeta 200, sin `Origin` 403 y 0 errores en el log.
