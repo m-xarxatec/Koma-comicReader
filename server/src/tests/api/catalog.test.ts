@@ -142,6 +142,9 @@ test('Seguridad: el catálogo pagina de 24 en 24 con el total de resultados', as
   assert.deepEqual([second.page, second.total, titles(second)], [2, 25, [`${P} 1`]]);
   const beyond = await catalog({ q: P, page: '3' });
   assert.deepEqual([beyond.total, beyond.comics.length], [25, 0]);
+  // El entero seguro más grande: 200 con la lista vacía, sin desbordar el OFFSET.
+  const huge = await catalog({ q: P, page: String(Number.MAX_SAFE_INTEGER) });
+  assert.deepEqual([huge.page, huge.total, huge.comics.length], [Number.MAX_SAFE_INTEGER, 25, 0]);
 });
 
 test('Seguridad: el catálogo responde 400 con el campo culpable a una búsqueda, unas etiquetas o una página no válidas', async () => {
@@ -154,6 +157,8 @@ test('Seguridad: el catálogo responde 400 con el campo culpable a una búsqueda
     [`tags=${encodeURIComponent('Fantasía')}`, 'tags'],
     ['page=0', 'page'],
     ['page=abc', 'page'],
+    [`page=${Number.MAX_SAFE_INTEGER + 1}`, 'page'], // fuera de los enteros seguros
+    ['page=1e400', 'page'],
   ] as const) {
     const res = await fetch(`${srv.baseUrl}/api/comics?${query}`);
     assert.equal(res.status, 400, query);

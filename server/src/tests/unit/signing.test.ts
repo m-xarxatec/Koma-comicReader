@@ -49,3 +49,13 @@ test('Seguridad: la firma con caducidad vale hasta exp; después, expired; con e
   assert.equal(verifyExpiring(key, 'clave.webp', exp + 3600, signature, exp - 1), 'invalid');
   assert.equal(verifyExpiring(key, 'otra.webp', exp, signature, exp - 1), 'invalid');
 });
+
+test('Seguridad: un exp negativo bien firmado ya está caducado; pasar un exp a negativo o enorme invalida la firma', () => {
+  const key = deriveKey(SECRET, 'files');
+  const now = 1_800_000_000;
+  assert.equal(verifyExpiring(key, 'clave.webp', -1, signExpiring(key, 'clave.webp', -1), now), 'expired');
+  const signature = signExpiring(key, 'clave.webp', now + 60);
+  for (const exp of [-(now + 60), -1, 0, Number.MAX_SAFE_INTEGER, 10 ** 15]) {
+    assert.equal(verifyExpiring(key, 'clave.webp', exp, signature, now), 'invalid', String(exp));
+  }
+});

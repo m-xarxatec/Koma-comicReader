@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
+import { request } from 'node:http';
 import { rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -36,6 +37,18 @@ async function filesKey(label: 'files' | 'ad-token' = 'files'): Promise<Buffer> 
 
 const get = (url: string) => fetch(`${srv.baseUrl}${url}`);
 
+// fetch normaliza la ruta (quita los ../) antes de enviarla; node:http la manda tal cual.
+function rawGet(rawPath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const req = request(`${srv.baseUrl}/`, { path: rawPath }, (res) => {
+      res.resume();
+      resolve(res.statusCode ?? 0);
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 test('Seguridad: /files sirve la imagen con su URL firmada, en caché privada hasta que caduca', async () => {
   const { url } = await storeImage();
   const res = await get(url);
@@ -70,6 +83,18 @@ test('Seguridad: /files responde 403 sin firma, con la firma alterada, de otro u
   }
 });
 
+test('Seguridad: /files responde 403 a un exp negativo o de más de 15 cifras aunque su firma sea correcta', async () => {
+  const { key } = await storeImage();
+  const signingKey = await filesKey();
+  for (const exp of [-1, -nowSeconds() - 3600, 10 ** 15, Number.MAX_SAFE_INTEGER]) {
+    const res = await get(`/files/${key}?exp=${exp}&sig=${signExpiring(signingKey, key, exp)}`);
+    assert.equal(res.status, 403, String(exp));
+  }
+  // El máximo canónico (15 cifras) sí vale: el límite es de formato, no de fecha.
+  const max = 10 ** 15 - 1;
+  assert.equal((await get(`/files/${key}?exp=${max}&sig=${signExpiring(signingKey, key, max)}`)).status, 200);
+});
+
 test('Seguridad: /files responde 403 a una URL bien firmada que ya caducó', async () => {
   const { key } = await storeImage();
   const exp = nowSeconds() - 1;
@@ -81,10 +106,19 @@ test('Seguridad: /files responde 403 a una URL bien firmada que ya caducó', asy
 test('Seguridad: /files valida la clave antes que la firma y antes de tocar el disco: 404 aunque esté firmada', async () => {
   const key = await filesKey();
   const exp = nowSeconds() + 60;
-  for (const candidate of ['../../etc/passwd', '..%2F..%2Fetc%2Fpasswd', 'portada.webp', newImageKey('webp').toUpperCase(), newImageKey('png').replace('.png', '.gif'), '.env']) {
+  for (const candidate of ['..%2F..%2Fetc%2Fpasswd', 'portada.webp', newImageKey('webp').toUpperCase(), newImageKey('png').replace('.png', '.gif'), '.env']) {
     const decoded = decodeURIComponent(candidate);
     const res = await get(`/files/${candidate}?exp=${exp}&sig=${signExpiring(key, decoded, exp)}`);
     assert.equal(res.status, 404, candidate);
+  }
+});
+
+test('Seguridad: una ruta /files con ../ sin normalizar no sale de la carpeta: 404', async () => {
+  const key = await filesKey();
+  const exp = nowSeconds() + 60;
+  for (const candidate of ['../../etc/passwd', '..', '../package.json', '%2e%2e/%2e%2e/etc/passwd', '%2e%2e%2f%2e%2e%2fetc%2fpasswd']) {
+    const status = await rawGet(`/files/${candidate}?exp=${exp}&sig=${signExpiring(key, decodeURIComponent(candidate), exp)}`);
+    assert.equal(status, 404, candidate);
   }
 });
 
