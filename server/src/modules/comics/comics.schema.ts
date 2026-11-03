@@ -13,6 +13,8 @@ export const catalogQuery = z.object({
     .string({ error: 'La búsqueda debe ser un único texto' })
     .trim()
     .max(CATALOG_QUERY_MAX_LENGTH, { error: `La búsqueda no puede pasar de ${CATALOG_QUERY_MAX_LENGTH} caracteres` })
+    // PostgreSQL no admite el carácter nulo en un texto: sin esto, ?q=%00 sería un 500.
+    .refine((value) => !value.includes('\u0000'), { error: 'La búsqueda contiene caracteres no válidos' })
     .default(''),
   // Slugs separados por comas, combinados con Y; los repetidos cuentan una vez.
   tags: z

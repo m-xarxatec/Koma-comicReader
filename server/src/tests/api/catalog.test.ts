@@ -148,6 +148,8 @@ test('Seguridad: el catálogo responde 400 con el campo culpable a una búsqueda
   for (const [query, field] of [
     [`q=${'a'.repeat(101)}`, 'q'],
     [`q=a&q=b`, 'q'],
+    ['q=%00', 'q'], // Seguridad: PostgreSQL rechaza el carácter nulo; sin validarlo sería un 500
+    ['q=a%00b', 'q'],
     [`tags=${Array.from({ length: 11 }, (_, i) => `t${i}`).join(',')}`, 'tags'],
     [`tags=${encodeURIComponent('Fantasía')}`, 'tags'],
     ['page=0', 'page'],
