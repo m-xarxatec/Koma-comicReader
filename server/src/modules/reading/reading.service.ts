@@ -13,6 +13,7 @@ import {
   addGuestRead,
   buildAdStart,
   consumeCredit,
+  countReadForAd,
   createAdToken,
   parseGuestReads,
   recalculateCredits,
@@ -156,7 +157,7 @@ async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRo
   const settings = isAdmin(user) || isPremium(user, now) || ownsComic ? null : await loadReadingSettings();
 
   // Una transacción: saldo, chapter_reads, reads_since_ad y estadísticas; un error lo deshace todo.
-  const balance = await withTransaction(async (client): Promise<BalanceDto | null> => {
+  const { balance, interstitialDue } = await withTransaction(async (client): Promise<{ balance: BalanceDto | null; interstitialDue: boolean }> => {
     const stored = settings ? await readingRepository.lockCredits(client, user.id, settings.maxBalance) : null;
     const alreadyRead = (await readingRepository.findReadChapterIds(client, user.id, [chapter.id])).has(chapter.id);
     const access = chapterAccess(user, { number: chapter.number, alreadyRead, ownsComic }, now);
@@ -175,19 +176,30 @@ async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRo
     }
 
     const firstRead = await readingRepository.recordChapterRead(client, user.id, chapter.id);
-    if (firstRead && settings) await readingRepository.incrementReadsSinceAd(client, user.id);
+    // RN-03: `stored` solo existe con `settings` (registrado sin premium, fuera de su obra).
+    const counted = firstRead && stored ? countReadForAd(stored.readsSinceAd) : null;
+    if (counted) await readingRepository.updateReadsSinceAd(client, user.id, counted.readsSinceAd);
     // user_reads: lectores registrados únicos; no cuentan el admin ni el autor dueño.
     if (firstRead && !isAdmin(user) && !ownsComic) await readingRepository.countRead(client, chapter.id, 'user');
 
-    return settings && credits
-      ? { balance: credits.balance, max: settings.maxBalance, retryAt: credits.retryAt ? credits.retryAt.toISOString() : null }
-      : null;
+    return {
+      balance: settings && credits
+        ? { balance: credits.balance, max: settings.maxBalance, retryAt: credits.retryAt ? credits.retryAt.toISOString() : null }
+        : null,
+      interstitialDue: counted?.interstitial ?? false,
+    };
   });
 
-  // RN-03: anuncio al final de cada capítulo para el registrado sin premium. El intersticial llega en T17.
-  const endAd = settings ? await readingRepository.pickActiveAd(pool) : null;
+  // RN-03: anuncio al final de cada capítulo para el registrado sin premium y, cuando toca, el intersticial;
+  // cada uno al azar entre los activos (pueden coincidir).
+  const [endAd, interstitialAd] = settings
+    ? await Promise.all([readingRepository.pickActiveAd(pool), interstitialDue ? readingRepository.pickActiveAd(pool) : null])
+    : [null, null];
   const reading = await buildReading(comic, chapter, {
-    ads: { interstitial: null, end: endAd ? await toAdDto(endAd, signUrl) : null },
+    ads: {
+      interstitial: interstitialAd ? await toAdDto(interstitialAd, signUrl) : null,
+      end: endAd ? await toAdDto(endAd, signUrl) : null,
+    },
     balance,
   });
   return { reading, guestReadsCookie: null };

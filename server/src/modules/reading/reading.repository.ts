@@ -64,9 +64,10 @@ export async function updateCredits(db: Queryable, userId: number, credits: { ba
   await db.query('UPDATE reading_credits SET balance = $2, period_started_at = $3 WHERE user_id = $1', [userId, credits.balance, credits.periodStartedAt]);
 }
 
-// RN-03: cuenta las primeras lecturas (caps. 1–2 incluidos; relecturas no) para el anuncio intersticial.
-export async function incrementReadsSinceAd(db: Queryable, userId: number): Promise<void> {
-  await db.query('UPDATE reading_credits SET reads_since_ad = reads_since_ad + 1 WHERE user_id = $1', [userId]);
+// RN-03: primeras lecturas desde el último intersticial (caps. 1–2 incluidos; relecturas no). El valor lo
+// calcula countReadForAd sobre la fila bloqueada por lockCredits en la misma transacción.
+export async function updateReadsSinceAd(db: Queryable, userId: number, readsSinceAd: number): Promise<void> {
+  await db.query('UPDATE reading_credits SET reads_since_ad = $2 WHERE user_id = $1', [userId, readsSinceAd]);
 }
 
 // Registra la lectura en chapter_reads: true si es la primera de ese usuario (fila nueva); si no, solo

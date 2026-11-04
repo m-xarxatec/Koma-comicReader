@@ -171,7 +171,7 @@ test('RN-03: el registrado recibe un anuncio al final de cada capítulo; premium
   const reading = await readOk(comic.slug, 1, reader.cookie);
   assert.ok(reading.ads.end);
   assert.deepEqual(Object.keys(reading.ads.end).sort(), ['body', 'brand', 'imageUrl']);
-  assert.equal(reading.ads.interstitial, null); // T17
+  assert.equal(reading.ads.interstitial, null, 'primera lectura: aún no toca el intersticial');
 
   for (const kind of ['premium', 'admin'] as const) {
     const user = await createUser(kind);
@@ -180,6 +180,35 @@ test('RN-03: el registrado recibe un anuncio al final de cada capítulo; premium
     assert.equal(await credits(user.id), null, `${kind}: sin reading_credits`);
     assert.deepEqual(await readRows(user.id), [5], `${kind}: chapter_reads para marcar "Leído" (D2)`);
   }
+});
+
+test('RN-03: la 5.ª primera lectura trae el intersticial y pone reads_since_ad a 0; las relecturas no cuentan', async () => {
+  const reader = await createUser('reader');
+  for (const number of [1, 2, 3, 4]) {
+    assert.equal((await readOk(comic.slug, number, reader.cookie)).ads.interstitial, null, `cap. ${number}`);
+    await readOk(comic.slug, 1, reader.cookie); // relectura entre medias: no cuenta
+  }
+  assert.equal((await credits(reader.id))?.reads_since_ad, 4);
+  const fifth = await readOk(comic.slug, 5, reader.cookie);
+  assert.ok(fifth.ads.interstitial, '5.ª primera lectura');
+  assert.deepEqual(Object.keys(fifth.ads.interstitial).sort(), ['body', 'brand', 'imageUrl']);
+  assert.ok(fifth.ads.end, 'el anuncio final sigue');
+  assert.equal((await credits(reader.id))?.reads_since_ad, 0);
+  // "Recargar" (CU-03) es una relectura: ni intersticial ni cuenta.
+  assert.equal((await readOk(comic.slug, 5, reader.cookie)).ads.interstitial, null);
+  assert.equal((await credits(reader.id))?.reads_since_ad, 0);
+});
+
+test('RN-03: un 403 READING_LIMIT no cuenta para el intersticial; un contador por encima del límite lo da y vuelve a 0', async () => {
+  const reader = await createUser('reader');
+  await setCredits(reader, 0, 10);
+  await pool.query('UPDATE reading_credits SET reads_since_ad = 4 WHERE user_id = $1', [reader.id]);
+  assert.equal((await read(comic.slug, 3, reader.cookie)).status, 403);
+  assert.equal((await credits(reader.id))?.reads_since_ad, 4);
+
+  await pool.query('UPDATE reading_credits SET reads_since_ad = 7 WHERE user_id = $1', [reader.id]);
+  assert.ok((await readOk(comic.slug, 1, reader.cookie)).ads.interstitial);
+  assert.equal((await credits(reader.id))?.reads_since_ad, 0);
 });
 
 async function counts(chapterId: number): Promise<{ user: number; guest: number }> {

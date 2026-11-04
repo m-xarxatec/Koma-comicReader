@@ -1,8 +1,8 @@
-import { AD_TOKEN_MAX_AGE_SECONDS, GUEST_READS_MAX } from '../../config/limits.js';
+import { AD_TOKEN_MAX_AGE_SECONDS, GUEST_READS_MAX, INTERSTITIAL_EVERY } from '../../config/limits.js';
 import { sign, verify } from '../../utils/signing.js';
 
-// Reglas puras de la lectura: saldo de capítulos (RN-02), token y respuesta del anuncio del invitado (RN-01)
-// y cookie de sus lecturas contadas. Sin BD ni reloj: la hora, los parámetros, las claves y la firma de
+// Reglas puras de la lectura: saldo de capítulos (RN-02), anuncio intersticial (RN-03), token y respuesta del
+// anuncio del invitado (RN-01) y cookie de sus lecturas contadas. Sin BD ni reloj: la hora, los parámetros, las claves y la firma de
 // URLs llegan por parámetro. Qué exige cada capítulo según quién lee
 // (`access`) es un permiso y vive en modules/auth/permissions.ts.
 
@@ -57,6 +57,16 @@ export function consumeCredit(credits: Credits, settings: ReadingSettings, now: 
     periodStartedAt,
     retryAt: new Date(periodStartedAt.getTime() + settings.waitMinutes * MINUTE_MS),
   };
+}
+
+// --- RN-03: anuncio intersticial ---
+
+// Una primera lectura más del registrado sin premium (caps. 1–2 incluidos; las relecturas no llegan aquí).
+// Al llegar a `every`, toca el intersticial y el contador vuelve a 0. Un contador que ya pasaba de `every`
+// (guardado antes de T17, cuando solo se sumaba) también da el intersticial y vuelve a 0.
+export function countReadForAd(readsSinceAd: number, every: number = INTERSTITIAL_EVERY): { readsSinceAd: number; interstitial: boolean } {
+  const next = readsSinceAd + 1;
+  return next >= every ? { readsSinceAd: 0, interstitial: true } : { readsSinceAd: next, interstitial: false };
 }
 
 // --- RN-01: token del anuncio del invitado ---

@@ -11,6 +11,9 @@ export const FREE_CHAPTERS = 2; // caps. 1 y 2: libres para todos y sin consumo 
 export const AD_CHAPTER = 3; // el invitado lo lee tras un anuncio
 export const AD_TOKEN_MAX_AGE_SECONDS = 30 * 60;
 
+// RN-03: el registrado sin premium ve un anuncio intersticial cada 5 primeras lecturas (reads_since_ad).
+export const INTERSTITIAL_EVERY = 5;
+
 // Estadísticas del invitado (modelo_datos.md, "Estadísticas"; decisión D3): cookie firmada con los últimos
 // capítulos ya contados.
 export const GUEST_READS_MAX = 50;

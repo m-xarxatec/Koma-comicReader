@@ -4,6 +4,7 @@ import {
   addGuestRead,
   buildAdStart,
   consumeCredit,
+  countReadForAd,
   createAdToken,
   parseGuestReads,
   recalculateCredits,
@@ -11,9 +12,10 @@ import {
   verifyAdToken,
   type ReadingSettings,
 } from '../../modules/reading/reading.rules.js';
+import { INTERSTITIAL_EVERY } from '../../config/limits.js';
 import { deriveKey, sign } from '../../utils/signing.js';
 
-// Reglas puras de la lectura (RN-01 y RN-02), con la hora fijada en cada caso.
+// Reglas puras de la lectura (RN-01 a RN-03), con la hora fijada en cada caso.
 
 const T0 = new Date('2026-11-06T10:00:00Z');
 const at = (minutes: number, seconds = 0) => new Date(T0.getTime() + minutes * 60_000 + seconds * 1000);
@@ -94,6 +96,28 @@ test('RN-02: con máximo 1, leer deja el saldo a 0 y la recarga lo devuelve llen
   const after = consumeCredit(recalculateCredits(null, one, T0), one, T0);
   assert.deepEqual(after, { balance: 0, periodStartedAt: T0, retryAt: at(10) });
   assert.deepEqual(recalculateCredits(after, one, at(10)), { balance: 1, periodStartedAt: null, retryAt: null });
+});
+
+// --- RN-03: anuncio intersticial ---
+
+test('RN-03: el intersticial toca en la 5.ª, la 10.ª… primera lectura, y el contador vuelve a 0', () => {
+  assert.equal(INTERSTITIAL_EVERY, 5);
+  let readsSinceAd = 0;
+  const shown: number[] = [];
+  for (let read = 1; read <= 12; read++) {
+    const counted = countReadForAd(readsSinceAd);
+    if (counted.interstitial) shown.push(read);
+    readsSinceAd = counted.readsSinceAd;
+  }
+  assert.deepEqual(shown, [5, 10]);
+  assert.equal(readsSinceAd, 2);
+  assert.deepEqual(countReadForAd(3), { readsSinceAd: 4, interstitial: false });
+  assert.deepEqual(countReadForAd(4), { readsSinceAd: 0, interstitial: true });
+});
+
+test('RN-03: un contador guardado por encima del límite da el intersticial y vuelve a 0', () => {
+  assert.deepEqual(countReadForAd(7), { readsSinceAd: 0, interstitial: true });
+  assert.deepEqual(countReadForAd(0, 1), { readsSinceAd: 0, interstitial: true }, 'cada lectura');
 });
 
 // --- RN-01: token del anuncio ---

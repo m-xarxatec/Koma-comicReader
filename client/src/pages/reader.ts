@@ -5,7 +5,7 @@ import { fullscreenButtonState, toggleFullscreen } from '../utils/fullscreen.js'
 
 // Lector (CU-03, CU-04, CU-12, CU-24). La ruta HTML ya comprobó obra y capítulo (404, 410) e inyectó el título
 // y la advertencia. El permiso lo decide la API: aquí se hace el POST de la lectura y se muestra lo que
-// responda (tira, anuncio, invitación o muro de saldo). Todo dato de la obra va con textContent.
+// responda (tira, intersticial, anuncio, invitación o muro de saldo). Todo dato de la obra va con textContent.
 
 interface ReadingDto {
   comic: { slug: string; title: string; contentWarning: string | null };
@@ -285,6 +285,21 @@ function handleReadError(result: Extract<ApiResult<unknown>, { ok: false }>): vo
   showError(result, () => { void read(); });
 }
 
+// --- RN-03: anuncio intersticial ---
+
+// La API lo envía con el capítulo cuando toca (la lectura ya está registrada): una pantalla antes de la tira,
+// sin espera (aprobado el 4-nov), y "Continuar" pinta el capítulo que ya llegó.
+function showInterstitial(reading: ReadingDto, ad: AdDto): void {
+  showScreen({
+    eyebrow: `Capítulo ${number}`,
+    title: 'Antes de seguir',
+    text: 'Los anuncios hacen posible la lectura gratis en Koma. Con Premium lees sin anuncios.',
+    content: [screenBlock(adCard(ad, true))],
+    actions: [actionButton(`Continuar al capítulo ${number}`, () => renderReading(reading), true), backToComic()],
+  });
+  announce(`Anuncio antes del capítulo ${number}.`);
+}
+
 // --- La tira ---
 
 function panelFigure(panel: ReadingDto['panels'][number], index: number): HTMLElement {
@@ -333,7 +348,7 @@ function renderReading(reading: ReadingDto): void {
   stream?.replaceChildren(...reading.panels.map(panelFigure));
   if (strip) strip.hidden = false;
 
-  // RN-03: anuncio al final del capítulo (el intersticial llega en T17).
+  // RN-03: anuncio al final del capítulo.
   if (endAd) {
     endAd.replaceChildren(...(reading.ads.end ? [adCard(reading.ads.end)] : []));
     endAd.hidden = reading.ads.end === null;
@@ -380,8 +395,11 @@ async function read(mode: 'show' | 'reload' = 'show'): Promise<void> {
   // La recarga no cambia de pantalla: el foco no se mueve (salvo si la API niega el capítulo, más abajo).
   if (mode === 'reload' && (result.ok || result.status === 0 || result.status >= 500)) store.moveFocus = false;
   if (result.ok) {
-    if (mode === 'reload') refreshPanels(result.data.reading);
-    else renderReading(result.data.reading);
+    const { reading } = result.data;
+    // "Recargar" es una relectura: la API nunca trae ahí el intersticial.
+    if (mode === 'reload') refreshPanels(reading);
+    else if (reading.ads.interstitial) showInterstitial(reading, reading.ads.interstitial);
+    else renderReading(reading);
     return;
   }
   // Si falla la recarga por la red, la tira se queda como está y se avisa; si la API niega el capítulo
