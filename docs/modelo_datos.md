@@ -183,7 +183,18 @@ DELETE FROM panels WHERE id = $1;
 UPDATE panels SET position = position - 1 WHERE chapter_id = $2 AND position > $3;
 ```
 
-La restricción es `DEFERRABLE` porque, si no, el `UPDATE` puede chocar con la unicidad fila a fila. Fuera de `draft`, las viñetas no se tocan. La posición de una viñeta nueva es `max(position) + 1`, calculada con el capítulo bloqueado (`SELECT ... FOR UPDATE`).
+También en `draft`, el autor puede mover una viñeta de la posición `$p` a `$q`; las intermedias se desplazan en una sola sentencia:
+
+```sql
+SET CONSTRAINTS panels_chapter_position_uq DEFERRED;
+UPDATE panels
+SET position = CASE WHEN position = $2 THEN $3
+                    WHEN $3 < $2 THEN position + 1
+                    ELSE position - 1 END
+WHERE chapter_id = $1 AND position BETWEEN least($2, $3) AND greatest($2, $3);
+```
+
+La restricción es `DEFERRABLE` porque, si no, estos `UPDATE` pueden chocar con la unicidad fila a fila. Fuera de `draft`, las viñetas no se tocan. La posición de una viñeta nueva es `max(position) + 1`, calculada con el capítulo bloqueado (`SELECT ... FOR UPDATE`).
 
 ### 006_comments
 
