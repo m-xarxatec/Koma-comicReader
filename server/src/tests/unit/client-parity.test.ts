@@ -3,11 +3,13 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { paths } from '../../config/paths.js';
-import { CATALOG_MAX_TAGS, CATALOG_PAGE_SIZE, CATALOG_QUERY_MAX_LENGTH } from '../../config/limits.js';
+import { CATALOG_MAX_TAGS, CATALOG_PAGE_SIZE, CATALOG_QUERY_MAX_LENGTH, COMMENT_BODY_MAX } from '../../config/limits.js';
 import { EMAIL_MAX_CHARS, registerBody } from '../../modules/auth/auth.schema.js';
 import { catalogQuery } from '../../modules/comics/comics.schema.js';
+import { commentBody } from '../../modules/comments/comments.schema.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
+import { normalizeText, textProblem } from '../../utils/text.js';
 
 // El cliente duplica de forma explícita las reglas del servidor (no hay bundler: zod no llega al navegador).
 // Este test carga el JS compilado del cliente (client/dist, lo genera `tsc -b`) y le pasa los mismos casos.
@@ -107,4 +109,33 @@ test('Seguridad: lo que la home envía a /api/comics desde una URL válida, el s
     assert.ok(parsed.success, query);
     assert.deepEqual({ q: parsed.data.q, tags: parsed.data.tags, page: parsed.data.page }, state, query);
   }
+});
+
+// --- Textos del bloque 3 (utils/text.ts y config/limits.ts) ---
+
+interface ClientText {
+  COMMENT_BODY_MAX: number;
+  commentProblem: (value: string) => string | null;
+  textProblem: (value: string, rule: { min: number; max: number; multiline?: boolean }) => string | null;
+  textLength: (value: string, multiline?: boolean) => number;
+}
+const clientText = await load<ClientText>('utils/validate.js');
+const TEXT_CASES = ['', '   ', 'a', '  hola  ', 'a\nb', 'a\r\nb', 'a\rb', 'a\tb', 'a\u0000b', 'a\u007fb', '😀'.repeat(500), '😀'.repeat(501), 'x'.repeat(500), 'x'.repeat(501), ` ${'x'.repeat(500)} `];
+
+test('RN-11: el cliente valida el comentario igual que el servidor, con los mismos mensajes', () => {
+  assert.equal(clientText.COMMENT_BODY_MAX, COMMENT_BODY_MAX);
+  for (const value of TEXT_CASES) {
+    const server = commentBody.shape.body.safeParse(value);
+    const client = clientText.commentProblem(value);
+    assert.equal(client === null, server.success, JSON.stringify(value));
+    if (!server.success) assert.equal(client, server.error.issues[0]?.message, JSON.stringify(value));
+  }
+});
+
+test('Seguridad: la regla de textos de una línea es la misma en el cliente y en el servidor', () => {
+  const rule = { min: 3, max: 30 };
+  for (const value of [...TEXT_CASES, 'ab', ' abc ']) {
+    assert.equal(clientText.textProblem(value, rule), textProblem(normalizeText(value), rule), JSON.stringify(value));
+  }
+  assert.equal(clientText.textLength(' a\r\nb ', true), 3); // lo que contará el servidor
 });

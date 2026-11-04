@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
   <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/form.css">
   <link rel="stylesheet" href="/styles/components/content-warning.css">
   <link rel="stylesheet" href="/styles/components/reader-page.css">
   <link rel="stylesheet" href="/styles/components/reader-topbar.css">
@@ -18,6 +19,7 @@
   <link rel="stylesheet" href="/styles/components/reader-strip.css">
   <link rel="stylesheet" href="/styles/components/reader-screen.css">
   <link rel="stylesheet" href="/styles/components/ad-card.css">
+  <link rel="stylesheet" href="/styles/components/comment-panel.css">
   <script type="module" src="/js/pages/reader.js"></script>
 </head>
 <body>
@@ -37,6 +39,11 @@
       <h1 class="reader-intro__title" id="chapter-title" tabindex="-1">{{chapterTitle}}</h1>
       <p class="reader-intro__text">Lee desplazándote hacia abajo. Todas las imágenes forman una tira continua, sin separaciones.</p>
       <p class="reader-intro__note" id="reader-balance" hidden></p>
+      <!-- Idea 4: preferencia del dispositivo (localStorage); aparece con la tira. -->
+      <label class="reader-intro__toggle" id="reader-comments-toggle" hidden>
+        <input class="reader-intro__toggle-input" id="reader-hide-comments" type="checkbox">
+        <span>Ocultar iconos de comentarios</span>
+      </label>
     </section>
 
     <p class="visually-hidden" id="reader-status" role="status"></p>
@@ -62,6 +69,7 @@
     </section>
 
     <p data-content-warning hidden>{{contentWarning}}</p>
+    <p data-comic-title hidden>{{comicTitle}}</p>
     <noscript>
       <section class="reader-screen reader-page__column" aria-label="JavaScript desactivado">
         <p class="reader-screen__text">Activa JavaScript para leer este capítulo.</p>
@@ -69,5 +77,41 @@
       </section>
     </noscript>
   </main>
+
+  <!-- Comentarios de una viñeta (CU-05, CU-13) y compartirla (CU-06): hoja inferior en móvil, lateral en
+       escritorio. Lo abre el icono de cada viñeta; comment-panel.ts le da comportamiento. -->
+  <dialog class="comments-dialog" id="comments-dialog" aria-labelledby="comments-title">
+    <div class="comments-dialog__header">
+      <h2 class="comments-dialog__title" id="comments-title">Comentarios</h2>
+      <button class="comments-dialog__close" type="button" data-close-comments aria-label="Cerrar comentarios">×</button>
+    </div>
+    <div class="comments-dialog__body">
+      <p class="comments-dialog__status" id="comments-status" role="status"></p>
+      <ul class="comments-dialog__list" id="comments-list"></ul>
+      <button class="button button--outline comments-dialog__more" id="comments-more" type="button" hidden>Ver más comentarios</button>
+    </div>
+    <div class="comments-dialog__footer">
+      <form class="comments-dialog__form" id="comment-form" hidden>
+        <label class="form__label" for="comment-body">Añadir un comentario</label>
+        <textarea class="form__input comments-dialog__textarea" id="comment-body" name="body" rows="3" required autocomplete="off" placeholder="¿Qué te ha parecido esta viñeta?" aria-describedby="comment-body-error comment-body-count"></textarea>
+        <p class="form__error" id="comment-body-error" hidden></p>
+        <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+        <div class="comments-dialog__form-bottom">
+          <output class="comments-dialog__count" id="comment-body-count" for="comment-body" aria-live="off">0 / 500</output>
+          <button class="button button--primary" type="submit">Publicar</button>
+        </div>
+      </form>
+      <p class="comments-dialog__signin" id="comments-signin" hidden>
+        <a class="button button--outline" id="comments-signin-link" href="/entrar">Entra para comentar</a>
+      </p>
+      <button class="comments-dialog__share" id="share-panel" type="button"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-link"/></svg> Compartir enlace a esta viñeta</button>
+      <div class="comments-dialog__fallback" id="share-fallback" hidden>
+        <label class="form__label" for="share-link">Enlace directo</label>
+        <input class="form__input" id="share-link" type="text" readonly autocomplete="off">
+        <button class="button button--outline" id="share-copy" type="button" hidden>Copiar enlace</button>
+      </div>
+      <p class="comments-dialog__feedback" id="share-feedback" role="status"></p>
+    </div>
+  </dialog>
 </body>
 </html>

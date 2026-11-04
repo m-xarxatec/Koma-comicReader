@@ -368,3 +368,37 @@
   --font-size-reader-exit: 0.85rem;
   --line-height-reader-exit: 1.2;
 }
+
+/* Comentarios por viñeta y compartir (lector, bloque 3): valores de la maqueta (reader-strip.css,
+   reader-layout.css y reader-comments.css). */
+:root {
+  --color-reader-comments-border: #a88cdc;
+  --color-reader-comments-bg: #110c22dd;
+  --color-reader-comments-hover: #2b1644;
+  --color-reader-comments-text: #ffffff;
+  --reader-comments-inset: 0.6rem;
+  --reader-comments-gap: 0.35rem;
+  --reader-comments-min-width: 48px;
+  --reader-comments-padding: 0.45rem 0.65rem;
+  --font-size-reader-comments: 0.8rem;
+  --line-height-reader-comments: 1;
+  --reader-intro-toggle-gap: 0.6rem;
+  --font-size-reader-intro-toggle: 0.83rem;
+  --reader-intro-toggle-check-size: 1.2rem;
+  --color-comments-backdrop: #03020bb5;
+  --comments-dialog-max-height: 83dvh;
+  --comments-dialog-radius: 1rem;
+  --comments-dialog-width: 440px; /* lateral en escritorio */
+  --comments-dialog-padding: 1rem;
+  --comments-dialog-gap: 0.55rem;
+  --comments-item-padding: 0.85rem;
+  --comments-text-gap: 0.25rem 0 0.5rem;
+  --comments-delete-padding: 0.35rem 0.5rem;
+  --comments-textarea-padding: 0.75rem;
+  --font-size-comments-close: 1.8rem;
+  --font-size-comments-author: 0.85rem;
+  --font-size-comments-meta: 0.78rem;
+  --font-size-comments-count: 0.8rem;
+  --font-size-comments-feedback: 0.82rem;
+  --comments-feedback-min-height: 1.2em; /* reserva la línea del aviso: el panel no salta al aparecer */
+}

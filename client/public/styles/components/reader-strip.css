@@ -37,6 +37,43 @@
   text-align: center;
 }
 
+/* Icono de comentarios con su contador (CU-05, idea 4): abajo a la derecha de cada viñeta. */
+.reader-panel__comments {
+  position: absolute;
+  right: var(--reader-comments-inset);
+  bottom: var(--reader-comments-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--reader-comments-gap);
+  min-width: var(--reader-comments-min-width);
+  min-height: var(--touch-target);
+  padding: var(--reader-comments-padding);
+  border: var(--border-width) solid var(--color-reader-comments-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-reader-comments-bg);
+  color: var(--color-reader-comments-text);
+  font-size: var(--font-size-reader-comments);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-reader-comments);
+  cursor: pointer;
+}
+
+.reader-panel__comments:hover {
+  background: var(--color-reader-comments-hover);
+}
+
+.reader-panel__comments .icon {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+/* "Ocultar iconos de comentarios" y la pantalla completa (lectura limpia, como el modo inmersivo de la maqueta). */
+.reader--comments-hidden .reader-panel__comments,
+.reader:fullscreen .reader-panel__comments {
+  display: none;
+}
+
 /* Pantalla completa (D24): la API Fullscreen sobre la tira, que pasa a tener su propio desplazamiento. */
 .reader:fullscreen {
   max-width: none;

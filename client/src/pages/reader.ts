@@ -1,4 +1,5 @@
 import { adCard, type AdDto } from '../components/ad.js';
+import { commentButtonLabel, createCommentPanel } from '../components/comment-panel.js';
 import { retryAtText, startCountdown } from '../components/timer.js';
 import { api, type ApiResult } from '../services/api.js';
 import { fullscreenButtonState, toggleFullscreen } from '../utils/fullscreen.js';
@@ -10,7 +11,7 @@ import { fullscreenButtonState, toggleFullscreen } from '../utils/fullscreen.js'
 interface ReadingDto {
   comic: { slug: string; title: string; contentWarning: string | null };
   chapter: { number: number; title: string; prev: number | null; next: number | null };
-  panels: { position: number; url: string; width: number; height: number }[];
+  panels: { position: number; url: string; width: number; height: number; comments: number }[];
   ads: { interstitial: AdDto | null; end: AdDto | null };
   balance: { balance: number; max: number; retryAt: string | null } | null;
 }
@@ -31,6 +32,7 @@ const number = Number(numberText);
 const comicUrl = `/obra/${slug}`;
 const readPath = `/api/comics/${slug}/chapters/${number}/read`;
 const warningKey = `koma:aviso-aceptado:${slug}`;
+const hideCommentsKey = 'koma:ocultar-comentarios'; // preferencia de interfaz (idea 4), no un permiso
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
 const status = byId<HTMLElement>('reader-status');
@@ -45,6 +47,8 @@ const balanceNote = byId<HTMLElement>('reader-balance');
 const fullscreenButton = byId<HTMLButtonElement>('reader-fullscreen');
 const fullscreenLabel = byId<HTMLElement>('reader-fullscreen-label');
 const exitButton = byId<HTMLButtonElement>('reader-exit');
+const hideCommentsToggle = byId<HTMLElement>('reader-comments-toggle');
+const hideCommentsInput = byId<HTMLInputElement>('reader-hide-comments');
 const contentWarning = document.querySelector('[data-content-warning]')?.textContent?.trim() ?? '';
 
 const store = {
@@ -53,7 +57,55 @@ const store = {
   stopTimer: null as (() => void) | null,
   fullscreenOffset: 0, // posición dentro de la tira, para no perderla al entrar o salir de pantalla completa
   moveFocus: false, // tras pulsar un botón que desaparece, el foco pasa al título de lo nuevo
+  comments: new Map<number, number>(), // posición → comentarios visibles (contrato del bloque 3, D3)
 };
+
+// --- Comentarios por viñeta (CU-05, CU-13) y su interruptor ---
+
+const commentPanel = createCommentPanel({
+  slug,
+  number,
+  comicTitle: document.querySelector('[data-comic-title]')?.textContent?.trim() ?? '',
+  onCountChange: (position, count) => {
+    store.comments.set(position, count);
+    const button = document.querySelector<HTMLButtonElement>(`#v-${position} .reader-panel__comments`);
+    if (button) syncCommentButton(button, position, count);
+  },
+});
+
+function syncCommentButton(button: HTMLButtonElement, position: number, count: number): void {
+  button.setAttribute('aria-label', commentButtonLabel(position, count));
+  const label = button.querySelector('.reader-panel__comments-count');
+  if (label) label.textContent = String(count);
+}
+
+function readHideComments(): boolean {
+  try {
+    return localStorage.getItem(hideCommentsKey) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveHideComments(hidden: boolean): void {
+  try {
+    if (hidden) localStorage.setItem(hideCommentsKey, '1');
+    else localStorage.removeItem(hideCommentsKey);
+  } catch {
+    // Sin almacenamiento, la preferencia dura hasta recargar.
+  }
+}
+
+function applyHideComments(hidden: boolean): void {
+  strip?.classList.toggle('reader--comments-hidden', hidden);
+  if (hideCommentsInput) hideCommentsInput.checked = hidden;
+}
+
+hideCommentsInput?.addEventListener('change', () => {
+  applyHideComments(hideCommentsInput.checked);
+  saveHideComments(hideCommentsInput.checked);
+  announce(hideCommentsInput.checked ? 'Iconos de comentarios ocultos.' : 'Iconos de comentarios visibles.');
+});
 
 function announce(text: string): void {
   if (status) status.textContent = text;
@@ -142,7 +194,7 @@ function showScreen(parts: ScreenParts): void {
   }
   screen.replaceChildren(...children);
   screen.hidden = false;
-  for (const element of [strip, endAd, end, fullscreenButton]) if (element) element.hidden = true;
+  for (const element of [strip, endAd, end, fullscreenButton, hideCommentsToggle]) if (element) element.hidden = true;
   // "Cargando…" es una pantalla de paso: el foco espera a la siguiente.
   if (!parts.title.endsWith('...')) focusAfterAction(title);
 }
@@ -327,7 +379,27 @@ function panelFigure(panel: ReadingDto['panels'][number], index: number): HTMLEl
   image.addEventListener('load', () => { error.hidden = true; });
 
   figure.append(image, error);
+  if (commentPanel) figure.append(commentButton(panel.position)); // después del error: queda por encima
   return figure;
+}
+
+function commentButton(position: number): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'reader-panel__comments';
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('class', 'icon');
+  icon.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '/icons/sprite.svg#icon-chat');
+  icon.append(use);
+  const count = document.createElement('span');
+  count.className = 'reader-panel__comments-count';
+  count.setAttribute('aria-hidden', 'true'); // el número ya va en el aria-label
+  button.append(icon, count);
+  syncCommentButton(button, position, store.comments.get(position) ?? 0);
+  button.addEventListener('click', () => commentPanel?.open(position, store.comments.get(position) ?? 0));
+  return button;
 }
 
 function renderBalance(balance: ReadingDto['balance']): void {
@@ -345,8 +417,11 @@ function renderReading(reading: ReadingDto): void {
     screen.replaceChildren();
   }
   renderBalance(reading.balance);
+  store.comments = new Map(reading.panels.map((panel) => [panel.position, panel.comments]));
   stream?.replaceChildren(...reading.panels.map(panelFigure));
   if (strip) strip.hidden = false;
+  if (hideCommentsToggle && commentPanel) hideCommentsToggle.hidden = false;
+  applyHideComments(readHideComments());
 
   // RN-03: anuncio al final del capítulo.
   if (endAd) {
@@ -380,6 +455,9 @@ function refreshPanels(reading: ReadingDto): void {
     const error = figure?.querySelector<HTMLElement>('.reader-panel__error');
     if (error) error.hidden = true;
     if (image) image.src = panel.url;
+    store.comments.set(panel.position, panel.comments);
+    const button = figure?.querySelector<HTMLButtonElement>('.reader-panel__comments');
+    if (button) syncCommentButton(button, panel.position, panel.comments);
   }
   renderBalance(reading.balance);
   announce('Imágenes recargadas.');

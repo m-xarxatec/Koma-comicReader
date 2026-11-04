@@ -1,0 +1,188 @@
+/* Panel de comentarios de una viñeta (CU-05, CU-13) y compartirla (CU-06): <dialog> modal como hoja inferior en
+   móvil y lateral en escritorio. Está en la capa superior del navegador (showModal): no necesita z-index. */
+
+.comments-dialog {
+  position: fixed;
+  inset: auto 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: var(--comments-dialog-max-height);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--comments-dialog-radius) var(--comments-dialog-radius) 0 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.comments-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.comments-dialog::backdrop {
+  background: var(--color-comments-backdrop);
+}
+
+.comments-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--comments-dialog-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.comments-dialog__title {
+  font-size: var(--font-size-lg);
+}
+
+.comments-dialog__close {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: var(--font-size-comments-close);
+  cursor: pointer;
+}
+
+.comments-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--comments-dialog-padding);
+  overflow-y: auto;
+}
+
+/* Región viva siempre en el árbol (aunque esté vacía): si apareciera a la vez que su texto, no se anunciaría. */
+.comments-dialog__status {
+  min-height: var(--comments-feedback-min-height);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-comments-meta);
+}
+
+.comments-dialog__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comments-dialog__item {
+  padding-block: var(--comments-item-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.comments-dialog__author {
+  color: var(--color-secondary);
+  font-size: var(--font-size-comments-author);
+}
+
+.comments-dialog__time {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-comments-meta);
+}
+
+.comments-dialog__text {
+  margin: var(--comments-text-gap);
+  overflow-wrap: anywhere;
+  white-space: pre-line; /* texto plano: los saltos de línea del comentario se respetan */
+}
+
+.comments-dialog__delete {
+  min-height: var(--touch-target);
+  padding: var(--comments-delete-padding);
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
+.comments-dialog__delete:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: var(--cursor-disabled);
+}
+
+.comments-dialog__empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.comments-dialog__more {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.comments-dialog__footer {
+  display: grid;
+  gap: var(--comments-dialog-gap);
+  padding: var(--comments-dialog-padding);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.comments-dialog__form:not([hidden]) {
+  display: grid;
+  gap: var(--comments-dialog-gap);
+}
+
+.comments-dialog__textarea {
+  padding: var(--comments-textarea-padding);
+  resize: vertical;
+}
+
+.comments-dialog__form-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.comments-dialog__count {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-comments-count);
+}
+
+.comments-dialog__count--over {
+  color: var(--color-danger);
+}
+
+.comments-dialog__signin .button {
+  width: 100%;
+}
+
+.comments-dialog__share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.comments-dialog__fallback:not([hidden]) {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.comments-dialog__feedback {
+  min-height: var(--comments-feedback-min-height);
+  color: var(--color-success);
+  font-size: var(--font-size-comments-feedback);
+}
+
+@media (min-width: 64rem) {
+  .comments-dialog {
+    inset: 0 0 0 auto;
+    width: min(var(--comments-dialog-width), 100%);
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}

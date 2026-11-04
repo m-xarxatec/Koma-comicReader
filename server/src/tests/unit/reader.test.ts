@@ -81,3 +81,42 @@ test('RN-02: el muro de saldo dice la hora de la recarga; con la fecha si no es 
   assert.equal(timer.retryAtText(new Date(2026, 10, 4, 18, 5), now), 'a las 18:05');
   assert.equal(timer.retryAtText(new Date(2026, 10, 5, 9, 30), now), 'el 5 de noviembre a las 09:30');
 });
+
+// --- Comentarios y compartir viñeta (bloque 3) ---
+
+type ShareNavigator = { share?: (data: { title: string; url: string }) => Promise<void>; clipboard?: { writeText?: (text: string) => Promise<void> } };
+const panel = await load<{
+  commentButtonLabel: (position: number, count: number) => string;
+  panelShareUrl: (origin: string, slug: string, number: number, position: number) => string;
+  loginHref: (slug: string, number: number, position: number) => string;
+  sharePanel: (nav: ShareNavigator, data: { title: string; url: string }) => Promise<'shared' | 'cancelled' | 'manual'>;
+  canCopy: (nav: ShareNavigator) => boolean;
+}>('components/comment-panel.js');
+
+test('RN-11: el icono de cada viñeta dice cuántos comentarios tiene, en singular y en plural', () => {
+  assert.equal(panel.commentButtonLabel(3, 0), 'Comentar la viñeta 3: aún no tiene comentarios');
+  assert.equal(panel.commentButtonLabel(3, 1), 'Ver 1 comentario de la viñeta 3');
+  assert.equal(panel.commentButtonLabel(3, 12), 'Ver 12 comentarios de la viñeta 3');
+});
+
+test('RN-09: el enlace compartido abre la viñeta exacta, y el login vuelve a ella con #v-n', () => {
+  assert.equal(panel.panelShareUrl('http://koma.local', 'mi-obra', 4, 7), 'http://koma.local/leer/mi-obra/4#v-7');
+  const login = new URL(panel.loginHref('mi-obra', 4, 7), 'http://koma.local');
+  assert.equal(login.pathname, '/entrar');
+  assert.equal(login.searchParams.get('next'), '/leer/mi-obra/4#v-7');
+});
+
+test('Seguridad: compartir usa el menú nativo si existe; si se cancela no muestra nada; si no existe o falla, el enlace a mano', async () => {
+  const data = { title: 'Obra · Capítulo 1 · Viñeta 2', url: 'http://koma.local/leer/obra/1#v-2' };
+  const shared: unknown[] = [];
+  assert.equal(await panel.sharePanel({ share: async (d) => { shared.push(d); } }, data), 'shared');
+  assert.deepEqual(shared, [data]);
+  const abort = Object.assign(new Error('cancelado'), { name: 'AbortError' });
+  assert.equal(await panel.sharePanel({ share: async () => { throw abort; } }, data), 'cancelled');
+  assert.equal(await panel.sharePanel({ share: async () => { throw new Error('NotAllowedError'); } }, data), 'manual');
+  assert.equal(await panel.sharePanel({}, data), 'manual'); // http fuera de localhost: no hay Web Share
+
+  assert.equal(panel.canCopy({}), false); // ni portapapeles: solo el <input readonly>
+  assert.equal(panel.canCopy({ clipboard: {} }), false);
+  assert.equal(panel.canCopy({ clipboard: { writeText: async () => undefined } }), true);
+});

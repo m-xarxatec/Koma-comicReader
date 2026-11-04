@@ -77,6 +77,8 @@ test('RN-08: /leer/:slug/:numero inyecta escapados el título, el capítulo y la
   assert.ok(html.includes(`<p class="reader-page__eyebrow">${ESCAPED} <span aria-hidden="true">/</span> Capítulo 1</p>`), 'obra y capítulo');
   assert.ok(html.includes(`href="/obra/${comic.slug}"`), 'Volver a la obra, sin JS');
   assert.ok(html.includes('<p data-content-warning hidden>Aviso &lt;b&gt;fuerte&lt;/b&gt;</p>'));
+  assert.ok(html.includes(`<p data-comic-title hidden>${ESCAPED}</p>`), 'título para compartir viñeta (CU-06)');
+  assert.ok(html.includes('<dialog class="comments-dialog" id="comments-dialog"'), 'panel de comentarios (CU-05)');
   const noWarning = await page(`/leer/${plain.slug}/2`);
   assert.ok(noWarning.includes('<p data-content-warning hidden></p>'));
 });

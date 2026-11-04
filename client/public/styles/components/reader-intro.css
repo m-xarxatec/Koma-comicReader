@@ -21,3 +21,20 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
+
+/* "Ocultar iconos de comentarios" (idea 4), donde la maqueta tenía .reader-intro__tools. */
+.reader-intro__toggle:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--reader-intro-toggle-gap);
+  min-height: var(--touch-target);
+  margin-top: var(--space-4);
+  font-size: var(--font-size-reader-intro-toggle);
+  cursor: pointer;
+}
+
+.reader-intro__toggle-input {
+  width: var(--reader-intro-toggle-check-size);
+  height: var(--reader-intro-toggle-check-size);
+  accent-color: var(--color-accent);
+}

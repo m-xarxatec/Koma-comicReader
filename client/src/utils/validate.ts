@@ -1,5 +1,6 @@
 // Validación de formularios en el cliente. zod en el servidor es la fuente de verdad: estas reglas son un
-// duplicado EXPLÍCITO de server/src/modules/auth/auth.schema.ts y server/src/utils/password.ts (RN-12), y
+// duplicado EXPLÍCITO de server/src/modules/auth/auth.schema.ts, server/src/utils/password.ts (RN-12),
+// server/src/utils/text.ts y server/src/config/limits.ts (textos del bloque 3), y
 // server/src/tests/unit/client-parity.test.ts comprueba que dan el mismo resultado.
 
 export const EMAIL_MAX_CHARS = 254;
@@ -57,15 +58,66 @@ export function passwordConfirmProblem(value: string, values: Readonly<Record<st
   return null;
 }
 
+// --- Textos del bloque 3 (server/src/utils/text.ts y config/limits.ts) ---
+
+export const COMMENT_BODY_MAX = 500;
+
+export interface TextRule {
+  min: number;
+  max: number;
+  multiline?: boolean; // sinopsis y comentarios
+}
+
+// \r\n y \r cuentan como \n; sin espacios en los extremos.
+export function normalizeText(value: string, multiline = false): string {
+  return (multiline ? value.replace(/\r\n?/g, '\n') : value).trim();
+}
+
+const CONTROL = /\p{Cc}/u;
+const CONTROL_EXCEPT_NEWLINE = /[^\P{Cc}\n]/u;
+
+// Mismos mensajes que textProblem del servidor. Recibe el valor sin normalizar.
+export function textProblem(raw: string, rule: TextRule): string | null {
+  const value = normalizeText(raw, rule.multiline);
+  const length = chars(value);
+  if (length < rule.min) return rule.min === 1 ? REQUIRED : `Debe tener al menos ${rule.min} caracteres`;
+  if (length > rule.max) return `No puede pasar de ${rule.max} caracteres`;
+  if ((rule.multiline ? CONTROL_EXCEPT_NEWLINE : CONTROL).test(value)) return 'Contiene caracteres no válidos';
+  return null;
+}
+
+// RN-11: de 1 a 500 caracteres, con saltos de línea.
+export const commentProblem = (value: string) => textProblem(value, { min: 1, max: COMMENT_BODY_MAX, multiline: true });
+
+// Contador del campo: los caracteres que contará el servidor (puntos de código, ya normalizado).
+export const textLength = (value: string, multiline = false) => chars(normalizeText(value, multiline));
+
 export type Rules = Readonly<Record<string, Rule>>;
 export type SubmitOutcome = { ok: true } | { ok: false; message: string; fields?: Record<string, string> };
 
-// Cada <input> tiene su elemento de error con id `<id del input>-error`, ya incluido en su aria-describedby.
-function errorElement(input: HTMLInputElement): HTMLElement | null {
+// Campos con nombre de un formulario: <input>, <textarea> y <select>.
+type Field = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+const isField = (element: unknown): element is Field =>
+  element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement;
+
+// Valor que ven las reglas y onSubmit: una casilla vale su `value` si está marcada y '' si no; un grupo de
+// radios, el valor del marcado.
+function fieldValue(field: Field): string {
+  if (field instanceof HTMLInputElement && field.type === 'radio') {
+    const group = field.form?.elements.namedItem(field.name);
+    return group instanceof RadioNodeList ? group.value : field.checked ? field.value : '';
+  }
+  if (field instanceof HTMLInputElement && field.type === 'checkbox') return field.checked ? field.value : '';
+  return field.value;
+}
+
+// Cada campo tiene su elemento de error con id `<id del campo>-error`, ya incluido en su aria-describedby.
+function errorElement(input: Field): HTMLElement | null {
   return document.getElementById(`${input.id}-error`);
 }
 
-function clearFieldError(input: HTMLInputElement): void {
+function clearFieldError(input: Field): void {
   input.removeAttribute('aria-invalid');
   const error = errorElement(input);
   if (error) {
@@ -74,8 +126,14 @@ function clearFieldError(input: HTMLInputElement): void {
   }
 }
 
-function inputsOf(form: HTMLFormElement): HTMLInputElement[] {
-  return [...form.elements].filter((element): element is HTMLInputElement => element instanceof HTMLInputElement && element.name !== '');
+// Las casillas con el mismo nombre (etiquetas) cuentan una vez: las lee onSubmit directamente.
+function inputsOf(form: HTMLFormElement): Field[] {
+  const seen = new Set<string>();
+  return [...form.elements].filter((element): element is Field => {
+    if (!isField(element) || element.name === '' || seen.has(element.name)) return false;
+    seen.add(element.name);
+    return true;
+  });
 }
 
 // Pinta los errores por campo (cliente o `fields` del servidor) con aria-invalid y lleva el foco al primero
@@ -83,7 +141,7 @@ function inputsOf(form: HTMLFormElement): HTMLInputElement[] {
 // tienen <input> (o su elemento de error) en el formulario.
 function showFieldErrors(form: HTMLFormElement, errors: Readonly<Record<string, string>>): string[] {
   const shown = new Set<string>();
-  let first: HTMLInputElement | null = null;
+  let first: Field | null = null;
   for (const input of inputsOf(form)) {
     const message = Object.hasOwn(errors, input.name) ? errors[input.name] : undefined;
     const error = errorElement(input);
@@ -116,7 +174,7 @@ export function bindForm(
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 
   form.addEventListener('input', (event) => {
-    if (event.target instanceof HTMLInputElement) clearFieldError(event.target);
+    if (isField(event.target)) clearFieldError(event.target);
   });
 
   form.addEventListener('submit', async (event) => {
@@ -125,7 +183,7 @@ export function bindForm(
     inputsOf(form).forEach(clearFieldError);
     showFormError(form, '');
 
-    const values = Object.fromEntries(inputsOf(form).map((input) => [input.name, input.value]));
+    const values = Object.fromEntries(inputsOf(form).map((input) => [input.name, fieldValue(input)]));
     const errors: Record<string, string> = {};
     for (const [name, rule] of Object.entries(rules)) {
       const problem = rule(values[name] ?? '', values);
