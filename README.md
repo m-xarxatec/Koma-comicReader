@@ -41,6 +41,8 @@ Se abre en `http://koma.local` o `http://localhost`. Los pagos son simulados y l
 
 En Render, `TRUST_PROXY=3`: los saltos de proxy, comprobados en el primer despliegue (cómo se midió, en `docs/plan_mvp.md`, "Primer despliegue").
 
+Las variables de la web online son las de Render (Environment). `.env.online` solo lo leen `seed:online` y `content:import:online` en tu ordenador. Si cambias una variable, por ejemplo `STORAGE_DRIVER=r2`, cámbiala en los dos sitios. Si solo la cambias en `.env.online`, la web sigue con el valor anterior: con `local`, las imágenes dan 404 en `/files/…`.
+
 ## Subir datos a la versión online
 
 Seed y obras se cargan desde tu ordenador hacia Neon (base de datos) y R2 (imágenes). Antes, la app tiene que haber arrancado una vez en Render: es la que crea las tablas.
@@ -217,6 +219,7 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | El nombre ya lo usa una obra de un autor, o la obra está retirada | Esa dirección es de una obra subida desde la web o retirada por un admin | Usa otro nombre de carpeta |
 | Online: las tablas no existen | La versión online aún no ha arrancado con el código del bloque 2 | Despliega, espera a que arranque y repite |
 | Online: las imágenes no se ven | `STORAGE_DRIVER=local` en `.env.online`, o faltan las `R2_*` | Corrige `.env.online` y repite la carga |
+| Online: las imágenes dan 404 en `/files/…` | Render sigue con `STORAGE_DRIVER=local`: las variables se cambiaron solo en `.env.online` | Cámbialas también en Render (Environment) y espera a que se reinicie |
 
 ## Comandos
 

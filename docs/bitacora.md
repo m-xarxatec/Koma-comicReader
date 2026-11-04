@@ -411,3 +411,41 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - Un comentario duplicado en `layout.test.ts`.
 - **Pendiente (desarrollador):** los botones deshabilitados del lector usan la base del sitio (opacidad 0,6 y `cursor: progress`), y la maqueta usa .56 y `not-allowed`.
 - **Comprobación (IA):** typecheck, 89 unitarios y 118 de API.
+
+### 2026-11-04 · Bloque 2 · T16: versión online con R2
+- **Pedido a la IA:** la lista de variables de Render y los comandos de seed y de importación online. El desarrollador los ejecuta; la IA no ejecuta nada contra Neon ni R2.
+- **Resultado (IA):** no hay variables nuevas desde el cierre del bloque 1 (`env.ts` y `.env.example` comparados con `6f1de55`). En Render solo cambia `STORAGE_DRIVER` a `r2`, y se añaden `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_BUCKET`. Lo mismo en `.env.online`, más `PORT`, `HOST` y `SEED_*`.
+- **Ejecución (desarrollador):**
+  - `seed:online`: Neon por la conexión directa (sin `-pooler`) y `r2`. Crea 12 etiquetas y 3 anuncios; 0 usuarios y 0 ajustes, que ya existían.
+  - `content:import:online`: crea la etiqueta `harem` de `content/tags.json` e importa las dos obras (1 + 4 capítulos), con 0 errores.
+- **Fallos:** al principio, las imágenes online daban 404 en `/files/…`. Las variables de R2 se habían cambiado solo en `.env.online`, y Render seguía con `STORAGE_DRIVER=local`: firmaba URLs de su disco efímero, donde no hay imágenes.
+- **Corrección:** `STORAGE_DRIVER=r2` y las cuatro `R2_*` también en Render; tras el reinicio, todo carga desde R2. El README lo avisa en "Publicar online" y en los errores frecuentes.
+- **Comprobación (desarrollador, online):**
+  - El catálogo muestra las dos obras con portada, sin errores de CSP.
+  - Como invitado: el anuncio en el cap. 3 y la invitación en el 4.
+  - Registrado: el saldo y el anuncio final.
+- **Aprendizaje:** `.env.online` no configura la web: solo lo leen los scripts que se ejecutan desde local. Cualquier variable de la app online se cambia en Render.
+
+### 2026-11-04 · Bloque 2 · Botones deshabilitados del lector y T17: intersticial
+- **Decisiones del desarrollador:** los botones deshabilitados del lector, con los valores de la maqueta (pendiente de la segunda revisión del lector). El intersticial, como pantalla previa a la tira y sin espera: la maqueta no lo diseña y `docs/` no dice dónde va.
+- **Botones:** tokens `--cursor-disabled` (base, `progress`: en los formularios es una carga en curso), `--opacity-reader-disabled` (0,56) y `--cursor-reader-disabled` (`not-allowed`). `reader-page.css` los aplica con `:root:has(.reader-page)`, así que también llegan al botón de pantalla completa de la barra, fuera de `main`. El resto del sitio sigue con 0,6 y `progress`. La regla propia del botón de pantalla completa sobra y se quita.
+- **Resultado T17 (RN-03):**
+  - Servidor:
+    - `INTERSTITIAL_EVERY = 5` en `limits.ts`.
+    - La regla pura `countReadForAd` suma una primera lectura y, al llegar a 5, devuelve el intersticial y el contador a 0. Un contador guardado por encima de 5 (de antes de T17, cuando solo se sumaba) también lo da y vuelve a 0.
+    - El servicio la aplica sobre la fila ya bloqueada por `lockCredits`, en la misma transacción, y devuelve `ads.interstitial` al azar entre los activos (puede coincidir con `ads.end`).
+    - Premium, admin, el autor en su obra y las relecturas no cuentan, como antes.
+  - Cliente: `showInterstitial` muestra una pantalla con el anuncio, «Continuar al capítulo N» y «Volver a la obra»; «Continuar» pinta el capítulo que ya llegó. «Recargar» es una relectura y nunca lo trae.
+- **Tests:**
+  - 2 unitarios: intersticial en la 5.ª y la 10.ª primera lectura, y contador por encima del límite.
+  - 2 de API: la 5.ª primera lectura lo trae y deja `reads_since_ad` en 0, y ni las relecturas ni «Recargar» cuentan; un 403 `READING_LIMIT` no cuenta y un contador en 7 lo da y vuelve a 0.
+- **Revisión del agente `frontend`:** APTO. Comprobó el foco, el anuncio de estado, el `#v-n` tras «Continuar», el escapado, la CSP y que los botones del resto del sitio no cambian. Su único hallazgo era esta entrada.
+- **Comprobación (IA):** typecheck, 91 unitarios y 120 de API.
+- **Pendiente (desarrollador):**
+  - En el navegador, a 360 px y en escritorio, con teclado:
+    - El intersticial de `reader@` tras 5 primeras lecturas.
+    - Con advertencia y con `#v-3`.
+    - «Continuar en N s» del cap. 3 con opacidad 0,56.
+    - Los formularios siguen igual.
+  - Online, tras el push.
+- **Aprendizaje:** un contador que una tarea anterior solo sumaba puede llegar por encima del límite. La regla debe aceptarlo (`>=`) en lugar de esperar que coincida justo con 5.
