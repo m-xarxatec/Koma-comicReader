@@ -118,7 +118,7 @@
   width: var(--story-ring-size);
   height: var(--story-ring-size);
   border: var(--border-width-strong) solid var(--color-story-ring);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   box-shadow: var(--shadow-story-ring);
 }
 

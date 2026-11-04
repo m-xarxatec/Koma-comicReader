@@ -1,3 +1,5 @@
+import { sizeFromRatioToken } from '../utils/ratio.js';
+
 export interface TagDto {
   slug: string;
   name: string;
@@ -13,19 +15,6 @@ export interface ComicCardDto {
 }
 
 const COVER_VARIANTS = ['violet', 'rose', 'blue', 'amber', 'indigo'] as const;
-
-// width y height del <img> salen de --home-cover-ratio (variables.css, "ancho / alto"): el diseño cambia la
-// proporción sin tocar este archivo. Si el token no tiene esa forma, el hueco lo reserva igual el aspect-ratio
-// de .comic-card__cover.
-let coverSize: { width: number; height: number } | null | undefined;
-
-function readCoverSize(): { width: number; height: number } | null {
-  if (coverSize !== undefined) return coverSize;
-  const value = getComputedStyle(document.documentElement).getPropertyValue('--home-cover-ratio');
-  const match = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(value);
-  coverSize = match ? { width: Number(match[1]), height: Number(match[2]) } : null;
-  return coverSize;
-}
 
 // eager: la portada está en la primera pantalla y se carga sin loading="lazy".
 export function comicCard(comic: ComicCardDto, index: number, eager = false): HTMLElement {
@@ -43,7 +32,7 @@ export function comicCard(comic: ComicCardDto, index: number, eager = false): HT
     image.className = 'comic-card__image';
     image.src = comic.coverUrl;
     image.alt = ''; // el título, dentro del mismo enlace, ya le da nombre
-    const size = readCoverSize();
+    const size = sizeFromRatioToken('--home-cover-ratio');
     if (size) {
       image.width = size.width;
       image.height = size.height;

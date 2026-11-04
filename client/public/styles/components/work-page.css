@@ -1,0 +1,33 @@
+/* Página de la ficha: ancho, aire y la fila inferior (capítulos y "¿Cómo funciona la lectura?"). */
+.work-page {
+  max-width: var(--work-page-width);
+  padding-block: var(--space-5) var(--space-10);
+}
+
+.work-page__message:not(:empty) {
+  margin-block: var(--space-5);
+  color: var(--color-text-muted);
+}
+
+.work-page__message .button {
+  margin-top: var(--space-3);
+}
+
+.work-page__lower {
+  display: grid;
+  align-items: start;
+  gap: var(--space-5);
+}
+
+@media (min-width: 40rem) {
+  .work-page {
+    padding-top: var(--space-8);
+  }
+}
+
+@media (min-width: 64rem) {
+  .work-page__lower {
+    grid-template-columns: minmax(0, 1fr) var(--reading-info-width);
+    gap: var(--space-6);
+  }
+}

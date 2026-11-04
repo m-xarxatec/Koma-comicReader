@@ -1,0 +1,24 @@
+/* "¿Cómo funciona la lectura?": las reglas reales de RN-01 a RN-03, en texto. */
+.reading-info {
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.reading-info__title {
+  margin-bottom: var(--reading-info-heading-gap);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height);
+}
+
+.reading-info__text {
+  margin-block: var(--reading-info-text-margin);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Sin el botón "Descubrir Premium" de la maqueta (llega en el bloque 4), el último párrafo cierra el panel. */
+.reading-info__text:last-child {
+  margin-bottom: 0;
+}

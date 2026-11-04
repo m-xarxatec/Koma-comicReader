@@ -6,6 +6,7 @@
   <!-- @head -->
   <meta name="request-id" content="{{requestId}}">
   <title>{{title}} · Koma</title>
+  <meta name="description" content="Ficha de {{title}} en Koma: sinopsis, autor, licencia y capítulos.">
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
   <link rel="stylesheet" href="/styles/layers.css">
@@ -14,13 +15,83 @@
   <link rel="stylesheet" href="/styles/components/site-header.css">
   <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/work-page.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/work-detail.css">
+  <link rel="stylesheet" href="/styles/components/content-warning.css">
+  <link rel="stylesheet" href="/styles/components/chapter-list.css">
+  <link rel="stylesheet" href="/styles/components/reading-info.css">
+  <script type="module" src="/js/pages/comic.js"></script>
 </head>
 <body>
   <!-- @header -->
-  <!-- Ficha de la obra (CU-02). Base de T12: el diseño de koma_home y los datos de la API llegan en T14. -->
-  <main id="contenido" class="page">
-    <h1>{{title}}</h1>
-    <p><a href="/#catalogo">Volver al catálogo</a></p>
+  <!-- Ficha de la obra (CU-02, RN-07). El servidor inyecta el título, escapado; el resto lo pinta comic.ts desde
+       GET /api/comics/:slug, con el acceso de cada capítulo para quien consulta. -->
+  <main id="contenido" class="work-page container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <a class="breadcrumb__link" href="/#catalogo">Explorar</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">{{title}}</span>
+    </nav>
+
+    <article class="work-detail" aria-labelledby="work-title">
+      <div class="work-detail__cover" id="work-cover" aria-hidden="true"></div>
+
+      <div class="work-detail__intro">
+        <p class="work-detail__eyebrow">Ficha de obra</p>
+        <h1 class="work-detail__title" id="work-title">{{title}}</h1>
+        <p class="work-detail__status" id="work-status" hidden></p>
+        <dl class="work-detail__tags" id="work-tags" hidden></dl>
+      </div>
+
+      <div class="work-detail__body" id="work-body" hidden>
+        <h2 class="work-detail__heading">Sinopsis</h2>
+        <p class="work-detail__synopsis" id="work-synopsis"></p>
+
+        <dl class="work-detail__credits">
+          <div class="work-detail__credit"><dt class="work-detail__credit-label">Autor original</dt><dd class="work-detail__credit-value" id="work-author"></dd></div>
+          <div class="work-detail__credit"><dt class="work-detail__credit-label">Publicado por</dt><dd class="work-detail__credit-value" id="work-publisher"></dd></div>
+          <div class="work-detail__credit"><dt class="work-detail__credit-label">Licencia</dt><dd class="work-detail__credit-value" id="work-license"></dd></div>
+        </dl>
+
+        <div class="work-detail__actions">
+          <a class="button button--primary button--large" id="work-read" href="#capitulos" hidden><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> <span id="work-read-label">Leer capítulo 1</span></a>
+          <a class="button button--outline button--large" href="#capitulos">Ver capítulos</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- RN-08: aquí solo se informa; la confirmación antes de leer la pide el lector. -->
+    <aside class="content-warning" id="work-warning" aria-labelledby="warning-title" hidden>
+      <div class="content-warning__symbol" aria-hidden="true">!</div>
+      <div>
+        <h2 class="content-warning__title" id="warning-title">Advertencia de contenido</h2>
+        <p class="content-warning__text" id="work-warning-text"></p>
+      </div>
+    </aside>
+
+    <p class="work-page__message" id="work-message" role="status"></p>
+    <noscript><p class="work-page__message">Activa JavaScript para ver la sinopsis y los capítulos de la obra.</p></noscript>
+
+    <div class="work-page__lower">
+      <section class="chapter-list" id="capitulos" aria-labelledby="chapters-title" hidden>
+        <div class="chapter-list__heading">
+          <h2 class="chapter-list__title" id="chapters-title">Capítulos</h2>
+          <p class="chapter-list__summary" id="chapters-summary"></p>
+        </div>
+        <ol class="chapter-list__items" id="chapter-items"></ol>
+      </section>
+
+      <!-- Los números 1, 2, 3 y 4 repiten FREE_CHAPTERS y AD_CHAPTER de server/src/config/limits.ts
+           (RN-01): si cambian, cambia también este texto. -->
+      <aside class="reading-info" aria-labelledby="reading-info-title">
+        <h2 class="reading-info__title" id="reading-info-title">¿Cómo funciona la lectura?</h2>
+        <p class="reading-info__text">Los capítulos 1 y 2 de cada obra son libres. El 3 se desbloquea viendo un anuncio, y desde el 4 necesitas una cuenta.</p>
+        <p class="reading-info__text">Con cuenta, cada capítulo que lees por primera vez usa 1 de tu saldo de lectura, que se recarga con el tiempo. Releer no gasta saldo, y con Premium lees sin límites ni anuncios.</p>
+      </aside>
+    </div>
   </main>
   <!-- @footer -->
 </body>

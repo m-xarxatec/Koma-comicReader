@@ -43,7 +43,7 @@
   inset: 15% 13% 13%;
   z-index: var(--layer-back);
   border: var(--border-width) solid var(--color-scene-halo);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   box-shadow: var(--shadow-scene-halo);
 }
 
@@ -144,7 +144,7 @@
   display: inline-block;
   width: var(--dot-size);
   height: var(--dot-size);
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--color-accent);
 }
 

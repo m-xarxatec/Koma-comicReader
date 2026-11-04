@@ -133,6 +133,11 @@ code {
   margin-top: var(--space-4);
 }
 
+/* hidden oculta siempre, aunque la clase del elemento ponga display (flex, grid, inline-flex…) */
+[hidden] {
+  display: none !important;
+}
+
 /* Solo para lectores de pantalla */
 .visually-hidden {
   position: absolute !important;

@@ -41,10 +41,12 @@ async function page(path: string, status = 200): Promise<string> {
   return html;
 }
 
-test('Seguridad: /obra/:slug sirve la ficha con el título escapado en <title> y en su único <h1>', async () => {
+test('Seguridad: /obra/:slug sirve la ficha con el título escapado en <title>, en su único <h1>, en las migas y en la descripción', async () => {
   const html = await page(`/obra/${comic.slug}`);
   assert.equal(title(html), `${ESCAPED} · Koma`);
   assert.deepEqual(h1s(html), [ESCAPED]);
+  assert.ok(html.includes(`<span class="breadcrumb__current" aria-current="page">${ESCAPED}</span>`), 'migas');
+  assert.ok(html.includes(`<meta name="description" content="Ficha de ${ESCAPED} en Koma`), 'descripción (atributo)');
   assert.ok(!html.includes('<script>alert'), 'nada sin escapar');
   for (const part of ['class="skip-link"', 'id="contenido"', 'class="site-footer"', '<html lang="es">', 'rel="icon"']) {
     assert.ok(html.includes(part), part);

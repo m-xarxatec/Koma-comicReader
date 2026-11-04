@@ -1,0 +1,187 @@
+/* Ficha: portada, título, etiquetas, sinopsis, créditos (RN-07) y acciones. */
+.work-detail {
+  display: grid;
+  grid-template-columns: var(--work-cover-width) minmax(0, 1fr);
+  grid-template-areas:
+    "cover intro"
+    "body body";
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.work-detail__cover {
+  grid-area: cover;
+  overflow: hidden;
+  aspect-ratio: var(--work-cover-ratio);
+  border-radius: var(--radius-md);
+  background: var(--gradient-work-cover);
+  box-shadow: var(--shadow-panel);
+}
+
+.work-detail__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.work-detail__intro {
+  grid-area: intro;
+  min-width: 0;
+}
+
+.work-detail__eyebrow {
+  margin-bottom: var(--work-eyebrow-gap);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-work-eyebrow);
+  font-weight: var(--font-weight-label);
+  letter-spacing: var(--letter-spacing-work-eyebrow);
+  text-transform: var(--text-transform-label);
+}
+
+.work-detail__title {
+  font-size: var(--font-size-work-title);
+  line-height: var(--line-height-work-title);
+  letter-spacing: var(--letter-spacing-work-title);
+  overflow-wrap: anywhere;
+}
+
+.work-detail__status {
+  margin-block: var(--work-status-gap);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-work-meta);
+}
+
+.work-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--work-tags-gap);
+  margin-top: var(--space-3);
+}
+
+.work-detail__tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--work-tag-height);
+  padding: var(--work-tag-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-work-tag);
+}
+
+/* La píldora mide 32 px, como en la maqueta; el área táctil llega a 44 px por arriba y por abajo. */
+.work-detail__tag::after {
+  position: absolute;
+  inset: calc((var(--work-tag-height) - var(--touch-target)) / 2) 0;
+  content: '';
+}
+
+.work-detail__tag--genre {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.work-detail__tag--theme {
+  border-style: dashed;
+  color: var(--color-secondary);
+}
+
+.work-detail__tag:hover {
+  border-color: var(--color-accent);
+}
+
+.work-detail__body {
+  grid-area: body;
+}
+
+.work-detail__heading {
+  margin-bottom: var(--work-heading-gap);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height); /* en la maqueta, estos h2 heredan el del cuerpo */
+}
+
+.work-detail__synopsis {
+  max-width: var(--measure-synopsis);
+  margin: var(--work-synopsis-margin);
+  white-space: pre-line;
+}
+
+.work-detail__credits {
+  display: grid;
+  gap: var(--work-credits-gap);
+  margin-block: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.work-detail__credit {
+  display: grid;
+  gap: var(--work-credit-gap);
+}
+
+.work-detail__credit-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-work-meta);
+}
+
+.work-detail__credit-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.work-detail__license-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  text-decoration: underline;
+}
+
+.work-detail__license-link:hover {
+  color: var(--color-accent-soft);
+}
+
+.work-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--work-actions-gap);
+}
+
+.work-detail__actions .button {
+  flex: 1 1 var(--work-action-basis);
+}
+
+@media (min-width: 40rem) {
+  .work-detail {
+    grid-template-columns: var(--work-cover-width-medium) minmax(0, 1fr);
+    grid-template-areas:
+      "cover intro"
+      "cover body";
+    gap: var(--space-5) var(--space-6);
+    padding: var(--space-6);
+  }
+
+  .work-detail__title {
+    overflow-wrap: normal;
+  }
+
+  .work-detail__credits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .work-detail__actions .button {
+    flex: 0 1 auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  .work-detail {
+    grid-template-columns: var(--work-cover-width-wide) minmax(0, 1fr);
+    gap: var(--space-5) var(--space-8);
+  }
+}

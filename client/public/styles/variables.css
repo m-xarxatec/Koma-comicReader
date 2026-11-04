@@ -120,6 +120,7 @@
   --radius-md: 0.8rem;
   --radius-lg: 1.15rem;
   --radius-pill: 999px;
+  --radius-circle: 50%;
   /* Foco de 3 px en todo el sitio: la maqueta usaba 2 px en el buscador y en el desplazamiento del foco de
      los campos; se unifica en 3 px (decisión del desarrollador, 2-nov). */
   --focus-ring: 3px;
@@ -278,4 +279,54 @@
   --font-size-home-filters-summary: 0.85rem;
   --home-filters-form-gap: 0.8rem;
   --home-filters-form-padding: 0.8rem 1rem 1rem;
+}
+
+/* Ficha de obra (/obra/:slug): valores de la maqueta (obra/obra-demo-01, work-detail.css y chapter-list.css). */
+:root {
+  --color-work-cover-from: #362268;
+  --color-work-cover-mid: #7350b0;
+  --color-work-cover-to: #a53682;
+  --gradient-work-cover: linear-gradient(150deg, var(--color-work-cover-from), var(--color-work-cover-mid) 58%, var(--color-work-cover-to));
+  --font-weight-label: 750; /* antetítulo de la ficha y estado de un capítulo */
+  --work-page-width: 1180px;
+  --breadcrumb-gap: 0.6rem;
+  --work-cover-ratio: 2 / 3;
+  --work-cover-width: 108px;
+  --work-cover-width-medium: minmax(190px, 235px);
+  --work-cover-width-wide: minmax(250px, 290px);
+  --work-eyebrow-gap: 0.35rem;
+  --font-size-work-eyebrow: 0.68rem;
+  --letter-spacing-work-eyebrow: 0.06em;
+  --font-size-work-title: clamp(1.45rem, 3.5vw, 2.5rem);
+  --line-height-work-title: 1.12;
+  --letter-spacing-work-title: -0.03em;
+  --work-status-gap: 0.65rem;
+  --font-size-work-meta: 0.77rem; /* recuento de capítulos y etiquetas de los créditos */
+  --work-tags-gap: 0.4rem;
+  --work-tag-height: 32px; /* el área táctil llega a --touch-target con un pseudoelemento */
+  --work-tag-padding: 0.25rem 0.6rem;
+  --line-height-work-tag: 1.25;
+  --work-heading-gap: 0.3rem;
+  --measure-synopsis: 65ch;
+  --work-synopsis-margin: 0.4rem 0 0.8rem;
+  --work-credits-gap: 0.7rem;
+  --work-credit-gap: 0.1rem;
+  --work-actions-gap: 0.65rem;
+  --work-action-basis: 170px;
+  --warning-symbol-size: 28px;
+  --reading-info-width: 290px;
+  --reading-info-heading-gap: 0.65rem;
+  --reading-info-text-margin: 1em; /* margen por defecto de <p> en la maqueta */
+  --chapters-heading-bar: 4px;
+  --chapters-summary-gap: 0.45rem;
+  --chapter-row-height: 82px;
+  --chapter-row-padding: 0.85rem;
+  --chapter-row-padding-medium: 1rem 1.15rem;
+  --chapter-number-width: 40px;
+  --chapter-number-height: 44px;
+  --chapter-info-gap: 0.3rem;
+  --font-size-chapter-title: 0.9rem;
+  --line-height-chapter-meta: 1.4;
+  --chapter-state-padding: 0.3rem 0.5rem;
+  --font-size-chapter-state: 0.73rem;
 }

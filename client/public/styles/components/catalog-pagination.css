@@ -16,7 +16,3 @@
   opacity: var(--opacity-disabled);
   pointer-events: none; /* sin el hover de .button--outline */
 }
-
-.catalog-pagination[hidden] {
-  display: none;
-}
