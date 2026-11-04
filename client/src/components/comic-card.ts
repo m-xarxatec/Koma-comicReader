@@ -32,7 +32,7 @@ export function comicCard(comic: ComicCardDto, index: number, eager = false): HT
     image.className = 'comic-card__image';
     image.src = comic.coverUrl;
     image.alt = ''; // el título, dentro del mismo enlace, ya le da nombre
-    const size = sizeFromRatioToken('--home-cover-ratio');
+    const size = sizeFromRatioToken('--cover-ratio');
     if (size) {
       image.width = size.width;
       image.height = size.height;

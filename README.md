@@ -85,7 +85,7 @@ content/
 ```
 
 - **Nombre de la carpeta de la obra:** minúsculas, sin acentos, sin espacios y con guiones entre palabras. Es también su dirección en la web (`/obra/el-amante-de-las-princesas`) y no se puede cambiar después.
-- **Portada:** se llama `cover` y puede ser `.webp`, `.jpg` o `.png`.
+- **Portada:** se llama `cover` y puede ser `.webp`, `.jpg` o `.png`. Portada recomendada en 2:3 (por ejemplo, 1024 × 1536): las tarjetas y la ficha la muestran en esa proporción y recortan lo que sobre.
 - **Capítulos:** una carpeta por capítulo, con su número (`001`, `002`…). Solo números.
 - **Viñetas:** cada imagen es una viñeta y se muestran en el orden de sus números (`001`, `002`…). Solo números en el nombre. Los comentarios y los enlaces para compartir van por viñeta: si una imagen es una página entera, se comenta la página entera.
 - **Límites de cada imagen:** formato JPG, PNG o WebP (se comprueba el contenido, no basta con la extensión), 5 MB como máximo y 60 imágenes por capítulo como máximo.

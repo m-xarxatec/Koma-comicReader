@@ -100,7 +100,7 @@ function renderCover(comic: ComicDto): void {
   image.className = 'work-detail__image';
   image.src = comic.coverUrl;
   image.alt = `Portada de ${comic.title}`;
-  const size = sizeFromRatioToken('--work-cover-ratio');
+  const size = sizeFromRatioToken('--cover-ratio');
   if (size) {
     image.width = size.width;
     image.height = size.height;

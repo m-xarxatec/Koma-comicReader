@@ -145,6 +145,7 @@
 
   /* Medidas */
   --touch-target: 44px;
+  --cover-ratio: 2 / 3; /* portadas de la plataforma (tarjetas y ficha), recortadas con object-fit: cover */
   --control-height: 48px; /* campos y botones grandes */
   --body-min-width: 320px;
   --gutter: 1rem;
@@ -246,7 +247,6 @@
   --font-size-home-card-title: 0.94rem;
   --line-height-home-card-title: 1.35;
   --font-size-home-card-meta: 0.78rem;
-  --home-cover-ratio: 1055 / 1491;
   --home-genre-slide-width: 108px;
   --home-genre-slide-width-wide: 128px;
   --home-genre-column-share: 19%;
@@ -290,7 +290,6 @@
   --font-weight-label: 750; /* antetítulo de la ficha y estado de un capítulo */
   --work-page-width: 1180px;
   --breadcrumb-gap: 0.6rem;
-  --work-cover-ratio: 2 / 3;
   --work-cover-width: 108px;
   --work-cover-width-medium: minmax(190px, 235px);
   --work-cover-width-wide: minmax(250px, 290px);
@@ -304,6 +303,7 @@
   --font-size-work-meta: 0.77rem; /* recuento de capítulos y etiquetas de los créditos */
   --work-tags-gap: 0.4rem;
   --work-tag-height: 32px; /* el área táctil llega a --touch-target con un pseudoelemento */
+  --work-tags-row-gap: calc(var(--touch-target) - var(--work-tag-height)); /* las áreas de 44 px de dos filas no se solapan */
   --work-tag-padding: 0.25rem 0.6rem;
   --line-height-work-tag: 1.25;
   --work-heading-gap: 0.3rem;
