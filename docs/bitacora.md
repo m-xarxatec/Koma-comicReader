@@ -400,3 +400,14 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - Pantalla completa: con el botón, con Esc y con el gesto del sistema.
   - «Recargar»: con la red cortada.
 - **Aprendizaje:** con la API Fullscreen sobre un elemento, solo se ve ese elemento: los controles para salir tienen que ir dentro de él, y cualquier cambio de pantalla que lo oculte tiene que salir antes.
+
+### 2026-11-04 · Bloque 2 · Segunda revisión del lector
+- **Pedido del desarrollador:** explicar el cambio de `reading.service.ts` en T15, pasar otra vez el agente `frontend` solo sobre el lector y confirmar el `alt` de las viñetas.
+- **`reading.service.ts`:** solo añade `slug` a `ReaderPageValues`, los valores que `sendPage` inyecta en la página `/leer/:slug/:numero` («Volver a la obra» y «Ver todos los capítulos» funcionan sin JS). Ningún endpoint de `/api/*` lo devuelve, así que la API no cambia. Lo cubre el test de la página (`href="/obra/<slug>"`).
+- **`alt` de las viñetas:** «Viñeta N del capítulo M»; nunca está vacío. El desarrollador aprueba quitar el `figcaption`.
+- **Agente `frontend`:** APTO, con las 10 correcciones de la primera pasada comprobadas y 4 hallazgos bajos. Corregidos:
+  - Al salir de pantalla completa porque otra pantalla oculta la tira, ya no se desplaza la página ni se mueve el foco (regresión de la corrección 3).
+  - `reader-screen__block` como mezcla BEM en lugar de `.reader-screen .content-warning` y `.reader-screen .ad-card`.
+  - Un comentario duplicado en `layout.test.ts`.
+- **Pendiente (desarrollador):** los botones deshabilitados del lector usan la base del sitio (opacidad 0,6 y `cursor: progress`), y la maqueta usa .56 y `not-allowed`.
+- **Comprobación (IA):** typecheck, 89 unitarios y 118 de API.
