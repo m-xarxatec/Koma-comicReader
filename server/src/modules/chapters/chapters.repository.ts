@@ -104,3 +104,9 @@ export async function listPanels(db: Queryable, chapterId: number): Promise<Pane
   );
   return rows.map((row) => ({ position: row.position, imageKey: row.image_key, width: row.width, height: row.height }));
 }
+
+// Id de la viñeta en esa posición del capítulo (comentarios, CU-05 y CU-13).
+export async function findPanelId(db: Queryable, chapterId: number, position: number): Promise<number | null> {
+  const { rows } = await db.query<{ id: number }>('SELECT id FROM panels WHERE chapter_id = $1 AND position = $2', [chapterId, position]);
+  return rows[0]?.id ?? null;
+}

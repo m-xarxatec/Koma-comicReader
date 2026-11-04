@@ -60,6 +60,8 @@ test('Seguridad: los drivers rechazan claves que no son UUID.ext antes de tocar 
     await assert.rejects(local.signedUrl(key), /Clave de almacenamiento no válida/, key);
     await assert.rejects(r2.put(key, source, 'image/webp'), /Clave de almacenamiento no válida/, key);
     await assert.rejects(r2.signedUrl(key), /Clave de almacenamiento no válida/, key);
+    await assert.rejects(local.remove(key), /Clave de almacenamiento no válida/, key);
+    await assert.rejects(r2.remove(key), /Clave de almacenamiento no válida/, key);
   }
   await assert.rejects(readdir(storageDir), { code: 'ENOENT' }); // ni siquiera creó la carpeta
 });
@@ -74,4 +76,18 @@ test('Seguridad: el driver R2 da URLs prefirmadas de GetObject de su bucket que 
   assert.match(url.searchParams.get('X-Amz-Signature') ?? '', /^[0-9a-f]{64}$/);
   assert.match(url.searchParams.get('X-Amz-Credential') ?? '', /^id\/\d{8}\/auto\/s3\/aws4_request$/);
   assert.ok(!url.href.includes('secreto'), 'el secreto nunca va en la URL');
+});
+
+test('RN-05: el driver local borra la imagen (viñeta de un borrador) y no falla si ya no existe', async () => {
+  const storageDir = path.join(dir, 'borrado');
+  const local = createLocalStorage({ dir: storageDir, ttlSeconds: TTL, signingKey });
+  const key = newImageKey('png');
+  const other = newImageKey('png');
+  await local.put(key, source, 'image/png');
+  await local.put(other, source, 'image/png');
+  await local.remove(key);
+  assert.deepEqual(await readdir(storageDir), [other]);
+  await local.remove(key); // idempotente
+  await local.remove(newImageKey('webp')); // nunca existió
+  assert.deepEqual(await readdir(storageDir), [other]);
 });

@@ -8,6 +8,8 @@ export interface StorageDriver {
   put(key: string, sourcePath: string, contentType: string): Promise<void>;
   // URL firmada que caduca a los SIGNED_URL_TTL_SECONDS: ninguna imagen tiene URL pública permanente.
   signedUrl(key: string): Promise<string>;
+  // Borra la imagen (viñeta de un borrador o portada sustituida). Idempotente: si ya no existe, no falla.
+  remove(key: string): Promise<void>;
 }
 
 // Defensa en profundidad: el driver solo acepta claves UUID.ext, aunque el llamador ya las genere así.

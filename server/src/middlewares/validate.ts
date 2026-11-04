@@ -38,7 +38,8 @@ function toFields(error: z.ZodError): Record<string, string> {
 export function validate(schemas: Schemas, options: ValidateOptions = {}): RequestHandler {
   return (req, res, next) => {
     const validated: Express.Locals['validated'] = {};
-    for (const part of ['body', 'params', 'query'] as const) {
+    // Primero los params: una ruta que no puede existir es 404 aunque el cuerpo tampoco sea válido.
+    for (const part of ['params', 'query', 'body'] as const) {
       const schema = schemas[part];
       if (!schema) continue;
       const result = schema.safeParse(req[part] ?? {});

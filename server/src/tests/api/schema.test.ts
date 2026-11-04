@@ -100,3 +100,23 @@ test('Seguridad: la BD solo acepta claves de imagen UUID.ext generadas por el se
     }
   });
 });
+
+test('RN-11: la BD rechaza un comentario vacío o de más de 500 caracteres (puntos de código)', async () => {
+  await inRolledBackTransaction(async (client) => {
+    const comicId = await insertComic(client, 'comentarios-check');
+    const { rows } = await client.query<{ id: number }>(INSERT_CHAPTER, [comicId, 1, 'approved', null, new Date(), null]);
+    const chapterId = rows[0]!.id;
+    const panel = await client.query<{ id: number }>(
+      'INSERT INTO panels (chapter_id, position, image_key, width, height) VALUES ($1, 1, $2, 10, 10) RETURNING id',
+      [chapterId, KEY(901)],
+    );
+    const user = await client.query<{ id: number }>(
+      `INSERT INTO users (email, password_hash, display_name) VALUES ('check-comentario@demo.test', 'x', 'Check') RETURNING id`,
+    );
+    const insert = 'INSERT INTO comments (panel_id, user_id, body) VALUES ($1, $2, $3)';
+    const params = (body: string) => [panel.rows[0]!.id, user.rows[0]!.id, body];
+    await expectViolation(client, insert, params(''), '23514', 'comments_body_check');
+    await expectViolation(client, insert, params('x'.repeat(501)), '23514', 'comments_body_check');
+    await client.query(insert, params('😀'.repeat(500))); // 500 caracteres, 1000 unidades UTF-16
+  });
+});

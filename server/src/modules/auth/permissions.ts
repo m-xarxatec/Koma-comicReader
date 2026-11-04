@@ -5,6 +5,7 @@
 import { AD_CHAPTER, FREE_CHAPTERS } from '../../config/limits.js';
 
 export interface PermissionSubject {
+  id: number;
   role: 'user' | 'admin';
   isAuthor: boolean;
   status: 'active' | 'suspended';
@@ -55,4 +56,38 @@ export function chapterAccess(user: PermissionSubject | null, chapter: ChapterAc
   if (user === null) return chapter.number === AD_CHAPTER ? 'ad' : 'account';
   if (isAdmin(user) || isPremium(user, now) || chapter.ownsComic || chapter.alreadyRead) return 'free';
   return 'balance';
+}
+
+// --- Bloque 3: autor, comentarios y vista previa ---
+
+// Lo que hace falta de una obra para decidir sobre ella: de quién es (NULL = importada, RN-18).
+export interface ComicOwnership {
+  authorId: number | null;
+}
+
+// CU-28 a CU-30: gestiona una obra el autor (is_author y no admin) que la creó. Si el admin le retira el rol de
+// autor, sus obras siguen publicadas, pero ya no las gestiona.
+export function canManageComic(user: PermissionSubject, comic: ComicOwnership): boolean {
+  return isAuthor(user) && comic.authorId === user.id;
+}
+
+// CU-30 y "Modelo de permisos": retira una obra su autor o, cualquiera, el admin (D13).
+export function canWithdrawComic(user: PermissionSubject, comic: ComicOwnership): boolean {
+  return isAdmin(user) || canManageComic(user, comic);
+}
+
+// Mapa de rutas (D10): el autor dueño y el admin ven la obra en pending y los capítulos en draft o pending.
+export function canPreviewComic(user: PermissionSubject | null, comic: ComicOwnership): boolean {
+  return user !== null && (isAdmin(user) || canManageComic(user, comic));
+}
+
+// CU-13 (D2): comenta quien puede leer el capítulo sin gastar nada (caps. 1–2, ya leído, premium, admin o su
+// obra). El invitado no comenta nunca.
+export function canComment(user: PermissionSubject | null, chapter: ChapterAccessInput, now: Date): boolean {
+  return user !== null && chapterAccess(user, chapter, now) === 'free';
+}
+
+// RN-11: un usuario borra solo sus comentarios (el admin los oculta o elimina en el bloque 4, como moderación).
+export function canDeleteOwnComment(user: PermissionSubject, comment: { userId: number }): boolean {
+  return comment.userId === user.id;
 }

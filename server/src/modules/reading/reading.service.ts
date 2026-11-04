@@ -1,11 +1,12 @@
 import { env } from '../../config/env.js';
 import { pool, withTransaction } from '../../db/pool.js';
 import { storage } from '../../integrations/storage/index.js';
-import { AppError } from '../../utils/app-error.js';
+import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import { deriveKey } from '../../utils/signing.js';
 import { chapterAccess, isAdmin, isPremium } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
 import type { ComicRow } from '../comics/comics.repository.js';
+import * as commentsRepository from '../comments/comments.repository.js';
 import { requirePublicComic } from '../comics/comics.service.js';
 import type { User } from '../users/users.repository.js';
 import * as readingRepository from './reading.repository.js';
@@ -52,7 +53,8 @@ export interface BalanceDto {
 export interface ReadingDto {
   comic: { slug: string; title: string; contentWarning: string | null };
   chapter: { number: number; title: string; prev: number | null; next: number | null };
-  panels: { position: number; url: string; width: number; height: number }[]; // la viñeta n es #v-n (RN-09)
+  // La viñeta n es #v-n (RN-09); `comments`: visibles en esa viñeta (contrato del bloque 3, D3).
+  panels: { position: number; url: string; width: number; height: number; comments: number }[];
   ads: { interstitial: AdDto | null; end: AdDto | null }; // RN-03; los dos null para invitado, premium y admin
   balance: BalanceDto | null; // solo registrado sin premium
 }
@@ -67,7 +69,11 @@ async function loadReadingSettings(): Promise<ReadingSettings> {
   const values = await readingRepository.findReadingSettings(pool);
   const positive = (key: readingRepository.ReadingSettingKey): number => {
     const value = values[key];
-    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) throw new Error(`Parámetro de lectura ausente o no válido en settings: ${key}`);
+    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
+      throw new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, {
+        cause: new Error(`Parámetro de lectura ausente o no válido en settings: ${key}`),
+      });
+    }
     return value;
   };
   return { maxBalance: positive('reading.max_balance'), refill: positive('reading.refill'), waitMinutes: positive('reading.wait_minutes') };
@@ -76,11 +82,18 @@ async function loadReadingSettings(): Promise<ReadingSettings> {
 async function buildReading(comic: ComicRow, chapter: chaptersRepository.ChapterRow, extra: Pick<ReadingDto, 'ads' | 'balance'>): Promise<ReadingDto> {
   const adjacent = await chaptersRepository.findAdjacentNumbers(pool, comic.id, chapter.number);
   const panels = await chaptersRepository.listPanels(pool, chapter.id);
+  const comments = await commentsRepository.countVisibleByPosition(pool, chapter.id);
   return {
     comic: { slug: comic.slug, title: comic.title, contentWarning: comic.contentWarning },
     chapter: { number: chapter.number, title: chapter.title, prev: adjacent.prev, next: adjacent.next },
     panels: await Promise.all(
-      panels.map(async (panel) => ({ position: panel.position, url: await signUrl(panel.imageKey), width: panel.width, height: panel.height })),
+      panels.map(async (panel) => ({
+        position: panel.position,
+        url: await signUrl(panel.imageKey),
+        width: panel.width,
+        height: panel.height,
+        comments: comments.get(panel.position) ?? 0,
+      })),
     ),
     ...extra,
   };
@@ -103,8 +116,8 @@ export async function readChapter(
 }
 
 // Obra y capítulo públicos: 404 si no existen o no están aprobados; 410 si se retiraron (RN-06). Lo usan la
-// lectura y la página del lector. (El autor dueño y el admin verán draft y pending en el bloque 3.)
-async function requirePublicChapter(slug: string, number: number): Promise<{ comic: ComicRow; chapter: chaptersRepository.ChapterRow }> {
+// lectura, la página del lector y los comentarios. (El autor dueño y el admin verán draft y pending en T10.)
+export async function requirePublicChapter(slug: string, number: number): Promise<{ comic: ComicRow; chapter: chaptersRepository.ChapterRow }> {
   const comic = await requirePublicComic(slug);
   const chapter = await chaptersRepository.findChapterForReading(pool, comic.id, number);
   if (!chapter) throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
@@ -164,7 +177,10 @@ async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRo
 
     let credits = settings ? recalculateCredits(stored, settings, now) : null;
     if (access === 'balance') {
-      if (!settings || !credits) throw new Error('Saldo sin parámetros de lectura'); // chapterAccess lo impide
+      // chapterAccess lo impide: `balance` solo sale para el registrado sin premium, que siempre tiene `settings`.
+      if (!settings || !credits) {
+        throw new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, { cause: new Error('Saldo sin parámetros de lectura') });
+      }
       const consumed = consumeCredit(credits, settings, now);
       if (!consumed) {
         throw new AppError(403, 'READING_LIMIT', 'Has gastado tu saldo de capítulos: se recarga en unos minutos', {

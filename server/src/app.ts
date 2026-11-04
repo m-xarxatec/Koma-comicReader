@@ -14,6 +14,7 @@ import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
 import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
 import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
+import { commentsRouter } from './modules/comments/comments.routes.js';
 import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
 import { AppError } from './utils/app-error.js';
@@ -94,6 +95,7 @@ app.use(auth);
 app.use('/api', authRouter);
 app.use('/api', comicsRouter);
 app.use('/api', readingRouter);
+app.use('/api', commentsRouter);
 
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);

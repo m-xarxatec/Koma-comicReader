@@ -98,7 +98,7 @@ test('RN-09: el capítulo llega con sus viñetas en orden, firmadas y con sus me
   );
   const keys = comic.panelKeys.get(comic.chapterIds.get('1')!)!;
   reading.panels.forEach((panel, i) => {
-    assert.deepEqual(Object.keys(panel).sort(), ['height', 'position', 'url', 'width']);
+    assert.deepEqual(Object.keys(panel).sort(), ['comments', 'height', 'position', 'url', 'width']);
     assert.match(panel.url, new RegExp(`^/files/${keys[i]}\\?exp=\\d+&sig=[\\w-]{43}$`));
   });
   assert.deepEqual(reading.ads, { interstitial: null, end: null });

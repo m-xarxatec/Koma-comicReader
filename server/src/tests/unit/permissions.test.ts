@@ -2,12 +2,25 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { NextFunction, Request, Response } from 'express';
 import { requireAdmin, requireAuth, requireAuthor } from '../../middlewares/roles.js';
-import { canLogIn, chapterAccess, isAdmin, isAuthor, isPremium, isSessionValid, type PermissionSubject } from '../../modules/auth/permissions.js';
+import {
+  canComment,
+  canDeleteOwnComment,
+  canLogIn,
+  canManageComic,
+  canPreviewComic,
+  canWithdrawComic,
+  chapterAccess,
+  isAdmin,
+  isAuthor,
+  isPremium,
+  isSessionValid,
+  type PermissionSubject,
+} from '../../modules/auth/permissions.js';
 import { AppError } from '../../utils/app-error.js';
 
-const reader: PermissionSubject = { role: 'user', isAuthor: false, status: 'active', tokenVersion: 3, premiumUntil: null };
-const author: PermissionSubject = { ...reader, isAuthor: true };
-const admin: PermissionSubject = { ...reader, role: 'admin' };
+const reader: PermissionSubject = { id: 1, role: 'user', isAuthor: false, status: 'active', tokenVersion: 3, premiumUntil: null };
+const author: PermissionSubject = { ...reader, id: 2, isAuthor: true };
+const admin: PermissionSubject = { ...reader, id: 3, role: 'admin' };
 const now = new Date('2026-11-01T12:00:00Z');
 
 test('Seguridad: solo role=admin es admin; un admin nunca es autor aunque tenga is_author', () => {
@@ -99,4 +112,45 @@ test('Seguridad: premium, admin y el autor en su propia obra leen todo libre; en
     assert.equal(chapterAccess(user, chapter(40, extra), now), 'free', name);
   }
   assert.equal(chapterAccess(author, chapter(3), now), 'balance');
+});
+
+test('Seguridad: gestiona una obra solo el autor que la creó; un admin no la gestiona, pero la retira', () => {
+  const own = { authorId: author.id };
+  const otherAuthor: PermissionSubject = { ...author, id: 20 };
+  assert.equal(canManageComic(author, own), true);
+  assert.equal(canManageComic(otherAuthor, own), false);
+  assert.equal(canManageComic({ ...author, isAuthor: false }, own), false); // el admin le quitó el rol de autor
+  assert.equal(canManageComic(admin, own), false);
+  assert.equal(canManageComic(author, { authorId: null }), false); // importada
+
+  assert.equal(canWithdrawComic(author, own), true);
+  assert.equal(canWithdrawComic(otherAuthor, own), false);
+  assert.equal(canWithdrawComic(admin, own), true);
+  assert.equal(canWithdrawComic(admin, { authorId: null }), true);
+  assert.equal(canWithdrawComic(reader, own), false);
+});
+
+test('Seguridad: la vista previa de lo no aprobado es solo del autor dueño y del admin', () => {
+  const own = { authorId: author.id };
+  assert.equal(canPreviewComic(author, own), true);
+  assert.equal(canPreviewComic(admin, own), true);
+  assert.equal(canPreviewComic({ ...author, id: 20 }, own), false);
+  assert.equal(canPreviewComic(reader, own), false);
+  assert.equal(canPreviewComic(null, own), false);
+});
+
+test('RN-11: comenta quien puede leer el capítulo sin gastar saldo; el invitado nunca', () => {
+  assert.equal(canComment(null, chapter(1), now), false);
+  assert.equal(canComment(reader, chapter(1), now), true);
+  assert.equal(canComment(reader, chapter(5), now), false); // le costaría saldo: aún no lo ha leído
+  assert.equal(canComment(reader, chapter(5, { alreadyRead: true }), now), true);
+  assert.equal(canComment({ ...reader, premiumUntil: new Date('2026-12-01T00:00:00Z') }, chapter(5), now), true);
+  assert.equal(canComment(admin, chapter(5), now), true);
+  assert.equal(canComment(author, chapter(5, { ownsComic: true }), now), true);
+});
+
+test('RN-11: cada usuario borra solo sus comentarios', () => {
+  assert.equal(canDeleteOwnComment(reader, { userId: reader.id }), true);
+  assert.equal(canDeleteOwnComment(reader, { userId: author.id }), false);
+  assert.equal(canDeleteOwnComment(admin, { userId: reader.id }), false); // el admin modera en el bloque 4
 });

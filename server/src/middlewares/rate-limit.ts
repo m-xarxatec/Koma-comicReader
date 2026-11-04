@@ -17,6 +17,8 @@ export const LOGIN_LIMIT = 5;
 export const LOGIN_WINDOW_MS = 15 * MINUTE_MS;
 export const REGISTER_LIMIT = 3;
 export const REGISTER_WINDOW_MS = 60 * MINUTE_MS;
+export const COMMENT_LIMIT = 5;
+export const COMMENT_WINDOW_MS = MINUTE_MS;
 
 // ipKeyGenerator agrupa las IPv6 por subred (/56, el valor de serie de la librería): si no, un atacante
 // rotaría direcciones dentro de su propio bloque.
@@ -72,3 +74,19 @@ export const registerRateLimit = rateLimit({
   limit: REGISTER_LIMIT,
   keyGenerator: clientIp,
 });
+
+// Clave por usuario de la sesión (comentarios, subidas y cambio de contraseña): el limitador va después de
+// requireAuth. Sin usuario es un fallo de programación, como en el login.
+function userKey(req: Request, res: Response): string {
+  const user = res.locals.user;
+  if (!user) {
+    throw new AppError(500, 'INTERNAL_ERROR', INTERNAL_ERROR_MESSAGE, {
+      cause: new Error(`El limitador de ${req.path} necesita la sesión: va después de requireAuth`),
+    });
+  }
+  return `user:${user.id}`;
+}
+
+// Comentarios: 5 / min por usuario (RN-13). Cuenta cada intento que pasa la validación (también un 403 o un
+// 404 del servicio), como el registro.
+export const commentRateLimit = rateLimit({ ...common, windowMs: COMMENT_WINDOW_MS, limit: COMMENT_LIMIT, keyGenerator: userKey });

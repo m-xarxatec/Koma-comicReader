@@ -1,6 +1,6 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { assertImageKey, type StorageDriver } from './driver.js';
 
@@ -50,6 +50,12 @@ export function createR2Storage(config: R2Config): StorageDriver {
     async signedUrl(key) {
       assertImageKey(key);
       return getSignedUrl(client, new GetObjectCommand({ Bucket: config.bucket, Key: key }), { expiresIn: config.ttlSeconds });
+    },
+    // DeleteObject de S3 (y R2) ya es idempotente: una clave inexistente responde 204. El token de R2 necesita
+    // permiso de escritura ("Object Read & Write"), que incluye borrar.
+    async remove(key) {
+      assertImageKey(key);
+      await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }));
     },
   };
 }

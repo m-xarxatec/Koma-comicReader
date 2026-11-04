@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { copyFile, mkdir } from 'node:fs/promises';
+import { copyFile, mkdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import type { RequestHandler } from 'express';
 import { AppError } from '../../utils/app-error.js';
@@ -30,6 +30,14 @@ export function createLocalStorage(config: LocalStorageConfig): StorageDriver {
       assertImageKey(key);
       const exp = nowSeconds() + config.ttlSeconds;
       return `/files/${key}?exp=${exp}&sig=${signExpiring(config.signingKey, key, exp)}`;
+    },
+    async remove(key) {
+      assertImageKey(key);
+      try {
+        await unlink(path.join(config.dir, key));
+      } catch (err) {
+        if ((err as { code?: unknown }).code !== 'ENOENT') throw err;
+      }
     },
   };
 }

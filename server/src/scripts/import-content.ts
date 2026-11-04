@@ -3,7 +3,7 @@ import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import { env } from '../config/env.js';
-import { MAX_IMAGE_BYTES, MAX_PANELS_PER_CHAPTER } from '../config/limits.js';
+import { MAX_IMAGE_BYTES, MAX_PANELS_PER_CHAPTER, PG_MAX_INT } from '../config/limits.js';
 import { paths } from '../config/paths.js';
 import { databaseTarget, pool, withTransaction } from '../db/pool.js';
 import type { StorageDriver } from '../integrations/storage/driver.js';
@@ -28,7 +28,6 @@ const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const CHAPTER_DIR = /^\d+$/;
 const PANEL_FILE = /^(\d+)\.(jpg|jpeg|png|webp)$/i;
 const COVER_FILE = /^cover\.(jpg|jpeg|png|webp)$/i;
-const MAX_INT = 2_147_483_647; // INTEGER de PostgreSQL
 const COMIC_FILE = 'comic.json';
 const TAGS_FILE = 'tags.json';
 
@@ -124,7 +123,7 @@ async function readJson(file: string, label: string): Promise<unknown> {
 // Número de capítulo o de viñeta: solo dígitos, ≥ 1 y dentro de un INTEGER.
 function parseNumber(digits: string, what: string): number {
   const value = Number(digits);
-  if (!Number.isSafeInteger(value) || value < 1 || value > MAX_INT) throw new ContentError(`${what} no válido: ${digits}`);
+  if (!Number.isSafeInteger(value) || value < 1 || value > PG_MAX_INT) throw new ContentError(`${what} no válido: ${digits}`);
   return value;
 }
 
@@ -135,8 +134,8 @@ async function readImage(file: string, label: string): Promise<ImageFile> {
   const info = readImageInfo(await readFile(file));
   if (!info) throw new ContentError(`Imagen rechazada (${label}): no es un JPG, PNG ni WebP válido`);
   // Un PNG declara hasta 2^32 − 1 px por lado; panels.width y height son INTEGER.
-  if (info.width > MAX_INT || info.height > MAX_INT) {
-    throw new ContentError(`Imagen rechazada (${label}): mide ${info.width} × ${info.height} px y el máximo por lado es ${MAX_INT}`);
+  if (info.width > PG_MAX_INT || info.height > PG_MAX_INT) {
+    throw new ContentError(`Imagen rechazada (${label}): mide ${info.width} × ${info.height} px y el máximo por lado es ${PG_MAX_INT}`);
   }
   return { file, ...info };
 }
