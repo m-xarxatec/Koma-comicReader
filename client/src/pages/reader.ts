@@ -81,6 +81,12 @@ function actionButton(label: string, onClick: () => void, primary = false): HTML
 
 const backToComic = () => linkButton('Volver a la obra', comicUrl);
 
+// Mezcla BEM: un bloque ajeno (advertencia, anuncio) colocado dentro de una pantalla.
+function screenBlock<T extends HTMLElement>(element: T): T {
+  element.classList.add('reader-screen__block');
+  return element;
+}
+
 interface ScreenParts {
   eyebrow?: string;
   title: string;
@@ -170,6 +176,7 @@ function showWarning(): void {
   text.className = 'content-warning__text';
   text.textContent = contentWarning;
   box.append(symbol, text);
+  screenBlock(box);
   showScreen({
     eyebrow: `Capítulo ${number}`,
     title: 'Advertencia de contenido',
@@ -205,7 +212,7 @@ async function showAd(): Promise<void> {
     eyebrow,
     title: 'Mira un anuncio para leer este capítulo',
     text: `El capítulo ${number} se desbloquea al terminar el anuncio, sin cuenta.`,
-    content: ad ? [adCard(ad, true)] : [], // sin anuncios activos, solo la cuenta atrás (D6)
+    content: ad ? [screenBlock(adCard(ad, true))] : [], // sin anuncios activos, solo la cuenta atrás (D6)
     actions: [proceed, backToComic()],
   });
   announce(`El anuncio dura ${minSeconds} segundos.`);
@@ -425,10 +432,12 @@ function setUpFullscreen(): void {
     if (document.fullscreenElement === strip) {
       strip.scrollTop = store.fullscreenOffset;
       exitButton?.focus({ preventScroll: true });
-    } else {
+    } else if (!strip.hidden) {
       window.scrollTo({ top: strip.getBoundingClientRect().top + window.scrollY + store.fullscreenOffset, behavior: 'instant' });
       fullscreenButton.focus({ preventScroll: true });
     }
+    // Con la tira oculta (showScreen salió de pantalla completa para enseñar otra pantalla), ni se desplaza la
+    // página ni se mueve el foco: ya lo tiene el título de la pantalla nueva.
   });
 }
 

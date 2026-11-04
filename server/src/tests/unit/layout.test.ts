@@ -16,7 +16,6 @@ async function templates(): Promise<{ file: string; html: string }[]> {
   return result;
 }
 
-// Todos los valores que inyecta el servidor en alguna plantilla.
 // Todos los valores que inyecta el servidor en alguna plantilla (auth, comic y reader).
 const VALUES = {
   requestId: '00000000-0000-4000-8000-000000000000',

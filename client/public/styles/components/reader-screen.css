@@ -17,8 +17,8 @@
   color: var(--color-text-muted);
 }
 
-.reader-screen .content-warning,
-.reader-screen .ad-card {
+/* Bloque de otro componente (advertencia, anuncio) dentro de la pantalla: mezcla BEM. */
+.reader-screen__block {
   margin-block: var(--space-4);
   text-align: left;
 }
