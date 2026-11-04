@@ -1,10 +1,8 @@
 # CLAUDE.md · Koma — plataforma de cómics
 
-Guía para Claude Code en este repositorio. Las especificaciones completas están en `docs/`.
-
 ## Proyecto
 
-**Koma**: plataforma de cómics estilo webtoon (proyecto final de XarxaTec Activa). MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible.
+**Koma**: plataforma de cómics estilo webtoon (proyecto final de XarxaTec Activa). MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
 
 - Congelación de funciones: **20-nov-2026**; entrega: 25-nov-2026. Vibecoding: la IA genera el código; el desarrollador lo especifica, revisa y corrige.
 - Bloque actual: **2 · Catálogo y lector (4 – 9 nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
@@ -15,26 +13,22 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 | Comando | Qué hace |
 | --- | --- |
 | `docker compose up -d db` | Levanta solo Postgres (desarrollo diario; la app corre en el host) |
-| `npm run watch` | `tsc -b --watch` (terminal 1) |
-| `npm run dev` | `node --watch --env-file=.env server/dist/server.js` (terminal 2; ejecuta lo compilado) |
+| `npm run watch` · `npm run dev` | `tsc -b --watch` (terminal 1) · `node --watch --env-file=.env server/dist/server.js` (terminal 2; ejecuta lo compilado) |
 | `npm run build` / `npm run typecheck` | `tsc -b` (raíz con referencias a `server/` y `client/`); compilar es comprobar tipos |
-| `npm start` | `node server/dist/server.js` (online; aplica migraciones al arrancar) |
-| `npm run migrate` | Aplica migraciones pendientes |
-| `npm run seed` / `npm run seed:online` | Cuentas demo, etiquetas base, anuncios y `settings` (`:online`: con `--env-file=.env.online`) |
-| `npm run content:import` / `npm run content:import:online` | Importa `content/` (RN-18; requiere `migrate`; `:online`: con `--env-file=.env.online`) |
+| `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
+| `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm test` | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras) |
 | `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
 - Tests en `server/src/tests/unit/` y `server/src/tests/api/`, archivos `<tema>.test.ts`; el nombre de cada test empieza por su RN (`'RN-02: recarga 2 por periodo'`) o, si no tiene, por `'Seguridad:'`. Un solo test: `npm run build && node --test server/dist/tests/unit/<tema>.test.js`, o filtrar con `--test-name-pattern="RN-02"`.
 - Pruebas de API: BD `koma_test` (`.env.test` solo sobrescribe `DATABASE_URL`); `reset-test-db.ts` hace `DROP SCHEMA` + migraciones + seed y aborta si la BD no termina en `_test`. Usan `startTestServer()` de `tests/api/helpers.ts`: importa `app` de `app.ts`, `listen(0)` en `before()` y cierra servidor y pool en `after()`.
-- Online (Neon + R2), el seed y la importación se ejecutan desde local con `seed:online` y `content:import:online`: leen `.env.online` (ignorado por git y Docker) e imprimen al empezar el host de la BD y `STORAGE_DRIVER`.
 - Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test`; contraseñas en `docs/credenciales.local.md` (ignorado por git).
 
 ## Estructura
 
 ```
-├── package.json · tsconfig.json (referencias) · docker-compose.yml (db, app) · Dockerfile · .dockerignore · docker/initdb/ · .env.example · .env.test · README.md · .claude/ (auditor, constructor)
+├── package.json · tsconfig.json (referencias) · docker-compose.yml (db, app) · Dockerfile · .dockerignore · docker/initdb/ · .env.example · .env.test · README.md · .claude/ (auditor, frontend, constructor)
 ├── server/src/
 │   ├── app.ts · server.ts      # server.ts → server/dist/server.js
 │   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, payments, audit, admin
@@ -43,8 +37,8 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts
-│   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts
-│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next)
+│   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
+│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo e ilustraciones de error)
@@ -52,7 +46,7 @@ Guía para Claude Code en este repositorio. Las especificaciones completas está
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
 │       ├── services/           # api.ts (todas las peticiones), auth.ts
-│       └── utils/              # validate.ts…
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md
 ```
