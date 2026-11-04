@@ -356,3 +356,47 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Tests:** el de la ficha comprueba también el título escapado en las migas y en el atributo `description`.
 - **Comprobación (IA):** typecheck, 84 unitarios y 118 de API. Con `curl` en local, la página, los CSS, los JS y los datos de la API. La captura sin interfaz no arranca en este entorno: lo visual (360 px, escritorio, teclado y estados por rol) lo revisa el desarrollador.
 - **Aprendizaje:** `hidden` solo aplica `display: none` desde la hoja del navegador, y la clase de cualquier componente con `display` lo anula. La regla común evita repetir un `[hidden]` por componente.
+
+### 2026-11-04 · Bloque 2 · Portadas 2:3 y etiquetas sin solaparse
+- **Decisiones del desarrollador (al aprobar T14):** la proporción 2:3 es el estándar de las portadas de la plataforma, con `object-fit: cover`, y el solapamiento de las áreas táctiles de las etiquetas (hallazgo 11 de T14) se corrige.
+- **Resultado:** un solo token `--cover-ratio: 2 / 3`, en lugar de `--home-cover-ratio` (1055/1491) y `--work-cover-ratio`, en las tarjetas y en la ficha, con `cover`. El `row-gap` de las etiquetas es `--touch-target − --work-tag-height` (12 px): las áreas de 44 px de dos filas ya no se solapan. La guía del README recomienda portadas en 2:3.
+- **Commit:** `variables.css` y `comic.ts` también llevan cambios de T15: su parte va en un parche para el índice. Compila y pasa sus 84 tests unitarios aislado, en una copia de `HEAD`.
+
+### 2026-11-04 · Bloque 2 · T15: lector
+- **Pedido a la IA:** el lector de koma_home (`leer/obra-demo-01/1`) conectado a la lectura por `POST` y al anuncio (CU-03, CU-04, CU-12, CU-24), con D7 y D20–D25.
+- **Resultado:**
+  - `reader.html` lleva `@head` y una barra propia: «Volver a la obra», logo y pantalla completa. No lleva la cabecera, el pie ni la navegación móvil del sitio (D20); `layout.test.ts` lo recoge como excepción explícita (`OWN_CHROME`, solo `pages/reader.html`).
+  - El servidor inyecta, escapados, el `slug`, la obra, el capítulo y la advertencia.
+  - `reader.ts`:
+    - Si la obra tiene advertencia y no se aceptó en este dispositivo, la pide antes del `POST` (RN-08, D7; `localStorage` por obra con `try/catch`).
+    - Después pide el capítulo y pinta la respuesta: la tira con `figure#v-N` (las 2 primeras viñetas sin `lazy`, `width`/`height` de la API), la nota del saldo (RN-02), el anuncio final (RN-03) y el fin del capítulo con «Capítulo siguiente».
+    - Ante los errores de la API: con `AD_NOT_COMPLETED`, el anuncio con su cuenta atrás de `minSeconds` y, después, el `POST` con `X-Ad-Token`; con 401, la invitación (el `next` conserva `#v-n`); con `READING_LIMIT`, el muro, con la hora de la recarga y «Leer ahora» al llegar `retryAt`, sin reintento automático (D25).
+    - Con 404, 410 y fallos de red, una pantalla de error con «Reintentar».
+  - «Recargar» en una viñeta repite el `POST` y solo cambia los `src`: la posición se conserva (D22).
+  - Pantalla completa con la API Fullscreen sobre la tira (D24): `aria-pressed`, la etiqueta (y el `aria-label`) cambia entre entrar y salir, el estado se sincroniza con `fullscreenchange`, y sin soporte el botón queda `disabled` con `title`. El botón de salir va dentro de la tira, y la posición se conserva al entrar y al salir.
+  - Sin comentarios, «Ocultar iconos» ni compartir viñeta (D23). El intersticial queda para T17.
+  - CSS: `reader-page` (columna y antetítulo compartidos), `reader-topbar`, `reader-intro`, `reader-strip`, `reader-screen` (la tarjeta del fin de capítulo, con la que se componen todas las pantallas) y `ad-card`. Tokens con los valores de la maqueta. Capas `--layer-reader-topbar` y `--layer-reader-exit`. Iconos `arrow-left` y `expand`, copiados de la maqueta.
+- **Tests:** `reader.test.ts` (5) carga el JS compilado del cliente:
+  - Pantalla completa sin soporte, entrar y salir, el estado tras `fullscreenchange` y un rechazo del navegador.
+  - La cuenta atrás de RN-01 y la hora del muro de RN-02.
+  - El test de la página comprueba el `h1` (título del capítulo), el antetítulo escapado y «Volver a la obra» sin JS.
+- **Revisión del agente `frontend`:** APTO CON OBSERVACIONES (10). Corregidos:
+  - El botón de pantalla completa mide 44 px de ancho en móvil.
+  - Títulos de las pantallas a `1.5rem`, el `h2` por defecto de la maqueta.
+  - Al pasar a otra pantalla con la tira en pantalla completa, primero se sale (si no, la pantalla quedaba negra y sin botón de salir).
+  - Columna y antetítulo sin duplicar.
+  - La ficha baja a `#capitulos` al pintarlos.
+  - `cursor: not-allowed` sin soporte de pantalla completa.
+  - `--reader-tools-gap` fuera.
+  - La imagen del anuncio del cap. 3 va sin `lazy`.
+  - `viewport-fit=cover`, para que valga `env(safe-area-inset-*)`.
+  - Además, dos puntos de su lista para el navegador: el logo ya no salta mientras el botón está oculto (rejilla de 3 columnas), y el foco pasa al título de la pantalla nueva o al `h1` cuando desaparece el botón pulsado.
+- **Desvíos justificados:** sin el `figcaption` de cada viñeta, porque repetía el `alt` y se leía dos veces. La imagen del anuncio no reserva su hueco: el contrato no da sus medidas.
+- **Comprobación (IA):** typecheck, 89 unitarios y 118 de API. Con `curl` en local, con la segunda obra como invitado: cap. 1 con 5 viñetas; cap. 3, 403 `AD_NOT_COMPLETED` sin token o con uno de menos de 5 s, y 200 pasados 5 s; cap. 4, 401. Lo visual y la API Fullscreen los revisa el desarrollador en el navegador: la captura sin interfaz no arranca en este entorno.
+- **Pendiente (desarrollador):**
+  - En el navegador: 360 px y escritorio, con teclado.
+  - Advertencia: probarla con una obra que la tenga.
+  - Saldo y muro: con `reader@`, bajando `reading.max_balance` con SQL (D26).
+  - Pantalla completa: con el botón, con Esc y con el gesto del sistema.
+  - «Recargar»: con la red cortada.
+- **Aprendizaje:** con la API Fullscreen sobre un elemento, solo se ve ese elemento: los controles para salir tienen que ir dentro de él, y cualquier cambio de pantalla que lo oculte tiene que salir antes.
