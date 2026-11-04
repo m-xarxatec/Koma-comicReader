@@ -657,7 +657,7 @@ interface ReadingDto {
 
 ## Contrato de la API del bloque 3
 
-**Borrador del 4-nov, pendiente de aprobación.** Lo marcado con (Dn) depende de una decisión abierta del informe de arranque del bloque.
+Aprobado el 4-nov. (Dn) remite a la decisión aprobada del informe de arranque del bloque (bitácora).
 
 Comunidad y autor (CU-05, CU-06, CU-13, CU-23, CU-28 a CU-30; RN-05 a RN-07, RN-09 a RN-13, RN-15 y RN-17). Migración 006. Sin variables de entorno nuevas ni cambios en el seed. La aprobación y la moderación (ocultar y eliminar comentarios ajenos) son del bloque 4: en este bloque una obra o un capítulo enviados se quedan en `pending` (los tests los aprueban con SQL).
 
