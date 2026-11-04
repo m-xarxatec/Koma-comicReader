@@ -3,6 +3,8 @@
 // server/src/utils/text.ts y server/src/config/limits.ts (textos del bloque 3), y
 // server/src/tests/unit/client-parity.test.ts comprueba que dan el mismo resultado.
 
+import type { ApiError } from '../services/api.js';
+
 export const EMAIL_MAX_CHARS = 254;
 export const DISPLAY_NAME_MIN_CHARS = 3;
 export const DISPLAY_NAME_MAX_CHARS = 30;
@@ -52,11 +54,16 @@ export function currentPasswordProblem(value: string): string | null {
 }
 
 // Solo en el cliente: "Repite la contraseña" no se envía a la API ni forma parte del contrato (RN-12).
-export function passwordConfirmProblem(value: string, values: Readonly<Record<string, string>>): string | null {
-  if (value === '') return REQUIRED;
-  if (value !== (values['password'] ?? '')) return 'Las contraseñas no coinciden';
-  return null;
+// `field` es el campo con el que debe coincidir: `password` en el registro, `newPassword` en el perfil.
+export function confirmationOf(field: string): Rule {
+  return (value, values) => {
+    if (value === '') return REQUIRED;
+    if (value !== (values[field] ?? '')) return 'Las contraseñas no coinciden';
+    return null;
+  };
 }
+
+export const passwordConfirmProblem = confirmationOf('password');
 
 // --- Textos del bloque 3 (server/src/utils/text.ts y config/limits.ts) ---
 
@@ -94,6 +101,19 @@ export const textLength = (value: string, multiline = false) => chars(normalizeT
 
 export type Rules = Readonly<Record<string, Rule>>;
 export type SubmitOutcome = { ok: true } | { ok: false; message: string; fields?: Record<string, string> };
+
+const timeFormat = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+// Resultado de un envío que la API rechazó: su mensaje y sus `fields`. Con 429 se añade la hora a la que se
+// puede volver a intentar y, si el fallo es del servidor o de la red, el código de referencia de los logs.
+export function failureOutcome(status: number, error: ApiError): SubmitOutcome {
+  let message = error.message;
+  if (error.code === 'RATE_LIMITED' && error.retryAt) {
+    message += ` Podrás volver a intentarlo a las ${timeFormat.format(new Date(error.retryAt))}.`;
+  }
+  if ((status === 0 || status >= 500) && error.requestId) message += ` Código de referencia: ${error.requestId}.`;
+  return { ok: false, message, ...(error.fields && { fields: error.fields }) };
+}
 
 // Campos con nombre de un formulario: <input>, <textarea> y <select>.
 type Field = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

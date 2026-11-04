@@ -4,9 +4,10 @@ import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { paths } from '../../config/paths.js';
 import { CATALOG_MAX_TAGS, CATALOG_PAGE_SIZE, CATALOG_QUERY_MAX_LENGTH, COMMENT_BODY_MAX } from '../../config/limits.js';
-import { EMAIL_MAX_CHARS, registerBody } from '../../modules/auth/auth.schema.js';
+import { EMAIL_MAX_CHARS, passwordBody, registerBody } from '../../modules/auth/auth.schema.js';
 import { catalogQuery } from '../../modules/comics/comics.schema.js';
 import { commentBody } from '../../modules/comments/comments.schema.js';
+import { profileBody } from '../../modules/users/users.schema.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
 import { normalizeText, textProblem } from '../../utils/text.js';
@@ -19,7 +20,9 @@ interface ClientValidate {
   emailProblem: Problem;
   displayNameProblem: Problem;
   passwordProblem: Problem;
+  currentPasswordProblem: Problem;
   passwordConfirmProblem: (value: string, values: Readonly<Record<string, string>>) => string | null;
+  confirmationOf: (field: string) => (value: string, values: Readonly<Record<string, string>>) => string | null;
 }
 interface ClientRedirect {
   safeNext: (value: unknown) => string;
@@ -76,6 +79,31 @@ test('RN-12: repetir la contraseña se comprueba solo en el cliente: vacía u ot
   assert.equal(client.passwordConfirmProblem('', { password }), 'Este campo es obligatorio');
   assert.equal(client.passwordConfirmProblem(`${password} `, { password }), 'Las contraseñas no coinciden');
   assert.equal(client.passwordConfirmProblem(password, {}), 'Las contraseñas no coinciden');
+});
+
+test('RN-12: en el perfil, "Repite la nueva contraseña" se compara con newPassword, no con password', () => {
+  const newPassword = 'contraseña-nueva-1';
+  const confirm = client.confirmationOf('newPassword');
+  assert.equal(confirm(newPassword, { newPassword }), null);
+  assert.equal(confirm('', { newPassword }), 'Este campo es obligatorio');
+  assert.equal(confirm(newPassword, { password: newPassword }), 'Las contraseñas no coinciden');
+  assert.equal(confirm(newPassword, { newPassword, currentPassword: 'otra-contraseña' }), null);
+});
+
+test('RN-12: el cliente acepta y rechaza las mismas contraseñas del perfil que el servidor (actual y nueva)', () => {
+  const cases = ['', 'corta', '123456789', '1234567890', 'ñ'.repeat(36), 'ñ'.repeat(37), '🙂'.repeat(18), '🙂'.repeat(19), 'x'.repeat(72), 'x'.repeat(73)];
+  for (const value of cases) {
+    const server = (field: 'currentPassword' | 'newPassword') => passwordBody.shape[field].safeParse(value).success;
+    assert.equal(client.passwordProblem(value) === null, server('newPassword'), `newPassword ${JSON.stringify(value)}`);
+    assert.equal(client.currentPasswordProblem(value) === null, server('currentPassword'), `currentPassword ${JSON.stringify(value)}`);
+  }
+});
+
+test('RN-12: el nombre del perfil (PATCH /api/me) sigue la misma regla que el del registro', () => {
+  const cases = ['Al', 'Ana', '  Ana  ', 'a'.repeat(30), 'a'.repeat(31), '🙂'.repeat(30), '🙂'.repeat(31)];
+  for (const value of cases) {
+    assert.equal(client.displayNameProblem(value) === null, profileBody.shape.displayName.safeParse(value).success, JSON.stringify(value));
+  }
 });
 
 // --- Catálogo (CU-01): la home valida q y tags antes de pedir /api/comics ---

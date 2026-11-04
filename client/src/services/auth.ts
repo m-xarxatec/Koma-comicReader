@@ -29,3 +29,8 @@ export const login = (input: LoginInput) => api.post<{ user: UserDto }>('/api/au
 export const register = ({ email, password, displayName }: RegisterInput) =>
   api.post<{ user: UserDto }>('/api/auth/register', { email, password, displayName });
 export const logout = () => api.post<void>('/api/auth/logout');
+
+// Perfil (CU-23, contrato del bloque 3). Cambiar la contraseña trae la cookie nueva en la respuesta (RN-15).
+export const updateProfile = (displayName: string) => api.patch<{ user: UserDto }>('/api/me', { displayName });
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  api.post<{ user: UserDto }>('/api/auth/password', { currentPassword, newPassword });

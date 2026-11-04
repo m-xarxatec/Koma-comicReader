@@ -58,15 +58,26 @@
   display: none;
 }
 
-/* Con sesión: nombre (textContent, recortado si es largo) y "Salir" */
+/* Con sesión: nombre (textContent, recortado si es largo), enlazado a /perfil (D16), y "Salir" */
 .site-header__user {
+  display: inline-block;
   overflow: hidden;
+  min-width: var(--touch-target); /* área táctil también con un nombre corto ("Ana") */
   max-width: var(--header-user-max);
+  line-height: var(--touch-target);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   text-overflow: ellipsis;
+  text-align: center;
   white-space: nowrap;
+}
+
+.site-header__user:hover,
+.site-header__user[aria-current="page"] {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: var(--underline-offset);
 }
 
 .site-search {

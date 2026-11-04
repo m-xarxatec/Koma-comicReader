@@ -1,0 +1,109 @@
+/* Tarjetas del perfil: datos personales, seguridad y estado Premium (D17: solo el estado, sin enlace). */
+.profile-card {
+  min-width: 0;
+  padding: var(--profile-card-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.profile-card__header {
+  margin-bottom: var(--profile-card-header-margin);
+}
+
+.profile-card__title {
+  margin: var(--profile-card-title-margin);
+  font-size: var(--font-size-profile-card-title);
+}
+
+.profile-card__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Formularios del perfil: la maqueta separa los campos 1rem (.form, 1.25rem). */
+.profile-card__form {
+  gap: var(--profile-form-gap);
+}
+
+/* Botón y aviso de éxito en la misma fila: el aviso vacío (role="status", siempre en el árbol) no ocupa sitio. */
+.profile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+/* Estado Premium */
+.profile-card--premium {
+  overflow: hidden;
+  background: var(--gradient-profile-premium), var(--color-surface);
+}
+
+.profile-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--profile-card-top-gap);
+}
+
+.profile-card__icon {
+  display: grid;
+  place-items: center;
+  width: var(--profile-card-icon-size);
+  height: var(--profile-card-icon-size);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-accent-soft);
+}
+
+.profile-card__icon .icon {
+  width: var(--profile-card-icon-glyph);
+  height: var(--profile-card-icon-glyph);
+}
+
+.profile-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--profile-badge-height);
+  padding: var(--profile-badge-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  color: var(--color-warning);
+  font-size: var(--font-size-profile-badge);
+  font-weight: var(--font-weight-heavy);
+}
+
+.profile-card__badge--premium {
+  color: var(--color-success);
+}
+
+.profile-card__title--large {
+  margin: var(--profile-premium-title-margin);
+  font-size: var(--font-size-profile-premium-title);
+}
+
+.profile-card--premium .profile-card__text {
+  max-width: var(--measure-story);
+  margin: var(--profile-premium-text-margin);
+}
+
+.profile-card__benefits {
+  margin: 0;
+  padding-left: var(--profile-benefits-indent);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.profile-card__benefit + .profile-card__benefit {
+  margin-top: var(--profile-benefits-gap);
+}
+
+/* El servidor pone data-plan; se ve solo el texto de ese plan, también sin JS. */
+.profile-card--premium[data-plan="free"] .profile-card__only-premium,
+.profile-card--premium[data-plan="premium"] .profile-card__only-free {
+  display: none;
+}

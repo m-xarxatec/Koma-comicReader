@@ -72,3 +72,10 @@
   width: 100%;
   margin-top: var(--space-1);
 }
+
+/* Aviso de éxito de un envío (role="status"): siempre en el árbol para que se anuncie al rellenarse. */
+.form__status {
+  margin: 0;
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}

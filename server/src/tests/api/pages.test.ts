@@ -177,3 +177,56 @@ test('Seguridad: un error sin plantilla usa la página genérica con el mismo la
   const base = html.indexOf('href="/styles/base.css"');
   assert.ok(tokens >= 0 && tokens < layers && layers < base, 'orden variables → layers → base');
 });
+
+// ── /perfil (CU-23; contrato del bloque 3) ─────────────────────────────────────
+
+async function profileUser(displayName: string, premium = false): Promise<string> {
+  const { pool } = await import('../../db/pool.js');
+  const { signSession } = await import('../../modules/auth/auth.service.js');
+  const { rows } = await pool.query<{ id: number; token_version: number }>(
+    `INSERT INTO users (email, password_hash, display_name, premium_until)
+     VALUES ($1, 'sin-uso', $2, CASE WHEN $3::boolean THEN now() + interval '30 days' END)
+     RETURNING id, token_version`,
+    [`perfil-${crypto.randomUUID()}@paginas.test`, displayName, premium],
+  );
+  const user = rows[0]!;
+  return `koma_session=${signSession({ id: user.id, tokenVersion: user.token_version })}`;
+}
+
+test('Seguridad: sin sesión, /perfil redirige con 302 a /entrar con next=/perfil', async () => {
+  const res = await get('/perfil');
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('location'), '/entrar?next=%2Fperfil');
+});
+
+test('Seguridad: /perfil sirve profile.html con un solo h1, sin marcadores y con los datos de la cuenta escapados', async () => {
+  const cookie = await profileUser(`<img src=x onerror="alert('x')">&`);
+  const res = await get('/perfil', cookie);
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.equal(title(html), 'Mi perfil · Koma');
+  assert.deepEqual(h1s(html), ['Mi perfil']);
+  assert.ok(!html.includes('{{'), 'sin marcadores sin rellenar');
+  assert.ok(!html.includes('<img src=x'), 'el nombre no se inyecta como HTML');
+  assert.ok(html.includes('value="&lt;img src=x onerror=&quot;alert(&#39;x&#39;)&quot;&gt;&amp;"'), 'nombre escapado en el value');
+  assert.ok(html.includes('data-initials>&lt;S</div>'), 'iniciales de las dos primeras palabras («<img» y «src=x»), escapadas');
+  assert.ok(html.includes('data-plan="free"'));
+  assert.ok(html.includes('Cuenta de lectura'));
+  // Nunca GET: sin JS, las contraseñas no pueden acabar en la URL ni en los logs.
+  assert.equal(html.match(/<form [^>]*method="post"/g)?.length, 2);
+  assert.equal(html.match(/<input [^>]*type="password"/g)?.length, 3);
+});
+
+test('Seguridad: /perfil de una cuenta premium muestra su plan y la fecha de fin en ISO 8601', async () => {
+  const html = await (await get('/perfil', await profileUser('Lectora Premium', true))).text();
+  assert.ok(html.includes('data-plan="premium"'));
+  assert.match(html, /data-premium-until="\d{4}-\d{2}-\d{2}T[\d:.]+Z">\d{4}-\d{2}-\d{2}</);
+  assert.match(html, /data-initials>LP<\/div>/);
+});
+
+test('Seguridad: con la barra final, /perfil/ redirige con 301 a /perfil (y de ahí al login)', async () => {
+  const res = await get('/perfil/');
+  assert.equal(res.status, 301);
+  assert.equal(res.headers.get('location'), '/perfil');
+});

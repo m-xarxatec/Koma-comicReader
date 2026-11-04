@@ -27,6 +27,14 @@ const VALUES = {
   chapterTitle: 'Capítulo 1',
   number: '1',
   contentWarning: '',
+  // profile.html (profilePageValues en users.service.ts)
+  displayName: 'Ana',
+  email: 'ana@demo.test',
+  initials: 'A',
+  accountLabel: 'Cuenta de lectura',
+  plan: 'free',
+  premiumUntil: '',
+  premiumUntilDate: '',
 };
 const count = (html: string, text: string) => html.split(text).length - 1;
 

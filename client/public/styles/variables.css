@@ -402,3 +402,46 @@
   --font-size-comments-feedback: 0.82rem;
   --comments-feedback-min-height: 1.2em; /* reserva la línea del aviso: el panel no salta al aparecer */
 }
+
+/* Perfil (/perfil, bloque 3): valores de la maqueta (perfil/index.html y account.css), salvo el relleno
+   inferior (7rem en la maqueta): aquí basta 2.5rem, porque el pie ya deja --mobile-nav-clearance. */
+:root {
+  --color-profile-avatar-from: #ff2e93;
+  --color-profile-avatar-to: #8b5cf6;
+  --color-profile-avatar-text: #ffffff;
+  --color-profile-premium-glow: #ff2e9328;
+  --gradient-profile-avatar: linear-gradient(135deg, var(--color-profile-avatar-from), var(--color-profile-avatar-to));
+  --gradient-profile-premium: radial-gradient(ellipse at 92% 0%, var(--color-profile-premium-glow), transparent 60%);
+  --profile-page-padding: var(--space-8) var(--space-10);
+  --profile-page-padding-wide: 2.8rem 5rem;
+  --profile-head-gap: 1rem;
+  --profile-head-padding: 1.8rem;
+  --profile-avatar-size: 70px;
+  --profile-avatar-size-medium: 84px;
+  --profile-avatar-radius: 22px;
+  --font-size-profile-avatar: 1.65rem;
+  --font-weight-profile-avatar: 850;
+  --profile-title-margin: 0.3rem 0 0.2rem;
+  --font-size-profile-title: clamp(1.65rem, 4vw, 2.3rem);
+  --line-height-profile-title: 1.1;
+  --profile-grid-gap: 1.25rem;
+  --profile-grid-margin: 1.7rem;
+  --profile-grid-columns-medium: minmax(0, 1fr) minmax(0, 1fr);
+  --profile-grid-columns-wide: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(270px, 0.9fr);
+  --profile-form-gap: 1rem;
+  --profile-card-padding: clamp(1.2rem, 3vw, 1.8rem);
+  --profile-card-header-margin: 1.3rem;
+  --font-size-profile-card-title: 1.15rem;
+  --font-size-profile-premium-title: 1.3rem;
+  --profile-card-title-margin: 0 0 0.35rem;
+  --profile-premium-title-margin: 1.15rem 0 0.55rem;
+  --profile-premium-text-margin: 0 0 1.3rem;
+  --profile-card-top-gap: 0.8rem;
+  --profile-card-icon-size: 46px;
+  --profile-card-icon-glyph: 26px;
+  --profile-badge-height: 30px;
+  --profile-badge-padding: 0.3rem 0.7rem;
+  --font-size-profile-badge: 0.76rem;
+  --profile-benefits-indent: 1.2rem;
+  --profile-benefits-gap: 0.55rem;
+}

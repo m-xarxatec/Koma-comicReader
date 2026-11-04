@@ -1,0 +1,86 @@
+import { changePassword, updateProfile } from '../services/auth.js';
+import {
+  bindForm,
+  confirmationOf,
+  currentPasswordProblem,
+  displayNameProblem,
+  failureOutcome,
+  passwordProblem,
+} from '../utils/validate.js';
+
+// Página /perfil (CU-23). El servidor ya pintó los datos de la cuenta (escapados) y el plan (data-plan). Aquí
+// se envían los dos formularios por api.ts y, al acertar, se actualiza con textContent lo que muestra el
+// nombre: la cabecera de la página, el avatar y la cabecera del sitio.
+
+const dateFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' });
+
+// D17: iniciales decorativas. Duplicado explícito de initials() en server/src/modules/users/users.service.ts.
+function initials(displayName: string): string {
+  return displayName
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => [...word][0]!.toLocaleUpperCase('es'))
+    .join('');
+}
+
+// Fin del periodo Premium: el servidor deja la fecha en ISO (sin JS se lee así) y aquí se formatea en local.
+const premiumUntil = document.querySelector<HTMLElement>('[data-premium-until]');
+const until = premiumUntil?.dataset['premiumUntil'];
+if (premiumUntil && until) premiumUntil.textContent = dateFormat.format(new Date(until));
+
+// Aviso de éxito del formulario (role="status", siempre en el árbol). Se borra al volver a escribir.
+function statusOf(form: HTMLFormElement): (message: string) => void {
+  const status = form.querySelector<HTMLElement>('[data-form-status]');
+  form.addEventListener('input', () => {
+    if (status) status.textContent = '';
+  });
+  return (message) => {
+    if (status) status.textContent = message;
+  };
+}
+
+const profileForm = document.querySelector<HTMLFormElement>('#profile-form');
+const nameInput = document.querySelector<HTMLInputElement>('#profile-display-name');
+if (profileForm && nameInput) {
+  const setStatus = statusOf(profileForm);
+  bindForm(profileForm, { displayName: displayNameProblem }, async (values) => {
+    setStatus('');
+    const result = await updateProfile(values['displayName'] ?? '');
+    if (!result.ok) return failureOutcome(result.status, result.error);
+
+    const { displayName } = result.data.user; // ya recortado por el servidor
+    nameInput.value = displayName;
+    for (const element of document.querySelectorAll<HTMLElement>('[data-display-name], [data-user-name]')) {
+      element.textContent = displayName;
+    }
+    const avatar = document.querySelector<HTMLElement>('[data-initials]');
+    if (avatar) avatar.textContent = initials(displayName);
+    setStatus('Nombre guardado.');
+    nameInput.focus(); // el botón se desactiva durante el envío y el foco no puede quedarse en él
+    return { ok: true };
+  });
+}
+
+const passwordForm = document.querySelector<HTMLFormElement>('#password-form');
+if (passwordForm) {
+  const setStatus = statusOf(passwordForm);
+  // Mismo orden que el formulario (el foco del primer error lo decide bindForm).
+  const rules = {
+    currentPassword: currentPasswordProblem,
+    newPassword: passwordProblem,
+    newPasswordConfirm: confirmationOf('newPassword'),
+  };
+  bindForm(passwordForm, rules, async (values) => {
+    setStatus('');
+    // Solo los campos del contrato: la confirmación se queda en el cliente.
+    const result = await changePassword(values['currentPassword'] ?? '', values['newPassword'] ?? '');
+    if (!result.ok) return failureOutcome(result.status, result.error);
+
+    // RN-15: la respuesta trae la cookie nueva; esta sesión sigue abierta y las demás se cierran.
+    passwordForm.reset();
+    setStatus('Contraseña cambiada. Se ha cerrado la sesión en los demás dispositivos.');
+    passwordForm.querySelector<HTMLInputElement>('#password-current')?.focus();
+    return { ok: true };
+  });
+}

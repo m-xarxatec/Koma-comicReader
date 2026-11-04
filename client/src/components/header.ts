@@ -1,8 +1,9 @@
 import { getMe, logout } from '../services/auth.js';
 
 // Cabecera con la sesión. El HTML (server/src/utils/layout.ts) trae siempre "Entrar" y "Registrarse", que
-// funcionan sin JS. Con JS: si hay sesión, se cambian por el nombre (textContent) y un botón "Salir"; si
-// no, los dos enlaces llevan en `next` la página actual (con el fragmento #v-n) para volver a ella después.
+// funcionan sin JS. Con JS: si hay sesión, se cambian por el nombre (textContent, enlazado a /perfil) y un
+// botón "Salir"; si no, los dos enlaces llevan en `next` la página actual (con el fragmento #v-n) para volver
+// a ella después.
 
 const AUTH_PATHS = ['/entrar', '/registro'];
 
@@ -21,9 +22,13 @@ const result = await getMe();
 const user = result.ok ? result.data.user : null;
 
 if (user && account) {
-  const name = document.createElement('span');
+  // D16: el nombre lleva a /perfil. data-user-name: profile.ts lo actualiza al cambiar el nombre.
+  const name = document.createElement('a');
   name.className = 'site-header__user';
+  name.href = '/perfil';
+  name.dataset['userName'] = '';
   name.textContent = user.displayName;
+  if (location.pathname === '/perfil') name.setAttribute('aria-current', 'page');
 
   const logoutButton = document.createElement('button');
   logoutButton.type = 'button';

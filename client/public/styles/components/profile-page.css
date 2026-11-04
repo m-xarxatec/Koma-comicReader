@@ -1,0 +1,82 @@
+/* Página /perfil (CU-23): cabecera con el avatar de iniciales y rejilla de tarjetas (maqueta perfil/index.html). */
+.profile-page {
+  padding-block: var(--profile-page-padding);
+}
+
+.profile-page__head {
+  display: flex;
+  align-items: center;
+  gap: var(--profile-head-gap);
+  padding-bottom: var(--profile-head-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.profile-page__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: var(--profile-avatar-size);
+  height: var(--profile-avatar-size);
+  border-radius: var(--profile-avatar-radius);
+  background: var(--gradient-profile-avatar);
+  color: var(--color-profile-avatar-text);
+  font-size: var(--font-size-profile-avatar);
+  font-weight: var(--font-weight-profile-avatar);
+}
+
+.profile-page__eyebrow {
+  margin: 0;
+}
+
+.profile-page__title {
+  margin: var(--profile-title-margin);
+  font-size: var(--font-size-profile-title);
+  line-height: var(--line-height-profile-title);
+}
+
+.profile-page__meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.profile-page__notice {
+  margin-top: var(--profile-grid-margin);
+}
+
+.profile-page__grid {
+  display: grid;
+  gap: var(--profile-grid-gap);
+  margin-top: var(--profile-grid-margin);
+}
+
+@media (min-width: 40rem) {
+  .profile-page__avatar {
+    width: var(--profile-avatar-size-medium);
+    height: var(--profile-avatar-size-medium);
+  }
+
+  .profile-page__grid {
+    grid-template-columns: var(--profile-grid-columns-medium);
+  }
+
+  .profile-page__grid > .profile-card--premium {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 64rem) {
+  .profile-page {
+    padding-block: var(--profile-page-padding-wide);
+  }
+
+  .profile-page__grid {
+    grid-template-columns: var(--profile-grid-columns-wide);
+    align-items: start;
+  }
+
+  .profile-page__grid > .profile-card--premium {
+    grid-column: auto;
+  }
+}

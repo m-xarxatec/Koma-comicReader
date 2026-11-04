@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>Mi perfil · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/form.css">
+  <link rel="stylesheet" href="/styles/components/profile-page.css">
+  <link rel="stylesheet" href="/styles/components/profile-card.css">
+  <script type="module" src="/js/pages/profile.js"></script>
+</head>
+<body>
+  <!-- @header -->
+  <main id="contenido" class="profile-page container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Mi perfil</span>
+    </nav>
+
+    <!-- CU-23. Los datos los pone el servidor (escapados); el avatar son iniciales decorativas (D17). -->
+    <header class="profile-page__head">
+      <div class="profile-page__avatar" aria-hidden="true" data-initials>{{initials}}</div>
+      <div>
+        <p class="eyebrow profile-page__eyebrow">Mi espacio en Koma</p>
+        <h1 class="profile-page__title">Mi perfil</h1>
+        <p class="profile-page__meta"><span data-display-name>{{displayName}}</span> · {{accountLabel}}</p>
+      </div>
+    </header>
+
+    <noscript>
+      <p class="form__notice profile-page__notice">Para cambiar tu nombre o tu contraseña hay que activar JavaScript en el navegador.</p>
+    </noscript>
+
+    <div class="profile-page__grid">
+      <section class="profile-card" aria-labelledby="personal-title">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title" id="personal-title">Datos personales</h2>
+          <p class="profile-card__text">El nombre que verá la comunidad en tus comentarios.</p>
+        </div>
+        <!-- PATCH /api/me (RN-12): la misma regla que el registro. Sin maxlength: cuenta unidades UTF-16 y no
+             dejaría escribir 30 emojis, que valen (bindForm cuenta puntos de código). Un formulario no puede enviar
+             PATCH: sin JS, este POST a /api/me responde 404 (desvío aceptado; el aviso noscript lo explica). -->
+        <form class="form profile-card__form" id="profile-form" method="post" action="/api/me">
+          <div class="form__field">
+            <label class="form__label" for="profile-display-name">Nombre de usuario</label>
+            <input class="form__input" id="profile-display-name" name="displayName" type="text" value="{{displayName}}" autocomplete="nickname" required minlength="3" aria-describedby="profile-display-name-hint profile-display-name-error">
+            <p class="form__hint" id="profile-display-name-hint">De 3 a 30 caracteres.</p>
+            <p class="form__error" id="profile-display-name-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="profile-email">Correo electrónico</label>
+            <!-- Sin name: no se envía. El correo no se edita en el MVP. -->
+            <input class="form__input" id="profile-email" type="email" value="{{email}}" autocomplete="email" readonly aria-describedby="profile-email-hint">
+            <p class="form__hint" id="profile-email-hint">El correo no se puede cambiar.</p>
+          </div>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <div class="profile-card__actions">
+            <button class="button button--primary" type="submit">Guardar nombre</button>
+            <p class="form__status" data-form-status role="status"></p>
+          </div>
+        </form>
+      </section>
+
+      <section class="profile-card" aria-labelledby="password-title">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title" id="password-title">Seguridad</h2>
+          <p class="profile-card__text">Al cambiar la contraseña se cierra la sesión en los demás dispositivos.</p>
+        </div>
+        <!-- POST /api/auth/password (RN-12, RN-15). "Repite la nueva contraseña" se comprueba solo en el cliente
+             y no se envía. Nunca GET: sin JS, las contraseñas no pueden acabar en la URL. -->
+        <form class="form profile-card__form" id="password-form" method="post" action="/api/auth/password">
+          <!-- Para los gestores de contraseñas: la cuenta a la que pertenece la contraseña (sin name, no se envía). -->
+          <input type="email" value="{{email}}" autocomplete="username" readonly hidden>
+          <div class="form__field">
+            <label class="form__label" for="password-current">Contraseña actual</label>
+            <input class="form__input" id="password-current" name="currentPassword" type="password" placeholder="Contraseña actual" autocomplete="current-password" required aria-describedby="password-current-error">
+            <p class="form__error" id="password-current-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="password-new">Nueva contraseña</label>
+            <input class="form__input" id="password-new" name="newPassword" type="password" placeholder="Nueva contraseña" autocomplete="new-password" required minlength="10" aria-describedby="password-new-hint password-new-error">
+            <p class="form__hint" id="password-new-hint">Mínimo 10 caracteres.</p>
+            <p class="form__error" id="password-new-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="password-confirm">Repite la nueva contraseña</label>
+            <input class="form__input" id="password-confirm" name="newPasswordConfirm" type="password" placeholder="Repite la nueva contraseña" autocomplete="new-password" required aria-describedby="password-confirm-error">
+            <p class="form__error" id="password-confirm-error" hidden></p>
+          </div>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <div class="profile-card__actions">
+            <button class="button button--outline" type="submit">Cambiar contraseña</button>
+            <p class="form__status" data-form-status role="status"></p>
+          </div>
+        </form>
+      </section>
+
+      <!-- Solo el estado (D17): la página /premium llega en el bloque 4. profile-card.css muestra el texto de su plan. -->
+      <aside class="profile-card profile-card--premium" aria-labelledby="premium-title" data-plan="{{plan}}">
+        <div class="profile-card__top">
+          <div class="profile-card__icon" aria-hidden="true">
+            <svg class="icon"><use href="/icons/sprite.svg#icon-crown"/></svg>
+          </div>
+          <span class="profile-card__badge profile-card__only-free">Plan gratuito</span>
+          <span class="profile-card__badge profile-card__badge--premium profile-card__only-premium">Premium</span>
+        </div>
+        <h2 class="profile-card__title profile-card__title--large" id="premium-title">Tu estado Premium</h2>
+        <p class="profile-card__text profile-card__only-free">Ahora estás en el plan gratuito. Con Premium, las historias fluyen sin interrupciones.</p>
+        <p class="profile-card__text profile-card__only-premium">Tu suscripción Premium está activa hasta el <span data-premium-until="{{premiumUntil}}">{{premiumUntilDate}}</span>.</p>
+        <ul class="profile-card__benefits">
+          <li class="profile-card__benefit">Lectura sin anuncios</li>
+          <li class="profile-card__benefit">Capítulos sin límites</li>
+          <li class="profile-card__benefit">Suscripción de prueba, sin pagos reales</li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <!-- @footer -->
+</body>
+</html>
