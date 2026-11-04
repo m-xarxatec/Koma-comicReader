@@ -26,3 +26,13 @@ export const requireAuthor: RequestHandler = (_req, res, next) => {
   if (!isAuthor(user)) throw forbidden();
   next();
 };
+
+// Páginas del mapa de rutas que exigen sesión (/perfil, /autor): sin ella, 302 a /entrar con `next` = la ruta
+// pedida (con su query), que el login vuelve a validar con safeNext. La API sigue respondiendo 401.
+export const requirePageAuth: RequestHandler = (req, res, next) => {
+  if (!res.locals.user) {
+    res.redirect(302, `/entrar?${new URLSearchParams({ next: req.originalUrl })}`);
+    return;
+  }
+  next();
+};

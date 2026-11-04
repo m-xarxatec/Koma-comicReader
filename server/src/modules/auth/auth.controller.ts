@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
 import { clearSessionCookie, setSessionCookie } from '../../middlewares/auth.js';
-import { resetLoginAttempts } from '../../middlewares/rate-limit.js';
+import { resetLoginAttempts, resetPasswordAttempts } from '../../middlewares/rate-limit.js';
 import { sendPage } from '../../utils/page.js';
 import { safeNext } from '../../utils/redirect.js';
 import { toUserDto } from '../users/users.service.js';
-import type { LoginInput, RegisterInput } from './auth.schema.js';
+import type { LoginInput, PasswordInput, RegisterInput } from './auth.schema.js';
 import * as authService from './auth.service.js';
 
 // Traduce HTTP ↔ servicio; sin lógica de negocio.
@@ -32,6 +32,15 @@ export async function logout(req: Request, res: Response): Promise<void> {
   await authService.logout(res.locals.user, context(req, res));
   clearSessionCookie(res);
   res.status(204).end();
+}
+
+// requireAuth va antes en la ruta: aquí siempre hay usuario.
+export async function changePassword(req: Request, res: Response): Promise<void> {
+  const { user, token } = await authService.changePassword(res.locals.user!, res.locals.validated.body as PasswordInput, context(req, res));
+  await resetPasswordAttempts(req, res); // RN-13 (D11): acertar la contraseña actual pone el contador a cero
+  res.locals.user = user;
+  setSessionCookie(res, token); // RN-15: esta sesión sigue abierta con el token_version nuevo
+  res.json({ user: toUserDto(user) });
 }
 
 export function me(_req: Request, res: Response): void {

@@ -19,8 +19,9 @@ const email = z
       .max(EMAIL_MAX_CHARS, { error: `El correo no puede pasar de ${EMAIL_MAX_CHARS} caracteres` }),
   );
 
-// Caracteres contados como puntos de código, igual que la contraseña (RN-12).
-const displayName = z
+// Caracteres contados como puntos de código, igual que la contraseña (RN-12). El perfil (PATCH /api/me)
+// usa la misma regla que el registro (contrato del bloque 3).
+export const displayName = z
   .string(required)
   .trim()
   .refine((value) => [...value].length >= DISPLAY_NAME_MIN_CHARS && [...value].length <= DISPLAY_NAME_MAX_CHARS, {
@@ -43,6 +44,9 @@ const currentPassword = z
 
 export const registerBody = z.object({ email, password: newPassword, displayName });
 export const loginBody = z.object({ email, password: currentPassword });
+// Cambio de contraseña (CU-23, D12): la actual, como en el login; la nueva, con la regla del registro.
+export const passwordBody = z.object({ currentPassword, newPassword });
 
 export type RegisterInput = z.infer<typeof registerBody>;
 export type LoginInput = z.infer<typeof loginBody>;
+export type PasswordInput = z.infer<typeof passwordBody>;

@@ -19,6 +19,8 @@ export const REGISTER_LIMIT = 3;
 export const REGISTER_WINDOW_MS = 60 * MINUTE_MS;
 export const COMMENT_LIMIT = 5;
 export const COMMENT_WINDOW_MS = MINUTE_MS;
+export const PASSWORD_LIMIT = 5;
+export const PASSWORD_WINDOW_MS = 15 * MINUTE_MS;
 
 // ipKeyGenerator agrupa las IPv6 por subred (/56, el valor de serie de la librería): si no, un atacante
 // rotaría direcciones dentro de su propio bloque.
@@ -90,3 +92,12 @@ function userKey(req: Request, res: Response): string {
 // Comentarios: 5 / min por usuario (RN-13). Cuenta cada intento que pasa la validación (también un 403 o un
 // 404 del servicio), como el registro.
 export const commentRateLimit = rateLimit({ ...common, windowMs: COMMENT_WINDOW_MS, limit: COMMENT_LIMIT, keyGenerator: userKey });
+
+// Cambio de contraseña: 5 contraseñas actuales incorrectas / 15 min por usuario (RN-13, D11). Como el login,
+// cuenta cada intento que pasa la validación y acertar pone el contador a cero (resetPasswordAttempts), así que
+// en la práctica solo suman los fallos.
+export const passwordRateLimit = rateLimit({ ...common, windowMs: PASSWORD_WINDOW_MS, limit: PASSWORD_LIMIT, keyGenerator: userKey });
+
+export async function resetPasswordAttempts(req: Request, res: Response): Promise<void> {
+  await passwordRateLimit.resetKey(userKey(req, res));
+}

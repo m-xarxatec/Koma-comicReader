@@ -17,6 +17,7 @@ import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.
 import { commentsRouter } from './modules/comments/comments.routes.js';
 import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
+import { usersPagesRouter, usersRouter } from './modules/users/users.routes.js';
 import { AppError } from './utils/app-error.js';
 import { sendPage } from './utils/page.js';
 
@@ -93,6 +94,7 @@ app.get('/api/health', async (_req, res) => {
 // estáticos, /files y /api/health, que no la necesitan, para no consultar la BD en cada CSS o imagen.
 app.use(auth);
 app.use('/api', authRouter);
+app.use('/api', usersRouter);
 app.use('/api', comicsRouter);
 app.use('/api', readingRouter);
 app.use('/api', commentsRouter);
@@ -103,6 +105,7 @@ app.get('/', (_req, res) => sendPage(res, 'home'));
 app.use(authPagesRouter);
 app.use(comicsPagesRouter);
 app.use(readingPagesRouter);
+app.use(usersPagesRouter);
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');

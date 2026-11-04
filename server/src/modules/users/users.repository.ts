@@ -84,3 +84,30 @@ export async function updateStatus(db: Queryable, id: number, status: UserStatus
   );
   return rows[0] ? toUser(rows[0]) : null;
 }
+
+// Fila bloqueada hasta el final de la transacción: el perfil compara el nombre anterior con el nuevo.
+export async function findByIdForUpdate(db: Queryable, id: number): Promise<User | null> {
+  const { rows } = await db.query<UserRow>(`SELECT ${COLUMNS} FROM users WHERE id = $1 FOR UPDATE`, [id]);
+  return rows[0] ? toUser(rows[0]) : null;
+}
+
+export async function updateDisplayName(db: Queryable, id: number, displayName: string): Promise<User | null> {
+  const { rows } = await db.query<UserRow>(
+    `UPDATE users SET display_name = $2 WHERE id = $1 RETURNING ${COLUMNS}`,
+    [id, displayName],
+  );
+  return rows[0] ? toUser(rows[0]) : null;
+}
+
+// RN-15: el hash nuevo incrementa token_version (las demás sesiones dejan de valer). Solo si token_version sigue
+// siendo el de la sesión que pidió el cambio: si otra petición la invalidó entretanto (otro cambio de
+// contraseña, una suspensión), no se cambia nada y devuelve null.
+export async function updatePassword(db: Queryable, id: number, passwordHash: string, tokenVersion: number): Promise<User | null> {
+  const { rows } = await db.query<UserRow>(
+    `UPDATE users SET password_hash = $2, token_version = token_version + 1
+     WHERE id = $1 AND token_version = $3 AND status = 'active'
+     RETURNING ${COLUMNS}`,
+    [id, passwordHash, tokenVersion],
+  );
+  return rows[0] ? toUser(rows[0]) : null;
+}

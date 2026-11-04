@@ -9,7 +9,7 @@ import * as audit from '../audit/audit.service.js';
 import * as usersRepository from '../users/users.repository.js';
 import type { User } from '../users/users.repository.js';
 import { canLogIn, isSessionValid } from './permissions.js';
-import type { LoginInput, RegisterInput } from './auth.schema.js';
+import type { LoginInput, PasswordInput, RegisterInput } from './auth.schema.js';
 
 // Sesión: JWT HS256 { sub: id, tv: token_version } en la cookie koma_session, 7 días, sin renovación.
 export const SESSION_TTL_DAYS = 7;
@@ -121,4 +121,30 @@ export async function login(input: LoginInput, ctx: RequestContext): Promise<Ses
 export async function logout(user: User | null, ctx: RequestContext): Promise<void> {
   if (!user) return;
   await audit.record(pool, { action: 'auth.logout', actorId: user.id, entityType: 'users', entityId: String(user.id), ...ctx });
+}
+
+// CU-23 · RN-12 · RN-15. La contraseña actual incorrecta es un 400 en su campo (no un 401: la sesión sigue
+// valiendo). Los hashes se calculan fuera de la transacción; dentro van el hash nuevo, token_version + 1 y la
+// auditoría, sin before ni after. El JWT nuevo lleva el token_version nuevo: las demás sesiones dejan de valer.
+export async function changePassword(user: User, input: PasswordInput, ctx: RequestContext): Promise<SessionResult> {
+  if (!(await verifyPassword(input.currentPassword, user.passwordHash))) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', {
+      fields: { currentPassword: 'La contraseña actual no es correcta' },
+    });
+  }
+  const passwordHash = await hashPassword(input.newPassword);
+  const updated = await withTransaction(async (client) => {
+    const changed = await usersRepository.updatePassword(client, user.id, passwordHash, user.tokenVersion);
+    // Otra petición invalidó esta sesión mientras se calculaba el hash (otro cambio, una suspensión).
+    if (!changed) throw new AppError(401, 'UNAUTHENTICATED', 'Inicia sesión para continuar');
+    await audit.record(client, {
+      action: 'user.password_change',
+      actorId: user.id,
+      entityType: 'users',
+      entityId: String(user.id),
+      ...ctx,
+    });
+    return changed;
+  });
+  return { user: updated, token: signSession(updated) };
 }
