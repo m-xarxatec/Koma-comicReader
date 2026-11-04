@@ -1,0 +1,23 @@
+.reader-intro {
+  padding-block: var(--reader-intro-padding-block);
+}
+
+.reader-intro__title {
+  font-size: var(--font-size-reader-title);
+  line-height: var(--line-height); /* en la maqueta hereda el del cuerpo */
+  overflow-wrap: anywhere;
+}
+
+.reader-intro__text {
+  max-width: var(--measure-reader-intro);
+  margin-top: var(--reader-intro-text-gap);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Saldo de lectura (RN-02), donde la maqueta tenía sus herramientas. */
+.reader-intro__note {
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- @head -->
   <meta name="request-id" content="{{requestId}}">
   <title>{{comicTitle}} · Capítulo {{number}} · Koma</title>
@@ -11,19 +11,63 @@
   <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
   <link rel="stylesheet" href="/styles/components/button.css">
-  <link rel="stylesheet" href="/styles/components/site-header.css">
-  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
-  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/content-warning.css">
+  <link rel="stylesheet" href="/styles/components/reader-page.css">
+  <link rel="stylesheet" href="/styles/components/reader-topbar.css">
+  <link rel="stylesheet" href="/styles/components/reader-intro.css">
+  <link rel="stylesheet" href="/styles/components/reader-strip.css">
+  <link rel="stylesheet" href="/styles/components/reader-screen.css">
+  <link rel="stylesheet" href="/styles/components/ad-card.css">
+  <script type="module" src="/js/pages/reader.js"></script>
 </head>
 <body>
-  <!-- @header -->
-  <!-- Lector (CU-03). Base de T12: la barra propia, la tira, el anuncio, la invitación y el muro de saldo
-       llegan en T15. El título y la advertencia (RN-08) los inyecta el servidor, escapados. -->
-  <main id="contenido" class="page">
-    <h1>{{comicTitle}}</h1>
-    <p>Capítulo {{number}}: {{chapterTitle}}</p>
+  <!-- Lector (CU-03, CU-04, CU-12, CU-24). Barra propia en lugar de la cabecera, el pie y la navegación móvil
+       del sitio (D20): la navegación fija taparía la tira. El servidor inyecta, escapados, el título, el
+       capítulo y la advertencia (RN-08, D7); reader.ts pide el capítulo a la API, que decide qué se muestra. -->
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="reader-topbar">
+    <a class="reader-topbar__back" href="/obra/{{slug}}"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow-left"/></svg> <span>Volver a la obra</span></a>
+    <a class="reader-topbar__brand" href="/"><img class="reader-topbar__logo" src="/icons/koma-logo.webp" alt="Koma, ir al inicio" width="155" height="53"></a>
+    <button class="button button--outline reader-topbar__expand" id="reader-fullscreen" type="button" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-expand"/></svg> <span class="reader-topbar__expand-label" id="reader-fullscreen-label">Pantalla completa</span></button>
+  </header>
+
+  <main id="contenido" class="reader-page">
+    <section class="reader-intro reader-page__column" aria-labelledby="chapter-title">
+      <p class="reader-page__eyebrow">{{comicTitle}} <span aria-hidden="true">/</span> Capítulo {{number}}</p>
+      <h1 class="reader-intro__title" id="chapter-title" tabindex="-1">{{chapterTitle}}</h1>
+      <p class="reader-intro__text">Lee desplazándote hacia abajo. Todas las imágenes forman una tira continua, sin separaciones.</p>
+      <p class="reader-intro__note" id="reader-balance" hidden></p>
+    </section>
+
+    <p class="visually-hidden" id="reader-status" role="status"></p>
+
+    <!-- Advertencia, anuncio, invitación, muro de saldo, carga y errores: una pantalla cada vez (D25). -->
+    <section class="reader-screen reader-page__column" id="reader-screen" aria-labelledby="reader-screen-title" hidden></section>
+
+    <section class="reader" id="lector" aria-label="Viñetas del capítulo {{number}}" hidden>
+      <div class="reader__stream" id="reader-stream"></div>
+      <button class="reader__exit" id="reader-exit" type="button"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow-left"/></svg> Salir de pantalla completa</button>
+    </section>
+
+    <div class="reader-page__ad reader-page__column" id="reader-end-ad" hidden></div>
+
+    <section class="reader-screen reader-page__column" id="reader-end" aria-labelledby="reader-end-title" hidden>
+      <p class="reader-page__eyebrow">Fin del capítulo {{number}}</p>
+      <h2 class="reader-screen__title" id="reader-end-title">¿Seguimos leyendo?</h2>
+      <p class="reader-screen__text" id="reader-end-text"></p>
+      <div class="reader-screen__actions">
+        <a class="button button--outline" href="/obra/{{slug}}#capitulos">Ver todos los capítulos</a>
+        <a class="button button--primary" id="reader-next" href="/obra/{{slug}}#capitulos" hidden>Capítulo siguiente</a>
+      </div>
+    </section>
+
     <p data-content-warning hidden>{{contentWarning}}</p>
+    <noscript>
+      <section class="reader-screen reader-page__column" aria-label="JavaScript desactivado">
+        <p class="reader-screen__text">Activa JavaScript para leer este capítulo.</p>
+        <div class="reader-screen__actions"><a class="button button--outline" href="/obra/{{slug}}">Volver a la obra</a></div>
+      </section>
+    </noscript>
   </main>
-  <!-- @footer -->
 </body>
 </html>

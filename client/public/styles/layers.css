@@ -10,4 +10,8 @@
   --layer-header: 40;
   --layer-mobile-nav: 60;
   --layer-skip-link: 200;
+
+  /* Lector: la barra propia hace de cabecera; el botón de salir flota sobre la tira en pantalla completa */
+  --layer-reader-topbar: 40;
+  --layer-reader-exit: 80;
 }

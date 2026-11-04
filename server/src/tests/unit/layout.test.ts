@@ -23,6 +23,7 @@ const VALUES = {
   mode: 'login',
   title: 'Entrar',
   heading: 'Entrar',
+  slug: 'obra',
   comicTitle: 'Obra',
   chapterTitle: 'Capítulo 1',
   number: '1',
@@ -30,14 +31,20 @@ const VALUES = {
 };
 const count = (html: string, text: string) => html.split(text).length - 1;
 
+// Excepción explícita (D20): el lector lleva @head, pero su propia barra (header.reader-topbar) en lugar de la
+// cabecera, el pie y la navegación móvil del sitio, que taparía la tira. Ninguna otra plantilla.
+const OWN_CHROME = new Set(['pages/reader.html']);
+
 test('Seguridad: cada plantilla lleva una vez cada marcador y ninguna copia propia de la cabecera o el pie', async () => {
   const all = await templates();
   assert.ok(all.length >= 7, `plantillas encontradas: ${all.length}`);
+  assert.ok(all.some(({ file }) => OWN_CHROME.has(file)), 'la excepción apunta a una plantilla que existe');
   for (const { file, html } of all) {
     assert.equal(count(html, HEAD_MARKER), 1, `${file}: ${HEAD_MARKER}`);
     assert.ok(html.indexOf(HEAD_MARKER) < html.indexOf('</head>'), `${file}: ${HEAD_MARKER} fuera de <head>`);
-    assert.equal(count(html, HEADER_MARKER), 1, `${file}: ${HEADER_MARKER}`);
-    assert.equal(count(html, FOOTER_MARKER), 1, `${file}: ${FOOTER_MARKER}`);
+    const chrome = OWN_CHROME.has(file) ? 0 : 1;
+    assert.equal(count(html, HEADER_MARKER), chrome, `${file}: ${HEADER_MARKER}`);
+    assert.equal(count(html, FOOTER_MARKER), chrome, `${file}: ${FOOTER_MARKER}`);
     assert.equal(count(html, 'class="site-header"'), 0, `${file}: cabecera copiada`);
     assert.equal(count(html, 'class="site-footer"'), 0, `${file}: pie copiado`);
   }
@@ -65,8 +72,13 @@ test('Seguridad: ninguna plantilla sale con un marcador sin sustituir', async ()
     const rendered = renderTemplate(html, VALUES);
     assert.equal(count(rendered, '<!-- @'), 0, `${file}: marcador de layout`);
     assert.equal(count(rendered, '{{'), 0, `${file}: valor sin rellenar`);
-    for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'src="/js/components/header.js"']) {
-      assert.equal(count(rendered, part), 1, `${file}: ${part}`);
+    assert.equal(count(rendered, 'class="skip-link"'), 1, `${file}: skip-link`);
+    assert.equal(count(rendered, 'href="#contenido"'), 1, `${file}: "Saltar al contenido" a #contenido`);
+    assert.equal(count(rendered, 'id="contenido"'), 1, `${file}: id="contenido"`);
+    const own = OWN_CHROME.has(file);
+    assert.equal(count(rendered, 'class="reader-topbar"'), own ? 1 : 0, `${file}: barra del lector`);
+    for (const part of ['class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'src="/js/components/header.js"']) {
+      assert.equal(count(rendered, part), own ? 0 : 1, `${file}: ${part}`);
     }
     assert.equal(count(rendered, 'name="theme-color"'), 1, `${file}: theme-color`);
   }

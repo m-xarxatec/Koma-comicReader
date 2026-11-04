@@ -1,0 +1,24 @@
+/* Página del lector: sin desplazamiento suave (los saltos a #v-N y "Recargar" no deben animarse, como en la
+   maqueta), la columna de lectura y el antetítulo que comparten la introducción y las pantallas. */
+:root:has(.reader-page) {
+  scroll-behavior: auto;
+}
+
+.reader-page__column {
+  width: min(100% - 2 * var(--gutter), var(--reader-width));
+  margin-inline: auto;
+}
+
+.reader-page__eyebrow {
+  margin-bottom: var(--reader-eyebrow-gap);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-reader-eyebrow);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-reader-eyebrow);
+  text-transform: var(--text-transform-label);
+  overflow-wrap: anywhere;
+}
+
+.reader-page__ad {
+  margin-top: var(--space-10);
+}

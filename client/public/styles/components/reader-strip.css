@@ -1,0 +1,83 @@
+/* La tira: imágenes en bloque una debajo de otra, sin gap, margen, borde ni relleno, a todo el ancho de la
+   columna y con su proporción (el hueco lo reservan width y height del <img>). */
+.reader {
+  width: 100%;
+  max-width: var(--reader-width);
+  margin-inline: auto;
+  background: var(--color-reader-bg);
+}
+
+.reader-panel {
+  position: relative;
+  display: block;
+  line-height: var(--line-height-reader-strip);
+  scroll-margin-top: var(--reader-panel-scroll-margin);
+}
+
+.reader-panel__image {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+/* Imagen que no carga (CU-03): mensaje en la viñeta y "Recargar". */
+.reader-panel__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-reader-error-bg);
+  color: var(--color-reader-error-text);
+  line-height: var(--line-height-reader-error);
+  text-align: center;
+}
+
+/* Pantalla completa (D24): la API Fullscreen sobre la tira, que pasa a tener su propio desplazamiento. */
+.reader:fullscreen {
+  max-width: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.reader:fullscreen .reader__stream {
+  max-width: var(--reader-width);
+  margin-inline: auto;
+}
+
+.reader:fullscreen .reader-panel {
+  scroll-margin-top: 0;
+}
+
+.reader__exit {
+  display: none;
+}
+
+.reader:fullscreen .reader__exit {
+  position: fixed;
+  top: max(var(--reader-exit-inset), env(safe-area-inset-top));
+  left: max(var(--reader-exit-inset), env(safe-area-inset-left));
+  z-index: var(--layer-reader-exit);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--reader-exit-padding);
+  border: var(--border-width) solid var(--color-reader-exit-border);
+  border-radius: var(--reader-exit-radius);
+  background: var(--color-reader-exit-bg);
+  box-shadow: var(--shadow-reader-exit);
+  color: var(--color-reader-exit-text);
+  font-size: var(--font-size-reader-exit);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-reader-exit);
+  cursor: pointer;
+}
+
+.reader:fullscreen .reader__exit:hover {
+  background: var(--color-reader-exit-hover);
+}

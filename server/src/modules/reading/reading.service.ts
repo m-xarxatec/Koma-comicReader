@@ -114,6 +114,7 @@ async function requirePublicChapter(slug: string, number: number): Promise<{ com
 // Datos de la página /leer/:slug/:numero, que el servidor inyecta escapados (título y advertencia, para
 // que se vean antes de pedir el capítulo a la API). El permiso de lectura lo decide después la API.
 export interface ReaderPageValues {
+  slug: string; // ya validado con la regex del slug: los enlaces de la barra funcionan sin JS
   comicTitle: string;
   chapterTitle: string;
   number: string;
@@ -122,7 +123,7 @@ export interface ReaderPageValues {
 
 export async function getReaderPage(slug: string, number: number): Promise<ReaderPageValues> {
   const { comic, chapter } = await requirePublicChapter(slug, number);
-  return { comicTitle: comic.title, chapterTitle: chapter.title, number: String(chapter.number), contentWarning: comic.contentWarning ?? '' };
+  return { slug: comic.slug, comicTitle: comic.title, chapterTitle: chapter.title, number: String(chapter.number), contentWarning: comic.contentWarning ?? '' };
 }
 
 async function readAsGuest(

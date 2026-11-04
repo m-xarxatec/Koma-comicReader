@@ -1,0 +1,41 @@
+/* Tarjeta centrada del lector: el fin del capítulo de la maqueta (.reader-end). Con las mismas piezas se
+   componen la advertencia (RN-08), el anuncio (RN-01), la invitación, el muro de saldo (RN-02), la carga y
+   los errores (D25). */
+.reader-screen {
+  padding: var(--reader-screen-padding);
+  text-align: center;
+}
+
+.reader-screen__title {
+  font-size: var(--font-size-reader-screen-title);
+  line-height: var(--line-height); /* en la maqueta, h2 por defecto con el interlineado del cuerpo */
+}
+
+.reader-screen__text {
+  max-width: var(--measure-reader-screen);
+  margin: var(--space-4) auto;
+  color: var(--color-text-muted);
+}
+
+.reader-screen .content-warning,
+.reader-screen .ad-card {
+  margin-block: var(--space-4);
+  text-align: left;
+}
+
+.reader-screen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.reader-screen__actions .button {
+  flex: 1 1 var(--reader-action-basis);
+}
+
+@media (min-width: 40rem) {
+  .reader-screen__actions .button {
+    flex: 0 1 auto;
+  }
+}

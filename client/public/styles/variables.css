@@ -330,3 +330,40 @@
   --chapter-state-padding: 0.3rem 0.5rem;
   --font-size-chapter-state: 0.73rem;
 }
+
+/* Lector (/leer/:slug/:numero): valores de la maqueta (leer/obra-demo-01/1, reader-layout.css y reader-strip.css). */
+:root {
+  --color-reader-bg: #05040d; /* fondo de la tira y de la pantalla completa */
+  --color-reader-error-bg: #141022;
+  --color-reader-error-text: #ffffff;
+  --color-reader-exit-border: #ba9bef;
+  --color-reader-exit-bg: #110c22f0;
+  --color-reader-exit-hover: #2b1644;
+  --color-reader-exit-text: #ffffff;
+  --color-reader-exit-shadow: #000000aa;
+  --shadow-reader-exit: 0 5px 20px var(--color-reader-exit-shadow);
+  --reader-topbar-height: 62px;
+  --reader-topbar-padding-block: 0.45rem;
+  --reader-back-gap: 0.35rem;
+  --reader-logo-width: 126px;
+  --reader-expand-padding: 0.7rem;
+  --reader-intro-padding-block: 1.6rem 1.35rem;
+  --reader-eyebrow-gap: 0.45rem;
+  --font-size-reader-eyebrow: 0.73rem;
+  --letter-spacing-reader-eyebrow: 0.075em;
+  --font-size-reader-title: clamp(1.6rem, 5vw, 2.5rem);
+  --reader-intro-text-gap: 0.4rem;
+  --measure-reader-intro: 55ch;
+  --reader-screen-padding: 2.5rem 0 5rem;
+  --font-size-reader-screen-title: 1.5rem; /* h2 por defecto del navegador en la maqueta (1.5em) */
+  --measure-reader-screen: 43ch;
+  --reader-action-basis: 220px;
+  --line-height-reader-strip: 0; /* sin huecos entre las imágenes de la tira */
+  --reader-panel-scroll-margin: 72px; /* #v-N por debajo de la barra fija */
+  --line-height-reader-error: 1.4;
+  --reader-exit-inset: 0.7rem;
+  --reader-exit-padding: 0.6rem 1rem;
+  --reader-exit-radius: 0.65rem;
+  --font-size-reader-exit: 0.85rem;
+  --line-height-reader-exit: 1.2;
+}

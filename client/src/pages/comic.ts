@@ -212,6 +212,9 @@ function renderComic(comic: ComicDto): void {
   }
   chapterItems?.replaceChildren(...comic.chapters.map(chapterItem));
   if (chapters) chapters.hidden = false;
+  // Con #capitulos (p. ej. desde "Ver todos los capítulos" del lector), el navegador no pudo saltar al ancla
+  // mientras la sección estaba oculta.
+  if (location.hash === '#capitulos') chapters?.scrollIntoView();
 }
 
 async function loadComic(): Promise<void> {

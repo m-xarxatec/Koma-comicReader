@@ -1,0 +1,29 @@
+/* Anuncio de texto (RN-01, RN-03; D25): marca inventada, sin diseño en la maqueta. Se compone con piezas
+   aprobadas: el panel de superficie, el antetítulo "Publicidad" y el texto atenuado. */
+.ad-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.ad-card__label {
+  margin-bottom: 0;
+}
+
+.ad-card__image {
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.ad-card__brand {
+  font-size: var(--font-size-lg);
+}
+
+.ad-card__body {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  white-space: pre-line;
+}

@@ -1,0 +1,77 @@
+/* Barra propia del lector (D20): discreta, durante la lectura lo importante es la tira. */
+.reader-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--layer-reader-topbar);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* el logo queda centrado aunque el botón esté oculto */
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--reader-topbar-height);
+  padding: var(--reader-topbar-padding-block) max(var(--gutter), env(safe-area-inset-left));
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.reader-topbar__back {
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--reader-back-gap);
+  min-height: var(--touch-target);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.reader-topbar__back:hover {
+  color: var(--color-secondary);
+}
+
+.reader-topbar__brand {
+  grid-column: 2;
+  display: none;
+}
+
+.reader-topbar__logo {
+  width: var(--reader-logo-width);
+  height: auto;
+}
+
+.reader-topbar__expand {
+  grid-column: 3;
+  justify-self: end;
+  min-width: var(--touch-target);
+  padding-inline: var(--reader-expand-padding);
+}
+
+/* Sin soporte de la API Fullscreen (no es una carga en curso, como en los formularios). */
+.reader-topbar__expand:disabled {
+  cursor: not-allowed;
+}
+
+.reader-topbar__expand .icon {
+  width: var(--icon-size-nav);
+  height: var(--icon-size-nav);
+}
+
+/* En móvil solo el icono: el nombre accesible lo da aria-label (reader.ts lo cambia con el estado). */
+.reader-topbar__expand-label {
+  display: none;
+}
+
+@media (min-width: 40rem) {
+  .reader-topbar {
+    padding-inline: var(--gutter-wide);
+  }
+
+  .reader-topbar__brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+  }
+
+  .reader-topbar__expand-label {
+    display: inline;
+  }
+}

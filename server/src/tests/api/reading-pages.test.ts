@@ -73,8 +73,9 @@ test('RN-09: /leer/:slug redirige con 301 al capítulo 1; 404 o 410 si la obra n
 test('RN-08: /leer/:slug/:numero inyecta escapados el título, el capítulo y la advertencia', async () => {
   const html = await page(`/leer/${comic.slug}/1`);
   assert.equal(title(html), `${ESCAPED} · Capítulo 1 · Koma`);
-  assert.deepEqual(h1s(html), [ESCAPED]);
-  assert.ok(html.includes('Capítulo 1: Uno &quot;&lt;i&gt;&quot;'));
+  assert.deepEqual(h1s(html), ['Uno &quot;&lt;i&gt;&quot;']);
+  assert.ok(html.includes(`<p class="reader-page__eyebrow">${ESCAPED} <span aria-hidden="true">/</span> Capítulo 1</p>`), 'obra y capítulo');
+  assert.ok(html.includes(`href="/obra/${comic.slug}"`), 'Volver a la obra, sin JS');
   assert.ok(html.includes('<p data-content-warning hidden>Aviso &lt;b&gt;fuerte&lt;/b&gt;</p>'));
   const noWarning = await page(`/leer/${plain.slug}/2`);
   assert.ok(noWarning.includes('<p data-content-warning hidden></p>'));
