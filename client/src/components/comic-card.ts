@@ -27,6 +27,7 @@ function readCoverSize(): { width: number; height: number } | null {
   return coverSize;
 }
 
+// eager: la portada está en la primera pantalla y se carga sin loading="lazy".
 export function comicCard(comic: ComicCardDto, index: number, eager = false): HTMLElement {
   const article = document.createElement('article');
   article.className = 'comic-card';

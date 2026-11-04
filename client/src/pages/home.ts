@@ -15,6 +15,11 @@ interface CatalogPageDto {
   total: number;
 }
 
+// Tendencias: las 5 primeras de la petición del catálogo; solo las 2 primeras portadas sin loading="lazy"
+// (decisión del desarrollador, 4-nov).
+const TRENDING_SIZE = 5;
+const TRENDING_EAGER_COVERS = 2;
+
 const search = new URLSearchParams(location.search);
 const store = { state: readCatalogState(search), loading: false };
 const catalog = document.querySelector<HTMLElement>('#catalogo');
@@ -143,7 +148,7 @@ function renderComics(data: CatalogPageDto): void {
   grid.replaceChildren(...data.comics.map((comic, index) => comicCard(comic, index)));
   const isFirstUnfiltered = !store.state.q && store.state.tags.length === 0 && store.state.page === 1;
   trending.hidden = !isFirstUnfiltered || data.comics.length === 0;
-  trendingGrid.replaceChildren(...(trending.hidden ? [] : data.comics.slice(0, 5).map((comic, index) => comicCard(comic, index, true))));
+  trendingGrid.replaceChildren(...(trending.hidden ? [] : data.comics.slice(0, TRENDING_SIZE).map((comic, index) => comicCard(comic, index, index < TRENDING_EAGER_COVERS))));
   if (data.comics.length === 0) {
     const pages = Math.ceil(data.total / CATALOG_PAGE_SIZE);
     showMessage(data.total > 0

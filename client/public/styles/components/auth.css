@@ -31,6 +31,13 @@
   box-shadow: var(--shadow-panel);
 }
 
+/* En la maqueta, los antetítulos de /entrar y /registro (account-*__eyebrow) van a .75rem, no a los .72rem
+   de .eyebrow. */
+.auth__eyebrow,
+.auth__story-eyebrow {
+  font-size: var(--font-size-xs);
+}
+
 .auth__eyebrow {
   margin-bottom: var(--space-2);
 }
