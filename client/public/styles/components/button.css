@@ -26,7 +26,7 @@
 
 .button:disabled {
   opacity: var(--opacity-disabled);
-  cursor: progress;
+  cursor: var(--cursor-disabled);
   transform: none;
 }
 

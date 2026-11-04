@@ -1,6 +1,9 @@
 /* Página del lector: sin desplazamiento suave (los saltos a #v-N y "Recargar" no deben animarse, como en la
-   maqueta), la columna de lectura y el antetítulo que comparten la introducción y las pantallas. */
+   maqueta), los botones deshabilitados de la maqueta (también el de la barra, fuera de main), la columna de
+   lectura y el antetítulo que comparten la introducción y las pantallas. */
 :root:has(.reader-page) {
+  --opacity-disabled: var(--opacity-reader-disabled);
+  --cursor-disabled: var(--cursor-reader-disabled);
   scroll-behavior: auto;
 }
 

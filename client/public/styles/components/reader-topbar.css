@@ -45,11 +45,6 @@
   padding-inline: var(--reader-expand-padding);
 }
 
-/* Sin soporte de la API Fullscreen (no es una carga en curso, como en los formularios). */
-.reader-topbar__expand:disabled {
-  cursor: not-allowed;
-}
-
 .reader-topbar__expand .icon {
   width: var(--icon-size-nav);
   height: var(--icon-size-nav);

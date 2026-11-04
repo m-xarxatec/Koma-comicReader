@@ -188,6 +188,7 @@
 
   /* Estados */
   --opacity-disabled: 0.6;
+  --cursor-disabled: progress; /* en los formularios, un botón deshabilitado es una carga en curso */
   --opacity-placeholder: 0.85;
   --opacity-signal: 0.8;
 }
@@ -334,6 +335,8 @@
 /* Lector (/leer/:slug/:numero): valores de la maqueta (leer/obra-demo-01/1, reader-layout.css y reader-strip.css). */
 :root {
   --color-reader-bg: #05040d; /* fondo de la tira y de la pantalla completa */
+  --opacity-reader-disabled: 0.56; /* botones deshabilitados del lector (reader-layout.css) */
+  --cursor-reader-disabled: not-allowed; /* sin soporte de pantalla completa o esperando el anuncio: no es una carga */
   --color-reader-error-bg: #141022;
   --color-reader-error-text: #ffffff;
   --color-reader-exit-border: #ba9bef;
