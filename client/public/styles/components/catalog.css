@@ -1,0 +1,9 @@
+.catalog__message {
+  padding-block: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.catalog__message .text-link,
+.catalog__message .button {
+  margin-top: var(--space-3);
+}

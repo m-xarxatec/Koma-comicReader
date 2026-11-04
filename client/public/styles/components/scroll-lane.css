@@ -1,0 +1,23 @@
+/* Carril con desplazamiento horizontal (Tendencias y géneros); en escritorio pasa a rejilla.
+   El relleno deja sitio al anillo de foco, que overflow-x recortaría, y el margen negativo lo compensa:
+   el contenido del carril queda alineado con el título de la sección, como en la maqueta. */
+.scroll-lane {
+  display: grid;
+  grid-auto-flow: column;
+  overflow-x: auto;
+  margin: calc(-1 * var(--home-scroll-focus-padding)) calc(-1 * var(--home-scroll-focus-padding)) 0;
+  padding: var(--home-scroll-focus-padding) var(--home-scroll-focus-padding) var(--space-3);
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-border-strong) var(--color-home-scrollbar-track);
+}
+
+.scroll-lane > * {
+  scroll-snap-align: start;
+}
+
+@media (min-width: 64rem) {
+  .scroll-lane {
+    grid-auto-flow: row;
+    overflow-x: visible;
+  }
+}

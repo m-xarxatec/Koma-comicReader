@@ -1,0 +1,9 @@
+.home-main {
+  padding-block: var(--space-5) var(--space-12);
+}
+
+@media (min-width: 64rem) {
+  .home-main {
+    padding-top: var(--space-6);
+  }
+}

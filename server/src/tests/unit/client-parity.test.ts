@@ -3,7 +3,9 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { paths } from '../../config/paths.js';
+import { CATALOG_MAX_TAGS, CATALOG_PAGE_SIZE, CATALOG_QUERY_MAX_LENGTH } from '../../config/limits.js';
 import { EMAIL_MAX_CHARS, registerBody } from '../../modules/auth/auth.schema.js';
+import { catalogQuery } from '../../modules/comics/comics.schema.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
 
@@ -24,6 +26,17 @@ interface ClientRedirect {
 const load = <T>(file: string) => import(pathToFileURL(path.join(paths.clientDistDir, file)).href) as Promise<T>;
 const client = await load<ClientValidate>('utils/validate.js');
 const clientRedirect = await load<ClientRedirect>('utils/redirect.js');
+
+interface ClientCatalog {
+  CATALOG_QUERY_MAX_LENGTH: number;
+  CATALOG_MAX_TAGS: number;
+  CATALOG_PAGE_SIZE: number;
+  queryProblem: (q: string) => string | null;
+  tagsProblem: (tags: string) => string | null;
+  readCatalogState: (search: URLSearchParams) => { q: string; tags: string[]; page: number };
+  catalogQueryString: (state: { q: string; tags: readonly string[]; page: number }) => string;
+}
+const clientCatalog = await load<ClientCatalog>('utils/catalog.js');
 
 test('RN-12: el cliente valida la contraseña igual que el servidor, con los mismos mensajes', () => {
   const cases = ['', '123456789', '1234567890', 'a'.repeat(72), 'a'.repeat(73), 'ñ'.repeat(36), 'ñ'.repeat(37), '🙂'.repeat(9), '🙂'.repeat(10), '🙂'.repeat(19)];
@@ -61,4 +74,37 @@ test('RN-12: repetir la contraseña se comprueba solo en el cliente: vacía u ot
   assert.equal(client.passwordConfirmProblem('', { password }), 'Este campo es obligatorio');
   assert.equal(client.passwordConfirmProblem(`${password} `, { password }), 'Las contraseñas no coinciden');
   assert.equal(client.passwordConfirmProblem(password, {}), 'Las contraseñas no coinciden');
+});
+
+// --- Catálogo (CU-01): la home valida q y tags antes de pedir /api/comics ---
+
+test('Seguridad: el cliente usa los mismos límites del catálogo que el servidor', () => {
+  assert.equal(clientCatalog.CATALOG_QUERY_MAX_LENGTH, CATALOG_QUERY_MAX_LENGTH);
+  assert.equal(clientCatalog.CATALOG_MAX_TAGS, CATALOG_MAX_TAGS);
+  assert.equal(clientCatalog.CATALOG_PAGE_SIZE, CATALOG_PAGE_SIZE);
+});
+
+test('Seguridad: el cliente acepta y rechaza las mismas búsquedas (q) que zod en el servidor', () => {
+  const cases = ['', '   ', 'pimienta', '  pimienta  ', 'a'.repeat(100), 'a'.repeat(101), ` ${'a'.repeat(100)} `, 'ñ'.repeat(100), '🙂'.repeat(50), '🙂'.repeat(51), '50% off', 'a_b', 'c\\d', 'a\u0000b', '\u0000'];
+  for (const value of cases) {
+    assert.equal(clientCatalog.queryProblem(value) === null, catalogQuery.shape.q.safeParse(value).success, JSON.stringify(value));
+  }
+});
+
+test('Seguridad: el cliente acepta y rechaza las mismas etiquetas (tags) que zod en el servidor', () => {
+  const ten = Array.from({ length: 10 }, (_, i) => `t${i}`);
+  const cases = ['', 'fantasia', 'fantasia,magia', 'fantasia,fantasia', 'ciencia-ficcion', 'Fantasia', 'fantasía', 'a,,b', ',', 'a,', '-a', 'a-', 'a--b', 'a b', ten.join(','), [...ten, 't10'].join(','), [...ten, 't0'].join(',')];
+  for (const value of cases) {
+    assert.equal(clientCatalog.tagsProblem(value) === null, catalogQuery.shape.tags.safeParse(value).success, JSON.stringify(value));
+  }
+});
+
+test('Seguridad: lo que la home envía a /api/comics desde una URL válida, el servidor lo acepta igual', () => {
+  for (const query of ['', 'q=+pimienta+', 'tags=fantasia&tags=magia', 'tags=fantasia,magia,fantasia', 'q=a&tags=b&page=3', 'page=abc', 'page=0']) {
+    const state = clientCatalog.readCatalogState(new URLSearchParams(query));
+    const sent = new URLSearchParams(clientCatalog.catalogQueryString(state));
+    const parsed = catalogQuery.safeParse(Object.fromEntries(sent));
+    assert.ok(parsed.success, query);
+    assert.deepEqual({ q: parsed.data.q, tags: parsed.data.tags, page: parsed.data.page }, state, query);
+  }
 });

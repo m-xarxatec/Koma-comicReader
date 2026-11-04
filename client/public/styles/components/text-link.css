@@ -1,0 +1,19 @@
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--home-text-link-gap);
+  min-height: var(--touch-target);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.text-link .icon {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}

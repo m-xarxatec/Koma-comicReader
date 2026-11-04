@@ -1,0 +1,71 @@
+/* En la maqueta, el filtro va bajo los géneros (margin-top .55rem); aquí abre la sección del catálogo, bajo
+   su título, y el margen lo separa de los resultados. */
+.catalog-filters {
+  margin-bottom: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.catalog-filters__summary {
+  display: list-item;
+  min-height: var(--touch-target);
+  padding: var(--home-filters-summary-padding);
+  font-size: var(--font-size-home-filters-summary);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.catalog-filters__form {
+  display: grid;
+  gap: var(--home-filters-form-gap);
+  padding: var(--home-filters-form-padding);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.catalog-filters__group legend {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.catalog-filters__group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.catalog-filters__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.catalog-filters__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.catalog-filters__choice:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-surface-raised);
+}
+
+.catalog-filters__choice input {
+  accent-color: var(--color-accent);
+}
+
+@media (min-width: 40rem) {
+  .catalog-filters__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+}
+

@@ -122,7 +122,7 @@ code {
   margin-inline: auto;
 }
 
-/* Página sencilla (portada mientras llega el catálogo del bloque 2) */
+/* Página sencilla (plantillas mínimas de la ficha y del lector hasta T14 y T15) */
 .page {
   width: min(100% - 2 * var(--gutter), var(--content-width));
   margin-inline: auto;

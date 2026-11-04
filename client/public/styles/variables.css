@@ -1,7 +1,7 @@
 /* Tokens: todo valor visual sale de aquí. El diseño se sustituye cambiando este archivo, sin tocar HTML,
    TypeScript ni los componentes, que solo usan estas custom properties.
-   Paleta y escalas de la maqueta (koma_home) con los nombres del proyecto. Tema oscuro por defecto; el claro,
-   cuando el sistema lo pide. Contraste AA comprobado en los dos temas: texto ≥ 4.5:1; bordes de campos y foco
+   Paleta y escalas de la maqueta (koma_home) con los nombres del proyecto. Solo tema oscuro (color-scheme: dark,
+   sin variante clara: es una plataforma de lectura). Contraste AA comprobado: texto ≥ 4.5:1; bordes de campos y foco
    ≥ 3:1. --color-border (2,2–2,4:1) es solo decorativo: los campos usan --color-border-strong.
    Excepción: theme-color va en <meta> (server/src/utils/layout.ts) y repite --color-bg; un test lo compara.
    Criterio: colores, tipografía, espacios, radios, sombras, bordes, medidas y duraciones viven aquí. La
@@ -21,7 +21,7 @@
   --color-border-strong: #8b77ae;
   --color-accent: #ff2e93;
   --color-accent-contrast: #190014; /* texto sobre --color-accent */
-  --color-accent-hover: #ff62ac; /* botón principal al pasar el puntero (igual en los dos temas) */
+  --color-accent-hover: #ff62ac; /* botón principal al pasar el puntero */
   --color-accent-hover-contrast: #190014;
   --color-accent-soft: #ffc0e0;
   --color-secondary: #bd98ff;
@@ -35,10 +35,6 @@
   --color-selection-text: #170019;
   --color-bar: color-mix(in srgb, var(--color-bg) 92%, transparent); /* cabecera y navegación móvil */
 
-  /* El logotipo es blanco: en el tema claro necesita un apoyo oscuro. */
-  --color-logo-backdrop: transparent;
-  --logo-backdrop-padding: 0;
-
   /* Escena de las páginas de error */
   --color-scene-glow: #35224f;
   --color-scene-glow-edge: #1b1031;
@@ -51,7 +47,7 @@
   --color-scene-number: #ac80f51d;
   --color-scene-shadow: #0302088a;
 
-  /* Panel de bienvenida de /entrar y /registro (oscuro también en el tema claro, como en la maqueta) */
+  /* Panel de bienvenida de /entrar y /registro */
   --color-story-glow: #5c2c7766;
   --color-story-from: #1c1234;
   --color-story-to: #100c20;
@@ -193,42 +189,92 @@
   --opacity-signal: 0.8;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-
-    --color-bg: #f8f6fc;
-    --color-surface: #ffffff;
-    --color-surface-raised: #f1ebfa;
-    --color-surface-soft: #e9e1f5;
-    --color-text: #20142f;
-    --color-text-muted: #594b6c;
-    --color-border: #aea0c4;
-    --color-border-strong: #725b97;
-    --color-accent: #bb0067;
-    --color-accent-contrast: #ffffff;
-    --color-accent-soft: #7e0047;
-    --color-selection-text: #ffffff; /* #170019 de la maqueta daba 3,15:1 sobre el acento claro */
-    --color-secondary: #6840a7;
-    --color-highlight: #006b84;
-    --color-success: #176b48;
-    --color-warning: #815100;
-    --color-danger: #a0203a;
-    --color-info: #005f87;
-    --color-focus: #006b84;
-    --color-shadow: #27143921;
-
-    --color-logo-backdrop: #0b0716;
-    --logo-backdrop-padding: 0.2rem 0.35rem;
-
-    --color-scene-glow: #e5d5f5;
-    --color-scene-glow-edge: #f5edfb;
-    --color-scene-glow-error: #f8d8e7;
-    --color-scene-glow-error-edge: #f7eaf4;
-    --color-scene-halo: #ab69cf50;
-    --color-scene-number: #6a2f9640;
-    --scene-glow-center: center;
-    --scene-glow-stop: 55%;
-    --scene-glow-error-stop: 55%;
-  }
+/* Home: dimensiones y degradados de la maqueta. */
+:root {
+  --color-home-hero-glow: #ba287850;
+  --color-home-hero-from: #27113f;
+  --color-home-hero-mid: #111a38;
+  --color-home-hero-to: #0d112b;
+  --color-home-cover-violet-from: #362268;
+  --color-home-cover-violet-to: #7047ad;
+  --color-home-cover-rose-from: #501b47;
+  --color-home-cover-rose-to: #b33476;
+  --color-home-cover-blue-from: #142f59;
+  --color-home-cover-blue-to: #267b9a;
+  --color-home-cover-amber-from: #633b48;
+  --color-home-cover-amber-to: #af6f76;
+  --color-home-cover-indigo-from: #302459;
+  --color-home-cover-indigo-to: #565fa0;
+  --color-home-cover-sheen: #ffffff12;
+  --color-home-genre-icon: #aa79ff16;
+  --color-home-scrollbar-track: transparent;
+  --gradient-home-hero: radial-gradient(circle at 78% 20%, var(--color-home-hero-glow), transparent 35%), linear-gradient(125deg, var(--color-home-hero-from), var(--color-home-hero-mid) 62%, var(--color-home-hero-to));
+  --gradient-home-cover-violet: linear-gradient(135deg, var(--color-home-cover-violet-from), var(--color-home-cover-violet-to));
+  --gradient-home-cover-rose: linear-gradient(135deg, var(--color-home-cover-rose-from), var(--color-home-cover-rose-to));
+  --gradient-home-cover-blue: linear-gradient(135deg, var(--color-home-cover-blue-from), var(--color-home-cover-blue-to));
+  --gradient-home-cover-amber: linear-gradient(135deg, var(--color-home-cover-amber-from), var(--color-home-cover-amber-to));
+  --gradient-home-cover-indigo: linear-gradient(135deg, var(--color-home-cover-indigo-from), var(--color-home-cover-indigo-to));
+  --filter-home-cover-hover: brightness(1.15);
+  --home-hero-padding: clamp(1.3rem, 4vw, 3.25rem);
+  --home-hero-copy-padding-wide: 2.65rem 3rem;
+  --home-hero-title-measure: 11ch;
+  --home-hero-title-measure-wide: 12ch;
+  --home-hero-title-gap: 0.85rem;
+  --home-hero-description-width: 32rem;
+  --home-hero-actions-gap: 1.45rem;
+  --home-hero-min-height: 175px;
+  --home-hero-min-height-medium: 280px;
+  --home-hero-min-height-wide: 320px;
+  --home-section-gap: clamp(1.7rem, 3vw, 2.4rem);
+  --home-heading-gap: 0.85rem;
+  --home-heading-inset: 0.8rem;
+  --home-heading-bar-top: 0.12rem;
+  --home-heading-bar-bottom: 0.1rem;
+  --home-heading-bar-radius: 4px;
+  --font-size-home-heading: clamp(1.3rem, 2.3vw, 1.65rem);
+  --line-height-home-heading: 1.25;
+  --letter-spacing-home-heading: -0.03em;
+  --home-text-link-gap: 0.3rem;
+  --home-scroll-focus-padding: calc(var(--focus-ring) + var(--focus-offset));
+  --home-card-slide-width: 172px;
+  --home-card-slide-width-wide: 190px;
+  --home-card-gap: 0.8rem;
+  --home-trending-width-wide: 1200px;
+  --home-catalog-columns-wide: 6;
+  --font-size-home-card-title: 0.94rem;
+  --line-height-home-card-title: 1.35;
+  --font-size-home-card-meta: 0.78rem;
+  --home-cover-ratio: 1055 / 1491;
+  --home-genre-slide-width: 108px;
+  --home-genre-slide-width-wide: 128px;
+  --home-genre-column-share: 19%;
+  --home-genre-grid-gap: 0.65rem;
+  --home-genre-tile-gap: 0.7rem;
+  --home-genre-tile-padding-block: 0.8rem;
+  --home-genre-tile-padding-inline: 0.35rem;
+  --home-genre-height-wide: 115px;
+  --font-size-home-genre: 0.76rem;
+  --font-weight-home-genre: 750;
+  --home-genre-height: 112px;
+  --home-genre-art-size: 52px;
+  --radius-home-genre-icon: 0.7rem;
+  --home-quick-link-height: 70px;
+  --home-quick-links-gap: 0.6rem;
+  --home-quick-links-padding: 0.65rem;
+  --home-quick-links-gap-medium: 0.9rem;
+  --home-quick-link-gap: 0.55rem;
+  --home-quick-link-padding: 0.55rem 0.4rem;
+  --home-quick-link-padding-medium: 0.75rem;
+  --home-quick-copy-gap: 0.05rem;
+  --line-height-home-quick: 1.3;
+  --font-size-home-quick-title: 0.91rem;
+  --font-size-home-quick-small: 0.72rem;
+  --font-size-home-quick-small-medium: 0.83rem;
+  --icon-size-home-quick: 1.8rem;
+  --icon-size-home-quick-medium: 2.15rem;
+  --home-heading-bar-width: 4px;
+  --home-filters-summary-padding: 0.7rem 1rem;
+  --font-size-home-filters-summary: 0.85rem;
+  --home-filters-form-gap: 0.8rem;
+  --home-filters-form-padding: 0.8rem 1rem 1rem;
 }

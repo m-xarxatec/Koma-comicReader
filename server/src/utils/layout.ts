@@ -11,12 +11,11 @@ export const HEADER_MARKER = '<!-- @header -->';
 export const FOOTER_MARKER = '<!-- @footer -->';
 
 // Excepción a "todo valor visual en variables.css": theme-color es un <meta> y el navegador no lee custom
-// properties en él. Repite --color-bg de cada tema (tests/unit/layout.test.ts comprueba que coinciden).
-// El oscuro va sin media: es el tema por defecto, como en variables.css.
-export const THEME_COLORS = { light: '#f8f6fc', dark: '#0b0716' } as const;
+// properties en él. Repite --color-bg (tests/unit/layout.test.ts comprueba que coinciden). Un solo valor:
+// la plataforma solo tiene tema oscuro.
+export const THEME_COLOR = '#0b0716';
 
-const SITE_HEAD = `<meta name="theme-color" content="${THEME_COLORS.light}" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="${THEME_COLORS.dark}">`;
+const SITE_HEAD = `<meta name="theme-color" content="${THEME_COLOR}">`;
 
 interface NavItem {
   href: string;

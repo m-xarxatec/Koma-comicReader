@@ -1,0 +1,107 @@
+.comic-grid {
+  display: grid;
+  gap: var(--home-card-gap);
+}
+
+.comic-grid--trending {
+  grid-auto-columns: minmax(var(--home-card-slide-width), 46%);
+}
+
+.comic-grid--catalog {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.comic-card {
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.comic-card__link {
+  display: block;
+  height: 100%;
+  border-radius: inherit; /* el anillo de foco sigue las esquinas redondeadas de la tarjeta */
+}
+
+.comic-card__link:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring));
+}
+
+.comic-card__cover {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--home-cover-ratio);
+  transition: filter var(--duration-fast);
+}
+
+.comic-card__cover--violet { background: var(--gradient-home-cover-violet); }
+.comic-card__cover--rose { background: var(--gradient-home-cover-rose); }
+.comic-card__cover--blue { background: var(--gradient-home-cover-blue); }
+.comic-card__cover--amber { background: var(--gradient-home-cover-amber); }
+.comic-card__cover--indigo { background: var(--gradient-home-cover-indigo); }
+
+/* Brillo diagonal de la maqueta: solo en las portadas sin imagen, para no aclarar la portada real. */
+.comic-card__cover--empty::after {
+  position: absolute;
+  top: -20%;
+  left: 65%;
+  width: 85%;
+  height: 140%;
+  background: var(--color-home-cover-sheen);
+  transform: rotate(28deg);
+  pointer-events: none;
+  content: '';
+}
+
+.comic-card__link:hover .comic-card__cover {
+  filter: var(--filter-home-cover-hover);
+}
+
+.comic-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.comic-card__body {
+  padding: var(--space-3);
+}
+
+.comic-card__title {
+  font-size: var(--font-size-home-card-title);
+  line-height: var(--line-height-home-card-title);
+}
+
+.comic-card__meta,
+.comic-card__author {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-home-card-meta);
+}
+
+@media (min-width: 40rem) {
+  .comic-grid {
+    gap: var(--space-4);
+  }
+
+  .comic-grid--trending {
+    grid-auto-columns: minmax(var(--home-card-slide-width-wide), 29%);
+  }
+
+  .comic-grid--catalog {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .comic-grid--trending {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    max-width: var(--home-trending-width-wide);
+  }
+
+  .comic-grid--catalog {
+    grid-template-columns: repeat(var(--home-catalog-columns-wide), minmax(0, 1fr));
+  }
+}

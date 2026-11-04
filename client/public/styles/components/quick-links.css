@@ -1,0 +1,97 @@
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--home-quick-links-gap);
+  margin-top: var(--space-4);
+  padding: var(--home-quick-links-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: var(--home-quick-link-gap);
+  min-width: 0;
+  min-height: var(--home-quick-link-height);
+  padding: var(--home-quick-link-padding);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+
+.quick-link:not(.quick-link--soon):hover {
+  background: var(--color-surface-raised);
+}
+
+.quick-link__icon {
+  width: var(--icon-size-home-quick);
+  height: var(--icon-size-home-quick);
+  color: var(--color-secondary);
+}
+
+.quick-link__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-quick-copy-gap);
+  min-width: 0;
+  line-height: var(--line-height-home-quick);
+}
+
+.quick-link__copy strong {
+  font-size: var(--font-size-home-quick-title);
+}
+
+.quick-link__copy small {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-home-quick-small);
+}
+
+.quick-link__copy .quick-link__soon {
+  color: var(--color-accent-soft);
+  font-weight: var(--font-weight-semibold);
+}
+
+.quick-link__arrow {
+  display: none;
+}
+
+@media (min-width: 40rem) {
+  .quick-links {
+    gap: var(--home-quick-links-gap-medium);
+    padding: var(--space-3);
+  }
+
+  .quick-link {
+    padding: var(--home-quick-link-padding-medium);
+  }
+
+  .quick-link__icon {
+    width: var(--icon-size-home-quick-medium);
+    height: var(--icon-size-home-quick-medium);
+  }
+
+  .quick-link__copy strong {
+    font-size: var(--font-size-base);
+  }
+
+  .quick-link__copy small {
+    font-size: var(--font-size-home-quick-small-medium);
+  }
+}
+
+@media (min-width: 64rem) {
+  .quick-links {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .quick-link + .quick-link {
+    border-left: var(--border-width) solid var(--color-border);
+    border-radius: 0;
+  }
+
+  .quick-link {
+    justify-content: center;
+  }
+}

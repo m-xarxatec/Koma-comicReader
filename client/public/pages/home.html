@@ -6,25 +6,83 @@
   <!-- @head -->
   <meta name="request-id" content="{{requestId}}">
   <title>Koma</title>
-  <meta name="description" content="Koma: cómics tipo webtoon para leer viñeta a viñeta.">
+  <meta name="description" content="Koma: descubre cómics gratuitos, explora historias y comparte tu creatividad.">
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
   <link rel="stylesheet" href="/styles/layers.css">
   <link rel="stylesheet" href="/styles/base.css">
   <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/form.css">
   <link rel="stylesheet" href="/styles/components/site-header.css">
   <link rel="stylesheet" href="/styles/components/mobile-nav.css">
   <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/home-main.css">
+  <link rel="stylesheet" href="/styles/components/hero.css">
+  <link rel="stylesheet" href="/styles/components/quick-links.css">
+  <link rel="stylesheet" href="/styles/components/content-section.css">
+  <link rel="stylesheet" href="/styles/components/section-heading.css">
+  <link rel="stylesheet" href="/styles/components/text-link.css">
+  <link rel="stylesheet" href="/styles/components/scroll-lane.css">
+  <link rel="stylesheet" href="/styles/components/comic-card.css">
+  <link rel="stylesheet" href="/styles/components/genres.css">
+  <link rel="stylesheet" href="/styles/components/catalog-filters.css">
+  <link rel="stylesheet" href="/styles/components/catalog-pagination.css">
+  <link rel="stylesheet" href="/styles/components/catalog.css">
   <script type="module" src="/js/pages/home.js"></script>
 </head>
 <body>
   <!-- @header -->
-  <main id="contenido" class="page">
-    <h1>Koma</h1>
-    <p>Cómics tipo webtoon para leer viñeta a viñeta, en el móvil o en el ordenador.</p>
-    <section id="catalogo" aria-labelledby="catalogo-titulo">
-      <h2 id="catalogo-titulo">Catálogo</h2>
-      <p>Todavía no hay obras publicadas.</p>
+  <main id="contenido" class="home-main container">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__copy">
+        <p class="eyebrow"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-spark"/></svg> Un universo de historias</p>
+        <h1 class="hero__title" id="hero-title">Lee, crea y comparte <span class="hero__accent">historias.</span></h1>
+        <p class="hero__description">Cómics gratuitos, arte original y una comunidad de creadores como tú.</p>
+        <div class="hero__actions">
+          <a class="button button--primary button--large" href="#catalogo"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> Explorar cómics <svg class="icon icon--small" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+          <a class="button button--outline button--large" href="/registro"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-users"/></svg> Unirme a Koma</a>
+        </div>
+      </div>
+      <div class="hero__art" aria-hidden="true"></div>
+    </section>
+
+    <nav class="quick-links" aria-label="Accesos rápidos">
+      <a class="quick-link" href="#catalogo"><svg class="icon quick-link__icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg><span class="quick-link__copy"><strong>Leer</strong><small>Descubre nuevas obras</small></span><svg class="icon quick-link__arrow" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+      <span class="quick-link quick-link--soon"><svg class="icon quick-link__icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-pencil"/></svg><span class="quick-link__copy"><strong>Crear</strong><small>Publica tu propio cómic</small><small class="quick-link__soon">Próximamente</small></span></span>
+      <span class="quick-link quick-link--soon"><svg class="icon quick-link__icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-users"/></svg><span class="quick-link__copy"><strong>Comunidad</strong><small>Comenta y comparte</small><small class="quick-link__soon">Próximamente</small></span></span>
+      <span class="quick-link quick-link--soon"><svg class="icon quick-link__icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-cap"/></svg><span class="quick-link__copy"><strong>Tutoriales</strong><small>Aprende a usar Koma</small><small class="quick-link__soon">Próximamente</small></span></span>
+    </nav>
+
+    <section class="content-section" id="tendencias" aria-labelledby="tendencias-title" hidden>
+      <div class="section-heading"><h2 class="section-heading__title" id="tendencias-title">Tendencias</h2><a class="text-link" href="#catalogo">Ver todas <svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a></div>
+      <div class="comic-grid comic-grid--trending scroll-lane" id="trending-grid"></div>
+    </section>
+
+    <section class="content-section" id="generos" aria-labelledby="generos-title" hidden>
+      <div class="section-heading"><h2 class="section-heading__title" id="generos-title">Explorar por género</h2><a class="text-link" href="/#catalogo">Ver catálogo <svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a></div>
+      <div class="genre-grid scroll-lane" id="genre-grid"></div>
+    </section>
+
+    <section class="content-section catalog" id="catalogo" aria-labelledby="catalogo-titulo">
+      <div class="section-heading"><h2 class="section-heading__title" id="catalogo-titulo">Catálogo</h2></div>
+      <details class="catalog-filters" id="catalog-filters" hidden>
+        <summary class="catalog-filters__summary">Filtrar catálogo por título, autor o género</summary>
+        <form class="catalog-filters__form" action="/#catalogo" method="get" role="search">
+          <div class="form__field">
+            <label class="form__label" for="filtro-titulo">Título o autor</label>
+            <input class="form__input" id="filtro-titulo" name="q" type="search" autocomplete="off" placeholder="Buscar...">
+          </div>
+          <fieldset class="catalog-filters__group"><legend>Género</legend><div class="catalog-filters__choices" id="genre-filters"></div></fieldset>
+          <button class="button button--primary" type="submit">Aplicar filtros</button>
+        </form>
+      </details>
+      <p class="visually-hidden" id="catalog-status" role="status"></p>
+      <div class="catalog__results">
+        <p class="catalog__message" id="catalog-message" hidden></p>
+        <div class="comic-grid comic-grid--catalog" id="catalog-grid"></div>
+        <nav class="catalog-pagination" id="catalog-pagination" aria-label="Paginación" hidden></nav>
+      </div>
+      <noscript><p>Activa JavaScript para consultar el catálogo.</p></noscript>
     </section>
   </main>
   <!-- @footer -->

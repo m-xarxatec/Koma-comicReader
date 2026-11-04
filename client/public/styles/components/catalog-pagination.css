@@ -1,0 +1,22 @@
+.catalog-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.catalog-pagination__current {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.catalog-pagination__disabled {
+  opacity: var(--opacity-disabled);
+  pointer-events: none; /* sin el hover de .button--outline */
+}
+
+.catalog-pagination[hidden] {
+  display: none;
+}

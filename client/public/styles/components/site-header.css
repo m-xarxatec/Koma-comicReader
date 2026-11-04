@@ -24,16 +24,13 @@
   padding-block: var(--space-1) var(--space-3);
 }
 
-/* El logotipo es blanco: en el tema claro lleva un apoyo oscuro (--color-logo-backdrop). */
 .site-header__brand {
   grid-area: brand;
   display: inline-flex;
   align-items: center;
   justify-self: start;
   min-height: var(--touch-target);
-  padding: var(--logo-backdrop-padding);
   border-radius: var(--radius-sm);
-  background: var(--color-logo-backdrop);
 }
 
 .site-header__logo {

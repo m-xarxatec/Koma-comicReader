@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 import { paths } from '../../config/paths.js';
-import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate, THEME_COLORS } from '../../utils/layout.js';
+import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate, THEME_COLOR } from '../../utils/layout.js';
 
 // Todas las plantillas que sirve el servidor: páginas (sendPage) y errores (error-handler).
 async function templates(): Promise<{ file: string; html: string }[]> {
@@ -68,7 +68,7 @@ test('Seguridad: ninguna plantilla sale con un marcador sin sustituir', async ()
     for (const part of ['class="skip-link"', 'class="site-header"', 'class="site-footer"', 'class="mobile-nav"', 'src="/js/components/header.js"']) {
       assert.equal(count(rendered, part), 1, `${file}: ${part}`);
     }
-    assert.equal(count(rendered, 'name="theme-color"'), 2, `${file}: theme-color`);
+    assert.equal(count(rendered, 'name="theme-color"'), 1, `${file}: theme-color`);
   }
 });
 
@@ -82,12 +82,22 @@ test('Seguridad: aria-current marca solo la página de la ruta, en la cabecera y
 });
 
 // Excepción a "todo valor visual en variables.css": theme-color va en un <meta> de layout.ts y repite el
-// --color-bg de cada tema. Este test es el que mantiene los dos sitios iguales.
-test('Seguridad: theme-color de layout.ts coincide con --color-bg de variables.css en los dos temas', async () => {
+// --color-bg. Este test es el que mantiene los dos sitios iguales.
+test('Seguridad: theme-color de layout.ts coincide con --color-bg de variables.css', async () => {
   const css = await readFile(path.join(paths.publicDir, 'styles', 'variables.css'), 'utf8');
-  const light = css.indexOf('@media (prefers-color-scheme: light)');
-  assert.ok(light > 0, 'variables.css tiene el bloque del tema claro');
-  const bg = (part: string) => /--color-bg:\s*(#[0-9a-f]{6})/i.exec(part)?.[1]?.toLowerCase();
-  assert.equal(bg(css.slice(0, light)), THEME_COLORS.dark, 'tema oscuro (por defecto)');
-  assert.equal(bg(css.slice(light)), THEME_COLORS.light, 'tema claro');
+  const values = [...css.matchAll(/--color-bg:\s*(#[0-9a-f]{6})/gi)].map((match) => match[1]?.toLowerCase());
+  assert.deepEqual(values, [THEME_COLOR], 'un solo --color-bg, igual que theme-color');
+});
+
+// Solo tema oscuro (CLAUDE.md, convenciones de CSS): ninguna hoja cambia con prefers-color-scheme.
+test('Seguridad: solo tema oscuro: color-scheme: dark y ninguna variante por prefers-color-scheme', async () => {
+  const stylesDir = path.join(paths.publicDir, 'styles');
+  const variables = await readFile(path.join(stylesDir, 'variables.css'), 'utf8');
+  assert.match(variables, /:root\s*\{\s*color-scheme:\s*dark;/, 'variables.css declara color-scheme: dark');
+  const sheets = (await readdir(stylesDir, { recursive: true })).filter((name) => name.endsWith('.css'));
+  for (const name of sheets) {
+    const css = await readFile(path.join(stylesDir, name), 'utf8');
+    assert.ok(!css.includes('prefers-color-scheme'), `${name}: prefers-color-scheme`);
+    assert.ok(!/color-scheme:\s*light/.test(css), `${name}: color-scheme light`);
+  }
 });
