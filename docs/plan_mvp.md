@@ -655,6 +655,186 @@ interface ReadingDto {
 - **Páginas:** `/obra/:slug` y `/leer/:slug/:numero` hacen las comprobaciones del mapa de rutas (404, 410) y piden los datos a la API; `/leer/:slug` → 301 a `/leer/:slug/1`.
 - **Importación (RN-18):** en `comic.json`, `licenseUrl` y `contentWarning` admiten `null` y el título de capítulo es opcional. El ancho y el alto de cada viñeta se leen de la cabecera del archivo (JPEG, PNG o WebP, sin dependencias) y se guardan en `panels`; el lector los pone en `<img width height>` para que la página no salte mientras cargan.
 
+## Contrato de la API del bloque 3
+
+**Borrador del 4-nov, pendiente de aprobación.** Lo marcado con (Dn) depende de una decisión abierta del informe de arranque del bloque.
+
+Comunidad y autor (CU-05, CU-06, CU-13, CU-23, CU-28 a CU-30; RN-05 a RN-07, RN-09 a RN-13, RN-15 y RN-17). Migración 006. Sin variables de entorno nuevas ni cambios en el seed. La aprobación y la moderación (ocultar y eliminar comentarios ajenos) son del bloque 4: en este bloque una obra o un capítulo enviados se quedan en `pending` (los tests los aprueban con SQL).
+
+**Comunes a todo el bloque:**
+
+- Textos: sin espacios al principio ni al final y con la longitud contada en puntos de código (como RN-12 y el `char_length` de la BD), no en unidades UTF-16. Sin caracteres de control, salvo el salto de línea en la sinopsis y en los comentarios (`\r\n` se guarda como `\n`). Límites en `config/limits.ts`, duplicados en el cliente (D5).
+- Propiedad: se comprueba en el servicio con `permissions.ts`. Una obra que no existe da 404; una ajena, 403 `FORBIDDEN` (CU-29: "la obra no le pertenece"); una retirada, 410.
+- Capítulo vivo: el de ese número con `deleted_at IS NULL` y `status <> 'rejected'` (único por `chapters_comic_number_uq`). Las rutas del autor con `:number` actúan siempre sobre él.
+- Toda acción auditada escribe en `audit_log` con el mismo `client` de su `withTransaction`. `before` y `after`, solo con los campos cambiados.
+
+### Comentarios por viñeta (CU-05, CU-13; RN-11, RN-13)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/comics/:slug/chapters/:number/panels/:position/comments` | Público (D1) | Query: `page` (≥ 1) | 200 `{ comments: CommentDto[], page, pageSize, total }` | 400, 404, 410 | — |
+| `POST /api/comics/:slug/chapters/:number/panels/:position/comments` | `requireAuth` y poder leer el capítulo sin gastar saldo (D2) | `body` | 201 `{ comment: CommentDto }` | 400, 401, 403 `FORBIDDEN`, 404, 410, 429 | — (la tabla no tiene `comment.create`) |
+| `DELETE /api/comments/:id` | `requireAuth`; solo quien lo escribió (servicio) | — | 204 | 401, 403 `FORBIDDEN`, 404, 409 `CONFLICT` | `comment.delete_own` |
+
+```ts
+interface CommentDto {
+  id: number;
+  body: string;       // texto plano; el cliente lo pinta con textContent
+  authorName: string; // nombre visible de quien lo escribió (también si está suspendido: RN-15)
+  createdAt: string;  // ISO 8601
+  mine: boolean;      // lo escribió quien consulta (puede borrarlo); false para el invitado
+}
+
+// Ampliación del ReadingDto del bloque 2 (D3): cada viñeta lleva su contador.
+interface ReadingPanelDto {
+  position: number;
+  url: string;
+  width: number;
+  height: number;
+  comments: number; // sin ocultos ni eliminados (consulta de modelo_datos.md); 0 en la vista previa
+}
+```
+
+- **Viñeta:** la obra y el capítulo deben ser públicos (404 y 410, como la lectura) y `:position`, una viñeta existente (404). Los comentarios cuelgan de la viñeta: un capítulo de reemplazo empieza sin comentarios (riesgo aceptado).
+- **Lista (CU-05):** sin ocultos ni eliminados (un oculto no lo ve nadie, tampoco su autor), del más antiguo al más reciente (`created_at, id`), 50 por página (D4).
+- **Publicar (CU-13):** `body` de 1 a 500 caracteres (RN-11). Quien comenta debe poder leer el capítulo sin gastar nada: `chapterAccess(...)` = `free` (caps. 1–2, ya leído, premium, admin o su obra); si no, 403 `FORBIDDEN` (D2). Limitador de 5 / min por usuario después de `validate` y `requireAuth` (RN-13); cuenta cada intento validado.
+- **Borrar el propio:** el orden de comprobación es 404 (no existe u oculto, D15), 403 (ajeno) y 409 (ya eliminado, RN-11). Pone `deleted_at = now()`; la auditoría lleva `before { deletedAt: null }` y `after { deletedAt }`, sin el texto.
+- **Moderación** (`comment.hide`, `comment.delete`): bloque 4.
+
+### Compartir viñeta e iconos (CU-06; sin API)
+
+- Enlace absoluto `location.origin` + `/leer/:slug/:numero#v-:n` (RN-09).
+- Orden: Web Share (`navigator.share`, que solo existe en contexto seguro) → si no existe o falla, un `<input readonly>` con el enlace ya seleccionado y "Copiar enlace" (solo si existe `navigator.clipboard`). Si el usuario cancela el menú nativo (`AbortError`), no se muestra nada. En `http://koma.local` solo queda el `<input>`.
+- "Ocultar iconos de comentarios": preferencia en `localStorage` con `try/catch` (idea 4).
+
+### Perfil (CU-23; RN-12, RN-13, RN-15)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `PATCH /api/me` | `requireAuth` | `displayName` | 200 `{ user: UserDto }` | 400, 401 | `user.update_profile` (`displayName` antes y después; sin cambio, sin entrada) |
+| `POST /api/auth/password` (D12) | `requireAuth` | `currentPassword`, `newPassword` | 200 `{ user: UserDto }` + cookie nueva | 400 (también la contraseña actual incorrecta, en `fields.currentPassword`), 401, 429 (D11) | `user.password_change` (sin `before` ni `after`) |
+
+- `displayName`: la regla del registro (RN-12). El correo no se edita en el MVP.
+- `newPassword`: RN-12 (`passwordProblem`); `currentPassword`: como en el login (obligatoria, ≤ 72 bytes).
+- **Cambio de contraseña (RN-15):** el hash se calcula fuera de la transacción; dentro van el hash nuevo, `token_version + 1` y la auditoría. La respuesta trae un JWT nuevo en la cookie y las demás sesiones dejan de valer.
+- **Límite (D11):** 5 contraseñas actuales incorrectas / 15 min por usuario; acertar pone el contador a cero. Va después de `validate`.
+
+### Obras del autor (CU-28, CU-30; RN-05 a RN-07, RN-09, RN-17)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/author/comics` | `requireAuthor` | — | 200 `{ comics: AuthorComicDto[] }`, de la más reciente a la más antigua, sin las retiradas | 401, 403 | — |
+| `POST /api/author/comics` | `requireAuthor` | `CreateComicInput` | 201 `{ comic: AuthorComicDto }` | 400, 401, 403 | `comic.create` |
+| `PUT /api/author/comics/:slug/cover` | `requireAuthor` + dueño; limitador de subidas | `multipart/form-data`, campo `image` | 200 `{ comic: AuthorComicDto }` | 400, 401, 403, 404, 409 (rechazada, D8), 410, 413 `FILE_TOO_LARGE`, 415 `UNSUPPORTED_FILE`, 429 | `comic.update` (`coverKey`) |
+| `PATCH /api/author/comics/:slug` (recortable) | `requireAuthor` + dueño | Los campos de `CreateComicInput`, todos opcionales, salvo `authorshipDeclared` | 200 `{ comic: AuthorComicDto }` | 400, 401, 403, 404, 409 (rechazada, D8), 410 | `comic.update` |
+| `POST /api/comics/:slug/withdraw` (D13) | `requireAuth`; autor dueño o admin (servicio) | — | 204 | 401, 403, 404, 409 `CONFLICT` (ya retirada) | `comic.withdraw` |
+
+```ts
+// D6: lista cerrada y sin licencias NC; la URL la pone el servidor.
+type LicenseCode = 'all-rights-reserved' | 'cc-by-4.0' | 'cc-by-sa-4.0' | 'cc0-1.0';
+
+interface CreateComicInput {
+  title: string;                 // 1–100 (D5)
+  synopsis: string;              // 1–1000, admite saltos de línea
+  authorCredit: string;          // 1–100: el creador original (RN-07); el formulario propone el nombre visible
+  license: LicenseCode;
+  tags: string[];                // 1–10 slugs existentes, al menos uno de tipo genre (D5)
+  contentWarning: string | null; // 1–200 o null (RN-08)
+  isAdult: boolean;              // RN-17
+  authorshipDeclared: true;      // obligatoria (RN-07, CU-28); false o ausente → 400
+}
+
+interface AuthorComicDto {
+  slug: string;
+  title: string;
+  synopsis: string;
+  authorCredit: string;
+  license: LicenseCode;
+  licenseUrl: string | null;
+  tags: TagDto[];
+  contentWarning: string | null;
+  isAdult: boolean;
+  coverUrl: string | null; // firmada
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null; // CU-28: se muestra el motivo
+  createdAt: string; // ISO 8601
+  chapters: AuthorChapterSummaryDto[]; // por número, sin los retirados; los rechazados, con su motivo
+}
+
+interface AuthorChapterSummaryDto {
+  number: number;
+  title: string;
+  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null;
+  panelCount: number;
+  publishedAt: string | null; // ISO 8601; null si nunca se aprobó
+}
+```
+
+- **Licencias (D6):** `all-rights-reserved` → "Todos los derechos reservados" (sin URL); `cc-by-4.0` → "CC BY 4.0"; `cc-by-sa-4.0` → "CC BY-SA 4.0"; `cc0-1.0` → "CC0 1.0". Las tres CC, con su URL `…/deed.es` de creativecommons.org. En `comics.license` se guarda el texto visible, el mismo formato que las obras importadas.
+- **Alta (CU-28):** nace `pending`, con `author_id` = el usuario y `authorship_declared = true` (RN-05, RN-07). Un slug de etiqueta inexistente o ninguna de tipo `genre` → 400 en `fields.tags`. `isAdult: true` se guarda, pero la obra no se podrá aprobar (RN-17): el formulario lo avisa. La auditoría guarda en `after` el slug, el título, el estado, `isAdult`, la licencia y las etiquetas.
+- **Slug (RN-09):** sale del título: minúsculas, sin acentos (NFD sin marcas diacríticas), cada tramo que no sea `[a-z0-9]` se convierte en un guion, sin guiones en los extremos y con 80 caracteres como mucho; si queda vacío, `obra`. Si ya existe (también una retirada), se añade `-2`, `-3`… Si dos altas chocan a la vez (23505), se reintenta. No cambia nunca, aunque cambie el título. Es una función pura (`comics.rules.ts`).
+- **Portada (D7):** opcional. Pasa las mismas comprobaciones que una viñeta (RN-10). La clave es nueva y la anterior se borra del almacenamiento después del `COMMIT`; si ese borrado falla, queda un aviso en el log.
+- **Editar (CU-30, recortable; nivel 2 de la contingencia):** sin reaprobación. El slug no cambia. `isAdult` solo cambia mientras la obra no está aprobada (si lo está, 400, D14).
+- **Retirar (CU-30, RN-06):** `deleted_at = now()`. La ficha, el lector y la API pública responden 410, y los comentarios quedan ocultos con la obra. El admin puede retirar cualquiera (su botón llega en el bloque 4).
+
+### Capítulos y viñetas (CU-29, CU-30; RN-05, RN-09, RN-10, RN-13)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `POST /api/author/comics/:slug/chapters` | `requireAuthor` + dueño | `number`, `title?` | 201 `{ chapter: AuthorChapterDto }` | 400, 401, 403, 404, 409 `CONFLICT` (número en uso u obra rechazada), 410 | `chapter.create` |
+| `GET /api/author/comics/:slug/chapters/:number` | `requireAuthor` + dueño | — | 200 `{ chapter: AuthorChapterDto }` | 401, 403, 404, 410 | — |
+| `POST /api/author/comics/:slug/chapters/:number/panels` | `requireAuthor` + dueño; limitador de subidas | `multipart/form-data`, campo `image` | 201 `{ panel: AuthorPanelDto }` | 400 (sin archivo; la imagen 61), 401, 403, 404, 409 (no es borrador), 410, 413 `FILE_TOO_LARGE`, 415 `UNSUPPORTED_FILE`, 429 | — |
+| `DELETE /api/author/comics/:slug/chapters/:number/panels/:position` | `requireAuthor` + dueño | — | 204 | 401, 403, 404, 409 (no es borrador), 410 | — |
+| `POST /api/author/comics/:slug/chapters/:number/submit` | `requireAuthor` + dueño | — | 200 `{ chapter: AuthorChapterDto }` | 400 (sin viñetas), 401, 403, 404, 409 (no es borrador), 410 | `chapter.submit` |
+| `POST /api/author/comics/:slug/chapters/:number/withdraw` | `requireAuthor` + dueño | — | 204 | 401, 403, 404, 410 | `chapter.withdraw` |
+
+```ts
+interface AuthorChapterDto extends AuthorChapterSummaryDto {
+  panels: AuthorPanelDto[]; // por posición
+}
+
+interface AuthorPanelDto {
+  position: number;
+  url: string; // firmada
+  width: number; // px, leídos de la cabecera del archivo
+  height: number;
+}
+```
+
+- **Crear (CU-29):** `number`, entero de 1 a 2³¹ − 1 (el formulario propone el siguiente libre, D22); `title`, de 1 a 100 o, si falta, "Capítulo N" (solo al crearlo, D21). Nace `draft`. Se admite en una obra `pending` o `approved`; en una `rejected`, 409 (D8). Un número ocupado por un capítulo vivo da 409 "El número de capítulo ya está en uso" (23505 en `chapters_comic_number_uq`). El de un retirado o rechazado se reutiliza y hereda su URL (RN-09).
+- **Subir una viñeta (RN-10, RN-13):**
+  - Middlewares en orden: `validate` (params) → `requireAuthor` → limitador de subidas (100 / h por usuario; cuenta cada intento validado, portada incluida, D19) → `upload` → servicio.
+  - `upload`: multer en disco (`os.tmpdir()`), un solo archivo en el campo `image`, sin campos de texto y 5 MB como mucho (si no, 413 `FILE_TOO_LARGE`).
+  - Servicio: la firma de la cabecera debe ser JPEG, PNG o WebP (`utils/image.ts`; si no, 415 `UNSUPPORTED_FILE`), y de ella salen el ancho y el alto. Clave `UUID.ext` del servidor y `storage.put` desde el temporal, que se borra siempre (`finally`).
+  - Con el capítulo bloqueado (`FOR UPDATE`): con 60 viñetas ya, 400; la posición nueva es `max + 1`. Si la transacción falla después de `put`, la imagen queda huérfana (riesgo aceptado de los borradores).
+- **Eliminar una viñeta (RN-05):** solo en `draft`. Borrado físico y recompactación con la restricción diferida (`modelo_datos.md`). La imagen se borra del almacenamiento después del `COMMIT`, con un método nuevo del driver, `remove(key)` (local: `unlink`; R2: `DeleteObject`). No hay acción de auditoría para las viñetas: el borrador nunca fue público.
+- **Enviar a revisión (RN-05):** de `draft`, con al menos una viñeta, a `pending`. Desde `pending` ya no se edita: se retira y se sube otro.
+- **Retirar (CU-30):** desde `draft`, `pending` o `approved`, `deleted_at = now()`. Si estaba aprobado, el lector responde 410 y deja de salir en la ficha. El número queda libre.
+- Sin reordenar viñetas (D9).
+
+### Vista previa del dueño y del admin (mapa de rutas; D10, recortable)
+
+- `GET /api/comics/:slug` y `/obra/:slug`: el autor dueño y el admin también ven la obra en `pending`. `ComicDto` gana `status`, y cada `ChapterSummaryDto` gana `status` y pasa a `publishedAt: string | null`. Para ellos, `chapters` incluye los capítulos vivos en `draft` y `pending` (con `access: 'free'`). Para los demás, nada cambia: todo es `approved`.
+- `POST /api/comics/:slug/chapters/:number/read` y `/leer/:slug/:numero`: el autor dueño y el admin leen también un capítulo `draft` o `pending` de una obra no retirada. No se escribe en `chapter_reads`, `reading_credits` ni en las estadísticas; `ads` y `balance` van a `null`, cada `comments` vale 0 y no se abre el panel de comentarios (solo se comenta en un capítulo `approved`). `prev` y `next` recorren los capítulos que esa persona puede ver.
+
+### Páginas
+
+Ya figuran en el mapa de rutas; se implementan en este bloque.
+
+| Ruta | Página | Comprobación en servidor | Códigos |
+| --- | --- | --- | --- |
+| `/perfil` | `profile` | Sesión | 200, 302 a `/entrar?next=/perfil` |
+| `/autor` | `author` | Sesión e `isAuthor` (un admin nunca lo es) | 200, 302 a `/entrar?next=/autor`, 403 |
+| `/obra/:slug`, `/leer/:slug/:numero` | `comic`, `reader` | Se añade la vista previa del dueño y del admin (D10) | Los de siempre |
+
+- `/autor` es una sola página: la obra y el capítulo abiertos van en `?obra=<slug>&capitulo=<n>`, que lee el cliente (D18). No hay rutas nuevas en el servidor.
+
+### Errores de las subidas
+
+- Sin códigos nuevos. `error-handler` traduce los de multer: `LIMIT_FILE_SIZE` → 413 `FILE_TOO_LARGE`; `LIMIT_FILE_COUNT`, `LIMIT_UNEXPECTED_FILE`, `LIMIT_FIELD_COUNT` y `LIMIT_PART_COUNT` → 400 `VALIDATION_ERROR`. Sin archivo (incluida una petición que no es `multipart/form-data`) → 400 en `fields.image`.
+- Permiso y limitador van antes de multer: un 401, 403 o 429 no escribe nada en disco. Si multer corta la subida (413 o 400), no queda el archivo parcial en el temporal (lo comprueba un test).
+
 ## Convenciones, tests y definición de terminado
 
 ### Convenciones

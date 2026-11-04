@@ -487,3 +487,8 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - Los caps. 2–4 de la segunda obra son provisionales.
   - El build de Docker de la app, que no se ha probado en este bloque.
 - **Estado:** el bloque 2 queda cerrado por la IA. Se da por cerrado del todo cuando el desarrollador termine las comprobaciones manuales y decida sobre los hallazgos 1 y 3.
+
+### 2026-11-04 · Bloque 3 · Contrato de la API (borrador)
+- **Pedido a la IA:** redactar en el plan el contrato de la API del bloque 3 antes de escribir código, con el formato del bloque 2, más el desglose en tareas y las decisiones abiertas.
+- **Resultado:** comentarios por viñeta (lista pública, publicar con límite de 5 / min, borrar el propio) y su contador en el `ReadingDto`; compartir viñeta sin API; perfil (nombre y contraseña con JWT nuevo); obras del autor (alta con slug, licencia de lista cerrada y portada); capítulos en borrador con subida de viñetas de una en una, borrado con recompactación, envío a revisión y retirada; retirar obra (dueño o admin); vista previa del dueño y del admin. Cada endpoint, con su permiso, sus errores y su auditoría.
+- **Pendiente (desarrollador):** aprobar el contrato y las decisiones D1–D22; los cambios propuestos a RN-13 y a la línea "Bloque actual" de CLAUDE.md los edita él.
