@@ -29,7 +29,6 @@
   --color-success: #61dbaf;
   --color-warning: #ffd47b;
   --color-danger: #ff8b9a;
-  --color-info: #8bdcff;
   --color-focus: #00e5ff;
   --color-shadow: #00000088;
   --color-selection-text: #170019;
@@ -136,7 +135,6 @@
 
   /* Movimiento (se anula con prefers-reduced-motion en base.css) */
   --duration-fast: 160ms;
-  --duration-normal: 220ms;
   --duration-breathe: 3.8s;
   --duration-sleep: 4s;
   --duration-spark: 3.2s;
