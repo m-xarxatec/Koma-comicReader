@@ -322,3 +322,37 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Pendiente (desarrollador):** línea de autor en las tarjetas (no está en la maqueta); «Explorar cómics» y «Leer» → `#catalogo` en lugar de `#tendencias`; `.eyebrow` a `.75rem` (maqueta `.72rem`); `eager` en las portadas de Tendencias a 360 px; tokens sin uso heredados (`--color-surface-soft`, `--color-success`, `--color-info`, `--duration-normal`; `--reader-width` es para T15); `.comic-grid` y `.genre-grid` en el archivo de su tarjeta, como en la maqueta.
 - **Limpieza:** borrados el worktree `../koma-t13` y la rama `t13-codex` (sin commits propios). El encargo y los registros siguen en `.git/codex-t13/`.
 - **Aprendizaje:** `scroll-padding-top` en `html` y `scroll-margin-top` en el destino se suman: el desplazamiento de las anclas va en un solo sitio.
+
+### 2026-11-04 · Bloque 2 · Decisiones sobre la revisión de T13
+- **Decisiones del desarrollador:** la línea de autor de las tarjetas se queda; «Explorar cómics» y «Leer» siguen a `#catalogo`; los tokens sin uso se quedan hasta el cierre del bloque (allí se borran los que sigan sin uso); las rejillas siguen en el archivo de su tarjeta.
+- **Resultado:** `.eyebrow` a `.72rem` con `--font-size-eyebrow`, como en la maqueta. En `/entrar` y `/registro` se queda `.75rem` (`auth__eyebrow`, `auth__story-eyebrow`), porque allí la maqueta usa `account-*__eyebrow` con `--text-xs`. En Tendencias, solo las 2 primeras portadas van sin `lazy` (`TRENDING_EAGER_COVERS`).
+- **Commit:** `variables.css`, `base.css`, `auth.css` y `comic-card.ts` también llevan cambios de T14: su parte va en un parche para el índice (`git apply --cached`). Sus pruebas unitarias pasan aisladas, en una copia de `HEAD`.
+
+### 2026-11-04 · Bloque 2 · Segunda obra de demostración (D26)
+- **Pedido a la IA:** preparar en `content/` *El señor de los anillos de cebolla* para probar el lector (anuncio en el cap. 3, invitación en el 4, saldo y desplazamiento) e importarla en local.
+- **Resultado:** `el-senor-de-los-anillos-de-cebolla`, «KOMA Original», «Obra propia» sin enlace, `aventura` y `fantasia`, sin aviso. El cap. 1 lleva la portada y las 5 páginas reales en WebP (con los comandos de la guía del README). Los caps. 2–4 son provisionales: 4 páginas de color plano cada uno (azul, verde y marrón), de 1200 px de ancho y altos de 2200–2300 px. `fantasia` se añade a `content/tags.json` con el nombre del seed, así que la importación no cambia la etiqueta.
+- **Desvío del pedido:** se pidieron «la portada y las 4 páginas», pero la carpeta trae 5 páginas seguidas. El desarrollador eligió las 5 y la licencia «Obra propia» antes de importar: la importación solo añade capítulos (D5), así que un capítulo equivocado no se arregla volviendo a importar.
+- **Comprobación (IA):** en local, 1 obra creada y 4 capítulos (5, 4, 4 y 4 viñetas, con sus medidas), y *El amante de las princesas* sin cambios. La API da para el invitado `free`, `free`, `ad` y `account`.
+- **Pendiente (desarrollador):** sustituir los caps. 2–4 por páginas reales. La portada mide 1024 × 1536 (2:3): en las tarjetas de la home (1055/1491) deja unas franjas finas con `contain`.
+
+### 2026-11-04 · Bloque 2 · T14: ficha de la obra
+- **Pedido a la IA:** la ficha de koma_home (`obra/obra-demo-01`) conectada a `GET /api/comics/:slug` (CU-02, RN-07), con D16–D19.
+- **Resultado:**
+  - `comic.html`: el servidor inyecta el título, escapado, en `<title>`, las migas, el `<h1>` y la `description`.
+  - `comic.ts` pinta lo demás con `textContent`: portada (2/3, `contain`, sin `lazy`), «N capítulos», etiquetas (a `/?tags=…#catalogo`), sinopsis, créditos («Autor original», «Publicado por» con el autor o «La plataforma» y la licencia con su enlace solo si es http(s)), «Leer capítulo N», la advertencia (RN-08, solo informativa) y los capítulos, todos enlazados con su estado (Leído, Libre, Usa 1 de saldo, Con anuncio, Requiere cuenta).
+  - «¿Cómo funciona la lectura?» explica las reglas reales, sin «Descubrir Premium» (bloque 4).
+  - Las etiquetas van en un `<dl>`, como pide el plan. El `<dt>` «Etiquetas» es solo para lectores de pantalla.
+  - Seis CSS, uno por componente: `content-warning.css` va aparte para reutilizarlo en el lector. Tokens nuevos con los valores exactos de la maqueta. Tres iconos copiados de la maqueta (candado, check, chevron). `utils/ratio.ts` lee el `width`/`height` de una imagen de su token de proporción y lo comparten la tarjeta y la ficha.
+- **Revisión del agente `frontend`:** APTO CON OBSERVACIONES (11). Corregidos:
+  - `hidden` no ocultaba la advertencia vacía, las etiquetas ni «Leer capítulo 1» de una obra sin capítulos, porque su clase ponía `display`. Ahora hay una regla `[hidden]` común en `base.css`, y sobra la de `catalog-pagination.css`.
+  - El enlace de la licencia mide ahora 44 px de alto.
+  - Los `h2` de sinopsis, advertencia y lectura usan el interlineado del cuerpo, como en la maqueta.
+  - Sin el botón Premium, el último párrafo del panel de lectura cierra sin margen.
+  - `icon--small` en vez de repetir medidas.
+  - BEM en los antetítulos de auth.
+  - `--radius-circle` también en auth y en las páginas de error.
+  - Un comentario junto al texto de las reglas, que repite `FREE_CHAPTERS` y `AD_CHAPTER` de `limits.ts`.
+  - Sin cambio: las áreas táctiles de las etiquetas se solapan unos 6 px cuando pasan a otra fila.
+- **Tests:** el de la ficha comprueba también el título escapado en las migas y en el atributo `description`.
+- **Comprobación (IA):** typecheck, 84 unitarios y 118 de API. Con `curl` en local, la página, los CSS, los JS y los datos de la API. La captura sin interfaz no arranca en este entorno: lo visual (360 px, escritorio, teclado y estados por rol) lo revisa el desarrollador.
+- **Aprendizaje:** `hidden` solo aplica `display: none` desde la hoja del navegador, y la clase de cualquier componente con `display` lo anula. La regla común evita repetir un `[hidden]` por componente.
