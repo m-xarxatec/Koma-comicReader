@@ -299,7 +299,7 @@ Común: `<title>` "Koma" o "<página> · Koma" (también en las páginas de erro
 
 - Los CSS viven en `client/public/styles/` (no se compilan): `variables.css`, `layers.css` (capas de `z-index`), `base.css` y `components/`.
 - Mobile-first: estilos base para móvil y `@media (min-width: 40rem)` y `(min-width: 64rem)`.
-- `variables.css` concentra todo valor visual (colores, espacios, tipografía, bordes, desplazamientos) en custom properties semánticas: el diseño lo sustituye sin tocar HTML, TypeScript ni componentes; tema oscuro por defecto y claro con `prefers-color-scheme: light`; única excepción: los dos `<meta name="theme-color">` de `layout.ts`, que repiten `--color-bg` y un test los compara. Tipografía del sistema.
+- `variables.css` concentra todo valor visual (colores, espacios, tipografía, bordes, desplazamientos) en custom properties semánticas: el diseño lo sustituye sin tocar HTML, TypeScript ni componentes; solo tema oscuro (`color-scheme: dark`, sin tema claro: es una plataforma de lectura); única excepción: el `<meta name="theme-color">` de `layout.ts`, que repite `--color-bg` y un test lo compara. Tipografía del sistema.
 - Nombres de clase BEM (`comic-card__title--featured`); un archivo por componente.
 - Layout con Grid y Flexbox; lector a una columna, `max-width: 50rem`, imágenes `width: 100%`.
 - Foco visible siempre (`:focus-visible`) y áreas táctiles de 44 px mínimo.
