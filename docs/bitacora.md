@@ -449,3 +449,41 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
     - Los formularios siguen igual.
   - Online, tras el push.
 - **Aprendizaje:** un contador que una tarea anterior solo sumaba puede llegar por encima del límite. La regla debe aceptarlo (`>=`) en lugar de esperar que coincida justo con 5.
+
+### 2026-11-04 · Bloque 2 · T18: cierre del bloque
+- **Pedido del desarrollador:**
+  - Auditor sobre T1–T17, con las decisiones aprobadas.
+  - Repaso de la definición de terminado.
+  - Borrar los tokens sin uso.
+  - Propuestas para CLAUDE.md (155 líneas, a ≤ 150) y para el árbol de `ideas_base.md`, que edita él.
+- **Agente `auditor`:** APTO CON OBSERVACIONES. Revisó 63 commits (`6f1de55..6d85cf0`) y comprobó:
+  - Las migraciones son idénticas a `modelo_datos.md`.
+  - Nada de las fases 2 y 3 y ninguna dependencia nueva.
+  - SQL parametrizado, `textContent` y CSP directiva a directiva.
+  - CSRF en el `POST` de lectura.
+  - La clave de `/files` se valida antes de la firma y del disco.
+  - RN-01 a RN-03 en el orden del contrato.
+  - Tests con su prefijo RN o «Seguridad:».
+
+  Hallazgos:
+  1. Media: `reading.service.ts:70` y `:167` lanzan `Error` en lugar de `AppError(500, 'INTERNAL_ERROR', …, { cause })`.
+  2. Baja: los tokens sin uso.
+  3. Baja: `MAX_INT` está repetido en `reading.schema.ts` y en `import-content.ts`.
+
+  El 1 y el 3 quedan para la decisión del desarrollador; el 2 lo resuelve este cierre.
+- **Tokens:** se borran `--color-info` y `--duration-normal`, los dos únicos sin uso de 326. `--color-success` y `--color-surface-soft` ya se usan.
+- **Auditoría en la BD local:**
+  - `system.seed` en etiquetas (12), anuncios (3), ajustes y usuarios, y `content.import` en las dos obras.
+  - La etiqueta `harem` local no tiene entrada: se creó el 2-nov, antes de `a66918a`, que empezó a auditar las etiquetas importadas. En Neon, importada con el código actual, sí debería tenerla.
+- **Definición de terminado:**
+  - Cumplido: typecheck, tests (91 unitarios y 120 de API), diff revisado (auditor), auditoría en la misma transacción, sin variables nuevas (comparado con `6f1de55`) y bitácora.
+  - Online: comprobado hasta T16 por el desarrollador; T17 está desplegado, pero sin probar.
+  - Manual y pendiente (desarrollador):
+    - Navegador a 360 px y en escritorio, con teclado, en la home, la ficha y el lector (T13–T17).
+    - Consola y logs sin errores.
+    - `audit_log` de Neon.
+- **Pendientes que no bloquean:**
+  - Confirmar los nombres visibles de las etiquetas del seed («Terror», «Slice of Life»).
+  - Los caps. 2–4 de la segunda obra son provisionales.
+  - El build de Docker de la app, que no se ha probado en este bloque.
+- **Estado:** el bloque 2 queda cerrado por la IA. Se da por cerrado del todo cuando el desarrollador termine las comprobaciones manuales y decida sobre los hallazgos 1 y 3.
