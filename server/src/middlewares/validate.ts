@@ -34,7 +34,8 @@ function toFields(error: z.ZodError): Record<string, string> {
 }
 
 // Capa `schema`: valida body, params y query con zod → 400 VALIDATION_ERROR con `fields` (o 404, ver
-// ValidateOptions). Lo validado va a res.locals.validated (en Express 5, req.query es de solo lectura).
+// ValidateOptions). Lo validado va a res.locals.validated (en Express 5, req.query es de solo lectura). Se acumula:
+// una ruta puede validar los params antes de requireAuthor (404 antes que 401) y el cuerpo después.
 export function validate(schemas: Schemas, options: ValidateOptions = {}): RequestHandler {
   return (req, res, next) => {
     const validated: Express.Locals['validated'] = {};
@@ -51,7 +52,7 @@ export function validate(schemas: Schemas, options: ValidateOptions = {}): Reque
       }
       validated[part] = result.data;
     }
-    res.locals.validated = validated;
+    res.locals.validated = { ...res.locals.validated, ...validated };
     next();
   };
 }

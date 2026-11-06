@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ErrorRequestHandler, Request } from 'express';
+import multer from 'multer';
+import { MAX_IMAGE_BYTES } from '../config/limits.js';
 import { paths } from '../config/paths.js';
 import { AppError, INTERNAL_ERROR_MESSAGE, type ErrorCode } from '../utils/app-error.js';
 import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate } from '../utils/layout.js';
@@ -19,6 +21,25 @@ const BODY_PARSER_ERRORS: Record<string, [status: number, code: ErrorCode, messa
   'charset.unsupported': [415, 'UNSUPPORTED_MEDIA_TYPE', UNSUPPORTED],
   'encoding.unsupported': [415, 'UNSUPPORTED_MEDIA_TYPE', UNSUPPORTED],
 };
+// Errores de multer (subidas, contrato del bloque 3): el tamaño es 413 FILE_TOO_LARGE; los demás (más de un
+// archivo, otro campo, campos de texto, demasiadas partes…) son 400 en fields.image. busboy lanza Error a secas
+// cuando el multipart está mal formado o llega cortado: también es un 400, no un fallo del servidor.
+const MULTIPART_BROKEN = /^(Unexpected end of (form|file)|Malformed part header|Multipart: Boundary not found)$/;
+
+function uploadError(err: unknown): AppError | null {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') return new AppError(413, 'FILE_TOO_LARGE', `La imagen no puede pasar de ${MAX_IMAGE_BYTES / (1024 * 1024)} MB`, { cause: err });
+    return new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', {
+      fields: { image: 'Envía una sola imagen en el campo image, sin otros campos' },
+      cause: err,
+    });
+  }
+  if (err instanceof Error && MULTIPART_BROKEN.test(err.message)) {
+    return new AppError(400, 'VALIDATION_ERROR', INCOMPLETE, { cause: err });
+  }
+  return null;
+}
+
 // Red de Node y SQLSTATE de conexión (clase 08), arranque o parada (57P01–57P03) y saturación (53300).
 const DB_UNAVAILABLE_CODES = /^(ECONNREFUSED|ECONNRESET|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|08[0-9A-Z]{3}|57P0[1-3]|53300)$/;
 const DB_UNAVAILABLE_MESSAGES = /timeout exceeded when trying to connect|Connection terminated/;
@@ -28,6 +49,8 @@ function toAppError(err: unknown): AppError {
   // El router no puede decodificar un parámetro de ruta con un % mal formado (/files/%E0%A4%A): ningún
   // recurso tiene ese nombre, así que es un 404, no un fallo del servidor.
   if (err instanceof URIError) return new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe', { cause: err });
+  const upload = uploadError(err);
+  if (upload) return upload;
   const { type, code, message } = (err ?? {}) as { type?: unknown; code?: unknown; message?: unknown };
   const bodyError = typeof type === 'string' && Object.hasOwn(BODY_PARSER_ERRORS, type) ? BODY_PARSER_ERRORS[type] : undefined;
   if (bodyError) {

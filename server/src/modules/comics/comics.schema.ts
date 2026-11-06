@@ -1,5 +1,15 @@
 import { z } from 'zod';
-import { CATALOG_MAX_TAGS, CATALOG_QUERY_MAX_LENGTH } from '../../config/limits.js';
+import {
+  AUTHOR_CREDIT_MAX,
+  CATALOG_MAX_TAGS,
+  CATALOG_QUERY_MAX_LENGTH,
+  COMIC_SYNOPSIS_MAX,
+  COMIC_TAGS_MAX,
+  COMIC_TITLE_MAX,
+  CONTENT_WARNING_MAX,
+} from '../../config/limits.js';
+import { textField } from '../../utils/text.js';
+import { LICENSE_CODES } from './comics.rules.js';
 
 // Entrada de la API de obras (contrato del bloque 2). zod es la fuente de verdad; el cliente duplica estas
 // constantes de forma explícita.
@@ -41,3 +51,27 @@ export const comicParams = z.object({
   slug: z.string().regex(SLUG_PATTERN, { error: 'La obra no existe' }),
 });
 export type ComicParams = z.infer<typeof comicParams>;
+
+// --- Obras del autor (contrato del bloque 3; RN-05, RN-07, RN-17; D5, D6) ---
+
+// POST /api/author/comics (CU-28). Textos con la regla común (utils/text.ts). Las etiquetas repetidas cuentan
+// una vez; que existan y que haya al menos un género lo comprueba el servicio (400 en fields.tags).
+export const createComicBody = z.object({
+  title: textField({ min: 1, max: COMIC_TITLE_MAX }),
+  synopsis: textField({ min: 1, max: COMIC_SYNOPSIS_MAX, multiline: true }),
+  authorCredit: textField({ min: 1, max: AUTHOR_CREDIT_MAX }),
+  license: z.enum(LICENSE_CODES, { error: 'Elige una licencia de la lista' }),
+  tags: z
+    .array(z.string({ error: 'Etiqueta no válida' }).regex(SLUG_PATTERN, { error: 'Etiqueta no válida' }), {
+      error: 'Elige al menos una etiqueta',
+    })
+    .min(1, { error: 'Elige al menos una etiqueta' })
+    .max(COMIC_TAGS_MAX, { error: `Puedes elegir como mucho ${COMIC_TAGS_MAX} etiquetas` })
+    .transform((tags) => [...new Set(tags)]),
+  // RN-08: null = sin advertencia. Un texto vacío no vale (el formulario envía null si no se marca la casilla).
+  contentWarning: textField({ min: 1, max: CONTENT_WARNING_MAX }).nullable(),
+  isAdult: z.boolean({ error: 'Indica si la obra es para mayores de 18 años' }), // RN-17
+  // RN-07 y CU-28: obligatoria; false o ausente → 400.
+  authorshipDeclared: z.literal(true, { error: 'Debes declarar que eres el autor de la obra o que tienes permiso para publicarla' }),
+});
+export type CreateComicInput = z.infer<typeof createComicBody>;

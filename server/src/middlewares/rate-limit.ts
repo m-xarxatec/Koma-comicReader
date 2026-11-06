@@ -19,6 +19,8 @@ export const REGISTER_LIMIT = 3;
 export const REGISTER_WINDOW_MS = 60 * MINUTE_MS;
 export const COMMENT_LIMIT = 5;
 export const COMMENT_WINDOW_MS = MINUTE_MS;
+export const UPLOAD_LIMIT = 100;
+export const UPLOAD_WINDOW_MS = 60 * MINUTE_MS;
 export const PASSWORD_LIMIT = 5;
 export const PASSWORD_WINDOW_MS = 15 * MINUTE_MS;
 
@@ -101,3 +103,7 @@ export const passwordRateLimit = rateLimit({ ...common, windowMs: PASSWORD_WINDO
 export async function resetPasswordAttempts(req: Request, res: Response): Promise<void> {
   await passwordRateLimit.resetKey(userKey(req, res));
 }
+
+// Subidas de imágenes: 100 / h por usuario, portada incluida (RN-13, D19). Va antes de multer y cuenta cada intento
+// que pasa la validación de la ruta (también un 400 sin archivo, un 413 o un 415), como el registro.
+export const uploadRateLimit = rateLimit({ ...common, windowMs: UPLOAD_WINDOW_MS, limit: UPLOAD_LIMIT, keyGenerator: userKey });

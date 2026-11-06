@@ -110,3 +110,172 @@ export async function findPanelId(db: Queryable, chapterId: number, position: nu
   const { rows } = await db.query<{ id: number }>('SELECT id FROM panels WHERE chapter_id = $1 AND position = $2', [chapterId, position]);
   return rows[0]?.id ?? null;
 }
+
+// --- Autor (CU-28 a CU-30; contrato del bloque 3) ---
+
+export interface AuthorChapterSummaryRow {
+  id: number;
+  comicId: number;
+  number: number;
+  title: string;
+  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null;
+  panelCount: number;
+  publishedAt: Date | null;
+}
+
+// Capítulos de esas obras sin los retirados, por número (y, con el mismo número, del más antiguo al más reciente:
+// un rechazado y su reemplazo). Los rechazados salen con su motivo.
+export async function listAuthorChapterSummaries(db: Queryable, comicIds: readonly number[]): Promise<AuthorChapterSummaryRow[]> {
+  if (comicIds.length === 0) return [];
+  const { rows } = await db.query<{
+    id: number;
+    comic_id: number;
+    number: number;
+    title: string;
+    status: AuthorChapterSummaryRow['status'];
+    rejection_reason: string | null;
+    panel_count: number;
+    published_at: Date | null;
+  }>(
+    `SELECT ch.id, ch.comic_id, ch.number, ch.title, ch.status, ch.rejection_reason, ch.published_at,
+            (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panel_count
+     FROM chapters ch
+     WHERE ch.comic_id = ANY($1::int[]) AND ch.deleted_at IS NULL
+     ORDER BY ch.comic_id, ch.number, ch.created_at, ch.id`,
+    [comicIds],
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    comicId: row.comic_id,
+    number: row.number,
+    title: row.title,
+    status: row.status,
+    rejectionReason: row.rejection_reason,
+    panelCount: row.panel_count,
+    publishedAt: row.published_at,
+  }));
+}
+
+// Capítulo vivo (contrato del bloque 3): el de ese número con deleted_at IS NULL y status <> 'rejected', único
+// por chapters_comic_number_uq. Fragmento fijo, sin datos.
+const LIVE_CHAPTER = `deleted_at IS NULL AND status <> 'rejected'`;
+
+export interface LiveChapterRow {
+  id: number;
+  number: number;
+  title: string;
+  status: 'draft' | 'pending' | 'approved';
+  publishedAt: Date | null;
+}
+
+// `lock`: FOR UPDATE hasta el final de la transacción (subir, borrar y mover viñetas, enviar, retirar).
+export async function findLiveChapter(db: Queryable, comicId: number, number: number, lock = false): Promise<LiveChapterRow | null> {
+  const { rows } = await db.query<{ id: number; number: number; title: string; status: LiveChapterRow['status']; published_at: Date | null }>(
+    `SELECT id, number, title, status, published_at FROM chapters
+     WHERE comic_id = $1 AND number = $2 AND ${LIVE_CHAPTER}${lock ? ' FOR UPDATE' : ''}`,
+    [comicId, number],
+  );
+  const row = rows[0];
+  return row ? { id: row.id, number: row.number, title: row.title, status: row.status, publishedAt: row.published_at } : null;
+}
+
+// CU-29: nace en `draft`. Un número ocupado por un capítulo vivo lanza 23505 en chapters_comic_number_uq.
+export async function insertDraftChapter(db: Queryable, comicId: number, number: number, title: string): Promise<number> {
+  const { rows } = await db.query<{ id: number }>(
+    `INSERT INTO chapters (comic_id, number, title) VALUES ($1, $2, $3) RETURNING id`,
+    [comicId, number, title],
+  );
+  return rows[0]!.id;
+}
+
+// Número de viñetas y la última posición (con el capítulo ya bloqueado por quien llama).
+export async function countPanels(db: Queryable, chapterId: number): Promise<number> {
+  const { rows } = await db.query<{ n: number }>('SELECT count(*)::int AS n FROM panels WHERE chapter_id = $1', [chapterId]);
+  return rows[0]!.n;
+}
+
+// Una viñeta nueva va al final: max(position) + 1, calculada con el capítulo bloqueado (modelo_datos.md).
+export async function appendPanel(db: Queryable, chapterId: number, panel: NewPanel): Promise<number> {
+  const { rows } = await db.query<{ position: number }>(
+    `INSERT INTO panels (chapter_id, position, image_key, width, height)
+     SELECT $1, COALESCE(max(position), 0) + 1, $2, $3, $4 FROM panels WHERE chapter_id = $1
+     RETURNING position`,
+    [chapterId, panel.imageKey, panel.width, panel.height],
+  );
+  return rows[0]!.position;
+}
+
+export async function findPanelAt(db: Queryable, chapterId: number, position: number): Promise<{ id: number; imageKey: string } | null> {
+  const { rows } = await db.query<{ id: number; image_key: string }>(
+    'SELECT id, image_key FROM panels WHERE chapter_id = $1 AND position = $2',
+    [chapterId, position],
+  );
+  return rows[0] ? { id: rows[0].id, imageKey: rows[0].image_key } : null;
+}
+
+// RN-05: borrado físico de una viñeta de un borrador y recompactación (SQL de modelo_datos.md). Dentro de una
+// transacción: SET CONSTRAINTS dura hasta su final.
+export async function deletePanelAndCompact(db: Queryable, chapterId: number, panelId: number, position: number): Promise<void> {
+  await db.query('SET CONSTRAINTS panels_chapter_position_uq DEFERRED');
+  await db.query('DELETE FROM panels WHERE id = $1', [panelId]);
+  await db.query('UPDATE panels SET position = position - 1 WHERE chapter_id = $1 AND position > $2', [chapterId, position]);
+}
+
+// RN-05 (D9): mueve la viñeta de `from` a `to` y desplaza las intermedias (SQL de modelo_datos.md). Dentro de una
+// transacción, con el capítulo bloqueado. Los ::int hacen falta: en `$3 < $2` PostgreSQL no puede deducir el tipo
+// de los parámetros y los toma como texto (42883 al compararlos después con `position`).
+export async function movePanel(db: Queryable, chapterId: number, from: number, to: number): Promise<void> {
+  await db.query('SET CONSTRAINTS panels_chapter_position_uq DEFERRED');
+  await db.query(
+    `UPDATE panels
+     SET position = CASE WHEN position = $2::int THEN $3::int
+                         WHEN $3::int < $2::int THEN position + 1
+                         ELSE position - 1 END
+     WHERE chapter_id = $1 AND position BETWEEN least($2::int, $3::int) AND greatest($2::int, $3::int)`,
+    [chapterId, from, to],
+  );
+}
+
+// RN-05: de draft a pending ("Enviar a revisión").
+export async function submitChapter(db: Queryable, chapterId: number): Promise<void> {
+  await db.query(`UPDATE chapters SET status = 'pending' WHERE id = $1 AND status = 'draft'`, [chapterId]);
+}
+
+// Resumen de un capítulo por id (con su número de viñetas), para el AuthorChapterDto.
+export async function findChapterSummaryById(db: Queryable, chapterId: number): Promise<AuthorChapterSummaryRow | null> {
+  const { rows } = await db.query<{
+    id: number;
+    comic_id: number;
+    number: number;
+    title: string;
+    status: AuthorChapterSummaryRow['status'];
+    rejection_reason: string | null;
+    panel_count: number;
+    published_at: Date | null;
+  }>(
+    `SELECT ch.id, ch.comic_id, ch.number, ch.title, ch.status, ch.rejection_reason, ch.published_at,
+            (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panel_count
+     FROM chapters ch WHERE ch.id = $1`,
+    [chapterId],
+  );
+  const row = rows[0];
+  return row
+    ? {
+        id: row.id,
+        comicId: row.comic_id,
+        number: row.number,
+        title: row.title,
+        status: row.status,
+        rejectionReason: row.rejection_reason,
+        panelCount: row.panel_count,
+        publishedAt: row.published_at,
+      }
+    : null;
+}
+
+// CU-30: retirada lógica del capítulo vivo; su número queda libre (chapters_comic_number_uq). Devuelve el instante.
+export async function withdrawChapter(db: Queryable, chapterId: number): Promise<Date> {
+  const { rows } = await db.query<{ deleted_at: Date }>('UPDATE chapters SET deleted_at = now() WHERE id = $1 RETURNING deleted_at', [chapterId]);
+  return rows[0]!.deleted_at;
+}

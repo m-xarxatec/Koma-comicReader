@@ -29,6 +29,7 @@ export interface NewComic {
   contentWarning: string | null;
   coverKey: string | null;
   status: 'pending' | 'approved';
+  authorshipDeclared: boolean; // RN-07: obligatoria si hay author_id (CHECK comics_authorship)
 }
 
 export async function findComicRefBySlug(db: Queryable, slug: string): Promise<ComicRef | null> {
@@ -105,8 +106,8 @@ export async function findComicBySlug(db: Queryable, slug: string): Promise<Comi
 export async function insertComic(db: Queryable, comic: NewComic): Promise<number> {
   const { rows } = await db.query<{ id: number }>(
     `INSERT INTO comics (slug, title, synopsis, author_id, author_credit, license, license_url, is_adult,
-                         content_warning, cover_key, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                         content_warning, cover_key, status, authorship_declared)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING id`,
     [
       comic.slug,
@@ -120,6 +121,7 @@ export async function insertComic(db: Queryable, comic: NewComic): Promise<numbe
       comic.contentWarning,
       comic.coverKey,
       comic.status,
+      comic.authorshipDeclared,
     ],
   );
   return rows[0]!.id;
@@ -222,4 +224,138 @@ export async function searchApprovedComics(db: Queryable, search: CatalogSearch)
       tags: row.tags,
     })),
   };
+}
+
+// --- Obras del autor (CU-28, CU-30; contrato del bloque 3) ---
+
+// Slugs ocupados que podrían chocar con `base` o con sus sufijos (-2, -3…), también los de obras retiradas
+// (RN-09). La base solo tiene [a-z0-9-] (slugify), pero se escapa igualmente para el LIKE.
+export async function findSlugsLike(db: Queryable, base: string): Promise<Set<string>> {
+  const { rows } = await db.query<{ slug: string }>(`SELECT slug FROM comics WHERE slug = $1 OR slug LIKE $2`, [
+    base,
+    `${escapeLike(base)}-%`,
+  ]);
+  return new Set(rows.map((row) => row.slug));
+}
+
+// Etiquetas existentes con esos slugs (el alta comprueba que existan todas y que haya un género).
+export async function findTagsBySlugs(db: Queryable, slugs: readonly string[]): Promise<TagInput[]> {
+  if (slugs.length === 0) return [];
+  const { rows } = await db.query<TagInput>('SELECT slug, name, type FROM tags WHERE slug = ANY($1::text[])', [slugs]);
+  return rows;
+}
+
+export interface AuthorComicRow {
+  id: number;
+  slug: string;
+  title: string;
+  synopsis: string;
+  authorId: number;
+  authorCredit: string;
+  license: string;
+  licenseUrl: string | null;
+  isAdult: boolean;
+  contentWarning: string | null;
+  coverKey: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null;
+  deletedAt: Date | null;
+  createdAt: Date;
+  tags: TagInput[];
+}
+
+interface AuthorComicDbRow {
+  id: number;
+  slug: string;
+  title: string;
+  synopsis: string;
+  author_id: number;
+  author_credit: string;
+  license: string;
+  license_url: string | null;
+  is_adult: boolean;
+  content_warning: string | null;
+  cover_key: string | null;
+  status: AuthorComicRow['status'];
+  rejection_reason: string | null;
+  deleted_at: Date | null;
+  created_at: Date;
+  tags: TagInput[];
+}
+
+const AUTHOR_COMIC_COLUMNS = `c.id, c.slug, c.title, c.synopsis, c.author_id, c.author_credit, c.license, c.license_url,
+  c.is_adult, c.content_warning, c.cover_key, c.status, c.rejection_reason, c.deleted_at, c.created_at,
+  ${COMIC_TAGS_JSON} AS tags`;
+
+function toAuthorComicRow(row: AuthorComicDbRow): AuthorComicRow {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    synopsis: row.synopsis,
+    authorId: row.author_id,
+    authorCredit: row.author_credit,
+    license: row.license,
+    licenseUrl: row.license_url,
+    isAdult: row.is_adult,
+    contentWarning: row.content_warning,
+    coverKey: row.cover_key,
+    status: row.status,
+    rejectionReason: row.rejection_reason,
+    deletedAt: row.deleted_at,
+    createdAt: row.created_at,
+    tags: row.tags,
+  };
+}
+
+// Obras de un autor sin las retiradas, de la más reciente a la más antigua (GET /api/author/comics).
+export async function listAuthorComics(db: Queryable, authorId: number): Promise<AuthorComicRow[]> {
+  const { rows } = await db.query<AuthorComicDbRow>(
+    `SELECT ${AUTHOR_COMIC_COLUMNS} FROM comics c
+     WHERE c.author_id = $1 AND c.deleted_at IS NULL
+     ORDER BY c.created_at DESC, c.id DESC`,
+    [authorId],
+  );
+  return rows.map(toAuthorComicRow);
+}
+
+// Una obra por slug con los campos del autor, en cualquier estado (después de cambiar su portada).
+export async function findAuthorComicBySlug(db: Queryable, slug: string): Promise<AuthorComicRow | null> {
+  const { rows } = await db.query<AuthorComicDbRow>(`SELECT ${AUTHOR_COMIC_COLUMNS} FROM comics c WHERE c.slug = $1`, [slug]);
+  return rows[0] ? toAuthorComicRow(rows[0]) : null;
+}
+
+// Una obra por id con los campos del autor, en cualquier estado (la que se acaba de crear).
+export async function findAuthorComicById(db: Queryable, id: number): Promise<AuthorComicRow | null> {
+  const { rows } = await db.query<AuthorComicDbRow>(`SELECT ${AUTHOR_COMIC_COLUMNS} FROM comics c WHERE c.id = $1`, [id]);
+  return rows[0] ? toAuthorComicRow(rows[0]) : null;
+}
+
+// Lo que hace falta para decidir sobre una obra del autor (propiedad, estado y retirada) y su portada actual.
+// `lock`: FOR UPDATE hasta el final de la transacción (portada, capítulos, retirada).
+export interface ComicState {
+  id: number;
+  authorId: number | null;
+  status: 'pending' | 'approved' | 'rejected';
+  coverKey: string | null;
+  deletedAt: Date | null;
+}
+
+export async function findComicState(db: Queryable, slug: string, lock = false): Promise<ComicState | null> {
+  const { rows } = await db.query<{ id: number; author_id: number | null; status: ComicState['status']; cover_key: string | null; deleted_at: Date | null }>(
+    `SELECT id, author_id, status, cover_key, deleted_at FROM comics WHERE slug = $1${lock ? ' FOR UPDATE' : ''}`,
+    [slug],
+  );
+  const row = rows[0];
+  return row ? { id: row.id, authorId: row.author_id, status: row.status, coverKey: row.cover_key, deletedAt: row.deleted_at } : null;
+}
+
+export async function updateCoverKey(db: Queryable, id: number, coverKey: string): Promise<void> {
+  await db.query('UPDATE comics SET cover_key = $2 WHERE id = $1', [id, coverKey]);
+}
+
+// RN-06: retirada lógica. Devuelve el instante guardado (para la auditoría).
+export async function withdrawComic(db: Queryable, id: number): Promise<Date> {
+  const { rows } = await db.query<{ deleted_at: Date }>('UPDATE comics SET deleted_at = now() WHERE id = $1 RETURNING deleted_at', [id]);
+  return rows[0]!.deleted_at;
 }

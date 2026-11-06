@@ -262,6 +262,7 @@ async function applyPlan(plan: Plan, storage: StorageDriver, requestId: string):
         contentWarning: comic.contentWarning,
         coverKey,
         status: 'approved',
+        authorshipDeclared: false, // importada: sin author_id (RN-18)
       });
       await comicsRepository.addComicTags(client, comicId, comic.tags);
     }

@@ -13,6 +13,7 @@ import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
 import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
+import { chaptersRouter } from './modules/chapters/chapters.routes.js';
 import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
 import { commentsRouter } from './modules/comments/comments.routes.js';
 import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
@@ -96,6 +97,7 @@ app.use(auth);
 app.use('/api', authRouter);
 app.use('/api', usersRouter);
 app.use('/api', comicsRouter);
+app.use('/api', chaptersRouter);
 app.use('/api', readingRouter);
 app.use('/api', commentsRouter);
 
