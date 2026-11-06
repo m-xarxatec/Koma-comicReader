@@ -188,10 +188,10 @@ También en `draft`, el autor puede mover una viñeta de la posición `$p` a `$q
 ```sql
 SET CONSTRAINTS panels_chapter_position_uq DEFERRED;
 UPDATE panels
-SET position = CASE WHEN position = $2 THEN $3
-                    WHEN $3 < $2 THEN position + 1
+SET position = CASE WHEN position = $2::int THEN $3::int
+                    WHEN $3::int < $2::int THEN position + 1
                     ELSE position - 1 END
-WHERE chapter_id = $1 AND position BETWEEN least($2, $3) AND greatest($2, $3);
+WHERE chapter_id = $1 AND position BETWEEN least($2::int, $3::int) AND greatest($2::int, $3::int);
 ```
 
 La restricción es `DEFERRABLE` porque, si no, estos `UPDATE` pueden chocar con la unicidad fila a fila. Fuera de `draft`, las viñetas no se tocan. La posición de una viñeta nueva es `max(position) + 1`, calculada con el capítulo bloqueado (`SELECT ... FOR UPDATE`).
@@ -273,7 +273,7 @@ ON CONFLICT (chapter_id, day) DO UPDATE
   SET guest_reads = chapter_read_counts.guest_reads + 1;
 ```
 
-Crece como capítulos × días con lecturas, sin una fila por visita. Las vistas de estadísticas son de fase 2; los datos se recogen desde el MVP.
+Crece como capítulos × días con lecturas, sin una fila por visita. El panel del autor (bloque 3, RN-19) lee estas filas; las demás vistas de estadísticas son de fase 2.
 
 ### 008_ads
 

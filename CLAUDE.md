@@ -2,11 +2,10 @@
 
 ## Proyecto
 
-**Koma**: plataforma de cómics estilo webtoon (proyecto final de XarxaTec Activa). MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
+**Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
 
-- Congelación de funciones: **20-nov-2026**; entrega: 25-nov-2026. Vibecoding: la IA genera el código; el desarrollador lo especifica, revisa y corrige.
 - Bloque actual: **3 · Comunidad y autor (10 – 14 nov; empezado el 4-nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
-- Stack: Node 24 LTS, Express 5, TypeScript estricto (ESM, `module: NodeNext`), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
+- Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos
 
@@ -17,6 +16,7 @@
 | `npm run build` / `npm run typecheck` | `tsc -b` (raíz con referencias a `server/` y `client/`); compilar es comprobar tipos |
 | `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
 | `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
+| `npm run demo:data` | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es |
 | `npm test` | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras) |
 | `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
@@ -36,7 +36,7 @@
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
-│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts
+│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts (solo local)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
@@ -60,7 +60,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 6. `error-handler`: decide código y formato de cualquier error.
 
 - Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, e inyección de `requestId`), nunca por `express.static`.
-- Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`.
+- Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`. Una página solo informativa (`become-author`) no lleva `.ts`.
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
 - Local y online son el mismo código; solo cambian `STORAGE_DRIVER` y `PAYMENTS_DRIVER`. `env.ts` rechaza `PAYMENTS_DRIVER=fake` con `NODE_ENV=production`.
 - Toda novedad de premium pasa por `syncSubscription(subscriptionId)` (RN-04); el driver `fake` llama al mismo servicio.
@@ -69,7 +69,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 
 - Frameworks de frontend (React, Vue…), bundler, frameworks CSS (Bootstrap, Tailwind), ORM (Prisma, Sequelize…), microservicios ni WebSockets.
 - Depender de internet el día de la presentación (ni fuentes, scripts o estilos desde CDN o servicios externos); redes públicas o desconocidas ni HTTPS en local (la demo local es en la LAN de confianza, `http://koma.local`).
-- Pagos reales, guardar datos de tarjeta ni pago simulado en producción; redes publicitarias o marcas reales (anuncios de marcas inventadas).
+- Pagos reales; anuncios reales
 - Imágenes con URL pública permanente; alojar vídeos; borrado físico desde la interfaz (salvo viñetas de un borrador); internacionalización.
 - Verificación de identidad real ni contenido +18 real; obras con licencia NC; APK o apps nativas antes de la entrega.
 - **Nada de las fases 2 y 3:** ni carpetas, ni tablas, ni rutas, ni dependencias (listas en `docs/plan_mvp.md`).

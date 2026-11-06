@@ -217,7 +217,7 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - La obra no le pertenece.
 
 ### CU-31 Ver estadísticas propias
-**Actor:** Autor · **Fase:** 2
+**Actor:** Autor · **Fase:** MVP (recortado: sin punto de abandono ni puntos recibidos)
 **Objetivo:** Consultar lecturas por capítulo, punto de abandono y puntos recibidos.
 **Excepciones:**
 - La obra aún no tiene lecturas.

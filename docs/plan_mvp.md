@@ -18,7 +18,7 @@ El MVP es un lector de cómics desplegado y usable de punta a punta: un visitant
 
 ## Priorización por fases
 
-El MVP cubre 23 de los 41 casos de uso, varios con un recorte explícito. Fase 2 se aborda solo si el MVP está desplegado y probado; fase 3 queda documentada como ampliación.
+El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2 se aborda solo si el MVP está desplegado y probado; fase 3 queda documentada como ampliación.
 
 ### Fase 1 — MVP (entrega)
 
@@ -33,6 +33,7 @@ El MVP cubre 23 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 21, 27 | Suscripción premium con Stripe (modo prueba) y cancelación | Cancelar y cambiar tarjeta en el portal de Stripe; pago simulado mínimo sin internet |
 | 23 | Editar perfil | Nombre y contraseña; avatar en fase 2 |
 | 28, 29, 30 | Autor: crear obra, subir capítulo (borrador → revisión), editar o retirar | El rol autor lo activa el admin |
+| 31 | Panel del autor: resumen, lecturas por obra y capítulo (total, 7 y 30 días) y comentarios recientes | Sin punto de abandono ni puntos recibidos (fase 2); donaciones solo como «Próximamente» |
 | 32, 33 | Admin: aprobar contenido y moderar comentarios (ocultar y eliminar) | Ilustraciones en fase 3 |
 | 35, 36 | Admin: gestionar usuarios y parámetros de lectura | — |
 | 40 | Consultar auditoría con filtros | Sin restauración ni apelaciones |
@@ -48,7 +49,7 @@ El MVP cubre 23 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 14 | Seguir serie + bandeja de entrada |
 | 15 | Puntos y logros |
 | 11 | Onboarding por gustos |
-| 31, 39 | Estadísticas de autor y globales (las lecturas se registran desde el MVP) |
+| 31 (resto), 39 | Punto de abandono y puntos recibidos del autor; estadísticas globales (las lecturas se registran desde el MVP) |
 | — | Punto de abandono: endpoint de progreso y observador de scroll (la columna `last_panel` ya existe) |
 | 38 | Gestionar anuncios |
 | 23 | Avatar |
@@ -181,6 +182,7 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 - **RN-14 Administración:** un admin no puede suspenderse ni quitarse el rol; siempre debe quedar al menos un admin activo.
 - **RN-15 Sesión:** suspender, cambiar rol o cambiar contraseña incrementa `token_version`. Al cambiar la propia contraseña se emite un JWT nuevo en la misma respuesta; las demás sesiones se cierran. El contenido de un suspendido sigue visible.
 - **RN-16 Parámetros:** periodo de espera 1–1440 min (demo: 1), saldo máximo 1–20 (por defecto 5), recarga 1–10 (por defecto 2); fuera de rango → 400.
+- **RN-19 Estadísticas del autor:** lecturas = `guest_reads` + `user_reads` de `chapter_read_counts`; total, últimos 7 y últimos 30 días (hoy incluido, día de `Europe/Madrid`); sin obras ni capítulos retirados; solo las obras propias.
 
 ## Registro de auditoría y reversión
 
@@ -544,6 +546,7 @@ Cada ruta sirve un HTML estático de `client/public/`; Express comprueba antes l
 | `/premium/gracias` | `premium` | Sesión; la página consulta `/api/me` hasta ver premium | 200, 302 |
 | `/pago-simulado` | `fake-checkout` | Solo con `PAYMENTS_DRIVER=fake` | 200, 404 |
 | `/autor` | `author` | Sesión y `is_author` | 200, 302, 403 |
+| `/crear` | `become-author` | Sesión; si es autor, 302 a `/autor` | 200, 302 |
 | `/admin` | `admin` | Sesión y `role = admin` | 200, 302, 403 |
 | `/files/:key` | — (imagen) | Solo con `STORAGE_DRIVER=local`; firma y caducidad válidas | 200, 403, 404 |
 | Cualquier ruta con `/` final | — | — | 301 a la ruta sin `/` |
@@ -827,9 +830,10 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 | --- | --- | --- | --- |
 | `/perfil` | `profile` | Sesión | 200, 302 a `/entrar?next=/perfil` |
 | `/autor` | `author` | Sesión e `isAuthor` (un admin nunca lo es) | 200, 302 a `/entrar?next=/autor`, 403 |
+| `/crear` | `become-author` | Sesión; si es autor, 302 a `/autor` | 200, 302 |
 | `/obra/:slug`, `/leer/:slug/:numero` | `comic`, `reader` | Se añade la vista previa del dueño y del admin (D10) | Los de siempre |
 
-- `/autor` es una sola página: la obra y el capítulo abiertos van en `?obra=<slug>&capitulo=<n>`, que lee el cliente (D18). No hay rutas nuevas en el servidor.
+- `/autor` es una sola página: la obra y el capítulo abiertos van en `?obra=<slug>&capitulo=<n>`, y la vista de nueva obra en `?vista=nueva-obra`; los lee el cliente (D18). La única ruta nueva del servidor es `/crear`.
 
 ### Errores de las subidas
 
