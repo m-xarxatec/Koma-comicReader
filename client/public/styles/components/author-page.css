@@ -1,0 +1,213 @@
+/* Página /autor (D18): presentación, navegación por secciones, resumen, secciones y listas (maqueta autor/index.html,
+   components/panels.css: workspace, section-nav, metric, section-heading y panel-columns). */
+.author-page {
+  padding-block: var(--author-page-padding);
+}
+
+.author-page__intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--author-intro-gap);
+  margin-bottom: var(--author-intro-margin);
+}
+
+.author-page__eyebrow {
+  margin-bottom: var(--author-eyebrow-margin);
+}
+
+.author-page__title {
+  margin: 0;
+  font-size: var(--font-size-author-title);
+  line-height: var(--line-height-author-title);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.author-page__subtitle {
+  max-width: var(--measure-author-subtitle);
+  margin: var(--author-subtitle-margin) 0 0;
+  color: var(--color-text-muted);
+}
+
+.author-page__nav {
+  display: flex;
+  gap: var(--author-nav-gap);
+  margin-bottom: var(--author-nav-margin);
+  padding: var(--author-nav-padding);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.author-page__nav-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: var(--author-nav-link-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-author-nav);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.author-page__nav-link:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.author-page__notice {
+  margin-bottom: var(--author-nav-margin);
+}
+
+.author-page__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--author-metrics-gap);
+}
+
+.author-page__metric {
+  display: grid;
+  gap: var(--author-metric-gap);
+  min-width: 0;
+  padding: var(--author-metric-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.author-page__metric-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-author-metric-label);
+}
+
+.author-page__metric-value {
+  font-size: var(--font-size-author-metric-value);
+  line-height: var(--line-height-author-metric-value);
+}
+
+.author-page__metric-note {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.author-page__section {
+  margin-top: var(--author-section-margin);
+  scroll-margin-top: var(--scroll-offset);
+}
+
+.author-page__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--author-heading-gap);
+  margin-bottom: var(--author-heading-margin);
+}
+
+.author-page__heading-eyebrow {
+  margin-bottom: var(--author-heading-eyebrow-margin);
+}
+
+.author-page__heading-title {
+  margin: 0;
+  font-size: var(--font-size-author-heading);
+  letter-spacing: var(--letter-spacing-author-heading);
+  overflow-wrap: anywhere;
+}
+
+.author-page__muted {
+  margin: var(--author-heading-text-margin) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.author-page__message:not(:empty) {
+  margin: 0 0 var(--author-heading-margin);
+  color: var(--color-text-muted);
+}
+
+.author-page__status:not(:empty) {
+  margin-bottom: var(--author-heading-margin);
+}
+
+.author-page__works {
+  display: grid;
+  gap: var(--author-works-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.author-page__reviews {
+  display: grid;
+  gap: var(--author-reviews-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.author-page__columns {
+  display: grid;
+  gap: var(--author-columns-gap);
+  margin-top: var(--author-section-margin);
+}
+
+.author-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--author-actions-gap);
+  margin-bottom: var(--author-heading-margin);
+}
+
+/* La portada se elige con su <label> como botón: el <input type="file"> es .visually-hidden pero enfocable, y su
+   foco se ve en la etiqueta. */
+.author-page__cover-control {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.author-page__cover-label:has(+ .author-page__file:focus-visible) {
+  outline: var(--focus-ring) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+.author-page__new-chapter {
+  margin-top: var(--author-section-margin);
+}
+
+@media (min-width: 40rem) {
+  .author-page {
+    padding-top: var(--author-page-padding-medium-top);
+  }
+
+  .author-page__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .author-page__works {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .author-page {
+    padding-block: var(--author-page-padding-wide);
+  }
+
+  .author-page__works {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--author-works-gap-wide);
+  }
+
+  .author-page__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}

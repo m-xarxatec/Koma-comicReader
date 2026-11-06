@@ -79,3 +79,79 @@
   color: var(--color-success);
   font-size: var(--font-size-sm);
 }
+
+/* La misma región cuando anuncia un fallo (estudio del autor: subir, mover, retirar…). */
+.form__status--error {
+  color: var(--color-danger);
+}
+
+/* Formularios del estudio del autor: área de texto, fila de dos campos desde 40rem, grupos de casillas y casillas
+   con su texto (área táctil de 44 px). */
+.form__textarea {
+  min-height: var(--form-textarea-min-height);
+  resize: vertical;
+}
+
+.form__file {
+  padding: var(--form-file-padding);
+}
+
+.form__row {
+  display: grid;
+  gap: var(--form-row-gap);
+}
+
+.form__fieldset {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form__choices {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form__choices-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--form-choices-gap);
+}
+
+.form__choices-title {
+  width: 100%;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: var(--text-transform-label);
+}
+
+.form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--form-check-gap);
+  min-height: var(--touch-target);
+  padding-block: var(--form-check-padding);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-form-check);
+  cursor: pointer;
+}
+
+/* Arriba, con la primera línea del texto (la declaración de autoría ocupa varias), como en la maqueta. */
+.form__check-input {
+  flex-shrink: 0;
+  width: var(--form-check-size);
+  height: var(--form-check-size);
+  accent-color: var(--color-accent);
+}
+
+@media (min-width: 40rem) {
+  .form__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

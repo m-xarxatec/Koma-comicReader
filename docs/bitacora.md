@@ -571,3 +571,45 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Resultado:** `POST /api/comics/:slug/withdraw` (D13) con `requireAuth`: la retira su autor (`canWithdrawComic`) o, cualquiera (también una importada), el admin. Orden 404 → 403 → 409 (ya retirada): una obra ajena ya retirada da 403 y no revela su estado. `POST /api/author/comics/:slug/chapters/:number/withdraw` con `requireAuthor` y dueño: retira el capítulo vivo en draft, pending o approved (también en una obra rechazada: retirar no es editar), y su número queda libre. Las dos ponen `deleted_at = now()` con la fila bloqueada y auditan (`comic.withdraw`, `chapter.withdraw`) con `deletedAt` antes y después. La ficha, `/obra`, `/leer`, la lectura y los comentarios ya respondían 410 con la obra retirada (bloque 2): los tests lo comprueban con una retirada real.
 - **Tests:** `withdraw.test.ts` (10): `RN-06` 410 en ficha, páginas, lectura y comentarios, y fuera del catálogo y de la lista del autor; auditoría y 409 la segunda vez; el admin retira una importada y una de autor; 403 a otro autor, a un lector y a un autor sin el rol; 401; 404; obra ajena retirada → 403; CSRF; capítulo aprobado retirado → 410 en el lector y fuera de la ficha; número reutilizado; draft y pending, también en obra rechazada; 403/410/404 al retirar capítulos.
 - **Comprobación (IA):** typecheck, 115 unitarios y 195 de API; con `curl` en local: 401 sin sesión, 404 con una obra o un capítulo inexistentes y 403 `CSRF` sin `Origin`. Sin errores en el log.
+
+### 2026-11-06 · Bloque 3 · Regla "ningún any" (antes de T9)
+- **Pedido del desarrollador (regla del profesor):** ningún `any` de tipo en TypeScript, ni en el servidor, ni en el cliente, ni en los tests (`: any`, `as any`, `<any>`, `any[]`, `Array<any>`). Tampoco `@ts-ignore` ni `@ts-expect-error`.
+- **Búsqueda:** 0 `any` escritos en `server/src` y `client/src` (la palabra no aparece en ningún `.ts`) y ninguna directiva. Los dos `any` implícitos de librerías (`JSON.parse` en `import-content.ts` y `res.json()` en `services/api.ts`) ya van a `unknown` y se estrechan después: no hay nada que sustituir.
+- **Test:** `tests/unit/no-any.test.ts`. typescript 7 no expone su analizador a JavaScript, así que el test trae un analizador léxico mínimo, sin dependencias. Separa el código de los comentarios, las cadenas (también las plantillas con `${…}` anidados) y los regex literales, y falla con `archivo:línea` si queda un token `any` en el código. También falla si un comentario empieza por `@ts-ignore`, `@ts-expect-error` o `@ts-nocheck`. Dos tests previos comprueban el analizador con casos que debe encontrar y casos que debe ignorar ("anyone", comentarios, cadenas, regex con comillas, división). Probado con un archivo temporal con `as any`: falla y señala su línea.
+- **Agentes:** la comprobación se añade a `auditor.md` (C · Arquitectura y convenciones) y a `frontend.md` (4 · RN-12 y peticiones).
+- **Comprobación (IA):** typecheck, 119 unitarios y 195 de API.
+
+### 2026-11-06 · Bloque 3 · T9: página /autor y "Crear" en la cabecera
+- **Resultado:**
+  - `/autor` con `requirePageAuthor` (`roles.ts`): 302 a `/entrar?next=…` sin sesión (con la query) y la página 403 si no es autor. El servidor inyecta el nombre visible como "Autor original" por defecto, escapado.
+  - `author.html` + `author.ts` según la maqueta y D18: presentación, barra de secciones, resumen (publicadas, borradores, en revisión), "Mis obras" en tarjetas, "Crear obra", "Revisiones y rechazos", la obra abierta (`?obra=`) y el editor del capítulo abierto (`?capitulo=`). Los enlaces navegan de verdad; crear y retirar actualizan la URL con `history.pushState`, y `popstate` repinta.
+  - **Crear obra (CU-28, choque 2):** autor original, sinopsis, licencia de la lista cerrada (sin NC), etiquetas múltiples desde `GET /api/tags` (géneros y temas), dos casillas separadas (advertencia, que muestra su campo, y +18, con el aviso de que no se podrá aprobar), declaración de autoría y portada opcional, que se sube después del alta (D7). "Guardar borrador" pasa a "Crear obra": la obra nace en revisión.
+  - **Obra abierta:** estado y motivo del rechazo, "Ver ficha" (solo si está publicada), "Cambiar portada", "Retirar obra", capítulos en `<table>` con `<caption>` y `<th scope>` (estado, motivo, viñetas, fecha; "Editar" o "Ver" y "Retirar") y "Nuevo capítulo" con el siguiente número libre (D22). Una obra rechazada no ofrece portada ni capítulos nuevos (D8).
+  - **Editor (choque 3, D9):** cada imagen se sube al elegirla, una petición por imagen y en el orden elegido. Se comprueban antes en el cliente los 5 MB y las 60 viñetas, y se para ante un 429, un 409 o un 403. ↑↓ mueven una posición, con `disabled` en los extremos y el foco en el mismo botón de la nueva fila; × elimina tras confirmar. Debajo, la vista previa vertical sin espacios y "Enviar a revisión →". Fuera de borrador, solo lectura con su nota (RN-05).
+  - Cabecera (D16): "Crear" (`/autor`, `icon-pencil`) solo para autores, al final de la navegación de la cabecera y de la móvil, con `aria-current` en `/autor`. `api.ts` envía `FormData` sin `Content-Type` JSON. `validate.ts` duplica los límites de D5 y las reglas de obra, capítulo y etiquetas. `.button--danger` y casillas, filas y grupos en `form.css`.
+- **Revisión del agente `frontend`:** APTO CON OBSERVACIONES (16). Corregidos:
+  - el foco al retirar una obra (`tabindex="-1"` en "Mis obras");
+  - el texto de la maqueta bajo el título del editor;
+  - las acciones de cada tarjeta según su estado ("Ver ficha", "Ver motivo", "Revisiones →" y "Gestionar →");
+  - el foco que se devuelve al control desactivado durante una operación;
+  - los fallos en rojo (`.form__status--error`);
+  - el texto +18 sin prometer la fase 3;
+  - `__preview-label` en lugar de un selector de etiqueta;
+  - el input de portada con `.visually-hidden` y su pista de formatos;
+  - fuera el token sin uso y el `data-form-status` sin uso;
+  - medidas en las miniaturas;
+  - el hover de `.button--danger`;
+  - el error de las etiquetas, que se borra al tocar cualquier casilla;
+  - `aria-label` con el título en "Ver ficha";
+  - los valores de la maqueta: relleno superior 1.2rem, tintes del 9 % y el 45 %, huecos de .2rem y .18rem, relleno del archivo .55rem, botón de los avisos a .5rem y casillas alineadas arriba.
+- **Desvíos justificados:**
+  - Las secciones "Capítulos" y "Editor de capítulo" de la barra solo aparecen con `?obra` y `?capitulo` (D18).
+  - Mensajes de estado en cada sección en lugar del aviso fijo de la maqueta (`demo-feedback`).
+  - Las filas del editor muestran "Viñeta N" y las medidas: el servidor no guarda el nombre del archivo.
+  - Los avisos de revisión no llevan fecha: el contrato no la tiene.
+  - Confirmaciones con `confirm()`.
+  - Los componentes compartidos (campos de 48 px, `text-link`, migas) conservan sus valores del sitio.
+  - La tabla de capítulos es nueva (640 px de ancho mínimo).
+- **Tests:** `pages.test.ts` (302 con `next` y la query, 403 para un lector y para un admin, 200 con un solo h1 y el nombre escapado, formularios sin `action` y con los botones desactivados, sin `/admin` ni NC, tabla con `<caption>` y seis `<th scope>`), `client-parity.test.ts` (límites de D5, textos de obra y capítulo con sus mensajes, número de capítulo y etiquetas), `client-api.test.ts` (`FormData`) y `layout.test.ts`.
+- **Comprobación (IA):** typecheck, 124 unitarios y 198 de API; con `curl` en local: 302 sin sesión, 200 con el autor demo y los JS y CSS nuevos. Sin errores en el log. La página no la he visto en un navegador.
+- **Pendiente (desarrollador), en el navegador a 360 px y en escritorio, con teclado:** la lista del agente (intro, barra con scroll, métricas, tarjetas, columnas desde 64rem; fila del editor a 360 px; tabla con scroll y foco; foco al retirar, subir, mover, eliminar, enviar y crear; anillo en "Cambiar portada"; colores de los avisos; "Crear" solo con el autor demo). Además, el recorrido completo con el autor demo: crear una obra con portada, crear un capítulo, subir varias imágenes, reordenarlas, eliminar una y enviarlo; comprobar en la auditoría `comic.create`, `comic.update`, `chapter.create` y `chapter.submit`.

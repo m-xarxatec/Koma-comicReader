@@ -35,6 +35,8 @@ const VALUES = {
   plan: 'free',
   premiumUntil: '',
   premiumUntilDate: '',
+  // author.html (authorPage en comics.controller.ts)
+  authorCredit: 'Ana',
 };
 const count = (html: string, text: string) => html.split(text).length - 1;
 

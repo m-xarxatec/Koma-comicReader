@@ -3,9 +3,11 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { paths } from '../../config/paths.js';
+import * as limits from '../../config/limits.js';
 import { CATALOG_MAX_TAGS, CATALOG_PAGE_SIZE, CATALOG_QUERY_MAX_LENGTH, COMMENT_BODY_MAX } from '../../config/limits.js';
 import { EMAIL_MAX_CHARS, passwordBody, registerBody } from '../../modules/auth/auth.schema.js';
-import { catalogQuery } from '../../modules/comics/comics.schema.js';
+import { createChapterBody } from '../../modules/chapters/chapters.schema.js';
+import { catalogQuery, createComicBody } from '../../modules/comics/comics.schema.js';
 import { commentBody } from '../../modules/comments/comments.schema.js';
 import { profileBody } from '../../modules/users/users.schema.js';
 import { passwordProblem } from '../../utils/password.js';
@@ -24,6 +26,22 @@ interface ClientValidate {
   passwordConfirmProblem: (value: string, values: Readonly<Record<string, string>>) => string | null;
   confirmationOf: (field: string) => (value: string, values: Readonly<Record<string, string>>) => string | null;
   initials: (displayName: string) => string;
+  COMIC_TITLE_MAX: number;
+  COMIC_SYNOPSIS_MAX: number;
+  AUTHOR_CREDIT_MAX: number;
+  CONTENT_WARNING_MAX: number;
+  CHAPTER_TITLE_MAX: number;
+  COMIC_TAGS_MAX: number;
+  MAX_IMAGE_BYTES: number;
+  MAX_PANELS_PER_CHAPTER: number;
+  PG_MAX_INT: number;
+  comicTitleProblem: Problem;
+  synopsisProblem: Problem;
+  authorCreditProblem: Problem;
+  contentWarningProblem: Problem;
+  chapterTitleProblem: Problem;
+  chapterNumberProblem: Problem;
+  tagsProblem: (selected: readonly { type: 'genre' | 'theme' }[]) => string | null;
 }
 interface ClientRedirect {
   safeNext: (value: unknown) => string;
@@ -187,4 +205,61 @@ test('Seguridad: la regla de textos de una línea es la misma en el cliente y en
     assert.equal(clientText.textProblem(value, rule), textProblem(normalizeText(value), rule), JSON.stringify(value));
   }
   assert.equal(clientText.textLength(' a\r\nb ', true), 3); // lo que contará el servidor
+});
+
+// --- Estudio del autor (contrato del bloque 3, D5): /autor valida antes de llamar a la API ---
+
+test('Seguridad: el cliente usa los mismos límites de obras, capítulos y subidas que el servidor', () => {
+  assert.equal(client.COMIC_TITLE_MAX, limits.COMIC_TITLE_MAX);
+  assert.equal(client.COMIC_SYNOPSIS_MAX, limits.COMIC_SYNOPSIS_MAX);
+  assert.equal(client.AUTHOR_CREDIT_MAX, limits.AUTHOR_CREDIT_MAX);
+  assert.equal(client.CONTENT_WARNING_MAX, limits.CONTENT_WARNING_MAX);
+  assert.equal(client.CHAPTER_TITLE_MAX, limits.CHAPTER_TITLE_MAX);
+  assert.equal(client.COMIC_TAGS_MAX, limits.COMIC_TAGS_MAX);
+  assert.equal(client.MAX_IMAGE_BYTES, limits.MAX_IMAGE_BYTES);
+  assert.equal(client.MAX_PANELS_PER_CHAPTER, limits.MAX_PANELS_PER_CHAPTER);
+  assert.equal(client.PG_MAX_INT, limits.PG_MAX_INT);
+});
+
+test('Seguridad: título, sinopsis, autor original y advertencia se aceptan y rechazan igual que en el servidor, con su mensaje', () => {
+  const cases = ['', '   ', 'Obra', '  Obra  ', 'x'.repeat(100), 'x'.repeat(101), '🙂'.repeat(100), '🙂'.repeat(101), 'Dos\nlíneas', 'Con\u0000nulo', 'Con\ttab', 'x'.repeat(200), 'x'.repeat(201), 'x'.repeat(1000), 'x'.repeat(1001), 'a\r\nb'];
+  const fields = [
+    ['title', client.comicTitleProblem],
+    ['synopsis', client.synopsisProblem],
+    ['authorCredit', client.authorCreditProblem],
+  ] as const;
+  for (const [field, rule] of fields) {
+    for (const value of cases) {
+      const server = createComicBody.shape[field].safeParse(value);
+      assert.equal(rule(value), server.success ? null : server.error.issues[0]!.message, `${field} ${JSON.stringify(value)}`);
+    }
+  }
+  // contentWarning admite null en el servidor; el cliente solo valida el texto cuando se marca la casilla.
+  for (const value of cases) {
+    const server = createComicBody.shape.contentWarning.safeParse(value);
+    assert.equal(client.contentWarningProblem(value), server.success ? null : server.error.issues[0]!.message, `contentWarning ${JSON.stringify(value)}`);
+  }
+});
+
+test('Seguridad: número y título de capítulo se aceptan y rechazan igual que en el servidor (el título vacío = sin título)', () => {
+  for (const value of ['', ' ', '0', '1', '01', ' 7 ', '1.5', '-1', 'abc', '2147483647', '2147483648', '99999999999']) {
+    const parsed = /^\s*\d+\s*$/.test(value) ? Number(value.trim()) : value;
+    const server = createChapterBody.shape.number.safeParse(parsed);
+    assert.equal(client.chapterNumberProblem(value) === null, server.success, `number ${JSON.stringify(value)}`);
+  }
+  for (const value of ['Uno', '  Uno  ', 'x'.repeat(100), 'x'.repeat(101), 'Con\u0000nulo']) {
+    const server = createChapterBody.shape.title.safeParse(value);
+    assert.equal(client.chapterTitleProblem(value), server.success ? null : server.error.issues[0]!.message, `title ${JSON.stringify(value)}`);
+  }
+  assert.equal(client.chapterTitleProblem('   '), null, 'vacío: el cliente no envía título y el servidor pone «Capítulo N»');
+});
+
+test('Seguridad: las etiquetas del cliente siguen D5 con los mensajes del servidor (1–10 y al menos un género)', () => {
+  const genre = { type: 'genre' } as const;
+  const theme = { type: 'theme' } as const;
+  assert.equal(client.tagsProblem([]), createComicBody.shape.tags.safeParse([]).error?.issues[0]?.message);
+  assert.equal(client.tagsProblem(Array.from({ length: 11 }, () => genre)), createComicBody.shape.tags.safeParse(Array.from({ length: 11 }, (_, i) => `t${i}`)).error?.issues[0]?.message);
+  assert.equal(client.tagsProblem([theme, theme]), 'Elige al menos un género');
+  assert.equal(client.tagsProblem([theme, genre]), null);
+  assert.equal(client.tagsProblem(Array.from({ length: 10 }, () => genre)), null);
 });

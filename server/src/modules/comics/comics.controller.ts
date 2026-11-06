@@ -57,3 +57,9 @@ export async function withdrawComic(req: Request, res: Response): Promise<void> 
   await comicsService.withdrawComic(res.locals.user!, slug, { ip: req.ip ?? null, requestId: res.locals.requestId });
   res.status(204).end();
 }
+
+// /autor (D18): una sola página; la obra y el capítulo abiertos van en ?obra=&capitulo= y los lee el cliente.
+// requirePageAuthor va antes. "Autor original" propone el nombre visible (contrato, CreateComicInput), escapado.
+export async function authorPage(_req: Request, res: Response): Promise<void> {
+  await sendPage(res, 'author', { authorCredit: res.locals.user!.displayName });
+}

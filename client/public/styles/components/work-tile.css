@@ -1,0 +1,88 @@
+/* Tarjeta de una obra del autor (maqueta: .work-tile): portada, estado, título, etiquetas y acciones. */
+.work-tile {
+  display: grid;
+  grid-template-columns: var(--work-tile-columns);
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.work-tile__cover {
+  display: grid;
+  place-items: center;
+  min-height: var(--work-tile-cover-min-height);
+  padding: var(--work-tile-cover-padding);
+  background: var(--gradient-work-tile-cover);
+  color: var(--color-work-tile-cover-text);
+  font-size: var(--font-size-work-tile-cover);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-work-tile-cover);
+  text-align: center;
+}
+
+.work-tile__cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.work-tile__cover:has(.work-tile__cover-image) {
+  padding: 0;
+}
+
+.work-tile__body {
+  display: grid;
+  align-content: start;
+  gap: var(--work-tile-body-gap);
+  min-width: 0;
+  padding: var(--work-tile-body-padding);
+}
+
+.work-tile__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--work-tile-top-gap);
+}
+
+.work-tile__meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-work-tile-meta);
+}
+
+.work-tile__title {
+  margin: 0;
+  font-size: var(--font-size-work-tile-title);
+  line-height: var(--line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.work-tile__tags {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-work-tile-text);
+}
+
+.work-tile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--author-actions-gap);
+  margin-top: var(--work-tile-actions-margin);
+}
+
+@media (min-width: 40rem) {
+  .work-tile {
+    grid-template-columns: var(--work-tile-columns-medium);
+  }
+}
+
+@media (min-width: 64rem) {
+  .work-tile {
+    grid-template-columns: var(--work-tile-columns-wide);
+  }
+}

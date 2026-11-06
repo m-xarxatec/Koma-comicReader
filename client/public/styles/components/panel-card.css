@@ -1,0 +1,46 @@
+/* Tarjeta de panel del estudio (maqueta: .panel-card): crear obra, revisiones y nuevo capítulo. */
+.panel-card {
+  min-width: 0;
+  padding: var(--panel-card-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  scroll-margin-top: var(--scroll-offset);
+}
+
+.panel-card__heading {
+  margin-bottom: var(--panel-card-heading-margin);
+}
+
+.panel-card__eyebrow {
+  margin-bottom: var(--author-heading-eyebrow-margin);
+}
+
+.panel-card__title {
+  margin: 0;
+  font-size: var(--font-size-author-heading);
+  letter-spacing: var(--letter-spacing-author-heading);
+}
+
+.panel-card__text {
+  margin: var(--author-heading-text-margin) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-panel-card-text);
+}
+
+.panel-card__form {
+  gap: var(--panel-form-gap);
+}
+
+.panel-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.panel-card__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-panel-note);
+}

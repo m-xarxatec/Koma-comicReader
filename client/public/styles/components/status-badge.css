@@ -1,0 +1,37 @@
+/* Estado de una obra o un capítulo (maqueta: .status): siempre con texto, el color solo lo acompaña. */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--status-badge-height);
+  padding: var(--status-badge-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-status-badge);
+  font-weight: var(--font-weight-heavy);
+  white-space: nowrap;
+}
+
+.status-badge:empty {
+  display: none;
+}
+
+.status-badge--success {
+  border-color: color-mix(in srgb, var(--color-success) var(--status-badge-border-tint), var(--color-border));
+  background: color-mix(in srgb, var(--color-success) var(--status-badge-tint), var(--color-surface));
+  color: var(--color-success);
+}
+
+.status-badge--warning {
+  border-color: color-mix(in srgb, var(--color-warning) var(--status-badge-border-tint), var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) var(--status-badge-tint-warning), var(--color-surface));
+  color: var(--color-warning);
+}
+
+.status-badge--danger {
+  border-color: color-mix(in srgb, var(--color-danger) var(--status-badge-border-tint-danger), var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) var(--status-badge-tint-warning), var(--color-surface));
+  color: var(--color-danger);
+}

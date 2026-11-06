@@ -1,0 +1,193 @@
+/* Editor de un capítulo en /autor (maqueta: .editor-layout, .upload-area, .image-list, .image-row y .preview-card):
+   subida, orden de lectura con ↑↓× y vista previa vertical sin espacios entre viñetas. */
+.chapter-editor {
+  display: grid;
+  gap: var(--chapter-editor-gap);
+}
+
+.chapter-editor__main {
+  min-width: 0;
+}
+
+.chapter-editor__upload {
+  display: grid;
+  gap: var(--chapter-editor-upload-gap);
+  padding: var(--chapter-editor-upload-padding);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+
+.chapter-editor__upload-label {
+  display: grid;
+  gap: var(--chapter-editor-upload-label-gap);
+  cursor: pointer;
+}
+
+.chapter-editor__upload-title {
+  color: var(--color-secondary);
+}
+
+.chapter-editor__upload-text,
+.chapter-editor__upload-hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-chapter-editor-small);
+}
+
+.chapter-editor__upload-input {
+  display: block;
+  max-width: 100%;
+  min-height: var(--touch-target);
+  color: var(--color-text);
+  font-size: var(--font-size-chapter-editor-small);
+}
+
+.chapter-editor__subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--chapter-editor-subtitle-margin);
+  font-size: var(--font-size-chapter-editor-subtitle);
+}
+
+.chapter-editor__list {
+  display: grid;
+  gap: var(--chapter-editor-list-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chapter-editor__row {
+  display: flex;
+  align-items: center;
+  gap: var(--chapter-editor-row-gap);
+  min-width: 0;
+  padding: var(--chapter-editor-row-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.chapter-editor__thumb {
+  flex: 0 0 auto;
+  width: var(--chapter-editor-thumb-width);
+  height: var(--chapter-editor-thumb-height);
+  overflow: hidden;
+  border-radius: var(--chapter-editor-thumb-radius);
+  background: var(--color-chapter-editor-thumb);
+}
+
+.chapter-editor__thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chapter-editor__row-text {
+  display: grid;
+  flex: 1;
+  gap: var(--chapter-editor-row-text-gap);
+  min-width: 0;
+}
+
+.chapter-editor__row-title {
+  font-size: var(--font-size-chapter-editor-row);
+}
+
+.chapter-editor__row-meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-chapter-editor-row-meta);
+}
+
+.chapter-editor__buttons {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--chapter-editor-buttons-gap);
+}
+
+.chapter-editor__button {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--chapter-editor-button-radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.chapter-editor__button:disabled {
+  opacity: var(--opacity-chapter-editor-disabled);
+  cursor: not-allowed;
+}
+
+.chapter-editor__button--remove {
+  color: var(--color-danger);
+}
+
+.chapter-editor__status:not(:empty) {
+  margin-top: var(--chapter-editor-actions-margin);
+}
+
+.chapter-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--author-actions-gap);
+  margin-top: var(--chapter-editor-actions-margin);
+}
+
+.chapter-editor__note {
+  margin: var(--chapter-editor-note-margin);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-panel-note);
+}
+
+.chapter-editor__note:empty {
+  display: none;
+}
+
+.chapter-editor__preview {
+  align-self: start;
+  min-width: 0;
+  padding: var(--chapter-editor-preview-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.chapter-editor__preview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--chapter-editor-preview-heading-margin);
+}
+
+.chapter-editor__preview-label,
+.chapter-editor__preview-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-chapter-editor-preview);
+}
+
+.chapter-editor__strip {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, var(--chapter-editor-strip-width));
+  margin: auto;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.chapter-editor__strip-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 64rem) {
+  .chapter-editor {
+    grid-template-columns: var(--chapter-editor-columns-wide);
+  }
+}

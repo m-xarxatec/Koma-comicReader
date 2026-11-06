@@ -234,3 +234,58 @@ test('Seguridad: con la barra final, /perfil/ redirige con 301 a /perfil (y de a
   assert.equal(res.status, 301);
   assert.equal(res.headers.get('location'), '/perfil');
 });
+
+// ── /autor (CU-28 a CU-30; D18) ───────────────────────────────────────────────
+
+async function pageUser(displayName: string, kind: 'reader' | 'author' | 'admin'): Promise<string> {
+  const { pool } = await import('../../db/pool.js');
+  const { signSession } = await import('../../modules/auth/auth.service.js');
+  const { rows } = await pool.query<{ id: number; token_version: number }>(
+    `INSERT INTO users (email, password_hash, display_name, role, is_author)
+     VALUES ($1, 'sin-uso', $2, $3, $4) RETURNING id, token_version`,
+    [`autor-${crypto.randomUUID()}@paginas.test`, displayName, kind === 'admin' ? 'admin' : 'user', kind === 'author'],
+  );
+  const user = rows[0]!;
+  return `koma_session=${signSession({ id: user.id, tokenVersion: user.token_version })}`;
+}
+
+test('Seguridad: sin sesión, /autor redirige con 302 a /entrar con next, también con ?obra=&capitulo=', async () => {
+  for (const [path, next] of [
+    ['/autor', '%2Fautor'],
+    ['/autor?obra=mi-obra&capitulo=2', '%2Fautor%3Fobra%3Dmi-obra%26capitulo%3D2'],
+  ] as const) {
+    const res = await get(path);
+    assert.equal(res.status, 302, path);
+    assert.equal(res.headers.get('location'), `/entrar?next=${next}`, path);
+  }
+});
+
+test('Seguridad: /autor responde la página 403 a quien no es autor (un lector o un admin)', async () => {
+  for (const kind of ['reader', 'admin'] as const) {
+    const res = await get('/autor', await pageUser(`Usuaria ${kind}`, kind));
+    assert.equal(res.status, 403, kind);
+    assert.match(res.headers.get('content-type') ?? '', /^text\/html/);
+    assert.ok(!(await res.text()).includes('id="comic-form"'), `${kind}: no recibe el estudio`);
+  }
+});
+
+test('Seguridad: /autor sirve author.html al autor, con un solo h1, sin marcadores y su nombre escapado como autor original', async () => {
+  const res = await get('/autor?obra=x', await pageUser(`<b>"Autora"</b> & cía`, 'author'));
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.equal(title(html), 'Estudio del autor · Koma');
+  assert.deepEqual(h1s(html), ['Estudio del autor']);
+  assert.ok(!html.includes('{{'), 'sin marcadores sin rellenar');
+  assert.ok(!html.includes('<b>"Autora"'), 'el nombre no se inyecta como HTML');
+  assert.ok(html.includes('value="&lt;b&gt;&quot;Autora&quot;&lt;/b&gt; &amp; cía"'));
+  // Sin JS no se envía nada: los formularios no tienen action y sus botones llegan desactivados.
+  assert.match(html, /<form class="[^"]*" id="comic-form">/);
+  assert.match(html, /<form class="[^"]*" id="chapter-form">/);
+  assert.equal(html.match(/type="submit" disabled data-needs-js/g)?.length, 2);
+  assert.ok(!html.includes('/admin'), 'sin "Panel admin" en el estudio (choque 5)');
+  assert.ok(!html.includes('NC 4.0'), 'sin licencias NC (D6)');
+  // D18: capítulos en <table> con <caption> y <th scope>.
+  assert.match(html, /<caption class="chapter-table__caption"/);
+  assert.equal(html.match(/<th class="chapter-table__head" scope="col">/g)?.length, 6);
+});

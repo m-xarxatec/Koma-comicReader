@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>Estudio del autor · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/text-link.css">
+  <link rel="stylesheet" href="/styles/components/form.css">
+  <link rel="stylesheet" href="/styles/components/author-page.css">
+  <link rel="stylesheet" href="/styles/components/status-badge.css">
+  <link rel="stylesheet" href="/styles/components/work-tile.css">
+  <link rel="stylesheet" href="/styles/components/panel-card.css">
+  <link rel="stylesheet" href="/styles/components/review-notice.css">
+  <link rel="stylesheet" href="/styles/components/chapter-table.css">
+  <link rel="stylesheet" href="/styles/components/chapter-editor.css">
+  <script type="module" src="/js/pages/author.js"></script>
+</head>
+<body>
+  <!-- @header -->
+  <!-- CU-28 a CU-30 (D18): una sola página; la obra y el capítulo abiertos van en ?obra=<slug>&capitulo=<n> y los
+       lee author.ts. Todo dato del autor se pinta con textContent. -->
+  <main id="contenido" class="author-page container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Estudio del autor</span>
+    </nav>
+
+    <div class="author-page__intro">
+      <div>
+        <p class="eyebrow author-page__eyebrow">Tu espacio de creación</p>
+        <h1 class="author-page__title">Estudio del autor</h1>
+        <p class="author-page__subtitle">Gestiona tus historias, prepara capítulos y envíalos a revisión.</p>
+      </div>
+      <a class="button button--primary" href="#crear-obra">+ Crear obra</a>
+    </div>
+
+    <nav class="author-page__nav" aria-label="Secciones del estudio">
+      <a class="author-page__nav-link" href="#mis-obras">Mis obras</a>
+      <a class="author-page__nav-link" href="#crear-obra">Crear obra</a>
+      <a class="author-page__nav-link" href="#obra" data-nav="comic" hidden>Capítulos</a>
+      <a class="author-page__nav-link" href="#capitulo" data-nav="chapter" hidden>Editor de capítulo</a>
+      <a class="author-page__nav-link" href="#revisiones">Revisiones</a>
+    </nav>
+
+    <noscript>
+      <p class="form__notice author-page__notice">El estudio del autor necesita JavaScript para mostrar tus obras, crearlas y subir capítulos.</p>
+    </noscript>
+
+    <section class="author-page__metrics" aria-label="Resumen de mi actividad">
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Obras publicadas</span>
+        <strong class="author-page__metric-value" data-metric="published">–</strong>
+        <span class="author-page__metric-note">Visibles en el catálogo</span>
+      </div>
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Capítulos en borrador</span>
+        <strong class="author-page__metric-value" data-metric="drafts">–</strong>
+        <span class="author-page__metric-note">Listos para seguir editando</span>
+      </div>
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">En revisión</span>
+        <strong class="author-page__metric-value" data-metric="review">–</strong>
+        <span class="author-page__metric-note">Pendiente de moderación</span>
+      </div>
+    </section>
+
+    <!-- Mis obras (CU-28): tarjetas (D18). -->
+    <section id="mis-obras" class="author-page__section" aria-labelledby="mis-obras-title">
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Biblioteca de autor</p>
+          <h2 class="author-page__heading-title" id="mis-obras-title" tabindex="-1">Mis obras</h2>
+        </div>
+        <span class="author-page__muted" id="works-count"></span>
+      </div>
+      <p class="form__status author-page__status" id="works-status" role="status"></p>
+      <p class="author-page__message" id="works-message">Cargando tus obras…</p>
+      <ul class="author-page__works" id="works-list"></ul>
+    </section>
+
+    <div class="author-page__columns">
+      <!-- Crear obra (CU-28; RN-05, RN-07, RN-08, RN-17; D6). Nace en revisión. -->
+      <section id="crear-obra" class="panel-card" aria-labelledby="crear-obra-title">
+        <div class="panel-card__heading">
+          <p class="eyebrow panel-card__eyebrow">Nueva historia</p>
+          <h2 class="panel-card__title" id="crear-obra-title">Crear obra</h2>
+          <p class="panel-card__text">Información que aparecerá en la ficha pública.</p>
+        </div>
+        <!-- Sin action ni method: se envía por api.ts. El botón llega desactivado (author.ts lo activa). -->
+        <form class="form panel-card__form" id="comic-form">
+          <div class="form__field">
+            <label class="form__label" for="comic-title">Título de la obra</label>
+            <input class="form__input" id="comic-title" name="title" type="text" placeholder="Ej. La última viñeta" autocomplete="off" required aria-describedby="comic-title-error">
+            <p class="form__error" id="comic-title-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="comic-synopsis">Sinopsis</label>
+            <textarea class="form__input form__textarea" id="comic-synopsis" name="synopsis" rows="4" placeholder="Cuéntanos de qué trata tu historia…" required aria-describedby="comic-synopsis-hint comic-synopsis-error"></textarea>
+            <p class="form__hint" id="comic-synopsis-hint">Hasta 1000 caracteres.</p>
+            <p class="form__error" id="comic-synopsis-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="comic-author-credit">Autor original</label>
+            <input class="form__input" id="comic-author-credit" name="authorCredit" type="text" value="{{authorCredit}}" autocomplete="off" required aria-describedby="comic-author-credit-hint comic-author-credit-error">
+            <p class="form__hint" id="comic-author-credit-hint">Quien creó la obra. Saldrá como «Autor» en la ficha.</p>
+            <p class="form__error" id="comic-author-credit-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="comic-license">Licencia</label>
+            <select class="form__input" id="comic-license" name="license" required aria-describedby="comic-license-hint comic-license-error">
+              <option value="">Seleccionar licencia</option>
+              <option value="all-rights-reserved">Todos los derechos reservados</option>
+              <option value="cc-by-4.0">CC BY 4.0</option>
+              <option value="cc-by-sa-4.0">CC BY-SA 4.0</option>
+              <option value="cc0-1.0">CC0 1.0</option>
+            </select>
+            <p class="form__hint" id="comic-license-hint">Koma no admite licencias no comerciales (NC).</p>
+            <p class="form__error" id="comic-license-error" hidden></p>
+          </div>
+          <!-- Las casillas las pinta author.ts desde GET /api/tags. La primera se llama comic-tags: bindForm pinta el
+               error de `tags` en #comic-tags-error (<id de la primera casilla>-error). -->
+          <fieldset class="form__fieldset" aria-describedby="comic-tags-hint">
+            <legend class="form__label">Etiquetas</legend>
+            <p class="form__hint" id="comic-tags-hint">De 1 a 10, con al menos un género.</p>
+            <div class="form__choices" id="comic-tags-choices"></div>
+            <p class="form__error" id="comic-tags-error" hidden></p>
+          </fieldset>
+          <div class="form__field">
+            <label class="form__label" for="comic-cover">Portada (opcional)</label>
+            <input class="form__input form__file" id="comic-cover" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="comic-cover-hint">
+            <p class="form__hint" id="comic-cover-hint">JPEG, PNG o WebP, hasta 5 MB. Se sube al crear la obra.</p>
+          </div>
+          <label class="form__check">
+            <input class="form__check-input" id="comic-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls="comic-warning-field">
+            <span>Esta obra necesita una advertencia de contenido</span>
+          </label>
+          <div class="form__field" id="comic-warning-field" hidden>
+            <label class="form__label" for="comic-content-warning">Advertencia</label>
+            <input class="form__input" id="comic-content-warning" name="contentWarning" type="text" placeholder="Ej. Violencia gráfica" autocomplete="off" aria-describedby="comic-content-warning-hint comic-content-warning-error">
+            <p class="form__hint" id="comic-content-warning-hint">Se mostrará antes del primer capítulo. Hasta 200 caracteres.</p>
+            <p class="form__error" id="comic-content-warning-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__check">
+              <input class="form__check-input" id="comic-is-adult" name="isAdult" type="checkbox" value="true" aria-describedby="comic-is-adult-hint">
+              <span>Contenido para mayores de 18 años (+18)</span>
+            </label>
+            <p class="form__hint" id="comic-is-adult-hint">Koma no publica obras +18: si la marcas, se guardará pero no podrá aprobarse.</p>
+          </div>
+          <div class="form__field">
+            <label class="form__check">
+              <input class="form__check-input" id="comic-authorship" name="authorshipDeclared" type="checkbox" value="true" required aria-describedby="comic-authorship-error">
+              <span>Declaro que soy el autor de esta obra o que tengo permiso de su autor para publicarla con esta licencia.</span>
+            </label>
+            <p class="form__error" id="comic-authorship-error" hidden></p>
+          </div>
+          <noscript>
+            <p class="form__notice">Para crear una obra hace falta JavaScript.</p>
+          </noscript>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <div class="panel-card__actions">
+            <button class="button button--primary" type="submit" disabled data-needs-js>Crear obra</button>
+          </div>
+          <p class="panel-card__note">La obra nace en revisión: un administrador la aprueba antes de que sea pública.</p>
+        </form>
+      </section>
+
+      <!-- Revisiones (CU-28: se muestra el motivo del rechazo). -->
+      <section id="revisiones" class="panel-card" aria-labelledby="revisiones-title">
+        <div class="panel-card__heading">
+          <p class="eyebrow panel-card__eyebrow">Control editorial</p>
+          <h2 class="panel-card__title" id="revisiones-title">Revisiones y rechazos</h2>
+          <p class="panel-card__text">Conoce el motivo antes de volver a enviar.</p>
+        </div>
+        <p class="author-page__message" id="reviews-message"></p>
+        <ul class="author-page__reviews" id="reviews-list"></ul>
+      </section>
+    </div>
+
+    <!-- Obra abierta (?obra=): capítulos en <table> (D18), nuevo capítulo (D22), portada (D7) y retirada (CU-30). -->
+    <section id="obra" class="author-page__section" aria-labelledby="obra-title" hidden>
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Gestionar obra</p>
+          <h2 class="author-page__heading-title" id="obra-title" tabindex="-1"></h2>
+        </div>
+        <span class="status-badge" id="obra-status"></span>
+      </div>
+      <p class="form__status author-page__status" id="obra-feedback" role="status"></p>
+      <p class="author-page__message" id="obra-message"></p>
+      <div id="obra-body" hidden>
+        <div class="author-page__actions">
+          <a class="button button--outline" id="obra-public" href="/" hidden>Ver ficha</a>
+          <span class="author-page__cover-control" id="obra-cover-control">
+            <label class="button button--outline author-page__cover-label" for="obra-cover">Cambiar portada</label>
+            <input class="visually-hidden author-page__file" id="obra-cover" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="obra-cover-hint">
+            <span class="form__hint" id="obra-cover-hint">JPEG, PNG o WebP, hasta 5 MB.</span>
+          </span>
+          <button class="button button--outline button--danger" id="obra-withdraw" type="button">Retirar obra</button>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="chapters-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="chapters-caption">Capítulos</caption>
+            <thead>
+              <tr>
+                <th class="chapter-table__head" scope="col">Nº</th>
+                <th class="chapter-table__head" scope="col">Título</th>
+                <th class="chapter-table__head" scope="col">Estado</th>
+                <th class="chapter-table__head" scope="col">Viñetas</th>
+                <th class="chapter-table__head" scope="col">Publicado</th>
+                <th class="chapter-table__head" scope="col"><span class="visually-hidden">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody id="chapter-rows"></tbody>
+          </table>
+        </div>
+        <p class="author-page__message" id="chapters-empty" hidden>Esta obra todavía no tiene capítulos.</p>
+
+        <!-- CU-29: nace en borrador. El formulario propone el siguiente número libre (D22). -->
+        <div class="panel-card author-page__new-chapter" id="nuevo-capitulo">
+          <div class="panel-card__heading">
+            <h3 class="panel-card__title">Nuevo capítulo</h3>
+            <p class="panel-card__text">Nace como borrador: añade sus viñetas y envíalo a revisión.</p>
+          </div>
+          <form class="form panel-card__form" id="chapter-form">
+            <div class="form__row">
+              <div class="form__field">
+                <label class="form__label" for="chapter-number">Número</label>
+                <input class="form__input" id="chapter-number" name="number" type="text" inputmode="numeric" autocomplete="off" required aria-describedby="chapter-number-hint chapter-number-error">
+                <p class="form__hint" id="chapter-number-hint">El de un capítulo retirado o rechazado se puede reutilizar.</p>
+                <p class="form__error" id="chapter-number-error" hidden></p>
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="chapter-title">Título (opcional)</label>
+                <input class="form__input" id="chapter-title" name="title" type="text" autocomplete="off" aria-describedby="chapter-title-hint chapter-title-error">
+                <p class="form__hint" id="chapter-title-hint">Si lo dejas vacío: «Capítulo N». No se puede cambiar después.</p>
+                <p class="form__error" id="chapter-title-error" hidden></p>
+              </div>
+            </div>
+            <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+            <div class="panel-card__actions">
+              <button class="button button--primary" type="submit" disabled data-needs-js>Crear borrador</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Editor del capítulo abierto (?capitulo=; CU-29, RN-05, RN-10): cada imagen se sube al elegirla, ↑↓ la
+         mueven una posición (D9) y × la elimina; solo en borrador. -->
+    <section id="capitulo" class="author-page__section" aria-labelledby="capitulo-title" hidden>
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Editor de capítulo</p>
+          <h2 class="author-page__heading-title" id="capitulo-title" tabindex="-1"></h2>
+          <p class="author-page__muted" id="capitulo-comic"></p>
+          <p class="author-page__muted">Añade imágenes y ordénalas como una tira vertical de lectura.</p>
+        </div>
+        <span class="status-badge" id="capitulo-status"></span>
+      </div>
+      <p class="author-page__message" id="capitulo-message"></p>
+      <div class="chapter-editor" id="capitulo-body" hidden>
+        <div class="panel-card chapter-editor__main">
+          <div class="chapter-editor__upload" id="editor-upload">
+            <label class="chapter-editor__upload-label" for="editor-images">
+              <strong class="chapter-editor__upload-title">+ Añadir imágenes al capítulo</strong>
+              <span class="chapter-editor__upload-text">Puedes elegir varias: se suben de una en una, en el orden en que las elijas.</span>
+            </label>
+            <input class="chapter-editor__upload-input" id="editor-images" type="file" accept="image/png,image/jpeg,image/webp" multiple aria-describedby="editor-images-hint">
+            <small class="chapter-editor__upload-hint" id="editor-images-hint">JPEG, PNG o WebP, hasta 5 MB cada una y 60 por capítulo.</small>
+          </div>
+          <h3 class="chapter-editor__subtitle">Orden de lectura <span class="author-page__muted" id="editor-count"></span></h3>
+          <ol class="chapter-editor__list" id="editor-list" aria-label="Viñetas del capítulo en orden de lectura"></ol>
+          <p class="author-page__message" id="editor-empty" hidden>Todavía no hay viñetas.</p>
+          <p class="form__status chapter-editor__status" id="editor-status" role="status"></p>
+          <div class="chapter-editor__actions">
+            <button class="button button--primary" id="editor-submit" type="button">Enviar a revisión →</button>
+            <button class="button button--outline button--danger" id="editor-withdraw" type="button">Retirar capítulo</button>
+          </div>
+          <p class="chapter-editor__note" id="editor-note"></p>
+        </div>
+        <aside class="chapter-editor__preview" aria-labelledby="editor-preview-title">
+          <div class="chapter-editor__preview-heading">
+            <strong id="editor-preview-title">Vista previa vertical</strong>
+            <span class="chapter-editor__preview-label">Lectura continua</span>
+          </div>
+          <div class="chapter-editor__strip" id="editor-strip"></div>
+          <p class="chapter-editor__preview-text">Sin espacios entre imágenes, como se verá en el lector.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <!-- @footer -->
+</body>
+</html>

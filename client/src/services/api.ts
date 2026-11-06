@@ -31,13 +31,16 @@ function isApiError(value: unknown): value is ApiError {
 }
 
 async function request<T>(method: Method, path: string, body?: unknown, options: RequestOptions = {}): Promise<ApiResult<T>> {
+  const isForm = body instanceof FormData;
   let res: Response;
   try {
     res = await fetch(path, {
       method,
       credentials: 'same-origin', // cookie de sesión httpOnly; el navegador añade Origin (control CSRF)
-      headers: { ...options.headers, Accept: 'application/json', ...(body !== undefined && { 'Content-Type': 'application/json' }) },
-      ...(body !== undefined && { body: JSON.stringify(body) }),
+      // FormData (subida de imágenes, contrato del bloque 3): el navegador pone el Content-Type multipart con su
+      // boundary; cualquier otro cuerpo va como JSON.
+      headers: { ...options.headers, Accept: 'application/json', ...(body !== undefined && !isForm && { 'Content-Type': 'application/json' }) },
+      ...(body !== undefined && { body: isForm ? body : JSON.stringify(body) }),
     });
   } catch {
     return { ok: false, status: 0, error: NETWORK_ERROR };

@@ -445,3 +445,137 @@
   --profile-benefits-indent: 1.2rem;
   --profile-benefits-gap: 0.55rem;
 }
+
+/* Estudio del autor (/autor, bloque 3): valores de la maqueta (autor/index.html y components/panels.css), salvo:
+   el relleno inferior (7.5rem en la maqueta; el pie ya deja --mobile-nav-clearance), los botones de 36 y 37 px de la
+   maqueta (aquí 44 px, el área táctil mínima), el desplazamiento de las anclas (--scroll-offset del sitio) y la tabla
+   de capítulos (nueva por D18: 640 px de ancho mínimo para sus seis columnas). */
+:root {
+  --author-page-padding: 1.2rem var(--space-10);
+  --author-page-padding-medium-top: 2rem;
+  --author-page-padding-wide: 2.5rem 5rem;
+  --author-intro-gap: 1rem;
+  --author-intro-margin: 1.4rem;
+  --font-size-author-title: clamp(1.8rem, 4vw, 2.7rem);
+  --line-height-author-title: 1.12;
+  --author-eyebrow-margin: 0.5rem;
+  --author-subtitle-margin: 0.55rem;
+  --measure-author-subtitle: 64ch;
+  --author-nav-gap: 0.5rem;
+  --author-nav-padding: 0.3rem 0 0.85rem;
+  --author-nav-margin: 1.2rem;
+  --author-nav-link-padding: 0.65rem 0.85rem;
+  --font-size-author-nav: 0.85rem;
+  --author-metrics-gap: 0.75rem;
+  --author-metric-padding: 1rem;
+  --author-metric-gap: 0.4rem;
+  --font-size-author-metric-label: 0.78rem;
+  --font-size-author-metric-value: clamp(1.65rem, 3vw, 2.2rem);
+  --line-height-author-metric-value: 1.1;
+  --author-section-margin: 2.3rem;
+  --author-heading-gap: 1rem;
+  --author-heading-margin: 1rem;
+  --author-heading-eyebrow-margin: 0.35rem;
+  --author-heading-text-margin: 0.3rem;
+  --font-size-author-heading: clamp(1.25rem, 2vw, 1.65rem);
+  --letter-spacing-author-heading: -0.025em;
+  --author-works-gap: 0.8rem;
+  --author-works-gap-wide: 1rem;
+  --author-columns-gap: 1rem;
+  --author-actions-gap: 0.7rem;
+  --author-reviews-gap: 0.9rem;
+
+  /* Tarjeta de obra */
+  --work-tile-columns: 95px minmax(0, 1fr);
+  --work-tile-columns-medium: 100px minmax(0, 1fr);
+  --work-tile-columns-wide: 110px minmax(0, 1fr);
+  --work-tile-cover-min-height: 165px;
+  --work-tile-cover-padding: 0.4rem;
+  --color-work-tile-cover-text: #f9f7ff;
+  --color-work-tile-cover-from: #29143b;
+  --color-work-tile-cover-mid: #6e2854;
+  --color-work-tile-cover-to: #26113b;
+  --gradient-work-tile-cover: linear-gradient(145deg, var(--color-work-tile-cover-from), var(--color-work-tile-cover-mid) 58%, var(--color-work-tile-cover-to));
+  --font-size-work-tile-cover: 0.65rem;
+  --letter-spacing-work-tile-cover: 0.13em;
+  --work-tile-body-gap: 0.45rem;
+  --work-tile-body-padding: 0.9rem;
+  --font-size-work-tile-title: 1rem;
+  --font-size-work-tile-text: 0.78rem;
+  --font-size-work-tile-meta: 0.72rem;
+  --work-tile-top-gap: 0.35rem;
+  --work-tile-actions-margin: 0.4rem;
+
+  /* Insignia de estado */
+  --status-badge-height: 26px;
+  --status-badge-padding: 0.3rem 0.55rem;
+  --font-size-status-badge: 0.73rem;
+  --status-badge-tint: 10%;
+  --status-badge-tint-warning: 9%; /* también el fondo de --danger */
+  --status-badge-border-tint: 46%;
+  --status-badge-border-tint-danger: 45%;
+
+  /* Tarjeta de panel y formularios del estudio */
+  --panel-card-padding: clamp(1rem, 2vw, 1.5rem);
+  --panel-card-heading-margin: 1.35rem;
+  --font-size-panel-card-text: 0.84rem;
+  --panel-form-gap: 1rem;
+  --form-row-gap: 0.85rem;
+  --form-textarea-min-height: 100px;
+  --form-check-gap: 0.65rem;
+  --form-check-size: 20px;
+  --form-check-padding: 0.75rem;
+  --form-file-padding: 0.55rem;
+  --font-size-form-check: 0.82rem;
+  --form-choices-gap: 0.25rem 1rem;
+  --font-size-panel-note: 0.75rem;
+
+  /* Aviso de revisión */
+  --review-notice-padding: 1rem;
+  --review-notice-tint: 5%;
+  --review-notice-border-tint: 54%;
+  --review-notice-title-margin: 0.85rem 0 0.5rem;
+  --font-size-review-notice: 0.84rem;
+  --line-height-review-notice: 1.55;
+  --review-notice-reason-padding: 0.75rem;
+  --review-notice-reason-border: 3px;
+  --review-notice-button-margin: 0.5rem;
+
+  /* Tabla de capítulos */
+  --font-size-chapter-table: 0.8rem;
+  --line-height-chapter-table: 1.45;
+  --chapter-table-min-width: 640px;
+  --chapter-table-head-padding: 0.9rem 0.8rem;
+  --chapter-table-cell-padding: 0.75rem 0.8rem;
+  --font-size-chapter-table-head: 0.73rem;
+  --letter-spacing-chapter-table-head: 0.025em;
+
+  /* Editor de capítulo */
+  --chapter-editor-gap: 1rem;
+  --chapter-editor-columns-wide: minmax(0, 1.7fr) minmax(230px, 0.8fr);
+  --chapter-editor-upload-gap: 0.5rem;
+  --chapter-editor-upload-padding: 1rem;
+  --chapter-editor-upload-label-gap: 0.2rem;
+  --chapter-editor-row-text-gap: 0.18rem;
+  --font-size-chapter-editor-small: 0.78rem;
+  --chapter-editor-subtitle-margin: 1.3rem 0 0.7rem;
+  --font-size-chapter-editor-subtitle: 0.95rem;
+  --chapter-editor-list-gap: 0.6rem;
+  --chapter-editor-row-gap: 0.7rem;
+  --chapter-editor-row-padding: 0.55rem;
+  --chapter-editor-thumb-width: 49px;
+  --chapter-editor-thumb-height: 59px;
+  --chapter-editor-thumb-radius: 0.35rem;
+  --color-chapter-editor-thumb: #35215a;
+  --font-size-chapter-editor-row: 0.78rem;
+  --font-size-chapter-editor-row-meta: 0.72rem;
+  --chapter-editor-buttons-gap: 0.25rem;
+  --chapter-editor-button-radius: 0.4rem;
+  --opacity-chapter-editor-disabled: 0.35;
+  --chapter-editor-actions-margin: 1.2rem;
+  --chapter-editor-note-margin: 0.6rem 0 0;
+  --chapter-editor-preview-padding: 1rem;
+  --chapter-editor-preview-heading-margin: 0.8rem;
+  --font-size-chapter-editor-preview: 0.76rem;
+  --chapter-editor-strip-width: 260px;
+}

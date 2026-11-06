@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { uploadRateLimit } from '../../middlewares/rate-limit.js';
-import { requireAuth, requireAuthor } from '../../middlewares/roles.js';
+import { requireAuth, requireAuthor, requirePageAuthor } from '../../middlewares/roles.js';
 import { uploadImage } from '../../middlewares/upload.js';
 import { validate } from '../../middlewares/validate.js';
 import * as controller from './comics.controller.js';
@@ -35,4 +35,5 @@ comicsRouter.put(
 // Página de la ficha (mapa de rutas HTML).
 export const comicsPagesRouter = Router();
 
+comicsPagesRouter.get('/autor', requirePageAuthor, controller.authorPage);
 comicsPagesRouter.get('/obra/:slug', validate({ params: comicParams }, { notFound: ['params'] }), controller.comicPage);

@@ -102,6 +102,47 @@ export function textProblem(raw: string, rule: TextRule): string | null {
 // RN-11: de 1 a 500 caracteres, con saltos de línea.
 export const commentProblem = (value: string) => textProblem(value, { min: 1, max: COMMENT_BODY_MAX, multiline: true });
 
+// --- Obras y capítulos del autor (contrato del bloque 3, D5; server/src/modules/comics/comics.schema.ts y
+// chapters/chapters.schema.ts) ---
+
+export const COMIC_TITLE_MAX = 100;
+export const COMIC_SYNOPSIS_MAX = 1000;
+export const AUTHOR_CREDIT_MAX = 100;
+export const CONTENT_WARNING_MAX = 200;
+export const CHAPTER_TITLE_MAX = 100;
+export const COMIC_TAGS_MAX = 10;
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // RN-10
+export const MAX_PANELS_PER_CHAPTER = 60;
+export const PG_MAX_INT = 2_147_483_647; // número de capítulo y posición de viñeta
+
+export const comicTitleProblem = (value: string) => textProblem(value, { min: 1, max: COMIC_TITLE_MAX });
+export const synopsisProblem = (value: string) => textProblem(value, { min: 1, max: COMIC_SYNOPSIS_MAX, multiline: true });
+export const authorCreditProblem = (value: string) => textProblem(value, { min: 1, max: AUTHOR_CREDIT_MAX });
+export const contentWarningProblem = (value: string) => textProblem(value, { min: 1, max: CONTENT_WARNING_MAX });
+// Título del capítulo: opcional (vacío = "Capítulo N", lo pone el servidor, D21).
+export const chapterTitleProblem = (value: string) =>
+  normalizeText(value) === '' ? null : textProblem(value, { min: 1, max: CHAPTER_TITLE_MAX });
+
+// Número de capítulo (D22): entero de 1 a 2³¹ − 1, escrito en forma canónica (el campo envía un número). Mismos
+// mensajes que el servidor.
+export function chapterNumberProblem(value: string): string | null {
+  const text = value.trim();
+  if (text === '') return REQUIRED;
+  if (!/^\d+$/.test(text)) return 'El número de capítulo debe ser un número entero';
+  const number = Number(text);
+  if (number < 1) return 'El número de capítulo empieza en 1';
+  if (number > PG_MAX_INT) return 'El número de capítulo es demasiado grande';
+  return null;
+}
+
+// Etiquetas (D5): de 1 a 10, con al menos un género. Las recibe ya leídas de las casillas.
+export function tagsProblem(selected: readonly { type: 'genre' | 'theme' }[]): string | null {
+  if (selected.length === 0) return 'Elige al menos una etiqueta';
+  if (selected.length > COMIC_TAGS_MAX) return `Puedes elegir como mucho ${COMIC_TAGS_MAX} etiquetas`;
+  if (!selected.some((tag) => tag.type === 'genre')) return 'Elige al menos un género';
+  return null;
+}
+
 // D17: iniciales decorativas del avatar del perfil. Mismo resultado que initials() de server/src/utils/text.ts.
 export function initials(displayName: string): string {
   return displayName

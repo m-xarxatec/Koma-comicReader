@@ -36,3 +36,12 @@ export const requirePageAuth: RequestHandler = (req, res, next) => {
   }
   next();
 };
+
+// /autor (mapa de rutas): sin sesión, 302 al login como requirePageAuth; con sesión y sin is_author (un admin nunca
+// lo es), la página 403. La API del autor lo vuelve a comprobar en cada petición (requireAuthor).
+export const requirePageAuthor: RequestHandler = (req, res, next) => {
+  requirePageAuth(req, res, () => {
+    if (!isAuthor(res.locals.user!)) throw forbidden();
+    next();
+  });
+};

@@ -1,4 +1,5 @@
-/* Botón (enlace o <button>): principal, con contorno y grande. Área táctil mínima de 44 px. */
+/* Botón (enlace o <button>): principal, con contorno, de peligro (retirar, eliminar) y grande. Área táctil mínima
+   de 44 px. */
 
 .button {
   display: inline-flex;
@@ -53,4 +54,11 @@
 
 .button--large {
   min-height: var(--control-height);
+}
+
+/* Acciones que retiran o eliminan (estudio del autor): texto y borde del color de peligro, sobre el contorno. */
+.button--danger,
+.button--danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }

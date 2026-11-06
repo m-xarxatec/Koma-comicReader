@@ -42,3 +42,21 @@ test('Seguridad: las cabeceras opcionales no sustituyen Accept ni el Content-Typ
   await api.post('/api/x', { a: 1 }, { headers: { Accept: 'text/html', 'Content-Type': 'text/plain', 'X-Extra': '1' } });
   assert.deepEqual(sent[0]?.headers, { 'X-Extra': '1', Accept: 'application/json', 'Content-Type': 'application/json' });
 });
+
+test('Seguridad: con FormData (subidas), api.ts no pone Content-Type JSON ni serializa el cuerpo', async (t) => {
+  const bodies: unknown[] = [];
+  const headers: Record<string, string>[] = [];
+  t.mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+    bodies.push(init.body);
+    headers.push({ ...(init.headers as Record<string, string>) });
+    return new Response('{}', { status: 201, headers: { 'Content-Type': 'application/json' } });
+  });
+  const form = new FormData();
+  form.append('image', new Blob([new Uint8Array([1, 2, 3])]), 'a.png');
+  await api.post('/api/author/comics/obra/chapters/1/panels', form);
+  await api.post('/api/author/comics', { title: 'x' });
+  assert.equal(bodies[0], form, 'el navegador pone el multipart con su boundary');
+  assert.deepEqual(headers[0], { Accept: 'application/json' });
+  assert.equal(bodies[1], JSON.stringify({ title: 'x' }));
+  assert.deepEqual(headers[1], { Accept: 'application/json', 'Content-Type': 'application/json' });
+});

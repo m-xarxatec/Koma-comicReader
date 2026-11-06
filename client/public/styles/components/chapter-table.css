@@ -1,0 +1,67 @@
+/* Capítulos de la obra abierta en /autor (D18; plan: <table> con <caption> y <th scope>; maqueta: .data-table). En
+   móvil se desplaza en horizontal dentro de su región (enfocable con el teclado). */
+.chapter-table__scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  scrollbar-width: thin;
+}
+
+.chapter-table {
+  width: 100%;
+  min-width: var(--chapter-table-min-width);
+  border-collapse: collapse;
+  font-size: var(--font-size-chapter-table);
+  line-height: var(--line-height-chapter-table);
+}
+
+.chapter-table__caption {
+  padding: var(--chapter-table-head-padding);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  text-align: left;
+}
+
+.chapter-table__head {
+  padding: var(--chapter-table-head-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-chapter-table-head);
+  letter-spacing: var(--letter-spacing-chapter-table-head);
+  text-align: left;
+  text-transform: var(--text-transform-label);
+  white-space: nowrap;
+}
+
+.chapter-table__cell {
+  padding: var(--chapter-table-cell-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.chapter-table__row:last-child .chapter-table__cell {
+  border-bottom: 0;
+}
+
+.chapter-table__title {
+  overflow-wrap: anywhere;
+}
+
+.chapter-table__reason {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  white-space: pre-line;
+}
+
+.chapter-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
