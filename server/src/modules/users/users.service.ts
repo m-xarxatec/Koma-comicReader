@@ -1,5 +1,6 @@
 import { withTransaction } from '../../db/pool.js';
 import { AppError } from '../../utils/app-error.js';
+import { initials } from '../../utils/text.js';
 import * as audit from '../audit/audit.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
 import { isPremium } from '../auth/permissions.js';
@@ -27,17 +28,6 @@ export function toUserDto(user: User, now: Date = new Date()): UserDto {
     isPremium: isPremium(user, now),
     premiumUntil: user.premiumUntil?.toISOString() ?? null,
   };
-}
-
-// Iniciales decorativas del avatar (D17): la primera letra de las dos primeras palabras, en mayúsculas.
-// Puntos de código, no unidades UTF-16 (un emoji no se parte). client/src/pages/profile.ts la duplica.
-export function initials(displayName: string): string {
-  return displayName
-    .split(/\s+/u)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => [...word][0]!.toLocaleUpperCase('es'))
-    .join('');
 }
 
 const ACCOUNT_LABELS = { reader: 'Cuenta de lectura', author: 'Cuenta de autoría', admin: 'Cuenta de administración' } as const;

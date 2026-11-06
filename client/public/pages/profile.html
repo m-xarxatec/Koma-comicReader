@@ -51,8 +51,9 @@
         </div>
         <!-- PATCH /api/me (RN-12): la misma regla que el registro. Sin maxlength: cuenta unidades UTF-16 y no
              dejaría escribir 30 emojis, que valen (bindForm cuenta puntos de código). Un formulario no puede enviar
-             PATCH: sin JS, este POST a /api/me responde 404 (desvío aceptado; el aviso noscript lo explica). -->
-        <form class="form profile-card__form" id="profile-form" method="post" action="/api/me">
+             PATCH: sin action ni method, y el botón llega desactivado (profile.ts lo activa). Sin JS no se envía
+             nada (con el botón por defecto desactivado, Intro tampoco envía) y se ve el aviso de noscript. -->
+        <form class="form profile-card__form" id="profile-form">
           <div class="form__field">
             <label class="form__label" for="profile-display-name">Nombre de usuario</label>
             <input class="form__input" id="profile-display-name" name="displayName" type="text" value="{{displayName}}" autocomplete="nickname" required minlength="3" aria-describedby="profile-display-name-hint profile-display-name-error">
@@ -65,9 +66,12 @@
             <input class="form__input" id="profile-email" type="email" value="{{email}}" autocomplete="email" readonly aria-describedby="profile-email-hint">
             <p class="form__hint" id="profile-email-hint">El correo no se puede cambiar.</p>
           </div>
+          <noscript>
+            <p class="form__notice">Para guardar el nombre hace falta JavaScript.</p>
+          </noscript>
           <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
           <div class="profile-card__actions">
-            <button class="button button--primary" type="submit">Guardar nombre</button>
+            <button class="button button--primary" type="submit" disabled data-needs-js>Guardar nombre</button>
             <p class="form__status" data-form-status role="status"></p>
           </div>
         </form>

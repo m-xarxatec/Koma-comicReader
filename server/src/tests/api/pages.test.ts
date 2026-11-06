@@ -214,8 +214,12 @@ test('Seguridad: /perfil sirve profile.html con un solo h1, sin marcadores y con
   assert.ok(html.includes('data-plan="free"'));
   assert.ok(html.includes('Cuenta de lectura'));
   // Nunca GET: sin JS, las contraseñas no pueden acabar en la URL ni en los logs.
-  assert.equal(html.match(/<form [^>]*method="post"/g)?.length, 2);
+  assert.match(html, /<form [^>]*id="password-form" method="post" action="\/api\/auth\/password">/);
   assert.equal(html.match(/<input [^>]*type="password"/g)?.length, 3);
+  // Sin JS, el nombre no se envía a ninguna ruta (no hay POST /api/me): sin action y con el botón desactivado.
+  assert.match(html, /<form class="[^"]*" id="profile-form">/);
+  assert.match(html, /<button [^>]*type="submit" disabled data-needs-js>Guardar nombre<\/button>/);
+  assert.ok(html.includes('Para guardar el nombre hace falta JavaScript.'));
 });
 
 test('Seguridad: /perfil de una cuenta premium muestra su plan y la fecha de fin en ISO 8601', async () => {

@@ -5,6 +5,7 @@ import {
   currentPasswordProblem,
   displayNameProblem,
   failureOutcome,
+  initials,
   passwordProblem,
 } from '../utils/validate.js';
 
@@ -13,16 +14,6 @@ import {
 // nombre: la cabecera de la página, el avatar y la cabecera del sitio.
 
 const dateFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' });
-
-// D17: iniciales decorativas. Duplicado explícito de initials() en server/src/modules/users/users.service.ts.
-function initials(displayName: string): string {
-  return displayName
-    .split(/\s+/u)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => [...word][0]!.toLocaleUpperCase('es'))
-    .join('');
-}
 
 // Fin del periodo Premium: el servidor deja la fecha en ISO (sin JS se lee así) y aquí se formatea en local.
 const premiumUntil = document.querySelector<HTMLElement>('[data-premium-until]');
@@ -44,6 +35,8 @@ const profileForm = document.querySelector<HTMLFormElement>('#profile-form');
 const nameInput = document.querySelector<HTMLInputElement>('#profile-display-name');
 if (profileForm && nameInput) {
   const setStatus = statusOf(profileForm);
+  // El botón llega desactivado del HTML: sin JS no hay forma de enviar un PATCH.
+  for (const button of profileForm.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
   bindForm(profileForm, { displayName: displayNameProblem }, async (values) => {
     setStatus('');
     const result = await updateProfile(values['displayName'] ?? '');

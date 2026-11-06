@@ -31,12 +31,14 @@ export function emailProblem(value: string): string | null {
   return null;
 }
 
+// RN-12 y la regla común de textos: sin caracteres de control (controlProblem, más abajo).
 export function displayNameProblem(value: string): string | null {
-  const length = chars(value.trim());
+  const name = value.trim();
+  const length = chars(name);
   if (length < DISPLAY_NAME_MIN_CHARS || length > DISPLAY_NAME_MAX_CHARS) {
     return `El nombre debe tener de ${DISPLAY_NAME_MIN_CHARS} a ${DISPLAY_NAME_MAX_CHARS} caracteres`;
   }
-  return null;
+  return controlProblem(name);
 }
 
 // RN-12, mismos mensajes que passwordProblem del servidor.
@@ -83,18 +85,32 @@ export function normalizeText(value: string, multiline = false): string {
 const CONTROL = /\p{Cc}/u;
 const CONTROL_EXCEPT_NEWLINE = /[^\P{Cc}\n]/u;
 
+// Mismo mensaje que controlProblem del servidor. Recibe el valor ya normalizado.
+export function controlProblem(value: string, multiline = false): string | null {
+  return (multiline ? CONTROL_EXCEPT_NEWLINE : CONTROL).test(value) ? 'Contiene caracteres no válidos' : null;
+}
+
 // Mismos mensajes que textProblem del servidor. Recibe el valor sin normalizar.
 export function textProblem(raw: string, rule: TextRule): string | null {
   const value = normalizeText(raw, rule.multiline);
   const length = chars(value);
   if (length < rule.min) return rule.min === 1 ? REQUIRED : `Debe tener al menos ${rule.min} caracteres`;
   if (length > rule.max) return `No puede pasar de ${rule.max} caracteres`;
-  if ((rule.multiline ? CONTROL_EXCEPT_NEWLINE : CONTROL).test(value)) return 'Contiene caracteres no válidos';
-  return null;
+  return controlProblem(value, rule.multiline);
 }
 
 // RN-11: de 1 a 500 caracteres, con saltos de línea.
 export const commentProblem = (value: string) => textProblem(value, { min: 1, max: COMMENT_BODY_MAX, multiline: true });
+
+// D17: iniciales decorativas del avatar del perfil. Mismo resultado que initials() de server/src/utils/text.ts.
+export function initials(displayName: string): string {
+  return displayName
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => [...word][0]!.toLocaleUpperCase('es'))
+    .join('');
+}
 
 // Contador del campo: los caracteres que contará el servidor (puntos de código, ya normalizado).
 export const textLength = (value: string, multiline = false) => chars(normalizeText(value, multiline));
@@ -176,11 +192,17 @@ function showFieldErrors(form: HTMLFormElement, errors: Readonly<Record<string, 
   return Object.keys(errors).filter((name) => !shown.has(name));
 }
 
-function showFormError(form: HTMLFormElement, message: string): void {
+// `focus`: tras un error sin campos (429, 500, red…), el foco va al mensaje. Si no, se quedaría en el botón,
+// que está desactivado durante el envío, y el navegador lo dejaría en <body>.
+function showFormError(form: HTMLFormElement, message: string, focus = false): void {
   const error = form.querySelector<HTMLElement>('[data-form-error]');
   if (!error) return;
   error.textContent = message; // role="alert": se anuncia al aparecer
   error.hidden = message === '';
+  if (focus && !error.hidden) {
+    error.tabIndex = -1; // enfocable por código, fuera del orden del tabulador
+    error.focus();
+  }
 }
 
 // Valida con `rules` al enviar, desactiva el botón durante el envío y pinta los errores del servidor
@@ -219,9 +241,11 @@ export function bindForm(
     try {
       const outcome = await onSubmit(values);
       if (!outcome.ok) {
-        const unknown = showFieldErrors(form, outcome.fields ?? {});
-        const extra = unknown.map((name) => outcome.fields?.[name]).filter(Boolean);
-        showFormError(form, [outcome.message, ...extra].join(' '));
+        const fields = outcome.fields ?? {};
+        const unknown = showFieldErrors(form, fields);
+        const extra = unknown.map((name) => fields[name]).filter(Boolean);
+        // Si ningún campo recibió su error (y el foco), el foco va al mensaje del formulario.
+        showFormError(form, [outcome.message, ...extra].join(' '), unknown.length === Object.keys(fields).length);
       }
     } finally {
       if (submit) submit.disabled = false;

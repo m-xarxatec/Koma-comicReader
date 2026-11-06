@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PASSWORD_MAX_BYTES, passwordProblem } from '../../utils/password.js';
+import { controlProblem } from '../../utils/text.js';
 
 // RN-12. zod es la fuente de verdad; el cliente duplica estas constantes de forma explícita.
 export const EMAIL_MAX_CHARS = 254;
@@ -20,12 +21,18 @@ const email = z
   );
 
 // Caracteres contados como puntos de código, igual que la contraseña (RN-12). El perfil (PATCH /api/me)
-// usa la misma regla que el registro (contrato del bloque 3).
+// usa la misma regla que el registro (contrato del bloque 3). Sin caracteres de control (regla común de textos,
+// utils/text.ts): \u0000 no cabe en un TEXT de PostgreSQL y los demás no se ven.
 export const displayName = z
   .string(required)
   .trim()
-  .refine((value) => [...value].length >= DISPLAY_NAME_MIN_CHARS && [...value].length <= DISPLAY_NAME_MAX_CHARS, {
-    error: `El nombre debe tener de ${DISPLAY_NAME_MIN_CHARS} a ${DISPLAY_NAME_MAX_CHARS} caracteres`,
+  .superRefine((value, ctx) => {
+    const length = [...value].length;
+    const problem =
+      length < DISPLAY_NAME_MIN_CHARS || length > DISPLAY_NAME_MAX_CHARS
+        ? `El nombre debe tener de ${DISPLAY_NAME_MIN_CHARS} a ${DISPLAY_NAME_MAX_CHARS} caracteres`
+        : controlProblem(value);
+    if (problem) ctx.addIssue({ code: 'custom', message: problem });
   });
 
 // Registro: la regla completa de RN-12, en su única función del servidor.

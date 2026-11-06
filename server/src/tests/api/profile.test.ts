@@ -97,6 +97,23 @@ test('RN-12: el nombre cuenta de 3 a 30 puntos de código; fuera de rango o ause
   assert.equal((await storedUser(user.id)).display_name, 'abc');
 });
 
+test('Seguridad: el nombre visible no admite caracteres de control, ni en el perfil ni en el registro', async () => {
+  const user = await createAccount();
+  for (const displayName of ['Ana\u0000', 'An\u0007a', 'Ana\nLópez', 'Ana\u007f']) {
+    const body = await assertError(await patchMe(user, { displayName }), 400, 'VALIDATION_ERROR', 'displayName');
+    assert.equal(body.fields?.['displayName'], 'Contiene caracteres no válidos', JSON.stringify(displayName));
+    // Un 400 de validación no cuenta para el límite de registro (RN-13) ni crea la cuenta.
+    const email = `control-${RUN}-${users}@perfil.test`;
+    const register = await api(srv, 'POST', '/api/auth/register', { body: { email, password: 'una-contraseña-larga', displayName } });
+    const registerBody = await assertError(register, 400, 'VALIDATION_ERROR', 'displayName');
+    assert.equal(registerBody.fields?.['displayName'], 'Contiene caracteres no válidos');
+  }
+  assert.equal((await storedUser(user.id)).display_name, `Perfil ${RUN}`);
+  // Los espacios y tabuladores de los extremos se recortan antes de comprobar.
+  assert.equal((await patchMe(user, { displayName: '\tAna López ' })).status, 200);
+  assert.equal((await storedUser(user.id)).display_name, 'Ana López');
+});
+
 test('Seguridad: el correo no se edita desde PATCH /api/me', async () => {
   const user = await createAccount();
   const res = await patchMe(user, { displayName: 'Con Correo', email: 'otro@perfil.test' });

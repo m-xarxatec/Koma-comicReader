@@ -10,7 +10,7 @@ import { commentBody } from '../../modules/comments/comments.schema.js';
 import { profileBody } from '../../modules/users/users.schema.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
-import { normalizeText, textProblem } from '../../utils/text.js';
+import { initials as serverInitials, normalizeText, textProblem } from '../../utils/text.js';
 
 // El cliente duplica de forma explícita las reglas del servidor (no hay bundler: zod no llega al navegador).
 // Este test carga el JS compilado del cliente (client/dist, lo genera `tsc -b`) y le pasa los mismos casos.
@@ -23,6 +23,7 @@ interface ClientValidate {
   currentPasswordProblem: Problem;
   passwordConfirmProblem: (value: string, values: Readonly<Record<string, string>>) => string | null;
   confirmationOf: (field: string) => (value: string, values: Readonly<Record<string, string>>) => string | null;
+  initials: (displayName: string) => string;
 }
 interface ClientRedirect {
   safeNext: (value: unknown) => string;
@@ -100,10 +101,30 @@ test('RN-12: el cliente acepta y rechaza las mismas contraseñas del perfil que 
 });
 
 test('RN-12: el nombre del perfil (PATCH /api/me) sigue la misma regla que el del registro', () => {
-  const cases = ['Al', 'Ana', '  Ana  ', 'a'.repeat(30), 'a'.repeat(31), '🙂'.repeat(30), '🙂'.repeat(31)];
+  const cases = ['Al', 'Ana', '  Ana  ', 'a'.repeat(30), 'a'.repeat(31), '🙂'.repeat(30), '🙂'.repeat(31), 'An\u0000a', 'An\u0007a'];
   for (const value of cases) {
     assert.equal(client.displayNameProblem(value) === null, profileBody.shape.displayName.safeParse(value).success, JSON.stringify(value));
   }
+});
+
+test('Seguridad: el cliente rechaza los mismos caracteres de control en el nombre visible que el servidor, con su mensaje', () => {
+  const cases = ['Ana\u0000', '\u0000Ana', 'An\u0007a', 'Ana\nLópez', 'Ana\tLópez', 'Ana\u007f', 'Ana\u0085x', '  Ana\t ', 'Ana López', 'Zoë 🙂'];
+  for (const value of cases) {
+    for (const schema of [registerBody.shape.displayName, profileBody.shape.displayName]) {
+      const server = schema.safeParse(value);
+      const message = server.success ? null : server.error.issues[0]!.message;
+      assert.equal(client.displayNameProblem(value), message, JSON.stringify(value));
+    }
+  }
+  assert.equal(client.displayNameProblem('An\u0000a'), 'Contiene caracteres no válidos');
+  assert.equal(client.displayNameProblem('  Ana\t '), null, 'los extremos se recortan antes de comprobar');
+});
+
+test('Seguridad: initials() da lo mismo en el cliente y en el servidor (avatar del perfil, D17)', () => {
+  const cases = ['Ana', 'ana lópez', '  Ana   María  López ', 'élan vital', '🙂 Feliz', 'x', '<img src=x>', 'ßeta ǆungla', 'İzmir', ''];
+  for (const value of cases) assert.equal(client.initials(value), serverInitials(value), JSON.stringify(value));
+  assert.equal(serverInitials('ana lópez'), 'AL');
+  assert.equal(serverInitials('🙂 Feliz'), '🙂F');
 });
 
 // --- Catálogo (CU-01): la home valida q y tags antes de pedir /api/comics ---
