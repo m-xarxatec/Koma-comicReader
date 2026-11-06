@@ -289,4 +289,43 @@ test('Seguridad: /autor sirve author.html al autor, con un solo h1, sin marcador
   // D18: capítulos en <table> con <caption> y <th scope>.
   assert.match(html, /<caption class="chapter-table__caption"/);
   assert.equal(html.match(/<th class="chapter-table__head" scope="col">/g)?.length, 6);
+  // "Nueva obra" abre su propia vista (?vista=nueva-obra): el formulario llega oculto y no está en el estudio.
+  assert.ok(html.includes('href="/autor?vista=nueva-obra"'), 'botón "+ Nueva obra"');
+  assert.match(html, /<section id="crear-obra" class="[^"]*"[^>]* hidden>/);
+  const studio = html.slice(html.indexOf('id="studio-view"'), html.indexOf('id="crear-obra"'));
+  assert.ok(!studio.includes('id="comic-form"'), 'el formulario de nueva obra no está en la vista del estudio');
+  assert.ok(html.includes('id="obra-new-chapter" href="#nuevo-capitulo"'), '"+ Nuevo capítulo" en la obra abierta');
+});
+
+// ── /crear ("Crear" de la navegación) ─────────────────────────────────────────
+
+test('Seguridad: sin sesión, /crear redirige con 302 a /entrar con next=/crear', async () => {
+  const res = await get('/crear');
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('location'), '/entrar?next=%2Fcrear');
+});
+
+test('Seguridad: /crear lleva al autor a /autor con 302', async () => {
+  const res = await get('/crear', await pageUser('Autora', 'author'));
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('location'), '/autor');
+});
+
+test('Seguridad: /crear sirve "¿Aún no eres creador?" a quien no es autor (un lector o un admin), sin formulario ni estudio', async () => {
+  for (const kind of ['reader', 'admin'] as const) {
+    const res = await get('/crear', await pageUser(`Usuaria ${kind}`, kind));
+    const html = await res.text();
+    assert.equal(res.status, 200, kind);
+    assert.equal(res.headers.get('cache-control'), 'no-store', kind);
+    assert.equal(title(html), '¿Aún no eres creador? · Koma', kind);
+    assert.deepEqual(h1s(html), ['¿Aún no eres creador?'], kind);
+    assert.ok(!html.includes('{{'), `${kind}: sin marcadores sin rellenar`);
+    assert.deepEqual(html.match(/<form class="[^"]*"/g), ['<form class="site-search"'], `${kind}: solo informa; el único formulario es el buscador de la cabecera`);
+    assert.ok(!html.includes('id="comic-form"'), `${kind}: no recibe el estudio`);
+    assert.ok(html.includes('lo activa un administrador'), kind);
+    // Un admin nunca es autor: a él no se le promete que «Crear» le llevará al estudio.
+    assert.equal(html.includes('te llevará directamente a tu estudio'), kind === 'reader', kind);
+    // "Crear" marcado como página actual en la cabecera y en la navegación móvil.
+    assert.equal(html.match(/href="\/crear" aria-current="page"/g)?.length, 2, kind);
+  }
 });

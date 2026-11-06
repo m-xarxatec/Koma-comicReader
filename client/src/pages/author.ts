@@ -17,8 +17,9 @@ import {
 } from '../utils/validate.js';
 
 // Estudio del autor (/autor; CU-28 a CU-30, D18). El servidor ya comprobó la sesión y el rol de autor. La obra y el
-// capítulo abiertos van en ?obra=<slug>&capitulo=<n>: los enlaces navegan de verdad y lo que cambia aquí (crear,
-// retirar) actualiza la URL con history.pushState. Todo dato del autor se pinta con textContent; las peticiones van
+// capítulo abiertos van en ?obra=<slug>&capitulo=<n>, y la vista de nueva obra en ?vista=nueva-obra (sustituye al
+// estudio): los enlaces navegan de verdad y lo que cambia aquí (crear, retirar) actualiza la URL con
+// history.pushState. Todo dato del autor se pinta con textContent; las peticiones van
 // por api.ts y la API vuelve a comprobar el rol y la propiedad en cada una.
 
 // --- Duplicado explícito del contrato del bloque 3 (server/src/modules/comics/comics.service.ts y
@@ -124,6 +125,10 @@ const studioUrl = (slug?: string, number?: number) => {
   const query = params.toString();
   return `/autor${query ? `?${query}` : ''}${number !== undefined ? '#capitulo' : slug ? '#obra' : '#mis-obras'}`;
 };
+// La obra abierta con el foco en su formulario de nuevo capítulo (D8: no en una rechazada).
+const newChapterUrl = (slug: string) => `/autor?${new URLSearchParams({ obra: slug })}#nuevo-capitulo`;
+const NEW_COMIC_VIEW = 'nueva-obra';
+const isNewComicView = () => new URLSearchParams(location.search).get('vista') === NEW_COMIC_VIEW;
 
 function imageForm(file: File): FormData {
   const form = new FormData();
@@ -194,6 +199,7 @@ function workTile(comic: AuthorComicDto): HTMLLIElement {
   // D10: la ficha de una obra en revisión solo la ven su autor y el admin.
   if (comic.status === 'pending') action('Vista previa', `/obra/${encodeURIComponent(comic.slug)}`, `Vista previa de la ficha de ${comic.title}`);
   if (comic.status === 'rejected') action('Ver motivo', '#revisiones', `Ver el motivo del rechazo de ${comic.title}`);
+  if (comic.status !== 'rejected') action('+ Nuevo capítulo', newChapterUrl(comic.slug), `Nuevo capítulo de ${comic.title}`);
   action('Gestionar →', studioUrl(comic.slug), `Gestionar ${comic.title}`, 'text-link');
   if (comic.status === 'pending') action('Revisiones →', '#revisiones', `Revisiones de ${comic.title}`, 'text-link');
   body.append(top, el('h3', 'work-tile__title', comic.title), el('p', 'work-tile__tags', comic.tags.map((tag) => tag.name).join(' · ')), actions);
@@ -247,7 +253,7 @@ function renderReviews(): void {
 function renderWorks(): void {
   worksList.replaceChildren(...store.comics.map(workTile));
   byId('works-count').textContent = plural(store.comics.length, 'obra', 'obras');
-  worksMessage.textContent = store.comics.length === 0 ? 'Todavía no has creado ninguna obra. Empieza con «Crear obra».' : '';
+  worksMessage.textContent = store.comics.length === 0 ? 'Todavía no has creado ninguna obra. Empieza con «Nueva obra».' : '';
   renderMetrics();
   renderReviews();
 }
@@ -393,6 +399,7 @@ const chaptersEmpty = byId<HTMLElement>('chapters-empty');
 const chapterForm = byId<HTMLFormElement>('chapter-form');
 const chapterNumber = byId<HTMLInputElement>('chapter-number');
 const newChapter = byId<HTMLElement>('nuevo-capitulo');
+const comicNewChapter = byId<HTMLAnchorElement>('obra-new-chapter');
 
 const currentSlug = () => new URLSearchParams(location.search).get('obra');
 const currentComic = () => store.comics.find((comic) => comic.slug === currentSlug()) ?? null;
@@ -448,6 +455,7 @@ function renderComic(): void {
   comicPublic.href = `/obra/${encodeURIComponent(comic.slug)}`;
   comicCoverControl.hidden = rejected; // D8
   newChapter.hidden = rejected;
+  comicNewChapter.hidden = rejected;
   editComic.hidden = rejected;
   if (store.editing !== comic.slug) fillEditForm(comic); // no pisa lo que se está escribiendo al repintar
 
@@ -877,7 +885,29 @@ interface RouteOptions {
   chapterMessage?: string;
 }
 
+const studioView = byId<HTMLElement>('studio-view');
+const createView = byId<HTMLElement>('crear-obra');
+const newComicLink = byId<HTMLAnchorElement>('new-comic-link');
+
+// Lleva el foco al número del formulario de nuevo capítulo (al llegar con #nuevo-capitulo desde una tarjeta o desde
+// "+ Nuevo capítulo" de la obra abierta).
+function focusNewChapter(): void {
+  if (location.hash !== '#nuevo-capitulo' || newChapter.hidden || comicSection.hidden || comicBody.hidden) return;
+  newChapter.scrollIntoView({ block: 'start' });
+  chapterNumber.focus({ preventScroll: true });
+}
+
 async function route(options: RouteOptions = {}): Promise<void> {
+  // Vista de nueva obra: solo el formulario; el estudio (obras, revisiones, obra y capítulo abiertos) se oculta.
+  const creating = isNewComicView();
+  studioView.hidden = creating;
+  createView.hidden = !creating;
+  newComicLink.hidden = creating;
+  if (creating) {
+    if (options.focus) focusHeading('crear-obra-title');
+    return;
+  }
+
   const params = new URLSearchParams(location.search);
   const slug = params.get('obra');
   const rawNumber = params.get('capitulo');
@@ -902,10 +932,19 @@ async function route(options: RouteOptions = {}): Promise<void> {
       await loadChapter(slug, number);
     }
   }
-  if (options.focus) focusHeading(showChapter ? 'capitulo-title' : slug !== null ? 'obra-title' : 'mis-obras-title');
+  if (location.hash === '#nuevo-capitulo' && !showChapter) focusNewChapter();
+  else if (options.focus) focusHeading(showChapter ? 'capitulo-title' : slug !== null ? 'obra-title' : 'mis-obras-title');
 }
 
-window.addEventListener('popstate', () => void route());
+// Atrás y Adelante: si cambia de vista (estudio ↔ nueva obra), lo que tenía el foco queda oculto; se lleva al título
+// de la vista visible.
+window.addEventListener('popstate', () => {
+  const changedView = studioView.hidden !== isNewComicView();
+  void route({ focus: changedView });
+});
+window.addEventListener('hashchange', focusNewChapter);
+// Si la URL ya acaba en #nuevo-capitulo, el enlace no lanza hashchange: el foco se lleva igual.
+comicNewChapter.addEventListener('click', () => queueMicrotask(focusNewChapter));
 
 // --- Arranque ---
 
@@ -921,4 +960,5 @@ if (tagsResult.ok) {
   tagChoices.textContent = `No se pudieron cargar las etiquetas. ${errorText(tagsResult)}`;
   editTagChoices.textContent = tagChoices.textContent;
 }
-if (loaded) await route({ focus: location.hash === '#obra' || location.hash === '#capitulo' });
+// La vista de nueva obra no depende de la lista de obras: se abre aunque esta no haya cargado.
+if (loaded || isNewComicView()) await route({ focus: isNewComicView() || location.hash === '#obra' || location.hash === '#capitulo' });

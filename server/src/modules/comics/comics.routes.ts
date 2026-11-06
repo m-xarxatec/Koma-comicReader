@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { uploadRateLimit } from '../../middlewares/rate-limit.js';
-import { requireAuth, requireAuthor, requirePageAuthor } from '../../middlewares/roles.js';
+import { requireAuth, requireAuthor, requirePageAuth, requirePageAuthor } from '../../middlewares/roles.js';
 import { uploadImage } from '../../middlewares/upload.js';
 import { validate } from '../../middlewares/validate.js';
 import * as controller from './comics.controller.js';
@@ -44,4 +44,7 @@ comicsRouter.put(
 export const comicsPagesRouter = Router();
 
 comicsPagesRouter.get('/autor', requirePageAuthor, controller.authorPage);
+// "Crear" de la navegación: sin sesión, 302 al login con next=/crear (al volver se decide de nuevo); el autor va a
+// /autor y quien no lo es (también el admin) ve la página informativa.
+comicsPagesRouter.get('/crear', requirePageAuth, controller.createPage);
 comicsPagesRouter.get('/obra/:slug', validate({ params: comicParams }, { notFound: ['params'] }), controller.comicPage);

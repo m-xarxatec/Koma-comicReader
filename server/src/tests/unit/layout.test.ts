@@ -37,6 +37,8 @@ const VALUES = {
   premiumUntilDate: '',
   // author.html (authorPage en comics.controller.ts)
   authorCredit: 'Ana',
+  // become-author.html (createPage en comics.controller.ts)
+  howTo: 'El rol de autor lo activa un administrador.',
 };
 const count = (html: string, text: string) => html.split(text).length - 1;
 
@@ -100,6 +102,16 @@ test('Seguridad: aria-current marca solo la página de la ruta, en la cabecera y
   for (const path of ['', '/entrar', '/no-existe', '/obra/x']) {
     assert.equal(count(renderTemplate(html, {}, path), 'aria-current'), 0, path);
   }
+  // "Crear" lleva a /crear, y está activo en /crear y en el estudio (/autor).
+  for (const path of ['/crear', '/autor']) {
+    assert.equal(count(renderTemplate(html, {}, path), 'href="/crear" aria-current="page"'), 2, path);
+  }
+});
+
+test('Seguridad: "Crear" sale para todos en la cabecera y en la navegación móvil, sin depender de JS', () => {
+  const rendered = renderTemplate(`<head>${HEAD_MARKER}</head><body>${HEADER_MARKER}${FOOTER_MARKER}</body>`, {}, '/');
+  assert.equal(count(rendered, 'href="/crear"'), 2);
+  assert.equal(count(rendered, '#icon-pencil'), 2);
 });
 
 // Excepción a "todo valor visual en variables.css": theme-color va en un <meta> de layout.ts y repite el

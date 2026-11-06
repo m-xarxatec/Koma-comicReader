@@ -24,10 +24,13 @@ interface NavItem {
   isCurrent: (path: string) => boolean;
 }
 
-// Solo rutas del plan que ya existen. Explorar lleva al catálogo de la portada (no hay /explorar).
+// Solo rutas del plan que ya existen. Explorar lleva al catálogo de la portada (no hay /explorar). "Crear" sale para
+// todos y lo resuelve el servidor en /crear: el autor va a /autor, quien no lo es ve "¿Aún no eres creador?" y el
+// invitado pasa antes por el login. Funciona sin JS.
 const NAV: readonly NavItem[] = [
   { href: '/', label: 'Inicio', icon: 'home', isCurrent: (path) => path === '/' },
   { href: '/#catalogo', label: 'Explorar', icon: 'compass', isCurrent: () => false },
+  { href: '/crear', label: 'Crear', icon: 'pencil', isCurrent: (path) => path === '/crear' || path === '/autor' },
 ];
 
 const icon = (name: string, className = 'icon') =>

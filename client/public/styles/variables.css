@@ -403,6 +403,14 @@
   --comments-feedback-min-height: 1.2em; /* reserva la línea del aviso: el panel no salta al aparecer */
 }
 
+/* ¿Aún no eres creador? (/crear sin rol de autor): una tarjeta informativa centrada. */
+:root {
+  --become-author-width: 44rem;
+  --become-author-padding: var(--space-8) var(--space-10);
+  --become-author-gap: var(--space-4);
+  --become-author-section-margin: var(--space-4); /* sobre cada apartado y sobre las acciones */
+}
+
 /* Perfil (/perfil, bloque 3): valores de la maqueta (perfil/index.html y account.css), salvo el relleno
    inferior (7rem en la maqueta): aquí basta 2.5rem, porque el pie ya deja --mobile-nav-clearance. */
 :root {
@@ -481,7 +489,7 @@
   --letter-spacing-author-heading: -0.025em;
   --author-works-gap: 0.8rem;
   --author-works-gap-wide: 1rem;
-  --author-columns-gap: 1rem;
+  --author-create-width: 48rem;
   --author-actions-gap: 0.7rem;
   --author-reviews-gap: 0.9rem;
 

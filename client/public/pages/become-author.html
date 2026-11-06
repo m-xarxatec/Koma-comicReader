@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>¿Aún no eres creador? · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/panel-card.css">
+  <link rel="stylesheet" href="/styles/components/become-author.css">
+</head>
+<body>
+  <!-- @header -->
+  <!-- /crear para quien tiene sesión y no es autor (también el admin, con su propio texto en howTo). Solo informa:
+       el rol de autor lo activa un administrador y aquí no hay formulario ni petición. Sin script propio: la cabecera
+       ya trae el suyo. -->
+  <main id="contenido" class="become-author container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Crear</span>
+    </nav>
+
+    <section class="panel-card become-author__card" aria-labelledby="become-author-title">
+      <p class="eyebrow panel-card__eyebrow">Publicar en Koma</p>
+      <h1 class="become-author__title" id="become-author-title">¿Aún no eres creador?</h1>
+      <p class="become-author__lead">Para publicar tus cómics en Koma, tu cuenta necesita el rol de autor.</p>
+
+      <h2 class="panel-card__title become-author__subtitle">Qué puedes hacer con el rol de autor</h2>
+      <ul class="become-author__list">
+        <li>Crear obras con su sinopsis, su licencia, sus etiquetas y su portada.</li>
+        <li>Preparar capítulos como borrador y subir sus viñetas en orden de lectura.</li>
+        <li>Enviarlos a revisión: un administrador los aprueba antes de que sean públicos.</li>
+      </ul>
+
+      <h2 class="panel-card__title become-author__subtitle">Cómo se consigue</h2>
+      <p class="become-author__text">{{howTo}}</p>
+
+      <div class="become-author__actions">
+        <a class="button button--primary" href="/#catalogo">Explorar el catálogo</a>
+        <a class="button button--outline" href="/perfil">Ver mi perfil</a>
+      </div>
+    </section>
+  </main>
+  <!-- @footer -->
+</body>
+</html>

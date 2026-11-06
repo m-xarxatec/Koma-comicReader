@@ -1,0 +1,46 @@
+/* ¿Aún no eres creador? (pages/become-author.html): tarjeta informativa centrada, sin formulario. */
+.become-author {
+  padding-block: var(--become-author-padding);
+}
+
+.become-author__card {
+  display: grid;
+  gap: var(--become-author-gap);
+  width: min(100%, var(--become-author-width));
+  margin-inline: auto;
+}
+
+.become-author__title {
+  margin: 0;
+  font-size: var(--font-size-author-title);
+  line-height: var(--line-height-author-title);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.become-author__lead {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* El tamaño y el espaciado vienen de .panel-card__title; aquí solo el aire sobre cada apartado. */
+.become-author__subtitle {
+  margin-top: var(--become-author-section-margin);
+}
+
+.become-author__list,
+.become-author__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+}
+
+.become-author__list {
+  padding-left: var(--space-5);
+}
+
+.become-author__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--become-author-section-margin);
+}

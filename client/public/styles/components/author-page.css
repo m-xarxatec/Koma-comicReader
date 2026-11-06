@@ -150,10 +150,18 @@
   list-style: none;
 }
 
-.author-page__columns {
-  display: grid;
-  gap: var(--author-columns-gap);
+/* Revisiones: tarjeta a todo el ancho debajo de "Mis obras". */
+.author-page__panel {
   margin-top: var(--author-section-margin);
+}
+
+/* Vista de nueva obra (?vista=nueva-obra): sustituye al estudio; el formulario no ocupa todo el ancho. */
+.author-page__create {
+  width: min(100%, var(--author-create-width));
+}
+
+.author-page__back {
+  margin-bottom: var(--space-2);
 }
 
 .author-page__actions {
@@ -204,10 +212,5 @@
   .author-page__works {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--author-works-gap-wide);
-  }
-
-  .author-page__columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
   }
 }

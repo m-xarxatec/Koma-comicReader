@@ -631,3 +631,23 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Tests:** `edit-comic.test.ts` (7): solo lo cambiado en la fila y en la auditoría, slug intacto y `authorshipDeclared` ignorado; sin cambios, sin auditoría; D14; una publicada sigue publicada; validación como en el alta; 403 (otro autor, admin, lector), 401, 404, 409 y 410; CSRF. `pages.test.ts`: el formulario de edición sin `action`.
 - **Comprobación (IA):** typecheck, 124 unitarios y 214 de API.
 - **Pendiente (desarrollador), en el navegador:** editar una obra pending y una publicada (casilla +18 desactivada), cambiar etiquetas y advertencia, guardar sin cambios, y ver `comic.update` en la auditoría.
+
+### 2026-11-06 · Bloque 3 · Arreglos de /autor y "Crear" (tras la prueba en el navegador)
+- **Pedido del desarrollador:** el "Crear" de la navegación inferior no funcionaba. "Crear" pasa a llevar al autor a `/autor`; a quien tiene sesión y no es autor, a una página informativa nueva ("¿Aún no eres creador?": el rol lo activa el admin, sin formulario); al invitado, al login y después a la misma lógica. En el estudio, "Nueva obra" abre su propia vista en lugar de un formulario fijo en el panel, y cada obra tiene un "Nuevo capítulo" directo.
+- **Causa:** "Crear" solo lo añadía `header.ts` con JS y solo para autores (D16). Un lector no lo veía, y el acceso rápido "Crear" de la portada era un "Próximamente" sin enlace.
+- **Resultado:**
+  - `GET /crear` (`comicsPagesRouter`): `requirePageAuth` (sin sesión, 302 a `/entrar?next=%2Fcrear`; al volver del login se decide de nuevo), autor → 302 a `/autor`, y quien no lo es (también el admin) → 200 con `become-author.html`. Sin JS propio: solo informa.
+  - "Crear" (`/crear`, `icon-pencil`) entra en `NAV` de `layout.ts`: sale para todos en la cabecera y en la navegación móvil, funciona sin JS y lleva `aria-current` en `/crear` y en `/autor`. `header.ts` ya no lo inyecta. El acceso rápido "Crear" de la portada enlaza a `/crear`.
+  - Estudio: "+ Nueva obra" (arriba a la derecha) abre `?vista=nueva-obra`, que oculta el estudio (`#studio-view`) y muestra solo el formulario, con "← Volver al estudio". Al crear la obra se abre esa obra (`?obra=<slug>`) y la vista se cierra. Fuera el enlace "Crear obra" de la barra de secciones. "Revisiones y rechazos" ocupa todo el ancho (fuera `.author-page__columns`).
+  - "+ Nuevo capítulo" en cada tarjeta (no en una rechazada, D8) → `/autor?obra=<slug>#nuevo-capitulo`, con el foco en el número. También en la barra de la obra abierta. El formulario de nuevo capítulo pasa delante de "Datos de la obra".
+- **Tests:** `pages.test.ts`: `/crear` sin sesión (302 con `next`), autor (302 a `/autor`) y lector y admin (200, título, un solo h1, sin más formulario que el buscador, `aria-current` en las dos navegaciones), y en `/autor` la vista de nueva obra oculta y fuera del estudio, más el "+ Nuevo capítulo" de la obra abierta. `layout.test.ts`: "Crear" en las dos navegaciones para todos y activo en `/crear` y `/autor`.
+- **Revisión del agente `frontend`:** APTO CON OBSERVACIONES (9, ninguna bloqueante). Corregidos:
+  - el foco al cambiar de vista con Atrás y Adelante (va al título de la vista visible);
+  - el foco en "Número" al pulsar "+ Nuevo capítulo" cuando la URL ya acaba en `#nuevo-capitulo`;
+  - el admin ve su propio texto en "Cómo se consigue" (`howTo`), sin la promesa del estudio;
+  - el CSS duplicado: los `h2` y el antetítulo usan `panel-card__title` y `panel-card__eyebrow`, y `.author-page__back` solo pone el margen sobre `.text-link`;
+  - el token `--become-author-section-margin`;
+  - el sangrado de `#studio-view` y el ancho de un comentario.
+  Se queda la página sin `.ts` propio: solo informa y funciona sin JS (el comentario de la plantilla lo explica).
+- **Comprobación (IA):** typecheck, 125 unitarios y 217 de API. Con `curl` en local: `/crear` da 302 al login sin sesión, 302 a `/autor` con `author@` y 200 con la página informativa con `reader@`.
+- **Pendiente (desarrollador):** añadir `/crear` al mapa de rutas y a "Páginas" del contrato del bloque 3, y `?vista=nueva-obra` a la línea de D18. D16 cambia: "Crear" ya no es solo para autores. En el navegador, a 360 px y en escritorio, con teclado: "Crear" con invitado, lector y autor; "+ Nueva obra", crear y llegar a la obra; "+ Nuevo capítulo" desde una tarjeta y desde la obra abierta (foco en el número).
