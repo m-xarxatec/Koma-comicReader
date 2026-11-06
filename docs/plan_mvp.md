@@ -677,7 +677,7 @@ Comunidad y autor (CU-05, CU-06, CU-13, CU-23, CU-28 a CU-30; RN-05 a RN-07, RN-
 | --- | --- | --- | --- | --- | --- |
 | `GET /api/comics/:slug/chapters/:number/panels/:position/comments` | Público (D1) | Query: `page` (≥ 1) | 200 `{ comments: CommentDto[], page, pageSize, total }` | 400, 404, 410 | — |
 | `POST /api/comics/:slug/chapters/:number/panels/:position/comments` | `requireAuth` y poder leer el capítulo sin gastar saldo (D2) | `body` | 201 `{ comment: CommentDto }` | 400, 401, 403 `FORBIDDEN`, 404, 410, 429 | — (la tabla no tiene `comment.create`) |
-| `DELETE /api/comments/:id` | `requireAuth`; solo quien lo escribió (servicio) | — | 204 | 401, 403 `FORBIDDEN`, 404, 409 `CONFLICT` | `comment.delete_own` |
+| `DELETE /api/comments/:id` | `requireAuth`; solo quien lo escribió (servicio) | — | 204 | 401, 403 `FORBIDDEN`, 404, 409 `CONFLICT`, 410 `GONE` | `comment.delete_own` |
 
 ```ts
 interface CommentDto {
@@ -701,7 +701,7 @@ interface ReadingPanelDto {
 - **Viñeta:** la obra y el capítulo deben ser públicos (404 y 410, como la lectura) y `:position`, una viñeta existente (404). Los comentarios cuelgan de la viñeta: un capítulo de reemplazo empieza sin comentarios (riesgo aceptado).
 - **Lista (CU-05):** sin ocultos ni eliminados (un oculto no lo ve nadie, tampoco su autor), del más antiguo al más reciente (`created_at, id`), 50 por página (D4).
 - **Publicar (CU-13):** `body` de 1 a 500 caracteres (RN-11). Quien comenta debe poder leer el capítulo sin gastar nada: `chapterAccess(...)` = `free` (caps. 1–2, ya leído, premium, admin o su obra); si no, 403 `FORBIDDEN` (D2). Limitador de 5 / min por usuario después de `validate` y `requireAuth` (RN-13); cuenta cada intento validado.
-- **Borrar el propio:** el orden de comprobación es 404 (no existe u oculto, D15), 403 (ajeno) y 409 (ya eliminado, RN-11). Pone `deleted_at = now()`; la auditoría lleva `before { deletedAt: null }` y `after { deletedAt }`, sin el texto.
+- **Borrar el propio:** el orden de comprobación es 404 (no existe u oculto, D15), 403 (ajeno: no revela si se retiró), 410 (su obra o su capítulo se retiraron, RN-06, como el resto de lo retirado; sin cambios ni auditoría) y 409 (ya eliminado, RN-11). Pone `deleted_at = now()`; la auditoría lleva `before { deletedAt: null }` y `after { deletedAt }`, sin el texto.
 - **Moderación** (`comment.hide`, `comment.delete`): bloque 4.
 
 ### Compartir viñeta e iconos (CU-06; sin API)
@@ -790,7 +790,7 @@ interface AuthorChapterSummaryDto {
 | `POST /api/author/comics/:slug/chapters/:number/panels` | `requireAuthor` + dueño; limitador de subidas | `multipart/form-data`, campo `image` | 201 `{ panel: AuthorPanelDto }` | 400 (sin archivo; la imagen 61), 401, 403, 404, 409 (no es borrador), 410, 413 `FILE_TOO_LARGE`, 415 `UNSUPPORTED_FILE`, 429 | — |
 | `DELETE /api/author/comics/:slug/chapters/:number/panels/:position` | `requireAuthor` + dueño | — | 204 | 401, 403, 404, 409 (no es borrador), 410 | — |
 | `PATCH /api/author/comics/:slug/chapters/:number/panels/:position` | `requireAuthor` + dueño | `position` (nueva) | 200 `{ chapter: AuthorChapterDto }` | 400 (posición fuera de 1…n), 401, 403, 404, 409 (no es borrador), 410 | — |
-| `POST /api/author/comics/:slug/chapters/:number/submit` | `requireAuthor` + dueño | — | 200 `{ chapter: AuthorChapterDto }` | 400 (sin viñetas), 401, 403, 404, 409 (no es borrador), 410 | `chapter.submit` |
+| `POST /api/author/comics/:slug/chapters/:number/submit` | `requireAuthor` + dueño | — | 200 `{ chapter: AuthorChapterDto }` | 400 `VALIDATION_ERROR` sin `fields` (sin viñetas), 401, 403, 404, 409 (no es borrador), 410 | `chapter.submit` |
 | `POST /api/author/comics/:slug/chapters/:number/withdraw` | `requireAuthor` + dueño | — | 204 | 401, 403, 404, 410 | `chapter.withdraw` |
 
 ```ts
@@ -813,7 +813,7 @@ interface AuthorPanelDto {
   - Servicio: la firma de la cabecera debe ser JPEG, PNG o WebP (`utils/image.ts`; si no, 415 `UNSUPPORTED_FILE`), y de ella salen el ancho y el alto. Clave `UUID.ext` del servidor y `storage.put` desde el temporal, que se borra siempre (`finally`).
   - Con el capítulo bloqueado (`FOR UPDATE`): con 60 viñetas ya, 400; la posición nueva es `max + 1`. Si la transacción falla después de `put`, la imagen queda huérfana (riesgo aceptado de los borradores).
 - **Eliminar una viñeta (RN-05):** solo en `draft`. Borrado físico y recompactación con la restricción diferida (`modelo_datos.md`). La imagen se borra del almacenamiento después del `COMMIT`, con un método nuevo del driver, `remove(key)` (local: `unlink`; R2: `DeleteObject`). No hay acción de auditoría para las viñetas: el borrador nunca fue público.
-- **Enviar a revisión (RN-05):** de `draft`, con al menos una viñeta, a `pending`. Desde `pending` ya no se edita: se retira y se sube otro.
+- **Enviar a revisión (RN-05):** de `draft`, con al menos una viñeta, a `pending`. Sin viñetas, 400 `VALIDATION_ERROR` sin `fields`: el error es del capítulo, no de un campo del cuerpo (no lleva cuerpo). Desde `pending` ya no se edita: se retira y se sube otro.
 - **Retirar (CU-30):** desde `draft`, `pending` o `approved`, `deleted_at = now()`. Si estaba aprobado, el lector responde 410 y deja de salir en la ficha. El número queda libre.
 - **Reordenar viñetas (RN-05, D9):** solo en `draft`. Mueve la viñeta de `position` a la posición nueva y desplaza las intermedias, en una transacción con el capítulo bloqueado (`FOR UPDATE`) y la restricción diferida (`modelo_datos.md`). La misma posición responde 200 sin cambios. Sin auditoría, como el resto de operaciones del borrador. En `/autor`, los botones ↑↓ de la maqueta mueven una posición; el primero no sube y el último no baja (`disabled`), y el cambio se anuncia en una región `aria-live`.
 
@@ -821,6 +821,7 @@ interface AuthorPanelDto {
 
 - `GET /api/comics/:slug` y `/obra/:slug`: el autor dueño y el admin también ven la obra en `pending`. `ComicDto` gana `status`, y cada `ChapterSummaryDto` gana `status` y pasa a `publishedAt: string | null`. Para ellos, `chapters` incluye los capítulos vivos en `draft` y `pending` (con `access: 'free'`). Para los demás, nada cambia: todo es `approved`.
 - `POST /api/comics/:slug/chapters/:number/read` y `/leer/:slug/:numero`: el autor dueño y el admin leen también un capítulo `draft` o `pending` de una obra no retirada. No se escribe en `chapter_reads`, `reading_credits` ni en las estadísticas; `ads` y `balance` van a `null`, cada `comments` vale 0 y no se abre el panel de comentarios (solo se comenta en un capítulo `approved`). `prev` y `next` recorren los capítulos que esa persona puede ver.
+- `ReadingDto` gana `preview: boolean`: `true` solo en esa vista previa (capítulo `draft` o `pending`, u obra `pending`), y `false` en cualquier lectura normal, también la del admin o la del dueño en un capítulo aprobado. Con él, el cliente decide si avisa de la vista previa y si oculta los iconos de comentarios: `ads` y `balance` a `null` y los comentarios a 0 también salen para el admin en una lectura normal.
 
 ### Páginas
 

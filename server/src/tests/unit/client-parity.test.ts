@@ -33,6 +33,7 @@ interface ClientValidate {
   CHAPTER_TITLE_MAX: number;
   COMIC_TAGS_MAX: number;
   MAX_IMAGE_BYTES: number;
+  IMAGE_TOO_LARGE: string;
   MAX_PANELS_PER_CHAPTER: number;
   PG_MAX_INT: number;
   comicTitleProblem: Problem;
@@ -217,6 +218,8 @@ test('Seguridad: el cliente usa los mismos límites de obras, capítulos y subid
   assert.equal(client.CHAPTER_TITLE_MAX, limits.CHAPTER_TITLE_MAX);
   assert.equal(client.COMIC_TAGS_MAX, limits.COMIC_TAGS_MAX);
   assert.equal(client.MAX_IMAGE_BYTES, limits.MAX_IMAGE_BYTES);
+  // El aviso del cliente antes de subir es el mismo texto que el 413 FILE_TOO_LARGE de error-handler.ts.
+  assert.equal(client.IMAGE_TOO_LARGE, `La imagen no puede pasar de ${limits.MAX_IMAGE_BYTES / (1024 * 1024)} MB`);
   assert.equal(client.MAX_PANELS_PER_CHAPTER, limits.MAX_PANELS_PER_CHAPTER);
   assert.equal(client.PG_MAX_INT, limits.PG_MAX_INT);
 });

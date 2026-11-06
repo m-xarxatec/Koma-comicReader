@@ -189,6 +189,31 @@ test('RN-11: borrar el propio: 204 y auditoría sin el texto; otra vez, 409; el 
   assert.deepEqual(Object.keys(rows[0]!.after), ['deletedAt']);
 });
 
+test('RN-06: borrar el propio de un capítulo o una obra retirados da 410, sin cambios ni auditoría; el ajeno sigue en 403', async () => {
+  const later = await createComic({ name: 'comentarios-retirar-despues', chapters: [{ number: 1 }, { number: 2 }] });
+  const [ana, bea] = [await createUser('reader'), await createUser('reader')];
+  const inChapter = await created(await post(ana, 'En el capítulo 2', 2, 1, later.slug));
+  const inComic = await created(await post(ana, 'En el capítulo 1', 1, 1, later.slug));
+  const others = await created(await post(bea, 'De Bea', 1, 1, later.slug));
+  const del = (id: number, user: TestUser) => api(srv, 'DELETE', `/api/comments/${id}`, { cookie: user.cookie });
+  const pg = await db();
+
+  await pg.query('UPDATE chapters SET deleted_at = now() WHERE comic_id = $1 AND number = 2', [later.id]);
+  const gone = await del(inChapter.id, ana);
+  assert.equal(gone.status, 410);
+  assert.equal(((await gone.json()) as { code: string }).code, 'GONE');
+
+  await pg.query('UPDATE comics SET deleted_at = now() WHERE id = $1', [later.id]);
+  assert.equal((await del(inComic.id, ana)).status, 410);
+  assert.equal((await del(others.id, ana)).status, 403); // ajeno: no revela que se retiró
+
+  const ids = [inChapter.id, inComic.id, others.id];
+  const { rows } = await pg.query<{ deleted: number }>('SELECT count(*)::int AS deleted FROM comments WHERE id = ANY($1) AND deleted_at IS NOT NULL', [ids]);
+  assert.equal(rows[0]!.deleted, 0, 'ninguno se marca como eliminado');
+  const audit = await pg.query(`SELECT 1 FROM audit_log WHERE action = 'comment.delete_own' AND entity_id = ANY($1)`, [ids.map(String)]);
+  assert.equal(audit.rowCount, 0, 'sin auditoría');
+});
+
 test('RN-13: como mucho 5 comentarios por minuto y usuario; un 400 no cuenta', async () => {
   const reader = await createUser('reader');
   assert.equal((await post(reader, '')).status, 400);

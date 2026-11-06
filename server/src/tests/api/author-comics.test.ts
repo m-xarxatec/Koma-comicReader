@@ -286,7 +286,7 @@ test('Seguridad: el alta exige el Origin propio (CSRF)', async () => {
 
 // ── Lista ─────────────────────────────────────────────────────────────────────
 
-test('CU-28: la lista trae solo las obras del autor, sin las retiradas, de la más reciente a la más antigua', async () => {
+test('RN-07: la lista trae solo las obras del autor, sin las retiradas, de la más reciente a la más antigua', async () => {
   const author = await createUser('author');
   const other = await createUser('author');
   assert.deepEqual(await list(author), []);
@@ -298,7 +298,7 @@ test('CU-28: la lista trae solo las obras del autor, sin las retiradas, de la m�
   assert.deepEqual(comics.map((comic) => comic.slug), [second.slug, first.slug]);
 });
 
-test('CU-28: cada obra lleva sus capítulos por número, sin los retirados; los rechazados, con su motivo', async () => {
+test('RN-05: cada obra lleva sus capítulos por número, sin los retirados; los rechazados, con su motivo', async () => {
   const author = await createUser('author');
   const comic = await createComic({
     name: 'lista-capitulos',

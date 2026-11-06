@@ -8,7 +8,9 @@ import {
   comicTitleProblem,
   contentWarningProblem,
   failureOutcome,
+  IMAGE_TOO_LARGE,
   MAX_IMAGE_BYTES,
+  MAX_IMAGE_MB,
   MAX_PANELS_PER_CHAPTER,
   normalizeText,
   synopsisProblem,
@@ -335,7 +337,7 @@ const AUTHORSHIP_REQUIRED = 'Debes declarar que eres el autor de la obra o que t
 
 async function uploadCover(slug: string, file: File): Promise<ApiResult<{ comic: AuthorComicDto }>> {
   if (file.size > MAX_IMAGE_BYTES) {
-    return { ok: false, status: 413, error: { code: 'FILE_TOO_LARGE', message: 'La imagen no puede pasar de 5 MB', requestId: '' } };
+    return { ok: false, status: 413, error: { code: 'FILE_TOO_LARGE', message: IMAGE_TOO_LARGE, requestId: '' } };
   }
   return api.put<{ comic: AuthorComicDto }>(`${comicUrl(slug)}/cover`, imageForm(file));
 }
@@ -830,7 +832,7 @@ editorImages.addEventListener('change', async () => {
       break;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      problems.push(`${file.name}: pasa de 5 MB.`);
+      problems.push(`${file.name}: pasa de ${MAX_IMAGE_MB} MB.`);
       continue;
     }
     say(editorStatus, `Subiendo ${index + 1} de ${files.length}: ${file.name}…`);

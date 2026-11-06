@@ -172,7 +172,7 @@ test('Seguridad: obra inexistente 404, ajena 403, retirada 410; sin sesión 401 
   await assertError(await api(srv, 'GET', chapterUrl(comic.slug, '01'), { cookie: author.cookie }), 404, 'NOT_FOUND');
 });
 
-test('D8: en una obra rechazada no se crean capítulos ni se suben portada o viñetas (409); sí se consultan', async () => {
+test('RN-05: en una obra rechazada no se crean capítulos ni se suben portada o viñetas (409); sí se consultan', async () => {
   const { author, comic } = await authorWithComic();
   await (await db()).query(`UPDATE comics SET status = 'rejected', rejection_reason = 'Motivo' WHERE id = $1`, [comic.id]);
   await assertError(await createChapter(comic.slug, author, { number: 2 }), 409, 'CONFLICT');
@@ -340,7 +340,7 @@ test('RN-05: fuera de borrador no se eliminan ni se mueven viñetas (409); en un
   assert.equal((await panelKeys(comic, 1)).length, 2);
 });
 
-test('D9: mover una viñeta arriba, abajo o a la misma posición desplaza las intermedias; fuera de 1…n, 400', async () => {
+test('RN-05: mover una viñeta arriba, abajo o a la misma posición desplaza las intermedias; fuera de 1…n, 400', async () => {
   const { author, comic } = await authorWithComic([{ number: 1, status: 'draft', panels: 4 }]);
   const [a, b, c, d] = await panelKeys(comic, 1);
 
@@ -371,10 +371,11 @@ test('D9: mover una viñeta arriba, abajo o a la misma posición desplaza las in
 
 // ── Enviar a revisión (RN-05) ─────────────────────────────────────────────────
 
-test('RN-05: enviar un borrador sin viñetas da 400; con viñetas pasa a pending, audita chapter.submit y ya no se edita', async () => {
+test('RN-05: enviar un borrador sin viñetas da 400 sin fields; con viñetas pasa a pending, audita chapter.submit y ya no se edita', async () => {
   const { author, comic } = await authorWithComic();
   const submit = () => api(srv, 'POST', `${chapterUrl(comic.slug, 1)}/submit`, { cookie: author.cookie });
-  await assertError(await submit(), 400, 'VALIDATION_ERROR');
+  const empty = await assertError(await submit(), 400, 'VALIDATION_ERROR');
+  assert.equal(empty.fields, undefined, 'sin fields: el error es del capítulo, no de un campo');
   assert.equal((await uploadPanel(comic.slug, 1, author)).status, 201);
   const res = await submit();
   assert.equal(res.status, 200);
@@ -390,7 +391,7 @@ test('RN-05: enviar un borrador sin viñetas da 400; con viñetas pasa a pending
 
 // ── Portada (D7) ──────────────────────────────────────────────────────────────
 
-test('D7: la portada se sube con clave nueva, se audita como comic.update y la anterior se borra del almacenamiento', async () => {
+test('RN-10: la portada se sube con clave nueva, se audita como comic.update y la anterior se borra del almacenamiento', async () => {
   const { author, comic } = await authorWithComic([]);
   const first = await uploadCover(comic.slug, author);
   assert.equal(first.status, 200);

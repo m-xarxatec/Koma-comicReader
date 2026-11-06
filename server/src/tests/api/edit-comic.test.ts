@@ -54,7 +54,7 @@ async function ownComic(status: 'pending' | 'approved' = 'pending'): Promise<{ a
   return { author, comic };
 }
 
-test('CU-30: editar guarda solo lo que cambia, no cambia el slug y audita comic.update con esos campos antes y después', async () => {
+test('RN-05: editar guarda solo lo que cambia, no cambia el slug y audita comic.update con esos campos antes y después', async () => {
   const { author, comic } = await ownComic();
   const res = await patch(comic.slug, author, {
     title: `  Título nuevo ${RUN}  `,
@@ -84,7 +84,7 @@ test('CU-30: editar guarda solo lo que cambia, no cambia el slug y audita comic.
   assert.deepEqual(rows[0], { authorship_declared: true, license: 'CC0 1.0' });
 });
 
-test('CU-30: sin cambios (o con un cuerpo vacío) responde 200 sin escribir en la auditoría', async () => {
+test('RN-05: sin cambios (o con un cuerpo vacío) responde 200 sin escribir en la auditoría', async () => {
   const { author, comic } = await ownComic();
   for (const body of [{}, { title: `Obra editar-${comics}`, tags: ['magia', 'fantasia'], license: 'cc-by-4.0', contentWarning: null }]) {
     const res = await patch(comic.slug, author, body);
@@ -93,7 +93,7 @@ test('CU-30: sin cambios (o con un cuerpo vacío) responde 200 sin escribir en l
   }
 });
 
-test('D14: isAdult solo cambia mientras la obra no está aprobada; en una publicada, 400 en fields.isAdult', async () => {
+test('RN-17: isAdult solo cambia mientras la obra no está aprobada; en una publicada, 400 en fields.isAdult', async () => {
   const pending = await ownComic('pending');
   const res = await patch(pending.comic.slug, pending.author, { isAdult: true });
   assert.equal((await ok(res)).isAdult, true);

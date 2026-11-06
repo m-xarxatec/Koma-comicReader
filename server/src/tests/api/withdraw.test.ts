@@ -82,7 +82,7 @@ test('RN-06: la retirada se audita como comic.withdraw con deletedAt antes y des
   assert.deepEqual(await auditOf(again), []);
 });
 
-test('D13: el admin retira cualquier obra, también una importada (sin autor), con su auditoría', async () => {
+test('RN-06: el admin retira cualquier obra, también una importada (sin autor), con su auditoría', async () => {
   const admin = await createUser('admin');
   const imported = await createComic({ name: 'retirar-importada', chapters: [{ number: 1 }] });
   const { comic } = await authorComic();
@@ -122,7 +122,7 @@ test('Seguridad: retirar una obra exige el Origin propio (CSRF)', async () => {
 
 // ── Retirar capítulo (CU-30) ──────────────────────────────────────────────────
 
-test('CU-30: retirar un capítulo aprobado: el lector responde 410, deja de salir en la ficha y se audita', async () => {
+test('RN-06: retirar un capítulo aprobado: el lector responde 410, deja de salir en la ficha y se audita', async () => {
   const { author, comic } = await authorComic();
   const res = await withdrawChapter(comic.slug, 2, author);
   assert.equal(res.status, 204);
@@ -149,7 +149,7 @@ test('RN-09: el número de un capítulo retirado queda libre y el nuevo hereda s
   await assertError(await withdrawChapter(comic.slug, 2, author), 404, 'NOT_FOUND');
 });
 
-test('CU-30: se retira un capítulo en draft o pending, también en una obra rechazada', async () => {
+test('RN-06: se retira un capítulo en draft o pending, también en una obra rechazada', async () => {
   const { author, comic } = await authorComic({ status: 'pending', chapters: [{ number: 1, status: 'draft' }, { number: 2, status: 'pending' }] });
   assert.equal((await withdrawChapter(comic.slug, 1, author)).status, 204);
   await (await db()).query(`UPDATE comics SET status = 'rejected', rejection_reason = 'Motivo' WHERE id = $1`, [comic.id]);

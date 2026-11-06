@@ -80,7 +80,7 @@ async function writes(userId: number, chapterIds: number[]) {
 
 // ── Ficha ─────────────────────────────────────────────────────────────────────
 
-test('D10: el autor dueño y el admin ven la ficha de una obra pending con su status; otro autor, un lector y el invitado, 404', async () => {
+test('Seguridad: el autor dueño y el admin ven la ficha de una obra pending con su status; otro autor, un lector y el invitado, 404', async () => {
   for (const user of [owner, admin]) {
     const res = await comicOf(pendingComic.slug, user);
     assert.equal(res.status, 200);
@@ -97,7 +97,7 @@ test('D10: el autor dueño y el admin ven la ficha de una obra pending con su st
   assert.equal((await page(`/obra/${pendingComic.slug}`)).status, 404);
 });
 
-test('D10: en una obra publicada, el dueño y el admin ven también los capítulos draft y pending; los demás, solo los aprobados', async () => {
+test('Seguridad: en una obra publicada, el dueño y el admin ven también los capítulos draft y pending; los demás, solo los aprobados', async () => {
   const numbers = async (user?: TestUser) => ((await (await comicOf(approvedComic.slug, user)).json()) as { comic: ComicBody }).comic.chapters;
   for (const user of [owner, admin]) {
     const chapters = await numbers(user);
@@ -119,7 +119,7 @@ test('D10: en una obra publicada, el dueño y el admin ven también los capítul
   }
 });
 
-test('D10: una obra rechazada no tiene vista previa (404) y una retirada responde 410 también a su dueño', async () => {
+test('Seguridad: una obra rechazada no tiene vista previa (404) y una retirada responde 410 también a su dueño', async () => {
   const rejected = await createComic({ name: 'previa-rechazada', status: 'pending', authorId: owner.id, chapters: [{ number: 1, status: 'draft' }] });
   await (await db()).query(`UPDATE comics SET status = 'rejected', rejection_reason = 'Motivo' WHERE id = $1`, [rejected.id]);
   const withdrawn = await createComic({ name: 'previa-retirada', status: 'pending', withdrawn: true, authorId: owner.id, chapters: [{ number: 1, status: 'draft' }] });
@@ -134,7 +134,7 @@ test('D10: una obra rechazada no tiene vista previa (404) y una retirada respond
 
 // ── Lectura ───────────────────────────────────────────────────────────────────
 
-test('D10: el dueño lee un borrador en vista previa: sin anuncios, saldo ni comentarios, y sin escribir nada', async () => {
+test('Seguridad: el dueño lee un borrador en vista previa: sin anuncios, saldo ni comentarios, y sin escribir nada', async () => {
   const chapterIds = [...pendingComic.chapterIds.values()];
   const before = await writes(owner.id, chapterIds);
   const reading = await readOk(pendingComic.slug, 1, owner);
@@ -147,7 +147,7 @@ test('D10: el dueño lee un borrador en vista previa: sin anuncios, saldo ni com
   assert.equal((await page(`/leer/${pendingComic.slug}/1`, owner)).status, 200);
 });
 
-test('D10: el admin lee un capítulo pending en vista previa sin registrar la lectura ni contarla', async () => {
+test('Seguridad: el admin lee un capítulo pending en vista previa sin registrar la lectura ni contarla', async () => {
   const chapterId = approvedComic.chapterIds.get('3:pending')!;
   const before = await writes(admin.id, [chapterId]);
   const reading = await readOk(approvedComic.slug, 3, admin);
@@ -155,7 +155,7 @@ test('D10: el admin lee un capítulo pending en vista previa sin registrar la le
   assert.deepEqual(await writes(admin.id, [chapterId]), before);
 });
 
-test('D10: otro autor, un lector y el invitado no leen un capítulo draft o pending (404), ni su página', async () => {
+test('Seguridad: otro autor, un lector y el invitado no leen un capítulo draft o pending (404), ni su página', async () => {
   for (const user of [otherAuthor, reader, undefined]) {
     assert.equal((await read(approvedComic.slug, 2, user)).status, 404);
     assert.equal((await read(approvedComic.slug, 3, user)).status, 404);
@@ -164,7 +164,7 @@ test('D10: otro autor, un lector y el invitado no leen un capítulo draft o pend
   }
 });
 
-test('D10: prev y next recorren los capítulos que esa persona puede ver', async () => {
+test('Seguridad: prev y next recorren los capítulos que esa persona puede ver', async () => {
   const ownerView = await readOk(approvedComic.slug, 1, owner);
   assert.deepEqual([ownerView.chapter.prev, ownerView.chapter.next], [null, 2]);
   const draftView = await readOk(approvedComic.slug, 3, owner);
@@ -174,7 +174,7 @@ test('D10: prev y next recorren los capítulos que esa persona puede ver', async
   assert.equal(readerView.preview, false);
 });
 
-test('D10: un capítulo aprobado sigue la lectura normal también para su dueño (sin vista previa)', async () => {
+test('Seguridad: un capítulo aprobado sigue la lectura normal también para su dueño (sin vista previa)', async () => {
   const reading = await readOk(approvedComic.slug, 4, owner);
   assert.equal(reading.preview, false);
 });

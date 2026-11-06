@@ -73,12 +73,15 @@ export async function createComment(ref: PanelRef, body: string, user: User): Pr
 }
 
 // RN-11: su autor lo borra (borrado lógico). Orden del contrato: 404 (no existe u oculto: un oculto no lo ve
-// nadie, tampoco su autor, D15), 403 (ajeno) y 409 (ya eliminado). Cambio y auditoría en la misma transacción.
+// nadie, tampoco su autor, D15), 403 (ajeno: no revela si se retiró), 410 (su obra o su capítulo se retiraron,
+// RN-06: como el resto de lo retirado, sin cambios ni auditoría) y 409 (ya eliminado). Cambio y auditoría en la
+// misma transacción.
 export async function deleteOwnComment(id: number, user: User, ctx: RequestContext): Promise<void> {
   await withTransaction(async (client) => {
     const comment = await commentsRepository.findStateForUpdate(client, id);
     if (!comment || comment.hiddenAt) throw new AppError(404, 'NOT_FOUND', 'El comentario no existe');
     if (!canDeleteOwnComment(user, comment)) throw new AppError(403, 'FORBIDDEN', 'Solo puedes borrar tus comentarios');
+    if (comment.withdrawn) throw new AppError(410, 'GONE', 'El capítulo o la obra del comentario se han retirado');
     if (comment.deletedAt) throw new AppError(409, 'CONFLICT', 'El comentario ya se eliminó');
     const deletedAt = await commentsRepository.markDeleted(client, id);
     await audit.record(client, {

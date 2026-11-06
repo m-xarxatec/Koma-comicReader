@@ -112,6 +112,9 @@ export const CONTENT_WARNING_MAX = 200;
 export const CHAPTER_TITLE_MAX = 100;
 export const COMIC_TAGS_MAX = 10;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // RN-10
+// El mismo texto que el 413 FILE_TOO_LARGE de error-handler.ts, calculado desde el límite.
+export const MAX_IMAGE_MB = MAX_IMAGE_BYTES / (1024 * 1024);
+export const IMAGE_TOO_LARGE = `La imagen no puede pasar de ${MAX_IMAGE_MB} MB`;
 export const MAX_PANELS_PER_CHAPTER = 60;
 export const PG_MAX_INT = 2_147_483_647; // número de capítulo y posición de viñeta
 

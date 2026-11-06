@@ -53,16 +53,24 @@ export interface CommentStateRow {
   userId: number;
   hiddenAt: Date | null;
   deletedAt: Date | null;
+  withdrawn: boolean; // su capítulo o su obra se retiraron (RN-06)
 }
 
-// Estado del comentario, bloqueado para decidir y cambiarlo en la misma transacción.
+// Estado del comentario, bloqueado para decidir y cambiarlo en la misma transacción (solo la fila del comentario).
 export async function findStateForUpdate(db: Queryable, id: number): Promise<CommentStateRow | null> {
-  const { rows } = await db.query<{ id: number; user_id: number; hidden_at: Date | null; deleted_at: Date | null }>(
-    'SELECT id, user_id, hidden_at, deleted_at FROM comments WHERE id = $1 FOR UPDATE',
+  const { rows } = await db.query<{ id: number; user_id: number; hidden_at: Date | null; deleted_at: Date | null; withdrawn: boolean }>(
+    `SELECT c.id, c.user_id, c.hidden_at, c.deleted_at,
+            (ch.deleted_at IS NOT NULL OR co.deleted_at IS NOT NULL) AS withdrawn
+     FROM comments c
+     JOIN panels p ON p.id = c.panel_id
+     JOIN chapters ch ON ch.id = p.chapter_id
+     JOIN comics co ON co.id = ch.comic_id
+     WHERE c.id = $1
+     FOR UPDATE OF c`,
     [id],
   );
   const row = rows[0];
-  return row ? { id: row.id, userId: row.user_id, hiddenAt: row.hidden_at, deletedAt: row.deleted_at } : null;
+  return row ? { id: row.id, userId: row.user_id, hiddenAt: row.hidden_at, deletedAt: row.deleted_at, withdrawn: row.withdrawn } : null;
 }
 
 export async function markDeleted(db: Queryable, id: number): Promise<Date> {

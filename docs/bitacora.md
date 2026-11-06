@@ -651,3 +651,14 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   Se queda la página sin `.ts` propio: solo informa y funciona sin JS (el comentario de la plantilla lo explica).
 - **Comprobación (IA):** typecheck, 125 unitarios y 217 de API. Con `curl` en local: `/crear` da 302 al login sin sesión, 302 a `/autor` con `author@` y 200 con la página informativa con `reader@`.
 - **Pendiente (desarrollador):** añadir `/crear` al mapa de rutas y a "Páginas" del contrato del bloque 3, y `?vista=nueva-obra` a la línea de D18. D16 cambia: "Crear" ya no es solo para autores. En el navegador, a 360 px y en escritorio, con teclado: "Crear" con invitado, lector y autor; "+ Nueva obra", crear y llegar a la obra; "+ Nuevo capítulo" desde una tarjeta y desde la obra abierta (foco en el número).
+
+### 2026-11-06 · Bloque 3 · Hallazgos del auditor tras T10 y T11
+- **Pedido del desarrollador:** corregir los hallazgos 1 a 4 del auditor y escribir en el contrato `ReadingDto.preview` (aprobado).
+- **Resultado:**
+  - **Hallazgo 1 (nombres de tests):** 20 tests empezaban por `D7:`, `D8:`, `D9:`, `D10:`, `D13:`, `D14:`, `CU-28:` o `CU-30:`. Ahora: D8, D9 y editar → `RN-05:`; retirar (D13 y CU-30) → `RN-06:`; la lista de obras del autor → `RN-07:` y sus capítulos con estado y motivo → `RN-05:`; la portada (D7) → `RN-10:`; D14 → `RN-17:`; vista previa (D10) → `Seguridad:`. Ningún test empieza ya por `D` ni por `CU-`.
+  - **Hallazgo 2:** `validate.ts` calcula `MAX_IMAGE_MB` e `IMAGE_TOO_LARGE` desde `MAX_IMAGE_BYTES`; `author.ts` ya no escribe "5 MB". `client-parity.test.ts` comprueba que el texto coincide con el 413 de `error-handler.ts`.
+  - **Hallazgo 3:** el contrato dice que enviar a revisión sin viñetas da 400 `VALIDATION_ERROR` sin `fields`, y el test lo comprueba.
+  - **Hallazgo 4:** `DELETE /api/comments/:id` responde 410 `GONE` si la obra o el capítulo del comentario se retiraron (RN-06), sin cambios ni auditoría. Orden: 404 → 403 (el ajeno no revela si se retiró) → 410 → 409. `findStateForUpdate` une viñeta, capítulo y obra, y bloquea solo la fila del comentario (`FOR UPDATE OF c`).
+  - Contrato: `ReadingDto.preview` en "Vista previa", el 410 y el orden del borrado, y el 400 sin `fields` del envío.
+- **Tests:** `comments.test.ts` (capítulo retirado y obra retirada: 410 sin `deleted_at` ni auditoría; el ajeno, 403), `author-chapters.test.ts` (sin `fields`) y `client-parity.test.ts`.
+- **Comprobación (IA):** typecheck, 125 unitarios y 218 de API.
