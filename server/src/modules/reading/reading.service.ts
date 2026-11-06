@@ -7,7 +7,7 @@ import { chapterAccess, isAdmin, isPremium } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
 import type { ComicRow } from '../comics/comics.repository.js';
 import * as commentsRepository from '../comments/comments.repository.js';
-import { requirePublicComic } from '../comics/comics.service.js';
+import { requirePublicComic, requireVisibleComic } from '../comics/comics.service.js';
 import type { User } from '../users/users.repository.js';
 import * as readingRepository from './reading.repository.js';
 import {
@@ -57,6 +57,9 @@ export interface ReadingDto {
   panels: { position: number; url: string; width: number; height: number; comments: number }[];
   ads: { interstitial: AdDto | null; end: AdDto | null }; // RN-03; los dos null para invitado, premium y admin
   balance: BalanceDto | null; // solo registrado sin premium
+  // D10: vista previa del dueño o del admin (capítulo draft o pending, u obra pending). Sin lectura registrada, sin
+  // anuncios ni saldo, comentarios a 0 y sin panel de comentarios (solo se comenta en un capítulo aprobado).
+  preview: boolean;
 }
 
 export interface ReadResult {
@@ -79,10 +82,21 @@ async function loadReadingSettings(): Promise<ReadingSettings> {
   return { maxBalance: positive('reading.max_balance'), refill: positive('reading.refill'), waitMinutes: positive('reading.wait_minutes') };
 }
 
-async function buildReading(comic: ComicRow, chapter: chaptersRepository.ChapterRow, extra: Pick<ReadingDto, 'ads' | 'balance'>): Promise<ReadingDto> {
-  const adjacent = await chaptersRepository.findAdjacentNumbers(pool, comic.id, chapter.number);
+// `view`: si es una vista previa y si prev y next recorren también los capítulos sin publicar (dueño y admin, D10).
+interface ReadingView {
+  preview: boolean;
+  includeUnpublished: boolean;
+}
+
+async function buildReading(
+  comic: ComicRow,
+  chapter: chaptersRepository.ChapterRow,
+  extra: Pick<ReadingDto, 'ads' | 'balance'>,
+  view: ReadingView,
+): Promise<ReadingDto> {
+  const adjacent = await chaptersRepository.findAdjacentNumbers(pool, comic.id, chapter.number, view.includeUnpublished);
   const panels = await chaptersRepository.listPanels(pool, chapter.id);
-  const comments = await commentsRepository.countVisibleByPosition(pool, chapter.id);
+  const comments = view.preview ? new Map<number, number>() : await commentsRepository.countVisibleByPosition(pool, chapter.id);
   return {
     comic: { slug: comic.slug, title: comic.title, contentWarning: comic.contentWarning },
     chapter: { number: chapter.number, title: chapter.title, prev: adjacent.prev, next: adjacent.next },
@@ -96,6 +110,7 @@ async function buildReading(comic: ComicRow, chapter: chaptersRepository.Chapter
       })),
     ),
     ...extra,
+    preview: view.preview,
   };
 }
 
@@ -110,13 +125,40 @@ export async function readChapter(
   user: User | null,
   input: { adToken: string | undefined; guestReadsCookie: unknown },
 ): Promise<ReadResult> {
-  const { comic, chapter } = await requirePublicChapter(slug, number);
+  const { comic, chapter, preview, canPreview } = await requireReadableChapter(slug, number, user);
+  // D10: la vista previa no escribe nada (chapter_reads, reading_credits, estadísticas) y no lleva anuncios.
+  if (preview) {
+    const reading = await buildReading(comic, chapter, { ads: { interstitial: null, end: null }, balance: null }, { preview: true, includeUnpublished: true });
+    return { reading, guestReadsCookie: null };
+  }
   const now = new Date();
-  return user ? readAsUser(comic, chapter, user, now) : readAsGuest(comic, chapter, input, now);
+  return user ? readAsUser(comic, chapter, user, now, canPreview) : readAsGuest(comic, chapter, input, now);
+}
+
+// El capítulo de esa URL para quien lo pide (mapa de rutas, D10). El autor dueño y el admin leen también un capítulo
+// vivo en draft o pending de una obra no retirada (`preview`), y cualquier capítulo de su obra en pending. Para los
+// demás, requirePublicChapter. `canPreview`: puede ver lo no publicado (prev y next lo incluyen).
+export async function requireReadableChapter(
+  slug: string,
+  number: number,
+  user: User | null,
+): Promise<{ comic: ComicRow; chapter: chaptersRepository.ChapterRow; preview: boolean; canPreview: boolean }> {
+  const { comic, preview: canPreview } = await requireVisibleComic(slug, user);
+  if (canPreview) {
+    const live = await chaptersRepository.findLiveChapter(pool, comic.id, number);
+    if (live && (live.status !== 'approved' || comic.status !== 'approved')) {
+      return { comic, chapter: { id: live.id, number: live.number, title: live.title, withdrawn: false }, preview: true, canPreview };
+    }
+  }
+  if (comic.status !== 'approved') throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
+  const chapter = await chaptersRepository.findChapterForReading(pool, comic.id, number);
+  if (!chapter) throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
+  if (chapter.withdrawn) throw new AppError(410, 'GONE', 'El capítulo se ha retirado');
+  return { comic, chapter, preview: false, canPreview };
 }
 
 // Obra y capítulo públicos: 404 si no existen o no están aprobados; 410 si se retiraron (RN-06). Lo usan la
-// lectura, la página del lector y los comentarios. (El autor dueño y el admin verán draft y pending en T10.)
+// anuncio y los comentarios (solo se comenta un capítulo público); la lectura y su página usan requireReadableChapter.
 export async function requirePublicChapter(slug: string, number: number): Promise<{ comic: ComicRow; chapter: chaptersRepository.ChapterRow }> {
   const comic = await requirePublicComic(slug);
   const chapter = await chaptersRepository.findChapterForReading(pool, comic.id, number);
@@ -135,8 +177,8 @@ export interface ReaderPageValues {
   contentWarning: string; // '' sin advertencia (RN-08)
 }
 
-export async function getReaderPage(slug: string, number: number): Promise<ReaderPageValues> {
-  const { comic, chapter } = await requirePublicChapter(slug, number);
+export async function getReaderPage(slug: string, number: number, user: User | null): Promise<ReaderPageValues> {
+  const { comic, chapter } = await requireReadableChapter(slug, number, user);
   return { slug: comic.slug, comicTitle: comic.title, chapterTitle: chapter.title, number: String(chapter.number), contentWarning: comic.contentWarning ?? '' };
 }
 
@@ -159,11 +201,11 @@ async function readAsGuest(
     await readingRepository.countRead(pool, chapter.id, 'guest');
     guestReadsCookie = serializeGuestReads(guestReadsKey, addGuestRead(counted, chapter.id));
   }
-  const reading = await buildReading(comic, chapter, { ads: { interstitial: null, end: null }, balance: null });
+  const reading = await buildReading(comic, chapter, { ads: { interstitial: null, end: null }, balance: null }, { preview: false, includeUnpublished: false });
   return { reading, guestReadsCookie };
 }
 
-async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRow, user: User, now: Date): Promise<ReadResult> {
+async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRow, user: User, now: Date, canPreview: boolean): Promise<ReadResult> {
   const ownsComic = comic.authorId === user.id;
   // Saldo y anuncios (RN-02, RN-03): solo el registrado sin premium, y no en su propia obra (aprobado el
   // 3-nov: la autora la lee sin anuncios ni saldo, y esas lecturas no cuentan para el intersticial).
@@ -217,6 +259,6 @@ async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRo
       end: endAd ? await toAdDto(endAd, signUrl) : null,
     },
     balance,
-  });
+  }, { preview: false, includeUnpublished: canPreview });
   return { reading, guestReadsCookie: null };
 }

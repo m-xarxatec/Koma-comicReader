@@ -359,3 +359,40 @@ export async function withdrawComic(db: Queryable, id: number): Promise<Date> {
   const { rows } = await db.query<{ deleted_at: Date }>('UPDATE comics SET deleted_at = now() WHERE id = $1 RETURNING deleted_at', [id]);
   return rows[0]!.deleted_at;
 }
+
+// --- Editar obra (CU-30) ---
+
+export interface ComicFieldsUpdate {
+  title?: string;
+  synopsis?: string;
+  authorCredit?: string;
+  license?: string;
+  licenseUrl?: string | null;
+  contentWarning?: string | null;
+  isAdult?: boolean;
+}
+
+// Lista blanca: cada campo editable con su columna. El SET se construye solo con estas columnas fijas; los valores van
+// siempre como parámetros.
+const EDITABLE_COLUMNS: Readonly<Record<keyof ComicFieldsUpdate, string>> = {
+  title: 'title',
+  synopsis: 'synopsis',
+  authorCredit: 'author_credit',
+  license: 'license',
+  licenseUrl: 'license_url',
+  contentWarning: 'content_warning',
+  isAdult: 'is_adult',
+};
+
+export async function updateComicFields(db: Queryable, id: number, fields: ComicFieldsUpdate): Promise<void> {
+  const entries = (Object.keys(EDITABLE_COLUMNS) as (keyof ComicFieldsUpdate)[]).filter((key) => fields[key] !== undefined);
+  if (entries.length === 0) return;
+  const assignments = entries.map((key, index) => `${EDITABLE_COLUMNS[key]} = $${index + 2}`);
+  await db.query(`UPDATE comics SET ${assignments.join(', ')} WHERE id = $1`, [id, ...entries.map((key) => fields[key])]);
+}
+
+// Sustituye las etiquetas de la obra por las de esos slugs (ya comprobados por el servicio).
+export async function replaceComicTags(db: Queryable, comicId: number, tagSlugs: readonly string[]): Promise<void> {
+  await db.query('DELETE FROM comic_tags WHERE comic_id = $1', [comicId]);
+  await addComicTags(db, comicId, tagSlugs);
+}

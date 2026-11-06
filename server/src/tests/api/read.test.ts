@@ -85,7 +85,7 @@ async function adToken(comicId: number, secondsAgo: number): Promise<string> {
 
 test('RN-09: el capítulo llega con sus viñetas en orden, firmadas y con sus medidas, y con el anterior y el siguiente', async () => {
   const reading = await readOk(comic.slug, 1);
-  assert.deepEqual(Object.keys(reading).sort(), ['ads', 'balance', 'chapter', 'comic', 'panels']);
+  assert.deepEqual(Object.keys(reading).sort(), ['ads', 'balance', 'chapter', 'comic', 'panels', 'preview']);
   assert.deepEqual(reading.comic, { slug: comic.slug, title: 'Obra lectura', contentWarning: 'Aviso de prueba' });
   assert.deepEqual(reading.chapter, { number: 1, title: 'Uno', prev: null, next: 2 });
   assert.deepEqual(
@@ -108,9 +108,10 @@ test('RN-09: el capítulo llega con sus viñetas en orden, firmadas y con sus me
   await writeFile(path.join(storageDir, keys[0]!), 'RIFF....WEBP');
   assert.equal((await fetch(`${srv.baseUrl}${reading.panels[0]!.url}`)).status, 200);
 
-  // Los números pueden saltar: anterior y siguiente son los capítulos públicos más cercanos.
-  assert.deepEqual((await readOk(comic.slug, 4, { cookie: users.admin.cookie })).chapter, { number: 4, title: 'Capítulo 4', prev: 3, next: 6 });
-  assert.deepEqual((await readOk(comic.slug, 10, { cookie: users.admin.cookie })).chapter, { number: 10, title: 'Diez bis', prev: 6, next: null });
+  // Los números pueden saltar: anterior y siguiente son los capítulos públicos más cercanos (para premium; el admin y
+  // el dueño recorren también los no publicados, D10, preview.test.ts).
+  assert.deepEqual((await readOk(comic.slug, 4, { cookie: users.premium.cookie })).chapter, { number: 4, title: 'Capítulo 4', prev: 3, next: 6 });
+  assert.deepEqual((await readOk(comic.slug, 10, { cookie: users.premium.cookie })).chapter, { number: 10, title: 'Diez bis', prev: 6, next: null });
 });
 
 test('RN-01: el invitado lee los caps. 1–2 sin anuncio ni cuenta, y cada lectura da URLs firmadas nuevas', async () => {
@@ -203,7 +204,8 @@ test('RN-06: la lectura responde 404 si la obra o el capítulo no existen o no s
     ['número con carácter nulo', comic.slug, '1%00', 404, 'NOT_FOUND'],
     ['slug no válido', 'Mayusculas', 1, 404, 'NOT_FOUND'],
   ] as const) {
-    await assertError(await read(slug, number, { cookie: users.admin.cookie }), status, code, label);
+    // Con premium (lo lee todo, pero solo lo público); la vista previa del admin y del dueño, en preview.test.ts (D10).
+    await assertError(await read(slug, number, { cookie: users.premium.cookie }), status, code, label);
   }
 });
 

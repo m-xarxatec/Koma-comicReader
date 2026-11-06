@@ -80,11 +80,18 @@ export async function findChapterForReading(db: Queryable, comicId: number, numb
   return rows[0] ?? null;
 }
 
-// Números del capítulo público anterior y siguiente (los números pueden saltar: 1, 2, 5).
-export async function findAdjacentNumbers(db: Queryable, comicId: number, number: number): Promise<{ prev: number | null; next: number | null }> {
+// Números del capítulo anterior y siguiente (los números pueden saltar: 1, 2, 5) entre los que ve quien lee: los
+// públicos o, en la vista previa del dueño y del admin (D10), todos los vivos (también draft y pending).
+export async function findAdjacentNumbers(
+  db: Queryable,
+  comicId: number,
+  number: number,
+  includeUnpublished = false,
+): Promise<{ prev: number | null; next: number | null }> {
+  const visible = includeUnpublished ? LIVE_CHAPTER : PUBLIC_CHAPTER;
   const { rows } = await db.query<{ prev: number | null; next: number | null }>(
-    `SELECT (SELECT max(number) FROM chapters WHERE comic_id = $1 AND number < $2 AND ${PUBLIC_CHAPTER}) AS prev,
-            (SELECT min(number) FROM chapters WHERE comic_id = $1 AND number > $2 AND ${PUBLIC_CHAPTER}) AS next`,
+    `SELECT (SELECT max(number) FROM chapters WHERE comic_id = $1 AND number < $2 AND ${visible}) AS prev,
+            (SELECT min(number) FROM chapters WHERE comic_id = $1 AND number > $2 AND ${visible}) AS next`,
     [comicId, number],
   );
   return { prev: rows[0]?.prev ?? null, next: rows[0]?.next ?? null };
@@ -278,4 +285,24 @@ export async function findChapterSummaryById(db: Queryable, chapterId: number): 
 export async function withdrawChapter(db: Queryable, chapterId: number): Promise<Date> {
   const { rows } = await db.query<{ deleted_at: Date }>('UPDATE chapters SET deleted_at = now() WHERE id = $1 RETURNING deleted_at', [chapterId]);
   return rows[0]!.deleted_at;
+}
+
+// --- Vista previa del dueño y del admin (D10) ---
+
+export interface VisibleChapterRow {
+  id: number;
+  number: number;
+  title: string;
+  status: 'draft' | 'pending' | 'approved';
+  publishedAt: Date | null; // null si nunca se aprobó
+}
+
+// Capítulos vivos de la obra (draft, pending y approved, sin retirados ni rechazados), por número: la ficha del
+// dueño y del admin.
+export async function listLiveChapters(db: Queryable, comicId: number): Promise<VisibleChapterRow[]> {
+  const { rows } = await db.query<{ id: number; number: number; title: string; status: VisibleChapterRow['status']; published_at: Date | null }>(
+    `SELECT id, number, title, status, published_at FROM chapters WHERE comic_id = $1 AND ${LIVE_CHAPTER} ORDER BY number`,
+    [comicId],
+  );
+  return rows.map((row) => ({ id: row.id, number: row.number, title: row.title, status: row.status, publishedAt: row.published_at }));
 }

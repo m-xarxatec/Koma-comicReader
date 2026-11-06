@@ -228,6 +228,73 @@
         </div>
         <p class="author-page__message" id="chapters-empty" hidden>Esta obra todavía no tiene capítulos.</p>
 
+        <!-- CU-30 (recortable): editar los datos, sin reaprobación. El slug no cambia; +18 solo mientras no está
+             publicada (D14). Solo se envía lo que cambia. -->
+        <div class="panel-card author-page__new-chapter" id="editar-obra">
+          <div class="panel-card__heading">
+            <h3 class="panel-card__title">Datos de la obra</h3>
+            <p class="panel-card__text">Los cambios se publican sin volver a revisión. La dirección de la obra no cambia.</p>
+          </div>
+          <form class="form panel-card__form" id="edit-form">
+            <div class="form__field">
+              <label class="form__label" for="edit-title">Título de la obra</label>
+              <input class="form__input" id="edit-title" name="title" type="text" autocomplete="off" required aria-describedby="edit-title-error">
+              <p class="form__error" id="edit-title-error" hidden></p>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="edit-synopsis">Sinopsis</label>
+              <textarea class="form__input form__textarea" id="edit-synopsis" name="synopsis" rows="4" required aria-describedby="edit-synopsis-hint edit-synopsis-error"></textarea>
+              <p class="form__hint" id="edit-synopsis-hint">Hasta 1000 caracteres.</p>
+              <p class="form__error" id="edit-synopsis-error" hidden></p>
+            </div>
+            <div class="form__row">
+              <div class="form__field">
+                <label class="form__label" for="edit-author-credit">Autor original</label>
+                <input class="form__input" id="edit-author-credit" name="authorCredit" type="text" autocomplete="off" required aria-describedby="edit-author-credit-error">
+                <p class="form__error" id="edit-author-credit-error" hidden></p>
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="edit-license">Licencia</label>
+                <select class="form__input" id="edit-license" name="license" required aria-describedby="edit-license-error">
+                  <option value="all-rights-reserved">Todos los derechos reservados</option>
+                  <option value="cc-by-4.0">CC BY 4.0</option>
+                  <option value="cc-by-sa-4.0">CC BY-SA 4.0</option>
+                  <option value="cc0-1.0">CC0 1.0</option>
+                </select>
+                <p class="form__error" id="edit-license-error" hidden></p>
+              </div>
+            </div>
+            <fieldset class="form__fieldset" aria-describedby="edit-tags-hint">
+              <legend class="form__label">Etiquetas</legend>
+              <p class="form__hint" id="edit-tags-hint">De 1 a 10, con al menos un género.</p>
+              <div class="form__choices" id="edit-tags-choices"></div>
+              <p class="form__error" id="edit-tags-error" hidden></p>
+            </fieldset>
+            <label class="form__check">
+              <input class="form__check-input" id="edit-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls="edit-warning-field">
+              <span>Esta obra necesita una advertencia de contenido</span>
+            </label>
+            <div class="form__field" id="edit-warning-field" hidden>
+              <label class="form__label" for="edit-content-warning">Advertencia</label>
+              <input class="form__input" id="edit-content-warning" name="contentWarning" type="text" autocomplete="off" aria-describedby="edit-content-warning-error">
+              <p class="form__error" id="edit-content-warning-error" hidden></p>
+            </div>
+            <div class="form__field">
+              <label class="form__check">
+                <input class="form__check-input" id="edit-is-adult" name="isAdult" type="checkbox" value="true" aria-describedby="edit-is-adult-hint edit-is-adult-error">
+                <span>Contenido para mayores de 18 años (+18)</span>
+              </label>
+              <p class="form__hint" id="edit-is-adult-hint"></p>
+              <p class="form__error" id="edit-is-adult-error" hidden></p>
+            </div>
+            <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+            <div class="panel-card__actions">
+              <button class="button button--primary" type="submit" disabled data-needs-js>Guardar cambios</button>
+              <p class="form__status" id="edit-status" role="status"></p>
+            </div>
+          </form>
+        </div>
+
         <!-- CU-29: nace en borrador. El formulario propone el siguiente número libre (D22). -->
         <div class="panel-card author-page__new-chapter" id="nuevo-capitulo">
           <div class="panel-card__heading">
@@ -287,6 +354,7 @@
           <p class="form__status chapter-editor__status" id="editor-status" role="status"></p>
           <div class="chapter-editor__actions">
             <button class="button button--primary" id="editor-submit" type="button">Enviar a revisión →</button>
+            <a class="button button--outline" id="editor-preview-link" href="/" hidden>Ver en el lector</a>
             <button class="button button--outline button--danger" id="editor-withdraw" type="button">Retirar capítulo</button>
           </div>
           <p class="chapter-editor__note" id="editor-note"></p>

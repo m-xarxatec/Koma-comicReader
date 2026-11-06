@@ -54,6 +54,12 @@
   font-size: var(--font-size-work-meta);
 }
 
+/* Vista previa del dueño y del admin (D10): la obra o algunos capítulos todavía no son públicos. */
+.work-detail__status--preview {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-bold);
+}
+
 .work-detail__tags {
   display: flex;
   flex-wrap: wrap;

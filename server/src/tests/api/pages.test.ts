@@ -282,7 +282,8 @@ test('Seguridad: /autor sirve author.html al autor, con un solo h1, sin marcador
   // Sin JS no se envía nada: los formularios no tienen action y sus botones llegan desactivados.
   assert.match(html, /<form class="[^"]*" id="comic-form">/);
   assert.match(html, /<form class="[^"]*" id="chapter-form">/);
-  assert.equal(html.match(/type="submit" disabled data-needs-js/g)?.length, 2);
+  assert.match(html, /<form class="[^"]*" id="edit-form">/);
+  assert.equal(html.match(/type="submit" disabled data-needs-js/g)?.length, 3);
   assert.ok(!html.includes('/admin'), 'sin "Panel admin" en el estudio (choque 5)');
   assert.ok(!html.includes('NC 4.0'), 'sin licencias NC (D6)');
   // D18: capítulos en <table> con <caption> y <th scope>.

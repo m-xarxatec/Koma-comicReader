@@ -75,3 +75,8 @@ export const createComicBody = z.object({
   authorshipDeclared: z.literal(true, { error: 'Debes declarar que eres el autor de la obra o que tienes permiso para publicarla' }),
 });
 export type CreateComicInput = z.infer<typeof createComicBody>;
+
+// PATCH /api/author/comics/:slug (CU-30, recortable): los campos del alta, todos opcionales, salvo la declaración de
+// autoría (ya se hizo al crearla; si llega, se ignora). El slug no se edita nunca (RN-09).
+export const updateComicBody = createComicBody.omit({ authorshipDeclared: true }).partial();
+export type UpdateComicInput = z.infer<typeof updateComicBody>;

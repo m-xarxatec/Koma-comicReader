@@ -6,7 +6,7 @@ import { storage } from '../../integrations/storage/index.js';
 import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import * as audit from '../audit/audit.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
-import { canManageComic, canWithdrawComic, chapterAccess, type ChapterAccess } from '../auth/permissions.js';
+import { canManageComic, canPreviewComic, canWithdrawComic, chapterAccess, type ChapterAccess } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import { IMAGE_CONTENT_TYPES, newImageKey, readImageInfo } from '../../utils/image.js';
@@ -14,7 +14,7 @@ import { logger } from '../../utils/logger.js';
 import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
 import { LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type LicenseCode } from './comics.rules.js';
-import type { CatalogQuery, CreateComicInput } from './comics.schema.js';
+import type { CatalogQuery, CreateComicInput, UpdateComicInput } from './comics.schema.js';
 
 // Catálogo, etiquetas y ficha (CU-01, CU-02; contrato del bloque 2). Solo obras aprobadas y no retiradas;
 // toda imagen sale con URL firmada (SIGNED_URL_TTL_SECONDS).
@@ -72,12 +72,14 @@ export async function searchCatalog(query: CatalogQuery): Promise<CatalogPageDto
 export interface ChapterSummaryDto {
   number: number;
   title: string;
-  publishedAt: string; // ISO 8601
-  access: ChapterAccess; // qué exige leerlo a quien consulta (RN-01, RN-02)
+  status: 'draft' | 'pending' | 'approved'; // D10: draft y pending solo en la vista previa del dueño y del admin
+  publishedAt: string | null; // ISO 8601; null si nunca se aprobó (vista previa)
+  access: ChapterAccess; // qué exige leerlo a quien consulta (RN-01, RN-02); 'free' en draft y pending
   read: boolean; // ya leído por este usuario; false para el invitado
 }
 
 export interface ComicDto extends ComicCardDto {
+  status: 'pending' | 'approved'; // D10: pending solo para el autor dueño y el admin
   synopsis: string;
   publishedBy: string | null; // null = "la plataforma" (obra importada, RN-07)
   license: string;
@@ -96,14 +98,31 @@ export async function requirePublicComic(slug: string): Promise<comicsRepository
   return comic;
 }
 
+// Mapa de rutas (D10): la obra de esa URL para quien consulta. Pública si está aprobada; el autor dueño y el admin
+// la ven también en pending (`preview`). 404 si no existe o no la puede ver (rechazada, o pending de otro); 410 si se
+// retiró (RN-06). La usan la ficha y la lectura; el anuncio y los comentarios siguen con requirePublicComic.
+export async function requireVisibleComic(slug: string, user: User | null): Promise<{ comic: comicsRepository.ComicRow; preview: boolean }> {
+  const comic = await comicsRepository.findComicBySlug(pool, slug);
+  const preview = comic !== null && canPreviewComic(user, comic);
+  if (!comic || !(comic.status === 'approved' || (comic.status === 'pending' && preview))) {
+    throw new AppError(404, 'NOT_FOUND', 'La obra no existe');
+  }
+  if (comic.deletedAt) throw new AppError(410, 'GONE', 'La obra se ha retirado');
+  return { comic, preview };
+}
+
 export async function getComic(slug: string, user: User | null): Promise<ComicDto> {
-  const comic = await requirePublicComic(slug);
-  const chapters = await chaptersRepository.listPublicChapters(pool, comic.id);
+  const { comic, preview } = await requireVisibleComic(slug, user);
+  // D10: el dueño y el admin ven también los capítulos vivos en draft y pending; los demás, solo los aprobados.
+  const chapters: chaptersRepository.VisibleChapterRow[] = preview
+    ? await chaptersRepository.listLiveChapters(pool, comic.id)
+    : (await chaptersRepository.listPublicChapters(pool, comic.id)).map((chapter) => ({ ...chapter, status: 'approved' as const }));
   const readIds = user ? await readingRepository.findReadChapterIds(pool, user.id, chapters.map((chapter) => chapter.id)) : new Set<number>();
   const ownsComic = user !== null && comic.authorId === user.id;
   const now = new Date();
   return {
     ...(await toComicCardDto(comic)),
+    status: comic.status === 'approved' ? 'approved' : 'pending',
     synopsis: comic.synopsis,
     publishedBy: comic.publishedBy,
     license: comic.license,
@@ -114,8 +133,9 @@ export async function getComic(slug: string, user: User | null): Promise<ComicDt
       return {
         number: chapter.number,
         title: chapter.title,
-        publishedAt: chapter.publishedAt.toISOString(),
-        access: chapterAccess(user, { number: chapter.number, alreadyRead: read, ownsComic }, now),
+        status: chapter.status,
+        publishedAt: chapter.publishedAt?.toISOString() ?? null,
+        access: chapter.status === 'approved' ? chapterAccess(user, { number: chapter.number, alreadyRead: read, ownsComic }, now) : 'free',
         read,
       };
     }),
@@ -199,6 +219,17 @@ export async function listAuthorComics(user: User): Promise<AuthorComicDto[]> {
   );
 }
 
+// D5: las etiquetas deben existir todas y al menos una ser un género (si no, 400 en fields.tags). Alta y edición.
+async function assertTags(db: Queryable, slugs: readonly string[]): Promise<void> {
+  const tags = await comicsRepository.findTagsBySlugs(db, slugs);
+  if (tags.length !== slugs.length) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { tags: 'Alguna etiqueta no existe' } });
+  }
+  if (!tags.some((tag) => tag.type === 'genre')) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { tags: 'Elige al menos un género' } });
+  }
+}
+
 // Dos altas a la vez con el mismo slug: la segunda choca con el UNIQUE de comics.slug (23505) y se reintenta.
 const SLUG_RETRIES = 3;
 const isSlugTaken = (err: unknown) => err instanceof pg.DatabaseError && err.code === '23505' && err.constraint === 'comics_slug_key';
@@ -212,13 +243,7 @@ export async function createComic(user: User, input: CreateComicInput, ctx: Requ
   for (let attempt = 1; ; attempt++) {
     try {
       const comicId = await withTransaction(async (client) => {
-        const tags = await comicsRepository.findTagsBySlugs(client, input.tags);
-        if (tags.length !== input.tags.length) {
-          throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { tags: 'Alguna etiqueta no existe' } });
-        }
-        if (!tags.some((tag) => tag.type === 'genre')) {
-          throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { tags: 'Elige al menos un género' } });
-        }
+        await assertTags(client, input.tags);
         const slug = nextFreeSlug(base, await comicsRepository.findSlugsLike(client, base));
         const id = await comicsRepository.insertComic(client, {
           slug,
@@ -380,4 +405,65 @@ export async function withdrawComic(user: User, slug: string, ctx: RequestContex
       ...ctx,
     });
   });
+}
+
+// PATCH /api/author/comics/:slug (CU-30, recortable): sin reaprobación (RN-05) y sin cambiar el slug (RN-09). Solo se
+// guarda y se audita lo que cambia (comic.update con esos campos antes y después; sin cambios, ni escribe ni audita).
+// `isAdult` solo cambia mientras la obra no está aprobada (D14); una rechazada no se edita (409, D8).
+export async function updateComic(user: User, slug: string, input: UpdateComicInput, ctx: RequestContext): Promise<AuthorComicDto> {
+  await withTransaction(async (client) => {
+    const state = await requireManagedComic(client, slug, user, { lock: true, editable: true });
+    const current = (await comicsRepository.findAuthorComicById(client, state.id))!;
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+    const fields: comicsRepository.ComicFieldsUpdate = {};
+    const change = <K extends 'title' | 'synopsis' | 'authorCredit' | 'contentWarning' | 'isAdult'>(key: K, value: comicsRepository.ComicFieldsUpdate[K] | undefined, old: comicsRepository.ComicFieldsUpdate[K]) => {
+      if (value === undefined || value === old) return;
+      before[key] = old;
+      after[key] = value;
+      fields[key] = value;
+    };
+
+    change('title', input.title, current.title);
+    change('synopsis', input.synopsis, current.synopsis);
+    change('authorCredit', input.authorCredit, current.authorCredit);
+    change('contentWarning', input.contentWarning, current.contentWarning);
+    if (input.isAdult !== undefined && input.isAdult !== current.isAdult && current.status === 'approved') {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', {
+        fields: { isAdult: 'No se puede cambiar en una obra ya publicada' },
+      });
+    }
+    change('isAdult', input.isAdult, current.isAdult);
+
+    const currentLicense = licenseCodeFromName(current.license);
+    if (input.license !== undefined && input.license !== currentLicense) {
+      before['license'] = currentLicense;
+      after['license'] = input.license;
+      fields.license = LICENSES[input.license].name;
+      fields.licenseUrl = LICENSES[input.license].url;
+    }
+
+    const currentTags = current.tags.map((tag) => tag.slug).sort();
+    const nextTags = input.tags ? [...input.tags].sort() : undefined;
+    const tagsChanged = nextTags !== undefined && nextTags.join(',') !== currentTags.join(',');
+    if (nextTags) await assertTags(client, nextTags);
+    if (tagsChanged) {
+      before['tags'] = currentTags;
+      after['tags'] = nextTags;
+    }
+
+    if (Object.keys(after).length === 0) return;
+    await comicsRepository.updateComicFields(client, state.id, fields);
+    if (tagsChanged) await comicsRepository.replaceComicTags(client, state.id, nextTags);
+    await audit.record(client, {
+      action: 'comic.update',
+      actorId: user.id,
+      entityType: 'comics',
+      entityId: String(state.id),
+      before,
+      after,
+      ...ctx,
+    });
+  });
+  return authorComicDto(slug);
 }

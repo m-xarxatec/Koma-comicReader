@@ -21,7 +21,7 @@ interface ComicBody {
     license: string;
     licenseUrl: string | null;
     contentWarning: string | null;
-    chapters: { number: number; title: string; publishedAt: string; access: string; read: boolean }[];
+    chapters: { number: number; title: string; status: string; publishedAt: string | null; access: string; read: boolean }[];
   };
 }
 
@@ -77,6 +77,7 @@ test('Seguridad: la ficha lleva solo los campos del contrato y los capítulos p�
     'licenseUrl',
     'publishedBy',
     'slug',
+    'status',
     'synopsis',
     'tags',
     'title',
@@ -95,8 +96,9 @@ test('Seguridad: la ficha lleva solo los campos del contrato y los capítulos p�
     ],
   );
   for (const chapter of comic.chapters) {
-    assert.deepEqual(Object.keys(chapter).sort(), ['access', 'number', 'publishedAt', 'read', 'title']);
-    assert.match(chapter.publishedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    assert.deepEqual(Object.keys(chapter).sort(), ['access', 'number', 'publishedAt', 'read', 'status', 'title']);
+    assert.match(chapter.publishedAt ?? '', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    assert.equal(chapter.status, 'approved'); // D10: quien no es dueño ni admin solo ve los aprobados
   }
 });
 
@@ -116,7 +118,8 @@ test('RN-06: la ficha responde 404 si la obra no existe o no está aprobada y 41
     ['con%00nulo', 404, 'NOT_FOUND'], // no llega a la BD
     ['%E0%A4%A', 404, 'NOT_FOUND'],
   ] as const) {
-    const res = await getComic(slug, users.admin.cookie); // ni el admin las ve todavía (bloque 3)
+    // Con premium (lo lee todo, pero solo lo público): la vista previa del admin y del dueño está en preview.test.ts (D10).
+    const res = await getComic(slug, users.premium.cookie);
     assert.equal(res.status, status, slug);
     assert.equal(((await res.json()) as { code: string }).code, code, slug);
   }
@@ -150,9 +153,9 @@ test('RN-02: el registrado gasta saldo desde el cap. 3 y lo ya leído queda libr
 });
 
 test('Seguridad: premium, admin y la autora en su obra leen todo libre; en una ajena, la autora gasta saldo', async () => {
-  for (const kind of ['premium', 'admin'] as const) {
-    assert.deepEqual(accessOf(await comicOf(imported.slug, users[kind].cookie)), { 1: 'free', 2: 'free', 3: 'free', 5: 'free' }, kind);
-  }
+  assert.deepEqual(accessOf(await comicOf(imported.slug, users.premium.cookie)), { 1: 'free', 2: 'free', 3: 'free', 5: 'free' });
+  // D10: el admin ve también los capítulos pending (4) y draft (6), libres.
+  assert.deepEqual(accessOf(await comicOf(imported.slug, users.admin.cookie)), { 1: 'free', 2: 'free', 3: 'free', 4: 'free', 5: 'free', 6: 'free' });
   assert.deepEqual(accessOf(await comicOf(authored.slug, users.author.cookie)), { 1: 'free', 3: 'free' });
   assert.deepEqual(accessOf(await comicOf(authored.slug, users.otherAuthor.cookie)), { 1: 'free', 3: 'balance' });
   assert.deepEqual(accessOf(await comicOf(imported.slug, users.author.cookie)), { 1: 'free', 2: 'free', 3: 'balance', 5: 'balance' });

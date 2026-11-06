@@ -22,6 +22,11 @@
   font-size: var(--font-size-xs);
 }
 
+.reader-intro__note--preview {
+  color: var(--color-warning);
+  font-weight: var(--font-weight-bold);
+}
+
 /* "Ocultar iconos de comentarios" (idea 4), donde la maqueta tenía .reader-intro__tools. */
 .reader-intro__toggle:not([hidden]) {
   display: inline-flex;

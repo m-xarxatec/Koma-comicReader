@@ -10,6 +10,7 @@ import {
   failureOutcome,
   MAX_IMAGE_BYTES,
   MAX_PANELS_PER_CHAPTER,
+  normalizeText,
   synopsisProblem,
   tagsProblem,
   type SubmitOutcome,
@@ -80,7 +81,8 @@ const store: {
   chapter: AuthorChapterDto | null; // el capítulo abierto en el editor
   busy: boolean; // una operación del editor en curso: los botones esperan
   chapterRequest: number; // descarta la respuesta de un capítulo que ya no es el abierto
-} = { comics: [], tags: [], chapter: null, busy: false, chapterRequest: 0 };
+  editing: string | null; // obra cuyos datos están en el formulario de edición (no se pisan al repintar)
+} = { comics: [], tags: [], chapter: null, busy: false, chapterRequest: 0, editing: null };
 
 // --- Utilidades ---
 
@@ -189,6 +191,8 @@ function workTile(comic: AuthorComicDto): HTMLLIElement {
     actions.append(link);
   };
   if (comic.status === 'approved') action('Ver ficha', `/obra/${encodeURIComponent(comic.slug)}`, `Ver la ficha de ${comic.title}`);
+  // D10: la ficha de una obra en revisión solo la ven su autor y el admin.
+  if (comic.status === 'pending') action('Vista previa', `/obra/${encodeURIComponent(comic.slug)}`, `Vista previa de la ficha de ${comic.title}`);
   if (comic.status === 'rejected') action('Ver motivo', '#revisiones', `Ver el motivo del rechazo de ${comic.title}`);
   action('Gestionar →', studioUrl(comic.slug), `Gestionar ${comic.title}`, 'text-link');
   if (comic.status === 'pending') action('Revisiones →', '#revisiones', `Revisiones de ${comic.title}`, 'text-link');
@@ -268,7 +272,9 @@ const coverInput = byId<HTMLInputElement>('comic-cover');
 const warningToggle = byId<HTMLInputElement>('comic-has-warning');
 const warningField = byId<HTMLElement>('comic-warning-field');
 
-function renderTags(): void {
+// Casillas de etiquetas de un formulario (alta y edición). La primera se llama como el grupo (`prefix`): bindForm pinta
+// el error de `tags` en #<prefix>-error.
+function renderTagChoices(container: HTMLElement, prefix: string): void {
   const groups: [TagDto['type'], string][] = [
     ['genre', 'Géneros'],
     ['theme', 'Temas'],
@@ -284,30 +290,30 @@ function renderTags(): void {
       input.name = 'tags';
       input.value = tag.slug;
       input.dataset['type'] = tag.type;
-      input.id = first ? 'comic-tags' : `comic-tags-${tag.slug}`;
-      if (first) input.setAttribute('aria-describedby', 'comic-tags-error');
+      input.id = first ? prefix : `${prefix}-${tag.slug}`;
+      if (first) input.setAttribute('aria-describedby', `${prefix}-error`);
       first = false;
       label.append(input, el('span', '', tag.name));
       group.append(label);
     }
     return group;
   });
-  tagChoices.replaceChildren(...blocks);
+  container.replaceChildren(...blocks);
+  // bindForm borra el error de un campo al escribir en él; las etiquetas son varias casillas y el error es del grupo:
+  // cualquier casilla lo borra.
+  container.onchange = (event) => {
+    if (!(event.target instanceof HTMLInputElement) || event.target.name !== 'tags') return;
+    document.getElementById(prefix)?.removeAttribute('aria-invalid');
+    const error = document.getElementById(`${prefix}-error`);
+    if (error) {
+      error.textContent = '';
+      error.hidden = true;
+    }
+  };
 }
 
-// bindForm borra el error de un campo al escribir en él; las etiquetas son varias casillas y el error es del grupo:
-// cualquier casilla lo borra.
-tagChoices.addEventListener('change', (event) => {
-  if (!(event.target instanceof HTMLInputElement) || event.target.name !== 'tags') return;
-  const first = byId<HTMLInputElement>('comic-tags');
-  first.removeAttribute('aria-invalid');
-  const error = byId<HTMLElement>('comic-tags-error');
-  error.textContent = '';
-  error.hidden = true;
-});
-
-function selectedTags(): { slug: string; type: TagDto['type'] }[] {
-  return [...comicForm.querySelectorAll<HTMLInputElement>('input[name="tags"]:checked')].map((input) => ({
+function selectedTags(form: HTMLFormElement = comicForm): { slug: string; type: TagDto['type'] }[] {
+  return [...form.querySelectorAll<HTMLInputElement>('input[name="tags"]:checked')].map((input) => ({
     slug: input.value,
     type: input.dataset['type'] === 'genre' ? 'genre' : 'theme',
   }));
@@ -442,6 +448,8 @@ function renderComic(): void {
   comicPublic.href = `/obra/${encodeURIComponent(comic.slug)}`;
   comicCoverControl.hidden = rejected; // D8
   newChapter.hidden = rejected;
+  editComic.hidden = rejected;
+  if (store.editing !== comic.slug) fillEditForm(comic); // no pisa lo que se está escribiendo al repintar
 
   byId('chapters-caption').textContent = `Capítulos de «${comic.title}»`;
   chapterRows.replaceChildren(...comic.chapters.map((chapter) => chapterRow(comic, chapter)));
@@ -521,6 +529,88 @@ bindForm(chapterForm, { number: chapterNumberProblem, title: chapterTitleProblem
   return { ok: true };
 });
 
+// --- Editar obra (CU-30, recortable; D14) ---
+
+const editComic = byId<HTMLElement>('editar-obra');
+const editForm = byId<HTMLFormElement>('edit-form');
+const editTagChoices = byId<HTMLElement>('edit-tags-choices');
+const editWarningToggle = byId<HTMLInputElement>('edit-has-warning');
+const editWarningField = byId<HTMLElement>('edit-warning-field');
+const editAdult = byId<HTMLInputElement>('edit-is-adult');
+const editStatus = byId<HTMLElement>('edit-status');
+
+const syncEditWarning = () => {
+  editWarningField.hidden = !editWarningToggle.checked;
+};
+editWarningToggle.addEventListener('change', syncEditWarning);
+
+// Rellena el formulario con los datos guardados de la obra.
+function fillEditForm(comic: AuthorComicDto): void {
+  store.editing = comic.slug;
+  const field = <T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(id: string) => byId<T>(id);
+  field<HTMLInputElement>('edit-title').value = comic.title;
+  field<HTMLTextAreaElement>('edit-synopsis').value = comic.synopsis;
+  field<HTMLInputElement>('edit-author-credit').value = comic.authorCredit;
+  field<HTMLSelectElement>('edit-license').value = comic.license;
+  const tags = new Set(comic.tags.map((tag) => tag.slug));
+  for (const input of editForm.querySelectorAll<HTMLInputElement>('input[name="tags"]')) input.checked = tags.has(input.value);
+  editWarningToggle.checked = comic.contentWarning !== null;
+  field<HTMLInputElement>('edit-content-warning').value = comic.contentWarning ?? '';
+  syncEditWarning();
+  // D14: +18 solo cambia mientras la obra no está publicada.
+  editAdult.checked = comic.isAdult;
+  editAdult.disabled = comic.status === 'approved';
+  byId('edit-is-adult-hint').textContent = comic.status === 'approved'
+    ? 'No se puede cambiar en una obra ya publicada.'
+    : 'Koma no publica obras +18: si la marcas, se guardará pero no podrá aprobarse.';
+  say(editStatus, '');
+}
+
+bindForm(
+  editForm,
+  {
+    title: comicTitleProblem,
+    synopsis: synopsisProblem,
+    authorCredit: authorCreditProblem,
+    tags: () => tagsProblem(selectedTags(editForm)),
+    contentWarning: (value, values) => (values['hasWarning'] ? contentWarningProblem(value) : null),
+  },
+  async (values): Promise<SubmitOutcome> => {
+    const comic = currentComic();
+    if (!comic) return { ok: false, message: 'La obra ya no está disponible.' };
+    // Solo lo que cambia (el servidor también compara, pero así no hay petición si no hay nada que guardar).
+    const next = {
+      title: normalizeText(values['title'] ?? ''),
+      synopsis: normalizeText(values['synopsis'] ?? '', true),
+      authorCredit: normalizeText(values['authorCredit'] ?? ''),
+      license: values['license'] ?? comic.license,
+      tags: selectedTags(editForm).map((tag) => tag.slug).sort(),
+      contentWarning: values['hasWarning'] ? normalizeText(values['contentWarning'] ?? '') : null,
+      isAdult: values['isAdult'] === 'true',
+    };
+    const changes: Record<string, unknown> = {};
+    if (next.title !== comic.title) changes['title'] = next.title;
+    if (next.synopsis !== comic.synopsis) changes['synopsis'] = next.synopsis;
+    if (next.authorCredit !== comic.authorCredit) changes['authorCredit'] = next.authorCredit;
+    if (next.license !== comic.license) changes['license'] = next.license;
+    if (next.tags.join(',') !== comic.tags.map((tag) => tag.slug).sort().join(',')) changes['tags'] = next.tags;
+    if (next.contentWarning !== comic.contentWarning) changes['contentWarning'] = next.contentWarning;
+    if (comic.status !== 'approved' && next.isAdult !== comic.isAdult) changes['isAdult'] = next.isAdult;
+    if (Object.keys(changes).length === 0) {
+      say(editStatus, 'No hay cambios que guardar.');
+      return { ok: true };
+    }
+
+    const result = await api.patch<{ comic: AuthorComicDto }>(comicUrl(comic.slug), changes);
+    if (!result.ok) return failureOutcome(result.status, result.error);
+    store.editing = null; // el repintado vuelve a rellenar el formulario con lo guardado
+    await reloadComics();
+    renderComic();
+    say(editStatus, 'Cambios guardados.');
+    return { ok: true };
+  },
+);
+
 // --- Editor del capítulo abierto (?capitulo=; RN-05, RN-10, D9) ---
 
 const chapterSection = byId<HTMLElement>('capitulo');
@@ -539,6 +629,7 @@ const editorSubmit = byId<HTMLButtonElement>('editor-submit');
 const editorWithdraw = byId<HTMLButtonElement>('editor-withdraw');
 const editorNote = byId<HTMLElement>('editor-note');
 const editorStrip = byId<HTMLElement>('editor-strip');
+const editorPreview = byId<HTMLAnchorElement>('editor-preview-link');
 
 const editable = () => store.chapter?.status === 'draft' && currentComic()?.status !== 'rejected';
 
@@ -563,6 +654,10 @@ function renderEditor(): void {
   const total = chapter.panels.length;
   editorTitle.textContent = chapter.title === `Capítulo ${chapter.number}` ? chapter.title : `Capítulo ${chapter.number}: ${chapter.title}`;
   editorComic.textContent = currentComic()?.title ?? '';
+  // D10: el capítulo se lee en el lector como lo verán los lectores; en draft o pending, sin registrar la lectura (uno
+  // aprobado de una obra aprobada sigue la lectura normal). No hay vista previa de una obra rechazada (404).
+  editorPreview.hidden = currentComic()?.status === 'rejected';
+  editorPreview.href = `/leer/${encodeURIComponent(currentSlug() ?? '')}/${chapter.number}`;
   badge(editorBadge, CHAPTER_STATUS[chapter.status]);
   editorBody.hidden = false;
   editorUpload.hidden = !canEdit;
@@ -820,8 +915,10 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-n
 const [tagsResult, loaded] = await Promise.all([api.get<{ tags: TagDto[] }>('/api/tags'), reloadComics()]);
 if (tagsResult.ok) {
   store.tags = tagsResult.data.tags;
-  renderTags();
+  renderTagChoices(tagChoices, 'comic-tags');
+  renderTagChoices(editTagChoices, 'edit-tags');
 } else {
   tagChoices.textContent = `No se pudieron cargar las etiquetas. ${errorText(tagsResult)}`;
+  editTagChoices.textContent = tagChoices.textContent;
 }
 if (loaded) await route({ focus: location.hash === '#obra' || location.hash === '#capitulo' });

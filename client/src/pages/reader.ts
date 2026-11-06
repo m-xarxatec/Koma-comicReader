@@ -14,6 +14,7 @@ interface ReadingDto {
   panels: { position: number; url: string; width: number; height: number; comments: number }[];
   ads: { interstitial: AdDto | null; end: AdDto | null };
   balance: { balance: number; max: number; retryAt: string | null } | null;
+  preview: boolean; // D10: vista previa del dueño o del admin (sin comentarios ni anuncios)
 }
 
 interface AdStartDto {
@@ -44,6 +45,7 @@ const end = byId<HTMLElement>('reader-end');
 const endText = byId<HTMLElement>('reader-end-text');
 const nextLink = byId<HTMLAnchorElement>('reader-next');
 const balanceNote = byId<HTMLElement>('reader-balance');
+const previewNote = byId<HTMLElement>('reader-preview');
 const fullscreenButton = byId<HTMLButtonElement>('reader-fullscreen');
 const fullscreenLabel = byId<HTMLElement>('reader-fullscreen-label');
 const exitButton = byId<HTMLButtonElement>('reader-exit');
@@ -58,6 +60,7 @@ const store = {
   fullscreenOffset: 0, // posición dentro de la tira, para no perderla al entrar o salir de pantalla completa
   moveFocus: false, // tras pulsar un botón que desaparece, el foco pasa al título de lo nuevo
   comments: new Map<number, number>(), // posición → comentarios visibles (contrato del bloque 3, D3)
+  preview: false, // D10: en la vista previa no se comenta (sin iconos ni panel)
 };
 
 // --- Comentarios por viñeta (CU-05, CU-13) y su interruptor ---
@@ -194,7 +197,7 @@ function showScreen(parts: ScreenParts): void {
   }
   screen.replaceChildren(...children);
   screen.hidden = false;
-  for (const element of [strip, endAd, end, fullscreenButton, hideCommentsToggle]) if (element) element.hidden = true;
+  for (const element of [strip, endAd, end, fullscreenButton, hideCommentsToggle, previewNote]) if (element) element.hidden = true;
   // "Cargando…" es una pantalla de paso: el foco espera a la siguiente.
   if (!parts.title.endsWith('...')) focusAfterAction(title);
 }
@@ -379,7 +382,7 @@ function panelFigure(panel: ReadingDto['panels'][number], index: number): HTMLEl
   image.addEventListener('load', () => { error.hidden = true; });
 
   figure.append(image, error);
-  if (commentPanel) figure.append(commentButton(panel.position)); // después del error: queda por encima
+  if (commentPanel && !store.preview) figure.append(commentButton(panel.position)); // después del error: queda por encima
   return figure;
 }
 
@@ -417,10 +420,12 @@ function renderReading(reading: ReadingDto): void {
     screen.replaceChildren();
   }
   renderBalance(reading.balance);
+  store.preview = reading.preview;
+  if (previewNote) previewNote.hidden = !reading.preview;
   store.comments = new Map(reading.panels.map((panel) => [panel.position, panel.comments]));
   stream?.replaceChildren(...reading.panels.map(panelFigure));
   if (strip) strip.hidden = false;
-  if (hideCommentsToggle && commentPanel) hideCommentsToggle.hidden = false;
+  if (hideCommentsToggle && commentPanel) hideCommentsToggle.hidden = reading.preview;
   applyHideComments(readHideComments());
 
   // RN-03: anuncio al final del capítulo.
@@ -431,7 +436,7 @@ function renderReading(reading: ReadingDto): void {
   const next = reading.chapter.next;
   if (endText) {
     endText.textContent = next === null
-      ? 'Has llegado al último capítulo publicado de esta obra.'
+      ? reading.preview ? 'Has llegado al último capítulo de esta obra.' : 'Has llegado al último capítulo publicado de esta obra.'
       : `Sigue con el capítulo ${next} o vuelve a la lista de capítulos.`;
   }
   if (nextLink) {
@@ -441,7 +446,8 @@ function renderReading(reading: ReadingDto): void {
   if (end) end.hidden = false;
   setUpFullscreen();
   focusAfterAction(document.getElementById('chapter-title'));
-  announce(`Capítulo ${number}: ${reading.panels.length} viñetas.`);
+  // D10: el aviso de la intro no es una región viva: la vista previa se dice también aquí.
+  announce(`${reading.preview ? 'Vista previa. ' : ''}Capítulo ${number}: ${reading.panels.length} viñetas.`);
 
   // El contenido llega después de cargar la página: el navegador ya no salta solo al #v-n.
   if (/^#v-\d+$/.test(location.hash)) document.getElementById(location.hash.slice(1))?.scrollIntoView();
@@ -449,6 +455,11 @@ function renderReading(reading: ReadingDto): void {
 
 // Sustituye las URLs de las imágenes que ya están en la página, sin volver a pintarla: la posición se conserva.
 function refreshPanels(reading: ReadingDto): void {
+  // Si el capítulo se aprobó (o dejó de estarlo) entre la carga y "Recargar", cambian los iconos y el aviso: se repinta.
+  if (reading.preview !== store.preview) {
+    renderReading(reading);
+    return;
+  }
   for (const panel of reading.panels) {
     const figure = document.getElementById(`v-${panel.position}`);
     const image = figure?.querySelector<HTMLImageElement>('.reader-panel__image');

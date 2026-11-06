@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { pool } from '../../db/pool.js';
 import { sendPage } from '../../utils/page.js';
-import type { CatalogQuery, ComicParams, CreateComicInput } from './comics.schema.js';
+import type { CatalogQuery, ComicParams, CreateComicInput, UpdateComicInput } from './comics.schema.js';
 import * as comicsService from './comics.service.js';
 
 // Traduce HTTP ↔ servicio; sin lógica de negocio.
@@ -19,10 +19,11 @@ export async function getComic(_req: Request, res: Response): Promise<void> {
   res.json({ comic: await comicsService.getComic(slug, res.locals.user) });
 }
 
-// /obra/:slug (mapa de rutas HTML): obra pública (404 o 410 si no); el título va escapado en <title> y <h1>.
+// /obra/:slug (mapa de rutas HTML): obra pública o, para su dueño y el admin, también pending (D10; 404 o 410 si no);
+// el título va escapado en <title> y <h1>.
 export async function comicPage(_req: Request, res: Response): Promise<void> {
   const { slug } = res.locals.validated.params as ComicParams;
-  const comic = await comicsService.requirePublicComic(slug);
+  const { comic } = await comicsService.requireVisibleComic(slug, res.locals.user);
   await sendPage(res, 'comic', { title: comic.title });
 }
 
@@ -62,4 +63,12 @@ export async function withdrawComic(req: Request, res: Response): Promise<void> 
 // requirePageAuthor va antes. "Autor original" propone el nombre visible (contrato, CreateComicInput), escapado.
 export async function authorPage(_req: Request, res: Response): Promise<void> {
   await sendPage(res, 'author', { authorCredit: res.locals.user!.displayName });
+}
+
+// CU-30: requireAuthor va antes en la ruta; la propiedad la comprueba el servicio.
+export async function updateComic(req: Request, res: Response): Promise<void> {
+  const { slug } = res.locals.validated.params as ComicParams;
+  const input = res.locals.validated.body as UpdateComicInput;
+  const comic = await comicsService.updateComic(res.locals.user!, slug, input, { ip: req.ip ?? null, requestId: res.locals.requestId });
+  res.json({ comic });
 }

@@ -12,12 +12,14 @@ type ChapterAccess = 'free' | 'ad' | 'account' | 'balance';
 interface ChapterSummaryDto {
   number: number;
   title: string;
-  publishedAt: string;
+  status: 'draft' | 'pending' | 'approved'; // D10: draft y pending solo en la vista previa del dueño y del admin
+  publishedAt: string | null;
   access: ChapterAccess;
   read: boolean;
 }
 
 interface ComicDto extends ComicCardDto {
+  status: 'pending' | 'approved';
   synopsis: string;
   publishedBy: string | null;
   license: string;
@@ -36,12 +38,19 @@ const CHAPTER_STATES: Record<ChapterAccess | 'read', { meta: string; label: stri
   account: { meta: 'Requiere cuenta o Premium', label: 'Requiere cuenta', style: 'locked', icon: 'icon-lock' },
 };
 
+// D10: capítulos que solo ven el autor dueño y el admin.
+const PREVIEW_STATES: Record<'draft' | 'pending', { meta: string; label: string; style: 'locked'; icon: null }> = {
+  draft: { meta: 'Vista previa · todavía no es público', label: 'Borrador', style: 'locked', icon: null },
+  pending: { meta: 'Vista previa · en revisión', label: 'En revisión', style: 'locked', icon: null },
+};
+
 const slug = decodeURIComponent(location.pathname.split('/')[2] ?? '');
 const store = { loading: false };
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
 const cover = byId<HTMLElement>('work-cover');
 const status = byId<HTMLElement>('work-status');
+const preview = byId<HTMLElement>('work-preview');
 const tags = byId<HTMLElement>('work-tags');
 const body = byId<HTMLElement>('work-body');
 const synopsis = byId<HTMLElement>('work-synopsis');
@@ -143,7 +152,7 @@ function renderLicense(comic: ComicDto): void {
 }
 
 function chapterItem(chapter: ChapterSummaryDto): HTMLLIElement {
-  const state = CHAPTER_STATES[chapter.read ? 'read' : chapter.access];
+  const state = chapter.status !== 'approved' ? PREVIEW_STATES[chapter.status] : CHAPTER_STATES[chapter.read ? 'read' : chapter.access];
   const item = document.createElement('li');
   item.className = `chapter-list__item${state.style === 'locked' ? ' chapter-list__item--locked' : ''}`;
   const link = document.createElement('a');
@@ -184,6 +193,16 @@ function renderComic(comic: ComicDto): void {
     status.hidden = false;
   }
   renderTags(comic.tags);
+  // D10: la API solo manda una obra pending o capítulos sin publicar a su autor y al admin.
+  const unpublished = comic.chapters.filter((chapter) => chapter.status !== 'approved').length;
+  if (preview) {
+    preview.textContent = comic.status === 'pending'
+      ? 'Vista previa: esta obra está en revisión y todavía no es pública. Solo la ven su autor y la administración.'
+      : unpublished > 0
+        ? `Vista previa: ${plural(unpublished, 'capítulo todavía no es público', 'capítulos todavía no son públicos')}. Solo los ven su autor y la administración.`
+        : '';
+    preview.hidden = preview.textContent === '';
+  }
   if (synopsis) synopsis.textContent = comic.synopsis;
   if (author) author.textContent = comic.authorCredit;
   // RN-07: el nombre del autor que la publicó o, si es importada, la plataforma.

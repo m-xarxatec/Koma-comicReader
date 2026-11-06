@@ -3,7 +3,7 @@ import { env } from '../../config/env.js';
 import { GUEST_READS_COOKIE_DAYS } from '../../config/limits.js';
 import { sendPage } from '../../utils/page.js';
 import type { ComicParams } from '../comics/comics.schema.js';
-import { requirePublicComic } from '../comics/comics.service.js';
+import { requireVisibleComic } from '../comics/comics.service.js';
 import type { ChapterParams, ReaderPageParams } from './reading.schema.js';
 import * as readingService from './reading.service.js';
 
@@ -39,15 +39,15 @@ export async function readChapter(req: Request, res: Response): Promise<void> {
 
 // --- Páginas ---
 
-// /leer/:slug → 301 al primer capítulo, si la obra es pública (404 o 410 si no). El slug ya cumple el patrón:
-// la redirección es relativa y local.
+// /leer/:slug → 301 al primer capítulo, si la obra es visible para quien la pide (pública, o pending para su dueño y
+// el admin, D10; 404 o 410 si no). El slug ya cumple el patrón: la redirección es relativa y local.
 export async function readerStart(_req: Request, res: Response): Promise<void> {
   const { slug } = res.locals.validated.params as ComicParams;
-  await requirePublicComic(slug);
+  await requireVisibleComic(slug, res.locals.user);
   res.redirect(301, `/leer/${slug}/1`);
 }
 
 export async function readerPage(_req: Request, res: Response): Promise<void> {
   const { slug, numero } = res.locals.validated.params as ReaderPageParams;
-  await sendPage(res, 'reader', { ...(await readingService.getReaderPage(slug, numero)) });
+  await sendPage(res, 'reader', { ...(await readingService.getReaderPage(slug, numero, res.locals.user)) });
 }
