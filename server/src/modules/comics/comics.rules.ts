@@ -1,6 +1,7 @@
 import { SLUG_MAX_LENGTH } from '../../config/limits.js';
 
-// Reglas puras de las obras del autor (sin BD ni reloj): slug (RN-09) y licencias (RN-07, D6).
+// Reglas puras de las obras del autor (sin BD ni reloj): slug (RN-09), licencias (RN-07, D6) y sumas del panel del
+// autor (RN-19).
 
 // RN-09: slug del título al crear la obra. Minúsculas, sin acentos (NFD sin marcas diacríticas), cada tramo que
 // no sea [a-z0-9] pasa a un guion, sin guiones en los extremos y con SLUG_MAX_LENGTH caracteres como mucho. Si
@@ -43,4 +44,40 @@ export const LICENSE_CODES = Object.keys(LICENSES) as [LicenseCode, ...LicenseCo
 // Del nombre guardado al código del contrato. null = una licencia fuera de la lista (obra importada).
 export function licenseCodeFromName(name: string): LicenseCode | null {
   return LICENSE_CODES.find((code) => LICENSES[code].name === name) ?? null;
+}
+
+// --- RN-19: panel del autor ---
+
+export interface Reads {
+  total: number;
+  last7: number;
+  last30: number;
+}
+
+export interface WorkReads<C> {
+  comic: C;
+  reads: Reads;
+  chapters: { number: number; title: string; reads: Reads }[];
+}
+
+const ZERO: Reads = { total: 0, last7: 0, last30: 0 };
+const addReads = (a: Reads, b: Reads): Reads => ({ total: a.total + b.total, last7: a.last7 + b.last7, last30: a.last30 + b.last30 });
+
+// Agrupa las filas (una por obra y capítulo approved vivo; `chapter` null si la obra no tiene ninguno) en obras con
+// sus capítulos, en el orden en que llegan. La obra suma sus capítulos (así coincide siempre con ellos) y el total
+// suma las obras. Una obra sin capítulos ni lecturas queda con ceros.
+export function groupWorkReads<C extends { id: number }>(
+  rows: readonly { comic: C; chapter: { number: number; title: string; reads: Reads } | null }[],
+): { reads: Reads; works: WorkReads<C>[] } {
+  const works = new Map<number, WorkReads<C>>();
+  for (const { comic, chapter } of rows) {
+    const work = works.get(comic.id) ?? { comic, reads: ZERO, chapters: [] };
+    works.set(comic.id, work);
+    if (chapter) {
+      work.chapters.push(chapter);
+      work.reads = addReads(work.reads, chapter.reads);
+    }
+  }
+  const list = [...works.values()];
+  return { reads: list.reduce((sum, work) => addReads(sum, work.reads), ZERO), works: list };
 }

@@ -662,3 +662,14 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - Contrato: `ReadingDto.preview` en "Vista previa", el 410 y el orden del borrado, y el 400 sin `fields` del envío.
 - **Tests:** `comments.test.ts` (capítulo retirado y obra retirada: 410 sin `deleted_at` ni auditoría; el ajeno, 403), `author-chapters.test.ts` (sin `fields`) y `client-parity.test.ts`.
 - **Comprobación (IA):** typecheck, 125 unitarios y 218 de API.
+
+### 2026-11-07 · Bloque 3 · Panel del autor: API (CU-31 recortado, RN-19)
+- **Pedido del desarrollador:** panel tipo YouTube Studio. Ampliación del contrato aprobada tal cual: `GET /api/author/dashboard`, "En Koma desde", RN-19, comentarios recientes y donaciones solo como tarjeta estática "Próximamente" (sin API, fase 3). Los textos fuera del contrato los editó el desarrollador (commit `docs: panel del autor en el MVP…`).
+- **Resultado:**
+  - Contrato del bloque 3: sección "Panel del autor" con `AuthorDashboardDto`, `ReadsDto`, `AuthorWorkReadsDto` y `AuthorRecentCommentDto`, y qué entra en cada suma.
+  - `GET /api/author/dashboard` con `requireAuthor`. El SQL filtra por el `author_id` de la sesión, así que no se puede pedir nada ajeno. Solo lectura, sin auditoría ni limitador, con `Cache-Control: no-store`.
+  - Repositorios: `countAuthorStatuses` (obras sin retiradas; capítulos sin retirados de obras vivas) y `listAuthorChapterReads` (`guest_reads + user_reads`, con ventanas `day > hoy − 7` y `day > hoy − 30` en el día de `Europe/Madrid`, solo capítulos `approved` vivos) en `comics.repository.ts`; `listRecentOnAuthorComics` (los 10 más nuevos, visibles y de capítulos aprobados vivos de obras vivas) en `comments.repository.ts`; `findCreatedAt` en `users.repository.ts`.
+  - `groupWorkReads` (pura, `comics.rules.ts`): la obra suma sus capítulos y el total suma las obras. `READS_WINDOW_SHORT_DAYS`, `READS_WINDOW_LONG_DAYS` y `AUTHOR_RECENT_COMMENTS` en `limits.ts`.
+  - El cliente del panel lo hará Codex con un diseño nuevo (punto 4 del pedido).
+- **Tests:** `unit/author-dashboard.test.ts` (2, RN-19: sumas, obra sin capítulos y lista vacía). `api/author-dashboard.test.ts` (6): 401 y 403 (lector y admin); autor sin obras; límites de las ventanas (hoy, − 6, − 7, − 29, − 30 y − 90) con invitados y registrados sumados; solo capítulos aprobados vivos, sin obra retirada ni ajena y en orden; recuentos por estado con rechazado y sustituto; los 10 comentarios más recientes sin ocultos, eliminados, retirados ni ajenos, con el texto tal cual.
+- **Comprobación (IA):** typecheck, 127 unitarios y 224 de API.

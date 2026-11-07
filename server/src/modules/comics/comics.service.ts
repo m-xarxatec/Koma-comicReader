@@ -1,6 +1,6 @@
 import { readFile, rm } from 'node:fs/promises';
 import pg from 'pg';
-import { CATALOG_PAGE_SIZE } from '../../config/limits.js';
+import { AUTHOR_RECENT_COMMENTS, CATALOG_PAGE_SIZE, READS_WINDOW_LONG_DAYS, READS_WINDOW_SHORT_DAYS } from '../../config/limits.js';
 import { pool, withTransaction, type Queryable } from '../../db/pool.js';
 import { storage } from '../../integrations/storage/index.js';
 import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
@@ -8,12 +8,14 @@ import * as audit from '../audit/audit.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
 import { canManageComic, canPreviewComic, canWithdrawComic, chapterAccess, type ChapterAccess } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
+import * as commentsRepository from '../comments/comments.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import { IMAGE_CONTENT_TYPES, newImageKey, readImageInfo } from '../../utils/image.js';
 import { logger } from '../../utils/logger.js';
+import * as usersRepository from '../users/users.repository.js';
 import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
-import { LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type LicenseCode } from './comics.rules.js';
+import { groupWorkReads, LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type LicenseCode, type Reads } from './comics.rules.js';
 import type { CatalogQuery, CreateComicInput, UpdateComicInput } from './comics.schema.js';
 
 // Catálogo, etiquetas y ficha (CU-01, CU-02; contrato del bloque 2). Solo obras aprobadas y no retiradas;
@@ -217,6 +219,70 @@ export async function listAuthorComics(user: User): Promise<AuthorComicDto[]> {
       ),
     ),
   );
+}
+
+// --- Panel del autor (CU-31 recortado; RN-19; contrato del bloque 3, "Panel del autor") ---
+
+export interface AuthorDashboardDto {
+  displayName: string;
+  authorSince: string;
+  today: string;
+  comics: { pending: number; approved: number; rejected: number };
+  chapters: { draft: number; pending: number; approved: number; rejected: number };
+  reads: Reads;
+  works: {
+    slug: string;
+    title: string;
+    status: 'pending' | 'approved' | 'rejected';
+    reads: Reads;
+    chapters: { number: number; title: string; reads: Reads }[];
+  }[];
+  recentComments: {
+    id: number;
+    body: string;
+    authorName: string;
+    createdAt: string;
+    comic: { slug: string; title: string };
+    chapterNumber: number;
+    panelPosition: number;
+  }[];
+}
+
+// GET /api/author/dashboard: solo lo del usuario de la sesión (requireAuthor va antes en la ruta). Solo lectura.
+export async function getAuthorDashboard(user: User): Promise<AuthorDashboardDto> {
+  const [createdAt, counts, readRows, comments] = await Promise.all([
+    usersRepository.findCreatedAt(pool, user.id),
+    comicsRepository.countAuthorStatuses(pool, user.id),
+    comicsRepository.listAuthorChapterReads(pool, user.id, { shortDays: READS_WINDOW_SHORT_DAYS, longDays: READS_WINDOW_LONG_DAYS }),
+    commentsRepository.listRecentOnAuthorComics(pool, user.id, AUTHOR_RECENT_COMMENTS),
+  ]);
+  // El usuario se acaba de leer de la BD (auth): si ya no está, la sesión no vale.
+  if (!createdAt) throw new AppError(401, 'UNAUTHENTICATED', 'Inicia sesión para continuar');
+  const toReads = (r: comicsRepository.ReadCounts): Reads => ({ total: r.total, last7: r.lastShort, last30: r.lastLong });
+  const { reads, works } = groupWorkReads(
+    readRows.map((row) => ({
+      comic: { id: row.comicId, slug: row.slug, title: row.title, status: row.status },
+      chapter: row.chapterNumber === null ? null : { number: row.chapterNumber, title: row.chapterTitle ?? '', reads: toReads(row.reads) },
+    })),
+  );
+  return {
+    displayName: user.displayName,
+    authorSince: createdAt.toISOString(),
+    today: counts.today,
+    comics: counts.comics,
+    chapters: counts.chapters,
+    reads,
+    works: works.map((work) => ({ slug: work.comic.slug, title: work.comic.title, status: work.comic.status, reads: work.reads, chapters: work.chapters })),
+    recentComments: comments.map((comment) => ({
+      id: comment.id,
+      body: comment.body,
+      authorName: comment.authorName,
+      createdAt: comment.createdAt.toISOString(),
+      comic: { slug: comment.comicSlug, title: comment.comicTitle },
+      chapterNumber: comment.chapterNumber,
+      panelPosition: comment.panelPosition,
+    })),
+  };
 }
 
 // D5: las etiquetas deben existir todas y al menos una ser un género (si no, 400 en fields.tags). Alta y edición.

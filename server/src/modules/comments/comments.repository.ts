@@ -90,3 +90,53 @@ export async function countVisibleByPosition(db: Queryable, chapterId: number): 
   );
   return new Map(rows.map((row) => [row.position, row.comments]));
 }
+
+// Panel del autor (RN-19): los comentarios visibles más recientes en sus obras, solo de capítulos approved sin
+// retirar de obras sin retirar.
+export interface AuthorRecentCommentRow {
+  id: number;
+  body: string;
+  authorName: string;
+  createdAt: Date;
+  comicSlug: string;
+  comicTitle: string;
+  chapterNumber: number;
+  panelPosition: number;
+}
+
+export async function listRecentOnAuthorComics(db: Queryable, authorId: number, limit: number): Promise<AuthorRecentCommentRow[]> {
+  const { rows } = await db.query<{
+    id: number;
+    body: string;
+    author_name: string;
+    created_at: Date;
+    comic_slug: string;
+    comic_title: string;
+    chapter_number: number;
+    panel_position: number;
+  }>(
+    `SELECT c.id, c.body, u.display_name AS author_name, c.created_at, co.slug AS comic_slug, co.title AS comic_title,
+            ch.number AS chapter_number, p.position AS panel_position
+     FROM comments c
+     JOIN users u ON u.id = c.user_id
+     JOIN panels p ON p.id = c.panel_id
+     JOIN chapters ch ON ch.id = p.chapter_id
+     JOIN comics co ON co.id = ch.comic_id
+     WHERE co.author_id = $1 AND co.deleted_at IS NULL
+       AND ch.status = 'approved' AND ch.deleted_at IS NULL
+       AND ${VISIBLE}
+     ORDER BY c.created_at DESC, c.id DESC
+     LIMIT $2`,
+    [authorId, limit],
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    body: row.body,
+    authorName: row.author_name,
+    createdAt: row.created_at,
+    comicSlug: row.comic_slug,
+    comicTitle: row.comic_title,
+    chapterNumber: row.chapter_number,
+    panelPosition: row.panel_position,
+  }));
+}

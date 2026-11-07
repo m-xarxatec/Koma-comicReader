@@ -111,3 +111,9 @@ export async function updatePassword(db: Queryable, id: number, passwordHash: st
   );
   return rows[0] ? toUser(rows[0]) : null;
 }
+
+// "En Koma desde" del panel del autor (RN-19): la fecha de alta de la cuenta.
+export async function findCreatedAt(db: Queryable, id: number): Promise<Date | null> {
+  const { rows } = await db.query<{ created_at: Date }>('SELECT created_at FROM users WHERE id = $1', [id]);
+  return rows[0]?.created_at ?? null;
+}

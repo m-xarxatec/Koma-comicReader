@@ -396,3 +396,98 @@ export async function replaceComicTags(db: Queryable, comicId: number, tagSlugs:
   await db.query('DELETE FROM comic_tags WHERE comic_id = $1', [comicId]);
   await addComicTags(db, comicId, tagSlugs);
 }
+
+// --- Panel del autor (CU-31 recortado; RN-19) ---
+
+const MADRID_TODAY = "(now() AT TIME ZONE 'Europe/Madrid')::date";
+
+export interface AuthorStatusCounts {
+  today: string; // 'YYYY-MM-DD' en Europe/Madrid
+  comics: { pending: number; approved: number; rejected: number };
+  chapters: { draft: number; pending: number; approved: number; rejected: number };
+}
+
+// Obras por estado sin las retiradas; capítulos por estado sin los retirados, de obras no retiradas.
+export async function countAuthorStatuses(db: Queryable, authorId: number): Promise<AuthorStatusCounts> {
+  const { rows } = await db.query<{
+    today: string;
+    comics_pending: number;
+    comics_approved: number;
+    comics_rejected: number;
+    chapters_draft: number;
+    chapters_pending: number;
+    chapters_approved: number;
+    chapters_rejected: number;
+  }>(
+    `WITH own AS (SELECT id, status FROM comics WHERE author_id = $1 AND deleted_at IS NULL),
+          own_chapters AS (SELECT ch.status FROM chapters ch JOIN own ON own.id = ch.comic_id WHERE ch.deleted_at IS NULL)
+     SELECT to_char(${MADRID_TODAY}, 'YYYY-MM-DD') AS today,
+            (SELECT count(*) FROM own WHERE status = 'pending')::int AS comics_pending,
+            (SELECT count(*) FROM own WHERE status = 'approved')::int AS comics_approved,
+            (SELECT count(*) FROM own WHERE status = 'rejected')::int AS comics_rejected,
+            (SELECT count(*) FROM own_chapters WHERE status = 'draft')::int AS chapters_draft,
+            (SELECT count(*) FROM own_chapters WHERE status = 'pending')::int AS chapters_pending,
+            (SELECT count(*) FROM own_chapters WHERE status = 'approved')::int AS chapters_approved,
+            (SELECT count(*) FROM own_chapters WHERE status = 'rejected')::int AS chapters_rejected`,
+    [authorId],
+  );
+  const row = rows[0]!;
+  return {
+    today: row.today,
+    comics: { pending: row.comics_pending, approved: row.comics_approved, rejected: row.comics_rejected },
+    chapters: { draft: row.chapters_draft, pending: row.chapters_pending, approved: row.chapters_approved, rejected: row.chapters_rejected },
+  };
+}
+
+export interface ReadCounts {
+  total: number;
+  lastShort: number; // READS_WINDOW_SHORT_DAYS con hoy incluido
+  lastLong: number; // READS_WINDOW_LONG_DAYS con hoy incluido
+}
+
+// Una fila por obra viva del autor y capítulo approved vivo (chapterNumber null si la obra no tiene ninguno), con
+// sus lecturas = guest_reads + user_reads. De la obra más reciente a la más antigua y por número.
+export interface AuthorChapterReadsRow {
+  comicId: number;
+  slug: string;
+  title: string;
+  status: 'pending' | 'approved' | 'rejected';
+  chapterNumber: number | null;
+  chapterTitle: string | null;
+  reads: ReadCounts;
+}
+
+export async function listAuthorChapterReads(db: Queryable, authorId: number, windows: { shortDays: number; longDays: number }): Promise<AuthorChapterReadsRow[]> {
+  const { rows } = await db.query<{
+    comic_id: number;
+    slug: string;
+    title: string;
+    status: AuthorChapterReadsRow['status'];
+    number: number | null;
+    chapter_title: string | null;
+    total: number;
+    last_short: number;
+    last_long: number;
+  }>(
+    `SELECT co.id AS comic_id, co.slug, co.title, co.status, ch.number, ch.title AS chapter_title,
+            COALESCE(sum(r.guest_reads + r.user_reads), 0)::int AS total,
+            COALESCE(sum(r.guest_reads + r.user_reads) FILTER (WHERE r.day > ${MADRID_TODAY} - $2::int), 0)::int AS last_short,
+            COALESCE(sum(r.guest_reads + r.user_reads) FILTER (WHERE r.day > ${MADRID_TODAY} - $3::int), 0)::int AS last_long
+     FROM comics co
+     LEFT JOIN chapters ch ON ch.comic_id = co.id AND ch.status = 'approved' AND ch.deleted_at IS NULL
+     LEFT JOIN chapter_read_counts r ON r.chapter_id = ch.id
+     WHERE co.author_id = $1 AND co.deleted_at IS NULL
+     GROUP BY co.id, ch.id
+     ORDER BY co.created_at DESC, co.id DESC, ch.number`,
+    [authorId, windows.shortDays, windows.longDays],
+  );
+  return rows.map((row) => ({
+    comicId: row.comic_id,
+    slug: row.slug,
+    title: row.title,
+    status: row.status,
+    chapterNumber: row.number,
+    chapterTitle: row.chapter_title,
+    reads: { total: row.total, lastShort: row.last_short, lastLong: row.last_long },
+  }));
+}

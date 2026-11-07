@@ -823,6 +823,57 @@ interface AuthorPanelDto {
 - `POST /api/comics/:slug/chapters/:number/read` y `/leer/:slug/:numero`: el autor dueño y el admin leen también un capítulo `draft` o `pending` de una obra no retirada. No se escribe en `chapter_reads`, `reading_credits` ni en las estadísticas; `ads` y `balance` van a `null`, cada `comments` vale 0 y no se abre el panel de comentarios (solo se comenta en un capítulo `approved`). `prev` y `next` recorren los capítulos que esa persona puede ver.
 - `ReadingDto` gana `preview: boolean`: `true` solo en esa vista previa (capítulo `draft` o `pending`, u obra `pending`), y `false` en cualquier lectura normal, también la del admin o la del dueño en un capítulo aprobado. Con él, el cliente decide si avisa de la vista previa y si oculta los iconos de comentarios: `ads` y `balance` a `null` y los comentarios a 0 también salen para el admin en una lectura normal.
 
+### Panel del autor (CU-31 recortado; RN-19)
+
+Ampliación aprobada el 6-nov. El panel de `/autor` (resumen, lecturas y comentarios recientes) se carga con una sola petición. Sin tablas nuevas: lee `chapter_read_counts`, `comments` y `users.created_at`. Sin punto de abandono ni puntos recibidos (fase 2). Las donaciones son una tarjeta estática "Próximamente" en el HTML, sin datos ni API (fase 3).
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/author/dashboard` | `requireAuthor`; el SQL filtra por el `author_id` del usuario (sin `:slug`: no se puede pedir nada ajeno) | — | 200 `{ dashboard: AuthorDashboardDto }` | 401, 403 | — (solo lectura, sin limitador) |
+
+```ts
+interface ReadsDto {
+  total: number;
+  last7: number;  // de hoy − 6 a hoy
+  last30: number; // de hoy − 29 a hoy
+}
+
+interface AuthorDashboardDto {
+  displayName: string;
+  authorSince: string; // users.created_at (ISO 8601): "En Koma desde"
+  today: string;       // 'YYYY-MM-DD' en Europe/Madrid: el día de referencia de last7 y last30
+  comics: { pending: number; approved: number; rejected: number };
+  chapters: { draft: number; pending: number; approved: number; rejected: number };
+  reads: ReadsDto;     // todas sus obras
+  works: AuthorWorkReadsDto[];
+  recentComments: AuthorRecentCommentDto[];
+}
+
+interface AuthorWorkReadsDto {
+  slug: string;
+  title: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reads: ReadsDto; // = suma de sus capítulos
+  chapters: { number: number; title: string; reads: ReadsDto }[]; // los approved vivos, por número
+}
+
+interface AuthorRecentCommentDto {
+  id: number;
+  body: string;       // texto plano; el cliente lo pinta con textContent
+  authorName: string;
+  createdAt: string;  // ISO 8601
+  comic: { slug: string; title: string };
+  chapterNumber: number;
+  panelPosition: number; // el cliente enlaza a /leer/:slug/:numero#v-:posición
+}
+```
+
+- **Lecturas (RN-19):** `guest_reads + user_reads` de `chapter_read_counts`. `user_reads` cuenta lectores registrados únicos por capítulo y `guest_reads` las lecturas de invitados (por su cookie): no son visitas. Las ventanas se cuentan con el día de `Europe/Madrid`, el mismo con el que se escriben las filas. Una obra o un capítulo sin lecturas dan ceros.
+- **Qué entra:** solo las obras del usuario y sin retiradas, como `GET /api/author/comics`. En `works[].chapters` y en las sumas, solo capítulos `approved` sin retirar: así la suma de los capítulos coincide siempre con la de la obra. `works` va de la obra más reciente a la más antigua.
+- **Recuentos:** obras por estado, sin retiradas. Capítulos por estado, sin retirados, de obras no retiradas; un capítulo rechazado sigue contando como rechazado aunque tenga sustituto vivo.
+- **Comentarios recientes:** los 10 más nuevos (`created_at DESC, id DESC`) en sus obras, sin ocultos ni eliminados, solo de capítulos `approved` sin retirar de obras sin retirar. Incluye los del propio autor.
+- **Motivos de rechazo:** ya los trae `GET /api/author/comics`; el panel no los repite.
+
 ### Páginas
 
 Ya figuran en el mapa de rutas; se implementan en este bloque.

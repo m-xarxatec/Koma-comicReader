@@ -34,6 +34,11 @@ export async function listAuthorComics(_req: Request, res: Response): Promise<vo
   res.set('Cache-Control', 'no-store').json({ comics: await comicsService.listAuthorComics(res.locals.user!) });
 }
 
+// Panel del autor (RN-19): requireAuthor va antes en la ruta.
+export async function getAuthorDashboard(_req: Request, res: Response): Promise<void> {
+  res.set('Cache-Control', 'no-store').json({ dashboard: await comicsService.getAuthorDashboard(res.locals.user!) });
+}
+
 export async function createComic(req: Request, res: Response): Promise<void> {
   const input = res.locals.validated.body as CreateComicInput;
   const comic = await comicsService.createComic(res.locals.user!, input, { ip: req.ip ?? null, requestId: res.locals.requestId });

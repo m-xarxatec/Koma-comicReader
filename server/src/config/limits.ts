@@ -39,3 +39,8 @@ export const SLUG_MAX_LENGTH = 80; // antes del sufijo -2, -3… (RN-09)
 // RN-11: comentarios por viñeta (el CHECK de 006 repite el máximo).
 export const COMMENT_BODY_MAX = 500;
 export const COMMENTS_PAGE_SIZE = 50;
+
+// RN-19: panel del autor (contrato del bloque 3, "Panel del autor"). Ventanas con hoy incluido.
+export const READS_WINDOW_SHORT_DAYS = 7;
+export const READS_WINDOW_LONG_DAYS = 30;
+export const AUTHOR_RECENT_COMMENTS = 10;

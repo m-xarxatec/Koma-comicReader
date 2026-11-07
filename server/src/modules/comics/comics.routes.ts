@@ -18,6 +18,8 @@ comicsRouter.get('/comics/:slug', validate({ params: comicParams }, { notFound: 
 // Obras del autor (contrato del bloque 3; CU-28). requireAuthor: sesión e is_author (un admin nunca lo es). La
 // propiedad de cada obra la comprueba el servicio.
 comicsRouter.get('/author/comics', requireAuthor, controller.listAuthorComics);
+// Panel del autor (CU-31 recortado; RN-19): solo lectura de lo propio.
+comicsRouter.get('/author/dashboard', requireAuthor, controller.getAuthorDashboard);
 comicsRouter.post('/author/comics', requireAuthor, validate({ body: createComicBody }), controller.createComic);
 // CU-30 (recortable): editar los datos; sin reaprobación y sin cambiar el slug.
 comicsRouter.patch(
