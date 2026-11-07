@@ -1,5 +1,4 @@
-/* Página /autor (D18): presentación, navegación por secciones, resumen, secciones y listas (maqueta autor/index.html,
-   components/panels.css: workspace, section-nav, metric, section-heading y panel-columns). */
+/* Página /autor: presentación, navegación del estudio, secciones y listas. */
 .author-page {
   padding-block: var(--author-page-padding);
 }
@@ -63,12 +62,6 @@
   margin-bottom: var(--author-nav-margin);
 }
 
-.author-page__metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--author-metrics-gap);
-}
-
 .author-page__metric {
   display: grid;
   gap: var(--author-metric-gap);
@@ -87,11 +80,6 @@
 .author-page__metric-value {
   font-size: var(--font-size-author-metric-value);
   line-height: var(--line-height-author-metric-value);
-}
-
-.author-page__metric-note {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
 }
 
 .author-page__section {
@@ -150,7 +138,7 @@
   list-style: none;
 }
 
-/* Revisiones: tarjeta a todo el ancho debajo de "Mis obras". */
+/* Control editorial y donaciones: paneles de sección. */
 .author-page__panel {
   margin-top: var(--author-section-margin);
 }
@@ -195,10 +183,6 @@
     padding-top: var(--author-page-padding-medium-top);
   }
 
-  .author-page__metrics {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
   .author-page__works {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -207,6 +191,33 @@
 @media (min-width: 64rem) {
   .author-page {
     padding-block: var(--author-page-padding-wide);
+  }
+
+  .author-page__studio {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 4fr);
+    column-gap: var(--space-8);
+  }
+
+  .author-page__studio > :not(.author-page__nav) {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .author-page__nav {
+    position: sticky;
+    top: var(--scroll-offset);
+    grid-column: 1;
+    grid-row: 1 / span 8; /* las 8 secciones de #studio-view que van en la columna 2 */
+    display: flex;
+    flex-direction: column;
+    align-self: start;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .author-page__nav-link {
+    white-space: normal;
   }
 
   .author-page__works {

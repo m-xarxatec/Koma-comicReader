@@ -700,3 +700,46 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - **2.ª ejecución:** nada nuevo.
   - En la auditoría hay 2 `comic.approve`, 6 `chapter.approve`, 1 `comic.reject` y 6 `system.seed` con el `requestId` del script. `GET /api/author/dashboard` de la autora demo devuelve 407 lecturas (234 en 7 días) y 10 comentarios recientes.
 - **Limitaciones:** las lecturas por SQL no tocan `reading_credits` ni `reads_since_ad`. Si se retira una obra demo, la siguiente ejecución la vuelve a crear con el slug `-2`.
+
+### 2026-11-07 · Bloque 3 · Panel del autor: cliente (RN-19)
+- **Pedido a la IA:** el frontend del estudio con el panel tipo YouTube Studio, con un diseño nuevo. Codex lo escribió en una vuelta, en un worktree aparte (`../koma-estudio`, rama `feat/estudio-panel`), con el encargo de `.claude/encargos/codex-estudio.md`, tras aprobar el desarrollador su propuesta de diseño. La IA de este repositorio revisó el diff, lo trajo al árbol principal, aplicó sus correcciones y las del agente `frontend`.
+- **Resultado (diseño aprobado):**
+  - Orden de secciones: resumen; control editorial, solo si hay obras o capítulos pendientes o rechazados; mis obras; lecturas; comentarios recientes; donaciones.
+  - **Resumen:** nombre, "En Koma desde" (`<time>`), lecturas totales, de 7 y de 30 días, y obras y capítulos por estado (`<dl>`).
+  - **Lecturas:** una fila por obra en la tabla de datos de la página (`chapter-table`), con el total y su barra `<meter>` (relativa a la obra con más lecturas; sin estilos en línea), 7 y 30 días, y los capítulos en un `<details>`. Arriba, "Datos hasta el …" (`today`).
+  - **Comentarios recientes:** autor, fecha, obra y capítulo, y "Ir a la viñeta N" (`/leer/:slug/:n#v-N`), todo con `textContent`.
+  - **Donaciones:** tarjeta estática "Próximamente", sin datos ni API (fase 3).
+  - Desde 64rem, la navegación del estudio es una columna lateral fija (`sticky`) y las secciones van en la segunda columna.
+  - El panel se vuelve a pedir tras cada acción del autor (`reloadComics`), y `dashboardRequest` descarta las respuestas viejas.
+  - Fuera las tres métricas antiguas (`data-metric`). Componentes nuevos: `author-summary.css`, `reads-table.css` y `recent-comment.css`.
+- **Corregido por la IA de este repositorio (revisión del diff):**
+  - BEM: las clases sustituyen a los selectores de elemento (`> div`, `dt`, `dd`, `strong`) y a `.recent-comment .text-link`.
+  - Un token propio (`--reads-table-work-min-width`) en lugar de reutilizar `--chapter-editor-strip-width`.
+  - Fuera `.author-page__metric-note`, que ya no se usaba, y dos `:focus-visible` que repetían el global.
+  - El aviso "Desplaza la tabla…" se oculta desde 64rem.
+  - Un comentario junto a `grid-row: 1 / span 8`.
+- **Revisión del agente `frontend`:** NO APTO por un bloqueante y 12 observaciones. Corregidos:
+  - el texto de la maqueta "Conoce el motivo antes de volver a enviar." en el control editorial (bloqueante);
+  - la tabla de lecturas usa la tabla de datos de `chapter-table.css` (cabeceras de la maqueta: mayúsculas, espaciado, `nowrap` y la última fila sin borde), y `reads-table.css` queda solo con lo propio, con `vertical-align: top` por el `<details>`;
+  - la pista de `<meter>` con tokens también en Firefox;
+  - la barra y "Todavía sin lecturas" pasan de la cabecera de fila a la celda del total;
+  - cada `summary` nombra su obra (`visually-hidden`);
+  - un solo `role="status"` para el fallo del panel;
+  - un aviso en el HTML de que la columna lateral depende de las 8 secciones;
+  - fuera el `scroll-margin-top` duplicado;
+  - "Capítulo N" sin el número repetido.
+
+  Se quedan: el aviso de desplazamiento entre 40 y 64rem, y `reads-table__hint` y `recent-comment__list` como elementos fuera de su bloque (hay precedente en `chapter-table__scroll`).
+- **Tests:** `pages.test.ts` cuenta las 6 cabeceras solo en la tabla de capítulos, porque la de lecturas comparte ahora sus clases.
+- **Comprobación (IA):** typecheck, 132 unitarios y 224 de API. Lo visual (360 px, escritorio y teclado) y los lectores de pantalla, el desarrollador en el navegador, con `npm run demo:data`.
+- **Pendiente (desarrollador), en el navegador:**
+  - la columna lateral fija y sin huecos (con y sin control editorial, y con la obra o el capítulo abiertos);
+  - la navegación a 360 px;
+  - las cifras largas en el resumen;
+  - abrir los `<details>` con Intro y Espacio;
+  - las barras en Chrome y Firefox;
+  - el panel recargado tras subir, enviar, retirar o editar, sin perder el foco;
+  - `?vista=nueva-obra` en escritorio;
+  - "Ir a la viñeta N";
+  - consola sin errores.
+- **Limpieza (desarrollador):** borrar el worktree `../koma-estudio` y la rama `feat/estudio-panel` (sin commits propios). Sus copias de `ENCARGO-CODEX.md`, `docs/ideas_base.md` y `docs/modelo_datos.md` no van a ningún commit.

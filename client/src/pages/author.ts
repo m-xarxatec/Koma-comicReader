@@ -66,6 +66,42 @@ interface AuthorChapterDto extends AuthorChapterSummaryDto {
   panels: AuthorPanelDto[];
 }
 
+// Contrato de GET /api/author/dashboard (RN-19).
+interface ReadsDto {
+  total: number;
+  last7: number;
+  last30: number;
+}
+
+interface AuthorWorkReadsDto {
+  slug: string;
+  title: string;
+  status: ComicStatus;
+  reads: ReadsDto;
+  chapters: { number: number; title: string; reads: ReadsDto }[];
+}
+
+interface AuthorRecentCommentDto {
+  id: number;
+  body: string;
+  authorName: string;
+  createdAt: string;
+  comic: { slug: string; title: string };
+  chapterNumber: number;
+  panelPosition: number;
+}
+
+interface AuthorDashboardDto {
+  displayName: string;
+  authorSince: string;
+  today: string;
+  comics: { pending: number; approved: number; rejected: number };
+  chapters: { draft: number; pending: number; approved: number; rejected: number };
+  reads: ReadsDto;
+  works: AuthorWorkReadsDto[];
+  recentComments: AuthorRecentCommentDto[];
+}
+
 const COMIC_STATUS: Record<ComicStatus, { label: string; tone: string }> = {
   approved: { label: 'Publicada', tone: 'success' },
   pending: { label: 'En revisión', tone: 'warning' },
@@ -85,7 +121,8 @@ const store: {
   busy: boolean; // una operación del editor en curso: los botones esperan
   chapterRequest: number; // descarta la respuesta de un capítulo que ya no es el abierto
   editing: string | null; // obra cuyos datos están en el formulario de edición (no se pisan al repintar)
-} = { comics: [], tags: [], chapter: null, busy: false, chapterRequest: 0, editing: null };
+  dashboardRequest: number; // descarta un panel anterior tras una acción del autor
+} = { comics: [], tags: [], chapter: null, busy: false, chapterRequest: 0, editing: null, dashboardRequest: 0 };
 
 // --- Utilidades ---
 
@@ -109,6 +146,8 @@ function badge(target: HTMLElement, status: { label: string; tone: string }): HT
 }
 
 const dateFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
+const numberFormat = new Intl.NumberFormat('es-ES');
+const dayFormat = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const isLive = (chapter: AuthorChapterSummaryDto) => chapter.status !== 'rejected';
 
@@ -157,17 +196,140 @@ const worksMessage = byId<HTMLElement>('works-message');
 const worksStatus = byId<HTMLElement>('works-status');
 const reviewsList = byId<HTMLUListElement>('reviews-list');
 const reviewsMessage = byId<HTMLElement>('reviews-message');
+const reviewsSection = byId<HTMLElement>('revisiones');
+const reviewsNav = byId<HTMLElement>('reviews-nav');
 
-function renderMetrics(): void {
-  const chapters = store.comics.flatMap((comic) => comic.chapters);
-  const values: Record<string, number> = {
-    published: store.comics.filter((comic) => comic.status === 'approved').length,
-    drafts: chapters.filter((chapter) => chapter.status === 'draft').length,
-    review: store.comics.filter((comic) => comic.status === 'pending').length + chapters.filter((chapter) => chapter.status === 'pending').length,
-  };
-  for (const element of document.querySelectorAll<HTMLElement>('[data-metric]')) {
-    element.textContent = String(values[element.dataset['metric'] ?? ''] ?? 0).padStart(2, '0');
+const summaryMessage = byId<HTMLElement>('summary-message');
+const summaryContent = byId<HTMLElement>('summary-content');
+const readsMessage = byId<HTMLElement>('reads-message');
+const readsRegion = byId<HTMLElement>('reads-table-region');
+const readsRows = byId<HTMLTableSectionElement>('reads-rows');
+const commentsMessage = byId<HTMLElement>('comments-message');
+const commentsList = byId<HTMLOListElement>('comments-list');
+
+function renderSummary(dashboard: AuthorDashboardDto): void {
+  byId('summary-name').textContent = dashboard.displayName;
+  const since = byId<HTMLTimeElement>('summary-since');
+  since.dateTime = dashboard.authorSince;
+  since.textContent = dateFormat.format(new Date(dashboard.authorSince));
+  for (const [id, value] of [
+    ['summary-reads-total', dashboard.reads.total],
+    ['summary-reads-7', dashboard.reads.last7],
+    ['summary-reads-30', dashboard.reads.last30],
+    ['summary-comics-pending', dashboard.comics.pending],
+    ['summary-comics-approved', dashboard.comics.approved],
+    ['summary-comics-rejected', dashboard.comics.rejected],
+    ['summary-chapters-draft', dashboard.chapters.draft],
+    ['summary-chapters-pending', dashboard.chapters.pending],
+    ['summary-chapters-approved', dashboard.chapters.approved],
+    ['summary-chapters-rejected', dashboard.chapters.rejected],
+  ] as const) byId(id).textContent = numberFormat.format(value);
+  summaryContent.hidden = false;
+  summaryMessage.textContent = '';
+}
+
+function chapterReadsList(work: AuthorWorkReadsDto): HTMLOListElement {
+  const list = el('ol', 'reads-table__chapters');
+  list.setAttribute('aria-label', `Capítulos de ${work.title}`);
+  for (const chapter of work.chapters) {
+    const item = el('li', 'reads-table__chapter');
+    // Sin título propio, el título ya es "Capítulo N" (D21): no se repite el número.
+    const name = chapter.title === `Capítulo ${chapter.number}` ? chapter.title : `${chapter.number}. ${chapter.title}`;
+    item.append(el('strong', 'reads-table__chapter-title', name));
+    const counts = el('dl', 'reads-table__chapter-counts');
+    for (const [label, value] of [
+      ['Total', chapter.reads.total],
+      ['7 días', chapter.reads.last7],
+      ['30 días', chapter.reads.last30],
+    ] as const) {
+      const pair = el('div', 'reads-table__count');
+      pair.append(el('dt', 'reads-table__count-label', label), el('dd', 'reads-table__count-value', numberFormat.format(value)));
+      counts.append(pair);
+    }
+    item.append(counts);
+    list.append(item);
   }
+  return list;
+}
+
+function renderReads(dashboard: AuthorDashboardDto): void {
+  const day = new Date(`${dashboard.today}T12:00:00Z`);
+  byId('reads-today').textContent = `Datos hasta el ${dayFormat.format(day)}`;
+  const maxReads = Math.max(1, ...dashboard.works.map((work) => work.reads.total));
+  const rows: HTMLTableRowElement[] = [];
+  for (const work of dashboard.works) {
+    const row = el('tr', 'chapter-table__row');
+    const cell = 'chapter-table__cell reads-table__cell';
+    // La cabecera de fila solo lleva el título: la barra y el aviso van en la celda del total.
+    const title = el('th', `${cell} reads-table__work`, work.title);
+    title.scope = 'row';
+    const total = el('td', `${cell} reads-table__number`, numberFormat.format(work.reads.total));
+    const meter = el('meter', 'reads-table__meter');
+    meter.min = 0;
+    meter.max = maxReads;
+    meter.value = work.reads.total;
+    meter.setAttribute('aria-label', `Lecturas de ${work.title} respecto a la obra con más lecturas`);
+    total.append(meter);
+    if (work.reads.total === 0) total.append(el('span', 'reads-table__empty', 'Todavía sin lecturas'));
+    row.append(title, total);
+    for (const value of [work.reads.last7, work.reads.last30]) {
+      row.append(el('td', `${cell} reads-table__number`, numberFormat.format(value)));
+    }
+    const chaptersCell = el('td', cell);
+    const details = el('details', 'reads-table__details');
+    const summary = el('summary', 'reads-table__summary', plural(work.chapters.length, 'capítulo', 'capítulos'));
+    summary.append(el('span', 'visually-hidden', ` de ${work.title}`)); // cada summary se oye distinto al tabular
+    details.append(summary);
+    if (work.chapters.length > 0) details.append(chapterReadsList(work));
+    else details.append(el('p', 'reads-table__empty', 'No hay capítulos publicados.'));
+    chaptersCell.append(details);
+    row.append(chaptersCell);
+    rows.push(row);
+  }
+  readsRows.replaceChildren(...rows);
+  readsRegion.hidden = rows.length === 0;
+  byId('reads-scroll-hint').hidden = rows.length === 0;
+  readsMessage.textContent = rows.length === 0 || dashboard.reads.total === 0 ? 'Todavía sin lecturas.' : '';
+}
+
+function renderComments(comments: AuthorRecentCommentDto[]): void {
+  const items = comments.map((comment) => {
+    const item = el('li', 'recent-comment');
+    const meta = el('p', 'recent-comment__meta');
+    meta.append(el('strong', 'recent-comment__author', comment.authorName));
+    const date = el('time');
+    date.dateTime = comment.createdAt;
+    date.textContent = dateFormat.format(new Date(comment.createdAt));
+    meta.append(document.createTextNode(' · '), date);
+    const context = el('p', 'recent-comment__context', `${comment.comic.title} · Capítulo ${comment.chapterNumber}`);
+    const link = el('a', 'text-link recent-comment__link', `Ir a la viñeta ${comment.panelPosition}`);
+    link.href = `/leer/${encodeURIComponent(comment.comic.slug)}/${comment.chapterNumber}#v-${comment.panelPosition}`;
+    item.append(meta, el('p', 'recent-comment__body', comment.body), context, link);
+    return item;
+  });
+  commentsList.replaceChildren(...items);
+  commentsMessage.textContent = items.length === 0 ? 'Todavía no hay comentarios en tus obras.' : '';
+}
+
+async function reloadDashboard(): Promise<void> {
+  const request = ++store.dashboardRequest;
+  const result = await api.get<{ dashboard: AuthorDashboardDto }>('/api/author/dashboard');
+  if (request !== store.dashboardRequest) return;
+  if (!result.ok) {
+    const message = `No se pudo cargar el panel. ${errorText(result)}`;
+    summaryContent.hidden = true;
+    readsRegion.hidden = true;
+    byId('reads-scroll-hint').hidden = true;
+    byId('reads-today').textContent = '';
+    commentsList.replaceChildren();
+    summaryMessage.textContent = message;
+    readsMessage.textContent = message;
+    commentsMessage.textContent = message;
+    return;
+  }
+  renderSummary(result.data.dashboard);
+  renderReads(result.data.dashboard);
+  renderComments(result.data.dashboard.recentComments);
 }
 
 function workTile(comic: AuthorComicDto): HTMLLIElement {
@@ -249,22 +411,28 @@ function renderReviews(): void {
     }
   }
   reviewsList.replaceChildren(...items);
-  reviewsMessage.textContent = items.length === 0 ? 'No tienes envíos pendientes ni rechazos.' : '';
+  reviewsSection.hidden = items.length === 0;
+  reviewsNav.hidden = items.length === 0;
+  reviewsMessage.textContent = '';
 }
 
 function renderWorks(): void {
   worksList.replaceChildren(...store.comics.map(workTile));
   byId('works-count').textContent = plural(store.comics.length, 'obra', 'obras');
   worksMessage.textContent = store.comics.length === 0 ? 'Todavía no has creado ninguna obra. Empieza con «Nueva obra».' : '';
-  renderMetrics();
   renderReviews();
 }
 
 // Vuelve a pedir las obras (tras crear, subir, retirar…) y repinta todo lo que depende de ellas.
-async function reloadComics(): Promise<boolean> {
+async function reloadComics(refreshDashboard = true): Promise<boolean> {
+  if (refreshDashboard) void reloadDashboard();
   const result = await api.get<{ comics: AuthorComicDto[] }>('/api/author/comics');
   if (!result.ok) {
     worksMessage.textContent = `No se pudieron cargar tus obras. ${errorText(result)}`; // texto, no aviso de estado
+    reviewsList.replaceChildren();
+    reviewsMessage.textContent = `No se pudo cargar el control editorial. ${errorText(result)}`;
+    reviewsSection.hidden = false;
+    reviewsNav.hidden = false;
     return false;
   }
   store.comics = result.data.comics;
@@ -953,7 +1121,7 @@ comicNewChapter.addEventListener('click', () => queueMicrotask(focusNewChapter))
 // Sin JS, los botones de envío llegan desactivados (no hay a dónde enviar un formulario): aquí se activan.
 for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
 
-const [tagsResult, loaded] = await Promise.all([api.get<{ tags: TagDto[] }>('/api/tags'), reloadComics()]);
+const [tagsResult, loaded] = await Promise.all([api.get<{ tags: TagDto[] }>('/api/tags'), reloadComics(false), reloadDashboard()]);
 if (tagsResult.ok) {
   store.tags = tagsResult.data.tags;
   renderTagChoices(tagChoices, 'comic-tags');

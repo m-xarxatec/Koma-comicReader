@@ -1,0 +1,76 @@
+/* Identidad, lecturas destacadas y recuentos del panel del autor. */
+.author-summary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.author-summary__identity {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.author-summary__name {
+  font-size: var(--font-size-xl);
+  overflow-wrap: anywhere;
+}
+
+.author-summary__since {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.author-summary__reads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--author-metrics-gap);
+}
+
+.author-summary__reads > :first-child {
+  grid-column: 1 / -1;
+}
+
+.author-summary__statuses {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.author-summary__subheading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-lg);
+}
+
+.author-summary__counts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.author-summary__count {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.author-summary__count-label {
+  color: var(--color-text-muted);
+}
+
+.author-summary__count-value {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 40rem) {
+  .author-summary__reads {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .author-summary__reads > :first-child {
+    grid-column: auto;
+  }
+
+  .author-summary__statuses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

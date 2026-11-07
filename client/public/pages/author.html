@@ -24,6 +24,9 @@
   <link rel="stylesheet" href="/styles/components/review-notice.css">
   <link rel="stylesheet" href="/styles/components/chapter-table.css">
   <link rel="stylesheet" href="/styles/components/chapter-editor.css">
+  <link rel="stylesheet" href="/styles/components/author-summary.css">
+  <link rel="stylesheet" href="/styles/components/reads-table.css">
+  <link rel="stylesheet" href="/styles/components/recent-comment.css">
   <script type="module" src="/js/pages/author.js"></script>
 </head>
 <body>
@@ -50,32 +53,70 @@
       <p class="form__notice author-page__notice">El estudio del autor necesita JavaScript para mostrar tus obras, crearlas y subir capítulos.</p>
     </noscript>
 
-    <!-- Vista del estudio: resumen, obras, revisiones y, si se abren, la obra y el capítulo. Se oculta en la vista de
-         nueva obra. -->
-    <div id="studio-view">
+    <!-- Vista del estudio: panel y, si se abren, la obra y el capítulo. Se oculta en la vista de
+         nueva obra. Desde 64rem, la navegación ocupa la columna 1 junto a las 8 secciones hermanas que siguen
+         (author-page.css: grid-row 1 / span 8): si se añade o quita una, hay que cambiar ese número. -->
+    <div id="studio-view" class="author-page__studio">
       <nav class="author-page__nav" aria-label="Secciones del estudio">
+        <a class="author-page__nav-link" href="#resumen">Resumen</a>
+        <a class="author-page__nav-link" href="#revisiones" id="reviews-nav" hidden>Control editorial</a>
         <a class="author-page__nav-link" href="#mis-obras">Mis obras</a>
+        <a class="author-page__nav-link" href="#lecturas">Lecturas</a>
+        <a class="author-page__nav-link" href="#comentarios-recientes">Comentarios</a>
+        <a class="author-page__nav-link" href="#donaciones">Donaciones</a>
         <a class="author-page__nav-link" href="#obra" data-nav="comic" hidden>Capítulos</a>
         <a class="author-page__nav-link" href="#capitulo" data-nav="chapter" hidden>Editor de capítulo</a>
-        <a class="author-page__nav-link" href="#revisiones">Revisiones</a>
       </nav>
 
-      <section class="author-page__metrics" aria-label="Resumen de mi actividad">
-        <div class="author-page__metric">
-          <span class="author-page__metric-label">Obras publicadas</span>
-          <strong class="author-page__metric-value" data-metric="published">–</strong>
-          <span class="author-page__metric-note">Visibles en el catálogo</span>
+      <section id="resumen" class="author-page__section" aria-labelledby="resumen-title">
+        <div class="author-page__heading">
+          <div>
+            <p class="eyebrow author-page__heading-eyebrow">Tu actividad</p>
+            <h2 class="author-page__heading-title" id="resumen-title" tabindex="-1">Resumen</h2>
+          </div>
         </div>
-        <div class="author-page__metric">
-          <span class="author-page__metric-label">Capítulos en borrador</span>
-          <strong class="author-page__metric-value" data-metric="drafts">–</strong>
-          <span class="author-page__metric-note">Listos para seguir editando</span>
+        <p class="author-page__message" id="summary-message" role="status">Cargando el panel…</p>
+        <div class="author-summary" id="summary-content" hidden>
+          <div class="panel-card author-summary__identity">
+            <strong class="author-summary__name" id="summary-name"></strong>
+            <p class="author-summary__since">En Koma desde <time id="summary-since"></time></p>
+          </div>
+          <div class="author-summary__reads" role="group" aria-label="Lecturas">
+            <div class="author-page__metric"><span class="author-page__metric-label">Lecturas totales</span><strong class="author-page__metric-value" id="summary-reads-total">–</strong></div>
+            <div class="author-page__metric"><span class="author-page__metric-label">Últimos 7 días</span><strong class="author-page__metric-value" id="summary-reads-7">–</strong></div>
+            <div class="author-page__metric"><span class="author-page__metric-label">Últimos 30 días</span><strong class="author-page__metric-value" id="summary-reads-30">–</strong></div>
+          </div>
+          <div class="author-summary__statuses">
+            <div class="panel-card">
+              <h3 class="author-summary__subheading">Obras por estado</h3>
+              <dl class="author-summary__counts">
+                <div class="author-summary__count"><dt class="author-summary__count-label">En revisión</dt><dd class="author-summary__count-value" id="summary-comics-pending">–</dd></div>
+                <div class="author-summary__count"><dt class="author-summary__count-label">Publicadas</dt><dd class="author-summary__count-value" id="summary-comics-approved">–</dd></div>
+                <div class="author-summary__count"><dt class="author-summary__count-label">Rechazadas</dt><dd class="author-summary__count-value" id="summary-comics-rejected">–</dd></div>
+              </dl>
+            </div>
+            <div class="panel-card">
+              <h3 class="author-summary__subheading">Capítulos por estado</h3>
+              <dl class="author-summary__counts">
+                <div class="author-summary__count"><dt class="author-summary__count-label">Borradores</dt><dd class="author-summary__count-value" id="summary-chapters-draft">–</dd></div>
+                <div class="author-summary__count"><dt class="author-summary__count-label">En revisión</dt><dd class="author-summary__count-value" id="summary-chapters-pending">–</dd></div>
+                <div class="author-summary__count"><dt class="author-summary__count-label">Publicados</dt><dd class="author-summary__count-value" id="summary-chapters-approved">–</dd></div>
+                <div class="author-summary__count"><dt class="author-summary__count-label">Rechazados</dt><dd class="author-summary__count-value" id="summary-chapters-rejected">–</dd></div>
+              </dl>
+            </div>
+          </div>
         </div>
-        <div class="author-page__metric">
-          <span class="author-page__metric-label">En revisión</span>
-          <strong class="author-page__metric-value" data-metric="review">–</strong>
-          <span class="author-page__metric-note">Pendiente de moderación</span>
+      </section>
+
+      <!-- Control editorial: aparece si hay pendientes o rechazos; los motivos vienen de la lista de obras. -->
+      <section id="revisiones" class="panel-card author-page__panel" aria-labelledby="revisiones-title" hidden>
+        <div class="panel-card__heading">
+          <p class="eyebrow panel-card__eyebrow">Control editorial</p>
+          <h2 class="panel-card__title" id="revisiones-title">Revisiones y rechazos</h2>
+          <p class="panel-card__text">Conoce el motivo antes de volver a enviar.</p>
         </div>
+        <p class="author-page__message" id="reviews-message" role="status"></p>
+        <ul class="author-page__reviews" id="reviews-list"></ul>
       </section>
 
       <!-- Mis obras (CU-28): tarjetas (D18). -->
@@ -92,15 +133,49 @@
         <ul class="author-page__works" id="works-list"></ul>
       </section>
 
-      <!-- Revisiones (CU-28: se muestra el motivo del rechazo). -->
-      <section id="revisiones" class="panel-card author-page__panel" aria-labelledby="revisiones-title">
-        <div class="panel-card__heading">
-          <p class="eyebrow panel-card__eyebrow">Control editorial</p>
-          <h2 class="panel-card__title" id="revisiones-title">Revisiones y rechazos</h2>
-          <p class="panel-card__text">Conoce el motivo antes de volver a enviar.</p>
+      <section id="lecturas" class="author-page__section" aria-labelledby="lecturas-title">
+        <div class="author-page__heading">
+          <div>
+            <p class="eyebrow author-page__heading-eyebrow">Alcance de tus historias</p>
+            <h2 class="author-page__heading-title" id="lecturas-title">Lecturas</h2>
+          </div>
+          <p class="author-page__muted" id="reads-today"></p>
         </div>
-        <p class="author-page__message" id="reviews-message"></p>
-        <ul class="author-page__reviews" id="reviews-list"></ul>
+        <p class="author-page__message" id="reads-message">Cargando lecturas…</p>
+        <p class="author-page__muted reads-table__hint" id="reads-scroll-hint" hidden>Desplaza la tabla horizontalmente para ver todas las cifras.</p>
+        <!-- Misma tabla de datos que la de capítulos (chapter-table.css); reads-table.css solo añade lo suyo. -->
+        <div class="chapter-table__scroll" id="reads-table-region" role="region" aria-labelledby="reads-caption" tabindex="0" hidden>
+          <table class="chapter-table reads-table">
+            <caption class="chapter-table__caption" id="reads-caption">Lecturas por obra y capítulo</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Obra</th>
+              <th class="chapter-table__head" scope="col">Total</th>
+              <th class="chapter-table__head" scope="col">7 días</th>
+              <th class="chapter-table__head" scope="col">30 días</th>
+              <th class="chapter-table__head" scope="col">Capítulos</th>
+            </tr></thead>
+            <tbody id="reads-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="comentarios-recientes" class="author-page__section" aria-labelledby="comments-title">
+        <div class="author-page__heading">
+          <div>
+            <p class="eyebrow author-page__heading-eyebrow">Conversación</p>
+            <h2 class="author-page__heading-title" id="comments-title">Comentarios recientes</h2>
+          </div>
+        </div>
+        <p class="author-page__message" id="comments-message">Cargando comentarios…</p>
+        <ol class="recent-comment__list" id="comments-list"></ol>
+      </section>
+
+      <section id="donaciones" class="panel-card author-page__panel" aria-labelledby="donations-title">
+        <div class="panel-card__heading">
+          <p class="eyebrow panel-card__eyebrow">Apoyo al autor</p>
+          <h2 class="panel-card__title" id="donations-title">Donaciones</h2>
+        </div>
+        <p class="panel-card__text">Próximamente</p>
       </section>
 
       <!-- Obra abierta (?obra=): capítulos en <table> (D18), nuevo capítulo (D22), portada (D7) y retirada (CU-30). -->

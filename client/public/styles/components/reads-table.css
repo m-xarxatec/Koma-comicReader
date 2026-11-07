@@ -1,0 +1,101 @@
+/* Lecturas del panel del autor: usa la tabla de datos de chapter-table.css (scroll, tabla, caption, cabeceras,
+   filas y celdas) y añade aquí solo lo suyo: barra, números, <details> de capítulos y aviso de desplazamiento. */
+
+/* El <details> crece hacia abajo: el contenido de las filas se alinea arriba. */
+.reads-table__cell {
+  vertical-align: top;
+}
+
+.reads-table__work {
+  min-width: var(--reads-table-work-min-width);
+  overflow-wrap: anywhere;
+}
+
+.reads-table__number {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Con appearance: none, Firefox pinta la pista con el fondo del propio elemento: va aquí, con tokens. */
+.reads-table__meter {
+  display: block;
+  width: 100%;
+  height: var(--space-3);
+  margin-top: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  appearance: none;
+}
+
+.reads-table__meter::-webkit-meter-bar {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+}
+
+.reads-table__meter::-webkit-meter-optimum-value {
+  border-radius: var(--radius-pill);
+  background: var(--color-secondary);
+}
+
+.reads-table__meter::-moz-meter-bar {
+  border-radius: var(--radius-pill);
+  background: var(--color-secondary);
+}
+
+.reads-table__empty {
+  display: block;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.reads-table__summary {
+  min-height: var(--touch-target);
+  padding: var(--space-2) 0;
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.reads-table__chapters {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.reads-table__chapter {
+  padding: var(--space-2) 0;
+  border-top: var(--border-width) solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.reads-table__chapter-counts {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+}
+
+.reads-table__count {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.reads-table__count-label {
+  color: var(--color-text-muted);
+}
+
+.reads-table__count-value {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Desde 64rem la tabla cabe entera: el aviso de desplazamiento sobra. */
+@media (min-width: 64rem) {
+  .reads-table__hint {
+    display: none;
+  }
+}

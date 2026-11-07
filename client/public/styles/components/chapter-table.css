@@ -1,5 +1,6 @@
-/* Capítulos de la obra abierta en /autor (D18; plan: <table> con <caption> y <th scope>; maqueta: .data-table). En
-   móvil se desplaza en horizontal dentro de su región (enfocable con el teclado). */
+/* Tablas de datos de /autor (maqueta: .data-table): los capítulos de la obra abierta (D18) y las lecturas del panel
+   (RN-19, con lo propio en reads-table.css). <table> con <caption> y <th scope>. En móvil se desplaza en horizontal
+   dentro de su región (enfocable con el teclado). */
 .chapter-table__scroll {
   max-width: 100%;
   overflow-x: auto;

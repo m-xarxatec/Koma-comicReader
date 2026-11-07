@@ -288,7 +288,8 @@ test('Seguridad: /autor sirve author.html al autor, con un solo h1, sin marcador
   assert.ok(!html.includes('NC 4.0'), 'sin licencias NC (D6)');
   // D18: capítulos en <table> con <caption> y <th scope>.
   assert.match(html, /<caption class="chapter-table__caption"/);
-  assert.equal(html.match(/<th class="chapter-table__head" scope="col">/g)?.length, 6);
+  const chaptersTable = html.slice(html.indexOf('id="chapters-caption"'), html.indexOf('</table>', html.indexOf('id="chapters-caption"')));
+  assert.equal(chaptersTable.match(/<th class="chapter-table__head" scope="col">/g)?.length, 6);
   // "Nueva obra" abre su propia vista (?vista=nueva-obra): el formulario llega oculto y no está en el estudio.
   assert.ok(html.includes('href="/autor?vista=nueva-obra"'), 'botón "+ Nueva obra"');
   assert.match(html, /<section id="crear-obra" class="[^"]*"[^>]* hidden>/);

@@ -553,6 +553,7 @@
   --font-size-chapter-table: 0.8rem;
   --line-height-chapter-table: 1.45;
   --chapter-table-min-width: 640px;
+  --reads-table-work-min-width: 260px; /* columna "Obra" de las lecturas del panel del autor (reads-table.css) */
   --chapter-table-head-padding: 0.9rem 0.8rem;
   --chapter-table-cell-padding: 0.75rem 0.8rem;
   --font-size-chapter-table-head: 0.73rem;
