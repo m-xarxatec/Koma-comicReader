@@ -673,3 +673,30 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - El cliente del panel lo hará Codex con un diseño nuevo (punto 4 del pedido).
 - **Tests:** `unit/author-dashboard.test.ts` (2, RN-19: sumas, obra sin capítulos y lista vacía). `api/author-dashboard.test.ts` (6): 401 y 403 (lector y admin); autor sin obras; límites de las ventanas (hoy, − 6, − 7, − 29, − 30 y − 90) con invitados y registrados sumados; solo capítulos aprobados vivos, sin obra retirada ni ajena y en orden; recuentos por estado con rechazado y sustituto; los 10 comentarios más recientes sin ocultos, eliminados, retirados ni ajenos, con el texto tal cual.
 - **Comprobación (IA):** typecheck, 127 unitarios y 224 de API.
+
+### 2026-11-07 · Bloque 3 · Datos de demostración (`npm run demo:data`)
+- **Pedido del desarrollador:** un script solo para desarrollo local, aprobado tal cual: la autora demo con 4 obras de 4 capítulos creadas por la API real, estados variados, 6 lectores con lecturas de los últimos 14 días, unos 30 comentarios, idempotente, y un test `Seguridad:` de la comprobación de BD local.
+- **Resultado:**
+  - `scripts/demo-guard.ts` (pura): `checkDemoTarget` exige `NODE_ENV=development`, `STORAGE_DRIVER=local`, `PAYMENTS_DRIVER=fake`, el host de `DATABASE_URL` en `localhost`, `127.0.0.1` o `[::1]` y una BD con nombre que no acabe en `_test`. `demo-data.ts` la comprueba antes de importar `env`, el pool o `app`.
+  - `scripts/demo-png.ts`: PNG de color plano con texto en una fuente de píxeles de 5 × 7, sin dependencias (`zlib.deflateSync` y `zlib.crc32`). Las viñetas (800 × 1200) dicen "OBRA n / CAP n / 0n" y las portadas (600 × 900), "OBRA n / PORTADA". Se escriben en un temporal del sistema que se borra al terminar.
+  - **API real:** `app` en `127.0.0.1` con un puerto libre y el primer origen de `ALLOWED_ORIGINS`; entra como `author@demo.test` y crea obras, portadas, capítulos y viñetas, y los envía a revisión. El limitador de subidas es el del proceso del script (52 subidas en la primera ejecución).
+  - **SQL, en una transacción:**
+    - aprobar 2 obras y 6 capítulos, con `published_at` escalonado de hace 13 a hace 4 días, y rechazar 1 obra con motivo, con su auditoría (`comic.approve`, `chapter.approve`, `comic.reject`; actor `NULL`, el `requestId` del script);
+    - 6 lectores (`system.seed`; contraseña de `SEED_READER_PASSWORD`, sin variable nueva);
+    - lecturas (`chapter_reads` y `chapter_read_counts`) entre la publicación y ayer, solo en capítulos sin filas;
+    - 30 comentarios de quien leyó cada capítulo, después de su lectura, sin repetir (usuario, viñeta, texto).
+  - **Estados:**
+
+    | Obra | Estado | Capítulos |
+    | --- | --- | --- |
+    | Faro de medianoche | aprobada | 1–3 aprobados, 4 borrador |
+    | Recetas para un dragón | aprobada | 1–3 aprobados, 4 en revisión |
+    | La biblioteca sumergida | en revisión | 1–2 en revisión, 3–4 borrador |
+    | Cartas desde Kepler | rechazada, con motivo | 1–2 en revisión, 3–4 borrador |
+  - `package.json`: `demo:data` (`node --env-file=.env …`). README: fila en la tabla de comandos.
+- **Tests:** `unit/demo-guard.test.ts` (5, `Seguridad:`): acepta `localhost`, `127.0.0.1` y `[::1]`; aborta en producción o sin `NODE_ENV`, con un host remoto (Neon, `db`, una IP de la LAN, `localhost.evil.com`), con `_test`, sin nombre de BD o sin URL, y con R2 o Stripe.
+- **Comprobación (IA):** typecheck y 132 unitarios. Con `.env.online` y con `.env.test` aborta sin conectarse. En la BD local:
+  - **1.ª ejecución:** 4 obras, 4 portadas, 16 capítulos, 48 viñetas, 11 envíos, 2 obras y 6 capítulos aprobados, 1 rechazada, 6 lectores, 26 lecturas de registrados y 381 de invitados (del 25-oct al 6-nov) y 30 comentarios.
+  - **2.ª ejecución:** nada nuevo.
+  - En la auditoría hay 2 `comic.approve`, 6 `chapter.approve`, 1 `comic.reject` y 6 `system.seed` con el `requestId` del script. `GET /api/author/dashboard` de la autora demo devuelve 407 lecturas (234 en 7 días) y 10 comentarios recientes.
+- **Limitaciones:** las lecturas por SQL no tocan `reading_credits` ni `reads_since_ad`. Si se retira una obra demo, la siguiente ejecución la vuelve a crear con el slug `-2`.

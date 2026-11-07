@@ -231,6 +231,7 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | `npm run test:api` | Tests de la API (vacía y vuelve a llenar la base `koma_test`) |
 | `npm run migrate` · `npm run seed` | Tablas y datos demo en local |
 | `npm run seed:online` · `npm run content:import:online` (desde el bloque 2) | Lo mismo, hacia la versión online |
+| `npm run demo:data` | Solo en tu ordenador: la autora demo con 4 obras de 4 capítulos (aprobadas, en revisión, rechazada y borradores), 6 lectores (`lector1…6@demo.test`, con la contraseña de `SEED_READER_PASSWORD`), lecturas de los últimos 14 días y 30 comentarios, para ver el panel del autor. Necesita `migrate` y `seed`. Se puede repetir sin duplicar nada. Se niega a ejecutarse si la base de datos no es local, si es `koma_test`, con `NODE_ENV=production` o sin los drivers locales |
 
 ## Variables
 

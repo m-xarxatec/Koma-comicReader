@@ -15,6 +15,7 @@
     "migrate": "node --env-file-if-exists=.env server/dist/scripts/migrate.js",
     "seed": "node --env-file-if-exists=.env server/dist/scripts/seed.js",
     "content:import": "node --env-file-if-exists=.env server/dist/scripts/import-content.js",
+    "demo:data": "node --env-file=.env server/dist/scripts/demo-data.js",
     "seed:online": "node --env-file=.env.online server/dist/scripts/seed.js",
     "content:import:online": "node --env-file=.env.online server/dist/scripts/import-content.js",
     "test": "tsc -b && node --test \"server/dist/tests/unit/**/*.test.js\"",
