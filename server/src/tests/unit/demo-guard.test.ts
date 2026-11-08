@@ -40,6 +40,18 @@ test('Seguridad: demo:data aborta con un host remoto (Neon, el contenedor db u o
   }
 });
 
+test('Seguridad: demo:data aborta si la query de DATABASE_URL cambia el host o el puerto (?host=, ?hostaddr=, ?port=)', () => {
+  // pg da prioridad a ?host= y ?port= sobre la URL: la primera iría a Neon aunque URL.hostname sea localhost.
+  for (const query of ['?host=ep-x.neon.tech', '?sslmode=disable&host=db', '?HOST=192.168.1.20', '?hostaddr=203.0.113.7', '?port=6543']) {
+    const url = `postgres://koma:koma@localhost:5432/koma${query}`;
+    const target = checkDemoTarget({ ...LOCAL, DATABASE_URL: url });
+    assert.equal(target.ok, false, url);
+    assert.match(target.ok ? '' : target.reason, /no puede llevar (host|HOST|hostaddr|port) en la query/, url);
+  }
+  // Otros parámetros no cambian el destino.
+  assert.equal(checkDemoTarget({ ...LOCAL, DATABASE_URL: 'postgres://koma:koma@localhost:5432/koma?application_name=demo' }).ok, true);
+});
+
 test('Seguridad: demo:data aborta con la BD de tests (_test), sin nombre de BD o sin una URL válida', () => {
   const cases: [string | undefined, RegExp][] = [
     ['postgres://koma:koma@localhost:5432/koma_test', /tests/],

@@ -45,3 +45,13 @@ export const requirePageAuthor: RequestHandler = (req, res, next) => {
     next();
   });
 };
+
+// /crear (mapa de rutas), después de requirePageAuth: el autor va a su estudio con 302; quien no lo es (también el
+// admin) sigue hacia la página informativa.
+export const redirectAuthorToStudio: RequestHandler = (_req, res, next) => {
+  if (isAuthor(res.locals.user!)) {
+    res.redirect(302, '/autor');
+    return;
+  }
+  next();
+};

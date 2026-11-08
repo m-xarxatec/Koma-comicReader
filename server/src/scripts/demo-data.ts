@@ -6,6 +6,7 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { PoolClient } from 'pg';
+import { z } from 'zod';
 import { checkDemoTarget } from './demo-guard.js';
 import { flatImagePng, type Rgb } from './demo-png.js';
 
@@ -126,18 +127,26 @@ const COMMENT_TEXTS = [
   'Más capítulos así, por favor.',
 ];
 
-interface AuthorChapter {
-  number: number;
-  status: 'draft' | 'pending' | 'approved' | 'rejected';
-  panelCount: number;
-}
-interface AuthorComic {
-  slug: string;
-  title: string;
-  status: 'pending' | 'approved' | 'rejected';
-  coverUrl: string | null;
-  chapters: AuthorChapter[];
-}
+// Respuestas de la API que usa el script (contrato del bloque 3), validadas con zod: solo los campos que lee.
+const authorChapterSchema = z.object({
+  number: z.number().int(),
+  status: z.enum(['draft', 'pending', 'approved', 'rejected']),
+  panelCount: z.number().int(),
+});
+const authorComicSchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  status: z.enum(['pending', 'approved', 'rejected']),
+  coverUrl: z.string().nullable(),
+  chapters: z.array(authorChapterSchema),
+});
+export const tagsResponse = z.object({ tags: z.array(z.object({ slug: z.string() })) });
+export const comicsResponse = z.object({ comics: z.array(authorComicSchema) });
+export const comicResponse = z.object({ comic: authorComicSchema });
+export const chapterResponse = z.object({ chapter: authorChapterSchema });
+
+type AuthorChapter = z.infer<typeof authorChapterSchema>;
+type AuthorComic = z.infer<typeof authorComicSchema>;
 
 export interface DemoSummary {
   comics: { created: number; existing: number };
@@ -149,10 +158,15 @@ export interface DemoSummary {
   rejected: number;
   readers: { created: number; existing: number };
   reads: { chapters: number; skipped: number; userReads: number; guestReads: number };
-  comments: { created: number; existing: number };
+  comments: { created: number; existing: number; skipped: number };
 }
 
 // --- Cliente HTTP de la API real ---
+
+interface RequestBody {
+  json?: unknown;
+  form?: FormData;
+}
 
 class Api {
   cookie = '';
@@ -161,7 +175,8 @@ class Api {
     private readonly origin: string,
   ) {}
 
-  async call<T>(method: string, route: string, expected: number, body?: { json?: unknown; form?: FormData }): Promise<T> {
+  // Sin esquema, la respuesta no se lee (`unknown`); con esquema, se valida y una forma inesperada aborta el script.
+  async call(method: string, route: string, expected: number, body?: RequestBody): Promise<unknown> {
     const headers: Record<string, string> = { Origin: this.origin };
     if (this.cookie) headers['Cookie'] = this.cookie;
     let payload: string | FormData | undefined;
@@ -176,7 +191,15 @@ class Api {
     if (session) this.cookie = session.split(';')[0]!;
     const text = await res.text();
     if (res.status !== expected) throw new Error(`${method} ${route}: ${res.status} ${text}`);
-    return (text ? JSON.parse(text) : null) as T;
+    if (!text) return null;
+    const data: unknown = JSON.parse(text);
+    return data;
+  }
+
+  async read<S extends z.ZodType>(schema: S, method: string, route: string, expected: number, body?: RequestBody): Promise<z.infer<S>> {
+    const result = schema.safeParse(await this.call(method, route, expected, body));
+    if (!result.success) throw new Error(`${method} ${route}: respuesta inesperada: ${z.prettifyError(result.error)}`);
+    return result.data;
   }
 }
 
@@ -189,20 +212,20 @@ async function imageForm(file: string): Promise<FormData> {
 // --- API: obras, portadas, capítulos, viñetas y envíos ---
 
 async function buildContent(api: Api, dir: string, summary: DemoSummary): Promise<AuthorComic[]> {
-  const { tags } = await api.call<{ tags: { slug: string }[] }>('GET', '/api/tags', 200);
+  const { tags } = await api.read(tagsResponse, 'GET', '/api/tags', 200);
   const known = new Set(tags.map((tag) => tag.slug));
   for (const comic of DEMO_COMICS) {
     for (const tag of comic.tags) if (!known.has(tag)) throw new Error(`Falta la etiqueta ${tag}: ejecuta antes npm run seed`);
   }
 
-  let { comics } = await api.call<{ comics: AuthorComic[] }>('GET', '/api/author/comics', 200);
+  let { comics } = await api.read(comicsResponse, 'GET', '/api/author/comics', 200);
   for (const [index, spec] of DEMO_COMICS.entries()) {
     const label = `OBRA ${index + 1}`;
     let comic = comics.find((candidate) => candidate.title === spec.title);
     if (comic) {
       summary.comics.existing++;
     } else {
-      ({ comic } = await api.call<{ comic: AuthorComic }>('POST', '/api/author/comics', 201, {
+      ({ comic } = await api.read(comicResponse, 'POST', '/api/author/comics', 201, {
         json: {
           title: spec.title,
           synopsis: spec.synopsis,
@@ -232,7 +255,7 @@ async function buildContent(api: Api, dir: string, summary: DemoSummary): Promis
       if (chapter) {
         summary.chapters.existing++;
       } else {
-        ({ chapter } = await api.call<{ chapter: AuthorChapter }>('POST', `/api/author/comics/${comic.slug}/chapters`, 201, {
+        ({ chapter } = await api.read(chapterResponse, 'POST', `/api/author/comics/${comic.slug}/chapters`, 201, {
           json: { number, title: chapterSpec.title },
         }));
         summary.chapters.created++;
@@ -253,7 +276,7 @@ async function buildContent(api: Api, dir: string, summary: DemoSummary): Promis
       }
     }
   }
-  ({ comics } = await api.call<{ comics: AuthorComic[] }>('GET', '/api/author/comics', 200));
+  ({ comics } = await api.read(comicsResponse, 'GET', '/api/author/comics', 200));
   return comics;
 }
 
@@ -276,7 +299,7 @@ async function moderate(client: PoolClient, audit: Audit, requestId: string, com
       summary.approved.comics++;
     } else if (row.status === 'pending' && spec.target === 'rejected') {
       await client.query(`UPDATE comics SET status = 'rejected', rejection_reason = $2 WHERE id = $1`, [row.id, spec.rejectionReason]);
-      await record('comic.reject', 'comics', row.id, { status: 'pending' }, { status: 'rejected', rejectionReason: spec.rejectionReason });
+      await record('comic.reject', 'comics', row.id, { status: 'pending', rejectionReason: null }, { status: 'rejected', rejectionReason: spec.rejectionReason });
       summary.rejected++;
       continue;
     }
@@ -295,7 +318,7 @@ async function moderate(client: PoolClient, audit: Audit, requestId: string, com
       );
       const chapter = updated[0];
       if (chapter) {
-        await record('chapter.approve', 'chapters', chapter.id, { status: 'pending' }, { status: 'approved', publishedAt: chapter.published_at.toISOString() });
+        await record('chapter.approve', 'chapters', chapter.id, { status: 'pending', publishedAt: null }, { status: 'approved', publishedAt: chapter.published_at.toISOString() });
         summary.approved.chapters++;
       }
     }
@@ -382,30 +405,67 @@ async function addReads(client: PoolClient, comics: readonly AuthorComic[], read
   }
 }
 
-// ~30 comentarios repartidos entre quienes leyeron cada capítulo, después de su lectura. Idempotente por
-// (usuario, viñeta, texto).
+export interface CommentSlot {
+  comicIndex: number; // en DEMO_COMICS
+  chapterNumber: number;
+  position: number; // viñeta
+  reader: number; // 1…DEMO_READERS (lectorN@demo.test)
+  body: string;
+}
+
+// Cada texto de COMMENT_TEXTS tiene un sitio fijo (obra, capítulo, viñeta, lector) que sale solo de DEMO_COMICS y
+// READERS_PER_CHAPTER, nunca de lo que haya en la BD: repetir el script no lo mueve aunque cambien las lecturas
+// (p. ej., al aprobar "Banquete real"). Los sitios son los de quienes leen cada capítulo aprobado (addReads), en el
+// mismo orden que usaba la primera versión del script, así que los comentarios ya creados coinciden.
+export function commentSlots(): CommentSlot[] {
+  const readings: { comicIndex: number; chapterNumber: number; reader: number }[] = [];
+  for (const [comicIndex, spec] of DEMO_COMICS.entries()) {
+    if (spec.target !== 'approved') continue;
+    for (const [chapterIndex, chapter] of spec.chapters.entries()) {
+      if (chapter.target !== 'approved') continue;
+      const chapterNumber = chapterIndex + 1;
+      const readersHere = READERS_PER_CHAPTER[chapterIndex] ?? 2;
+      for (let reader = 1; reader <= readersHere; reader++) readings.push({ comicIndex, chapterNumber, reader });
+    }
+  }
+  return COMMENT_TEXTS.map((body, k) => ({ ...readings[(k * 7) % readings.length]!, position: (k % PANELS_PER_CHAPTER) + 1, body }));
+}
+
+// ~30 comentarios, cada uno en su sitio fijo (commentSlots) y después de la lectura de quien lo escribe. Idempotente
+// por (usuario, viñeta, texto). Sin esa lectura (el capítulo ya tenía lecturas reales y addReads lo omitió), se omite.
 async function addComments(client: PoolClient, comics: readonly AuthorComic[], readers: readonly number[], summary: DemoSummary): Promise<void> {
-  const slugs = DEMO_COMICS.map((spec) => comics.find((comic) => comic.title === spec.title)?.slug).filter((slug): slug is string => slug !== undefined);
-  const { rows: pairs } = await client.query<{ user_id: number; chapter_id: number }>(
-    `SELECT r.user_id, r.chapter_id
-     FROM chapter_reads r JOIN chapters ch ON ch.id = r.chapter_id JOIN comics co ON co.id = ch.comic_id
-     WHERE r.user_id = ANY($1::int[]) AND co.slug = ANY($2::text[]) AND ch.status = 'approved' AND ch.deleted_at IS NULL
-     ORDER BY array_position($2::text[], co.slug), ch.number, array_position($1::int[], r.user_id)`,
-    [readers, slugs],
-  );
-  if (pairs.length === 0) return;
-  for (const [k, body] of COMMENT_TEXTS.entries()) {
-    const pair = pairs[(k * 7) % pairs.length]!;
-    const { rowCount } = await client.query(
-      `INSERT INTO comments (panel_id, user_id, body, created_at)
-       SELECT p.id, r.user_id, $3, r.first_read_at + make_interval(mins => $5::int)
-       FROM panels p JOIN chapter_reads r ON r.chapter_id = p.chapter_id AND r.user_id = $2
-       WHERE p.chapter_id = $1 AND p.position = $4
-         AND NOT EXISTS (SELECT 1 FROM comments c WHERE c.panel_id = p.id AND c.user_id = $2 AND c.body = $3)`,
-      [pair.chapter_id, pair.user_id, body, (k % PANELS_PER_CHAPTER) + 1, 3 + ((k * 11) % 50)],
+  for (const [k, slot] of commentSlots().entries()) {
+    const slug = comics.find((comic) => comic.title === DEMO_COMICS[slot.comicIndex]!.title)?.slug;
+    const userId = readers[slot.reader - 1];
+    if (slug === undefined || userId === undefined) {
+      summary.comments.skipped++;
+      continue;
+    }
+    const { rows } = await client.query<{ exists: boolean; inserted: boolean }>(
+      `WITH target AS (
+         SELECT p.id AS panel_id, r.first_read_at
+         FROM comics co
+         JOIN chapters ch ON ch.comic_id = co.id AND ch.number = $2 AND ch.status = 'approved' AND ch.deleted_at IS NULL
+         JOIN panels p ON p.chapter_id = ch.id AND p.position = $3
+         JOIN chapter_reads r ON r.chapter_id = ch.id AND r.user_id = $4
+         WHERE co.slug = $1
+       ),
+       existing AS (
+         SELECT 1 FROM comments c JOIN target t ON c.panel_id = t.panel_id WHERE c.user_id = $4 AND c.body = $5
+       ),
+       inserted AS (
+         INSERT INTO comments (panel_id, user_id, body, created_at)
+         SELECT t.panel_id, $4, $5, t.first_read_at + make_interval(mins => $6::int)
+         FROM target t
+         WHERE NOT EXISTS (SELECT 1 FROM existing)
+         RETURNING 1
+       )
+       SELECT EXISTS (SELECT 1 FROM existing) AS exists, EXISTS (SELECT 1 FROM inserted) AS inserted`,
+      [slug, slot.chapterNumber, slot.position, userId, slot.body, 3 + ((k * 11) % 50)],
     );
-    if (rowCount) summary.comments.created++;
-    else summary.comments.existing++;
+    if (rows[0]!.inserted) summary.comments.created++;
+    else if (rows[0]!.exists) summary.comments.existing++;
+    else summary.comments.skipped++;
   }
 }
 
@@ -438,10 +498,6 @@ async function main(): Promise<void> {
     return;
   }
 
-  const dir = await mkdtemp(path.join(tmpdir(), 'koma-demo-'));
-  const server: Server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
-  const { port } = server.address() as AddressInfo;
   const summary: DemoSummary = {
     comics: { created: 0, existing: 0 },
     covers: 0,
@@ -452,9 +508,17 @@ async function main(): Promise<void> {
     rejected: 0,
     readers: { created: 0, existing: 0 },
     reads: { chapters: 0, skipped: 0, userReads: 0, guestReads: 0 },
-    comments: { created: 0, existing: 0 },
+    comments: { created: 0, existing: 0, skipped: 0 },
   };
+  // Todo lo que deja algo abierto o en disco va dentro del try: el finally cierra el servidor, borra el temporal y
+  // cierra el pool aunque falle cualquier paso, también mkdtemp o listen.
+  let dir: string | undefined;
+  let server: Server | undefined;
   try {
+    dir = await mkdtemp(path.join(tmpdir(), 'koma-demo-'));
+    server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening'); // si listen falla, `once` rechaza con el evento 'error'
+    const { port } = server.address() as AddressInfo;
     const api = new Api(`http://127.0.0.1:${port}`, env.ALLOWED_ORIGINS[0]!);
     await api.call('POST', '/api/auth/login', 200, { json: { email: 'author@demo.test', password: authorPassword } });
     const comics = await buildContent(api, dir, summary);
@@ -475,15 +539,15 @@ async function main(): Promise<void> {
         `Moderación (SQL): ${summary.approved.comics} obras y ${summary.approved.chapters} capítulos aprobados, ${summary.rejected} obras rechazadas`,
         `Lectores: ${summary.readers.created} creados, ${summary.readers.existing} ya existían (lector1…${DEMO_READERS}@demo.test, contraseña de SEED_READER_PASSWORD)`,
         `Lecturas: ${summary.reads.chapters} capítulos con lecturas nuevas (${summary.reads.userReads} de registrados, ${summary.reads.guestReads} de invitados), ${summary.reads.skipped} omitidos porque ya tenían`,
-        `Comentarios: ${summary.comments.created} creados, ${summary.comments.existing} ya existían`,
+        `Comentarios: ${summary.comments.created} creados, ${summary.comments.existing} ya existían, ${summary.comments.skipped} omitidos (sin la lectura de quien comenta)`,
       ].join('\n'),
     );
   } catch (err) {
     logger.error('Datos de demostración: error', { requestId, err });
     process.exitCode = 1;
   } finally {
-    server.close();
-    await rm(dir, { recursive: true, force: true });
+    server?.close();
+    if (dir) await rm(dir, { recursive: true, force: true });
     await pool.end();
   }
 }

@@ -14,6 +14,11 @@ export type DemoTarget = { ok: true; dbHost: string; dbName: string } | { ok: fa
 // El host tal como lo devuelve `URL.hostname` (IPv6 entre corchetes).
 export const LOCAL_DB_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1', '[::1]']);
 
+// pg (pg-connection-string) copia la query al config y `?host=` o `?port=` sustituyen a los de la URL: con
+// `postgres://u:p@localhost/koma?host=ep-x.neon.tech` se conectaría a Neon aunque `URL.hostname` diga localhost.
+// libpq también admite `hostaddr`. Se rechazan sin distinguir mayúsculas.
+export const FORBIDDEN_DB_QUERY_PARAMS: ReadonlySet<string> = new Set(['host', 'hostaddr', 'port']);
+
 export function checkDemoTarget(input: DemoTargetInput): DemoTarget {
   if (input.NODE_ENV !== 'development') return { ok: false, reason: `NODE_ENV debe ser development (es ${input.NODE_ENV ?? 'indefinido'})` };
   if (input.STORAGE_DRIVER !== 'local') return { ok: false, reason: 'STORAGE_DRIVER debe ser local' };
@@ -27,6 +32,8 @@ export function checkDemoTarget(input: DemoTargetInput): DemoTarget {
   const dbHost = url.hostname;
   const dbName = decodeURIComponent(url.pathname.slice(1));
   if (!LOCAL_DB_HOSTS.has(dbHost)) return { ok: false, reason: `la BD no es local (host ${dbHost})` };
+  const override = [...url.searchParams.keys()].find((key) => FORBIDDEN_DB_QUERY_PARAMS.has(key.toLowerCase()));
+  if (override !== undefined) return { ok: false, reason: `DATABASE_URL no puede llevar ${override} en la query (cambiaría el destino)` };
   if (dbName === '') return { ok: false, reason: 'DATABASE_URL no nombra la BD' };
   if (dbName.endsWith('_test')) return { ok: false, reason: `${dbName} es la BD de tests` };
   return { ok: true, dbHost, dbName };

@@ -6,7 +6,7 @@ import { storage } from '../../integrations/storage/index.js';
 import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import * as audit from '../audit/audit.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
-import { canManageComic, canPreviewComic, canWithdrawComic, chapterAccess, type ChapterAccess } from '../auth/permissions.js';
+import { canManageComic, canPreviewComic, canWithdrawComic, chapterAccess, isAdmin, type ChapterAccess } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
 import * as commentsRepository from '../comments/comments.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
@@ -17,6 +17,17 @@ import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
 import { groupWorkReads, LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type LicenseCode, type Reads } from './comics.rules.js';
 import type { CatalogQuery, CreateComicInput, UpdateComicInput } from './comics.schema.js';
+
+// "Cómo se consigue" de /crear (become-author) para quien no es autor. Un admin nunca es autor (permissions.ts): a él
+// no se le promete el estudio.
+const BECOME_AUTHOR_USER =
+  'El rol de autor lo activa un administrador de Koma en tu cuenta. No hay que rellenar nada aquí. Cuando lo tengas, «Crear» te llevará directamente a tu estudio.';
+const BECOME_AUTHOR_ADMIN =
+  'El rol de autor lo activa un administrador en una cuenta de usuario. Las cuentas de administrador no publican obras: para publicar, usa una cuenta de usuario con el rol de autor.';
+
+export function becomeAuthorHowTo(user: User): string {
+  return isAdmin(user) ? BECOME_AUTHOR_ADMIN : BECOME_AUTHOR_USER;
+}
 
 // Catálogo, etiquetas y ficha (CU-01, CU-02; contrato del bloque 2). Solo obras aprobadas y no retiradas;
 // toda imagen sale con URL firmada (SIGNED_URL_TTL_SECONDS).

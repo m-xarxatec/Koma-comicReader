@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
 import { pool } from '../../db/pool.js';
-import { isAdmin, isAuthor } from '../auth/permissions.js';
 import { sendPage } from '../../utils/page.js';
 import type { CatalogQuery, ComicParams, CreateComicInput, UpdateComicInput } from './comics.schema.js';
 import * as comicsService from './comics.service.js';
@@ -71,20 +70,10 @@ export async function authorPage(_req: Request, res: Response): Promise<void> {
   await sendPage(res, 'author', { authorCredit: res.locals.user!.displayName });
 }
 
-// /crear: requirePageAuth va antes en la ruta. El rol se lee del usuario de esta petición (leído de la BD).
+// /crear: requirePageAuth y redirectAuthorToStudio van antes en la ruta; aquí solo llega quien no es autor.
 export async function createPage(_req: Request, res: Response): Promise<void> {
-  if (isAuthor(res.locals.user!)) {
-    res.redirect(302, '/autor');
-    return;
-  }
-  await sendPage(res, 'become-author', { howTo: isAdmin(res.locals.user!) ? BECOME_AUTHOR_ADMIN : BECOME_AUTHOR_USER });
+  await sendPage(res, 'become-author', { howTo: comicsService.becomeAuthorHowTo(res.locals.user!) });
 }
-
-// Un admin nunca es autor (permissions.ts): a él no se le promete el estudio.
-const BECOME_AUTHOR_USER =
-  'El rol de autor lo activa un administrador de Koma en tu cuenta. No hay que rellenar nada aquí. Cuando lo tengas, «Crear» te llevará directamente a tu estudio.';
-const BECOME_AUTHOR_ADMIN =
-  'El rol de autor lo activa un administrador en una cuenta de usuario. Las cuentas de administrador no publican obras: para publicar, usa una cuenta de usuario con el rol de autor.';
 
 // CU-30: requireAuthor va antes en la ruta; la propiedad la comprueba el servicio.
 export async function updateComic(req: Request, res: Response): Promise<void> {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { NextFunction, Request, Response } from 'express';
-import { requireAdmin, requireAuth, requireAuthor } from '../../middlewares/roles.js';
+import { redirectAuthorToStudio, requireAdmin, requireAuth, requireAuthor } from '../../middlewares/roles.js';
 import {
   canComment,
   canDeleteOwnComment,
@@ -75,6 +75,26 @@ test('Seguridad: requireAuth, requireAdmin y requireAuthor: 401 sin sesión, 403
   assert.equal(run(requireAuthor, reader)?.code, 'FORBIDDEN');
   assert.equal(run(requireAuthor, admin)?.code, 'FORBIDDEN');
   assert.equal(run(requireAuthor, author), null);
+});
+
+test('Seguridad: redirectAuthorToStudio (/crear) lleva al autor a /autor con 302 y deja pasar al lector y al admin', () => {
+  for (const [user, expected] of [
+    [author, '/autor'],
+    [reader, null],
+    [admin, null],
+  ] as const) {
+    let redirected: [number, string] | null = null;
+    let passed = false;
+    const res = {
+      locals: { user },
+      redirect: (status: number, location: string) => {
+        redirected = [status, location];
+      },
+    } as unknown as Response;
+    redirectAuthorToStudio({} as Request, res, (() => (passed = true)) as NextFunction);
+    assert.deepEqual(redirected, expected ? [302, expected] : null, String(user.id));
+    assert.equal(passed, expected === null, String(user.id));
+  }
 });
 
 // `access` de la ficha (contrato del bloque 2): qué exige cada capítulo a quien lo consulta.

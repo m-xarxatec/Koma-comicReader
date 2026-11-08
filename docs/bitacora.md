@@ -804,3 +804,26 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - "No haremos" perdió en `77a12e6` "ni pago simulado en producción" y las marcas inventadas.
   - La línea "Bloque actual".
 - **Estado:** el bloque 3 queda cerrado por la IA. Se da por cerrado del todo cuando el desarrollador lo pruebe online y decida sobre los hallazgos 1 a 6.
+
+### 2026-11-08 · Bloque 3 · Hallazgos del auditor del cierre (T12)
+- **Pedido del desarrollador:** corregir los hallazgos 1 a 6 en un solo commit, con tests.
+- **Resultado:**
+  - **1 (guarda de `demo:data`):** `checkDemoTarget` rechaza una `DATABASE_URL` con `host`, `hostaddr` o `port` en la query, sin distinguir mayúsculas (`FORBIDDEN_DB_QUERY_PARAMS`). `pg` les da prioridad sobre la URL. Con `?host=ep-x.neon.tech`, el script aborta antes de conectarse.
+  - **2:** el cliente HTTP del script devuelve `unknown`, y `read(schema, …)` lo valida con zod. Valida cuatro respuestas: etiquetas, lista de obras, obra y capítulo. Una forma inesperada aborta el script con el detalle.
+  - **3:** `commentSlots()` da a cada texto un sitio fijo (obra, capítulo, viñeta y lector) calculado solo con `DEMO_COMICS` y `READERS_PER_CHAPTER`, sin mirar la BD. Son los mismos sitios que daba la versión anterior, así que los 30 comentarios ya creados coinciden. Si falta la lectura de quien comenta, el comentario se omite y se cuenta como omitido.
+  - **4:** `mkdtemp` y `listen` van dentro del `try`. El `finally` cierra el servidor, borra el temporal y cierra el pool aunque falle cualquier paso.
+  - **5:** el `before` de `comic.reject` lleva `rejectionReason: null`, y el de `chapter.approve`, `publishedAt: null`.
+  - **6:** `redirectAuthorToStudio` (`roles.ts`) lleva al autor de `/crear` a `/autor` (302). El texto "Cómo se consigue" lo elige `comicsService.becomeAuthorHowTo`, y el controlador ya no decide nada.
+- **Contrato:** la cabecera del bloque 3 con CU-31 y RN-19 ya estaba en la edición del desarrollador de `plan_mvp.md`; la IA no la ha tocado.
+- **Tests:**
+  - `demo-guard.test.ts`: `?host=`, `?HOST=`, `?hostaddr=`, `?port=` y un `host` detrás de otro parámetro; `?application_name=` sigue valiendo.
+  - `demo-data.test.ts` (nuevo):
+    - las cuatro respuestas válidas y seis formas inválidas;
+    - 30 sitios estables, solo en los capítulos 1–3 aprobados y con lectores que los leen;
+    - los primeros, iguales a los de la versión anterior.
+  - `permissions.test.ts`: `redirectAuthorToStudio` con autor, lector y admin.
+- **Comprobación (IA):**
+  - typecheck, 136 unitarios y 224 de API;
+  - el script real con `?host=` aborta sin conectarse;
+  - en la BD local, los 30 comentarios demo coinciden con `commentSlots()`;
+  - `npm run demo:data` no crea nada (30 comentarios ya existían, 0 omitidos) y no deja temporales.
