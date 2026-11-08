@@ -4,7 +4,7 @@
 
 **Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
 
-- Bloque actual: **3 · Comunidad y autor (10 – 14 nov; empezado el 4-nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **4 · Admin y Stripe (15 – 19 nov; empezado el 8-nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos

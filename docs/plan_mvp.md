@@ -222,7 +222,7 @@ CREATE TABLE audit_log (
 | Obra | `comic.create`, `comic.update`, `comic.approve`, `comic.reject`, `comic.withdraw` |
 | Capítulo | `chapter.create`, `chapter.submit`, `chapter.approve`, `chapter.reject`, `chapter.withdraw` |
 | Comentario | `comment.delete_own`, `comment.hide`, `comment.delete` |
-| Suscripción | `subscription.start`, `subscription.renew`, `subscription.cancel`, `subscription.expire` |
+| Suscripción | `subscription.start`, `subscription.renew`, `subscription.cancel`, `subscription.resume`, `subscription.expire` |
 | Sistema | `settings.update`, `content.import`, `system.seed` |
 
 Fase 2 — restauración solo de acciones de admin, solo si el estado actual coincide con `after` (si no, 409), pasando por el mismo servicio para respetar RN-14; y tabla `appeals` con botón "Apelar" en rechazos y moderaciones.
@@ -546,7 +546,7 @@ Cada ruta sirve un HTML estático de `client/public/`; Express comprueba antes l
 | `/perfil` | `profile` | Sesión | 200, 302 a `/entrar?next=` |
 | `/premium` | `premium` | — | 200 |
 | `/premium/gracias` | `premium` | Sesión; la página consulta `/api/me` hasta ver premium | 200, 302 |
-| `/pago-simulado` | `fake-checkout` | Solo con `PAYMENTS_DRIVER=fake` | 200, 404 |
+| `/pago-simulado` | `fake-checkout` | Solo con `PAYMENTS_DRIVER=fake` (si no, 404); sesión | 200, 302 a `/entrar?next=/pago-simulado`, 404 |
 | `/autor` | `author` | Sesión y `is_author` | 200, 302, 403 |
 | `/crear` | `become-author` | Sesión; si es autor, 302 a `/autor` | 200, 302 |
 | `/admin` | `admin` | Sesión y `role = admin` | 200, 302, 403 |

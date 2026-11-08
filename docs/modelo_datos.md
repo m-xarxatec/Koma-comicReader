@@ -366,7 +366,7 @@ Las contraseñas salen de `SEED_*_PASSWORD`. Si falta alguna, el script termina 
 
 ### Bloque 4 (tras 009)
 
-- Con `PAYMENTS_DRIVER=fake`, la cuenta premium recibe una suscripción `provider = 'fake'`, `status = 'active'` y `current_period_end = now() + 30 días`, y `premium_until` se recalcula con `syncSubscription`. Desde aquí, el seed ya no escribe `premium_until` directamente.
+- Con `PAYMENTS_DRIVER=fake`, si la cuenta premium no tiene una suscripción `active` con `current_period_end` futuro, recibe una suscripción `provider = 'fake'`, `status = 'active'` y `current_period_end = now() + 30 días`, y `premium_until` se recalcula con `syncSubscription`. Así, repetir el seed renueva la cuenta demo cuando ha caducado y no hace nada mientras sigue vigente. Desde aquí, el seed ya no escribe `premium_until` directamente.
 
 ## Riesgos aceptados
 
