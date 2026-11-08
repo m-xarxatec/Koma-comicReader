@@ -827,3 +827,16 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - el script real con `?host=` aborta sin conectarse;
   - en la BD local, los 30 comentarios demo coinciden con `commentSlots()`;
   - `npm run demo:data` no crea nada (30 comentarios ya existían, 0 omitidos) y no deja temporales.
+
+### 2026-11-08 · Bloque 4 · Contrato de la API (borrador)
+- **Pedido del desarrollador:** bloque 3 cerrado (probado en local y online, también el borrado en R2). Redactar en el plan el contrato del bloque 4 con el formato del bloque 3, más el desglose en tareas, las decisiones abiertas y los choques con la maqueta (admin, premium y pago simulado). Sin código hasta aprobarlo.
+- **Resultado:** contrato marcado como borrador en `plan_mvp.md`:
+  - aprobación de obras y capítulos (cola, aprobar y rechazar con motivo, +18 no aprobable);
+  - moderación de comentarios (ocultar y eliminar);
+  - usuarios (rol, autor y estado, con RN-14 y RN-15);
+  - parámetros de lectura (RN-16);
+  - consulta de la auditoría con filtros;
+  - Checkout, portal y pago simulado;
+  - webhook idempotente con `syncSubscription` y la tabla de transiciones a `subscription.*`;
+  - seed del bloque 4 y páginas `/premium`, `/premium/gracias`, `/pago-simulado` y `/admin`.
+- **Pendiente (desarrollador):** aprobar el contrato y las decisiones D1–D21, responder a los choques con la maqueta y actualizar la línea "Bloque actual" de CLAUDE.md.
