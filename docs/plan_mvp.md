@@ -1073,7 +1073,7 @@ interface SubscriptionDto {
 ```
 
 - **Cuál devuelve `GET /api/payments/subscription`:** la `active` con el fin de periodo mayor; si no hay, la más reciente; si no tiene ninguna, `null`.
-- **Driver (D10):** `integrations/payments/` con la misma interfaz para `stripe` y `fake`: `createCheckout(user)`, `createPortal(user)` y `retrieveSubscription(id)`. Es un objeto, para que los tests sustituyan sus métodos con `mock.method` sin red. Con `fake`, checkout y portal devuelven `{ url: '/pago-simulado' }`.
+- **Driver (D10):** `integrations/payments/` con la misma interfaz para `stripe` y `fake`: `createCustomer({ userId, email })` (solo `stripe`; el servicio guarda el cliente antes del checkout, aprobado el 8-nov), `createCheckout({ userId, customerId })`, `createPortal(customerId)` y `retrieveSubscription(id)`. Es un objeto, para que los tests sustituyan sus métodos con `mock.method` sin red. Con `fake`, checkout y portal devuelven `{ url: '/pago-simulado' }`.
 - **Checkout con Stripe:**
   - Cliente de Stripe con `apiVersion: '2026-10-28.endive'` en el constructor.
   - Si el usuario no tiene `stripe_customer_id`, se crea el cliente (correo y `metadata.userId`; con `STRIPE_TEST_CLOCK_ID`, asociado a ese reloj) y se guarda con `UPDATE … WHERE stripe_customer_id IS NULL`. Sin auditoría: no es una acción de la tabla.
