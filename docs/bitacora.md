@@ -987,3 +987,61 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Pendiente:**
   - al integrar el trabajo de Codex, comprobar que el `select` de entidades sale de `AUDIT_ENTITY_TYPES` de `utils/admin.ts` y muestra las 9 opciones;
   - online, mirar si `/js/utils/admin.js` contiene `subscriptions` y si la consola muestra errores.
+
+### 2026-11-09 · Bloque 4 · T13 online, T14 recortada y T15: cierre del bloque
+- **Pedido del desarrollador:**
+  - Cerrar el bloque 4. Según el desarrollador, `/admin` está integrado y probado, y todo funciona en local y online.
+  - Pasar el auditor sobre todo lo hecho desde el cierre del bloque 3, con D1–D21 y los choques resueltos.
+  - Repasar la definición de terminado y los tokens sin uso.
+  - Proponer los cambios de documentación fuera del contrato, que edita él.
+  - Decir qué falta comprobar online.
+- **T13 (Stripe online, desarrollador):** funciona de principio a fin con la lista `.claude/t13-stripe-online.md`:
+  - pago con la tarjeta de prueba;
+  - bienvenida en `/premium/gracias`;
+  - cancelar y renovar en el portal;
+  - Workbench, con todas las entregas en 200. Ninguna 413, así que el riesgo de los 100 kB queda revisado;
+  - `subscription.*` en la auditoría, con actor «Sistema».
+
+  El filtro por «Suscripciones» fallaba online. Se cerró con las protecciones de `ffcef36`, y el desarrollador lo da por resuelto.
+- **T14 (Test Clocks, D21): recortada.** Es la contingencia de nivel 1: la demo muestra alta, portal, cancelación y renovación, pero no el paso del periodo. `STRIPE_TEST_CLOCK_ID` sigue siendo opcional en `env.ts` y en `.env.example`. `npm run stripe:demo-reset` no existe.
+- **Agente `auditor`:** APTO CON OBSERVACIONES.
+  - **Revisado:** `9eaf327..HEAD`, 82 archivos fuera de `docs/`.
+  - **Comprobado:**
+    - Pagos: webhook, idempotencia, `applySubscription`, transiciones y 503.
+    - Admin: `requireAdmin`, `FOR UPDATE`, regla +18, RN-14, RN-15 y RN-16.
+    - Auditoría: 32 acciones iguales a la tabla del plan, entidades tipadas y el `select` del cliente con 9 opciones desde `AUDIT_ENTITY_TYPES`.
+    - Cliente: `textContent`, sin scripts en línea y `fetch` solo en `api.ts`.
+    - Nada de las fases 2 y 3, ningún `any`.
+    - Las correcciones 1–6 del bloque 3 se mantienen.
+  - **Hallazgos, sin corregir hasta que decida el desarrollador:**
+    1. **Alta por el contrato, de impacto bajo:** aprobar o rechazar un capítulo ya rechazado da 404, no 409. `findLiveChapter` excluye los `rejected`, así que de dos admins que rechazan a la vez, el segundo recibe 404 (`admin.service.ts:111-112`).
+    2. **Media:** tres tests de `admin-audit.test.ts` empiezan por `CU-40:`, no por una RN ni por `Seguridad:`.
+    3. **Baja:** `admin.schema.ts:97` escribe `.max(254)` a mano, cuando ya existe `EMAIL_MAX_CHARS`.
+  - **Integración de `/admin` con Codex:** no está en `main` ni en `origin/main`, y no queda ninguna rama ni worktree de Codex. El `/admin` de `main` no tiene los cuatro elementos del encargo.
+- **Tokens:** los 605 de `variables.css` y los 9 de `layers.css` se usan todos, contando los que solo se usan desde otro token. No se borra nada.
+- **Auditoría en la BD local (solo lectura):** desde el 8-nov solo hay `system.seed` de la suscripción simulada y un `auth.login_ok`. Del resto solo están las aprobaciones y el rechazo de `demo:data`. Las acciones del admin y del pago simulado no se han hecho contra esta BD; las cubren los tests de API. La IA arrancó el contenedor `db`, que estaba parado.
+- **Definición de terminado:**
+  - Cumplido:
+    - typecheck, 158 unitarios y 282 de API, ejecutados por la IA hoy con la BD levantada;
+    - la lista del diff, en la revisión del auditor;
+    - la auditoría en la misma transacción;
+    - ninguna variable nueva;
+    - los tests de RN-04, RN-05, RN-09, RN-11 y RN-14 a RN-17.
+  - Según el desarrollador: funciona en local y online, incluido Stripe.
+  - Pendiente (desarrollador):
+    - el commit y el despliegue de la integración de `/admin`, con su revisión (agente `frontend` y auditor sobre ese diff);
+    - 360 px, teclado y consola, si no entraron en la prueba;
+    - en Neon, ver las acciones del admin del bloque 4 en la auditoría.
+- **Documentación (propuestas al desarrollador):**
+  - el nombre `syncSubscription` frente a `applySubscription` en CLAUDE.md, RN-04, `modelo_datos.md` y la tabla de decisiones;
+  - el seed de `premium@` en `modelo_datos.md`;
+  - Test Clocks recortado en el plan y en `ideas_base.md`;
+  - el riesgo de los 413, ya revisado;
+  - el pago simulado y la cuenta premium demo en «Decisiones del servidor»;
+  - `services/` y `utils/` en los árboles;
+  - `docs/modelo_datos.md` en `.gitignore`;
+  - la línea «Bloque actual».
+- **Estado:** el auditor da el bloque 4 por cerrado, con observaciones. Para el desarrollador queda:
+  - decidir sobre los hallazgos 1 a 3;
+  - hacer el commit, el despliegue y la revisión de la integración de `/admin`;
+  - aplicar los cambios de documentación.
