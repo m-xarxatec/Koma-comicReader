@@ -82,7 +82,7 @@ export async function reviewComic(admin: User, slug: string, review: Review, ctx
     if (!comic) throw comicNotFound();
     const problem = comicReviewProblem(comic, review.decision);
     if (problem) throw problem;
-    const base = { actorId: admin.id, entityType: 'comics', entityId: String(comic.id), ...ctx };
+    const base = { actorId: admin.id, entityType: 'comics' as const, entityId: String(comic.id), ...ctx };
     if (review.decision === 'approve') {
       await comicsRepository.setComicReview(client, comic.id, 'approved', null);
       await audit.record(client, { ...base, action: 'comic.approve', before: { status: 'pending' }, after: { status: 'approved' } });
@@ -113,7 +113,7 @@ export async function reviewChapter(
     if (!chapter) throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
     const problem = chapterReviewProblem(comic, chapter);
     if (problem) throw problem;
-    const base = { actorId: admin.id, entityType: 'chapters', entityId: String(chapter.id), ...ctx };
+    const base = { actorId: admin.id, entityType: 'chapters' as const, entityId: String(chapter.id), ...ctx };
     if (review.decision === 'approve') {
       const publishedAt = await chaptersRepository.approveChapter(client, chapter.id);
       await audit.record(client, {

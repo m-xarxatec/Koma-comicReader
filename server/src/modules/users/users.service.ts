@@ -140,7 +140,7 @@ export async function changeUser(admin: User, targetId: number, change: AdminUse
     const problem = adminUserChangeProblem(admin, target, change, activeAdminIds);
     if (problem) throw PROBLEMS[problem]();
 
-    const base = { actorId: admin.id, entityType: 'users', entityId: String(target.id), ...ctx };
+    const base = { actorId: admin.id, entityType: 'users' as const, entityId: String(target.id), ...ctx };
     let updated: User;
     if ('role' in change) {
       updated = await usersRepository.updateRole(client, target.id, change.role);

@@ -283,9 +283,10 @@ async function buildContent(api: Api, dir: string, summary: DemoSummary): Promis
 // --- SQL: lo que en el bloque 4 hará el admin, con la misma auditoría (actor NULL = sistema) ---
 
 type Audit = typeof import('../modules/audit/audit.service.js');
+type AuditEntityType = import('../modules/audit/audit.service.js').AuditEntityType;
 
 async function moderate(client: PoolClient, audit: Audit, requestId: string, comics: readonly AuthorComic[], summary: DemoSummary): Promise<void> {
-  const record = (action: 'comic.approve' | 'comic.reject' | 'chapter.approve', entityType: string, id: number, before: object, after: object) =>
+  const record = (action: 'comic.approve' | 'comic.reject' | 'chapter.approve', entityType: AuditEntityType, id: number, before: object, after: object) =>
     audit.record(client, { action, actorId: null, entityType, entityId: String(id), before, after, ip: null, requestId });
 
   for (const [index, spec] of DEMO_COMICS.entries()) {

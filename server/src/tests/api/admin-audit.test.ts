@@ -84,6 +84,37 @@ test('CU-40: filtra por entidad e id, por acción y por actor (correo sin distin
   assert.equal(byEntity.pageSize, 50);
 });
 
+test('CU-40: filtra por las suscripciones (actor «Sistema», el del webhook) y acepta cada entidad de AUDIT_ENTITY_TYPES', async () => {
+  const admin = await createUser('admin');
+  const entityId = `sub-${RUN}-${randomUUID().slice(0, 8)}`;
+  const { pool } = await import('../../db/pool.js');
+  const audit = await import('../../modules/audit/audit.service.js');
+  await audit.record(pool, {
+    action: 'subscription.start',
+    actorId: null,
+    entityType: 'subscriptions',
+    entityId,
+    after: { status: 'active', cancelAtPeriodEnd: false, provider: 'stripe' },
+    ip: null,
+    requestId: randomUUID(),
+  });
+
+  const bySubscription = await search(admin.cookie, `entityType=subscriptions&entityId=${entityId}`);
+  assert.equal(bySubscription.total, 1);
+  assert.deepEqual(
+    bySubscription.entries.map((e) => [e.action, e.entityType, e.actor]),
+    [['subscription.start', 'subscriptions', null]],
+  );
+  const all = await search(admin.cookie, 'entityType=subscriptions');
+  assert.ok(all.entries.every((e) => e.entityType === 'subscriptions'), 'solo suscripciones');
+  assert.ok(all.total >= 1);
+
+  // La misma lista que ofrece el filtro del cliente (client-parity.test.ts): ninguna entidad se rechaza.
+  for (const entityType of audit.AUDIT_ENTITY_TYPES) {
+    assert.equal((await api(srv, 'GET', `/api/admin/audit?entityType=${entityType}`, { cookie: admin.cookie })).status, 200, entityType);
+  }
+});
+
 test('CU-40: «desde» y «hasta» son días de Europe/Madrid con los dos extremos incluidos', async () => {
   const admin = await createUser('admin');
   const entityId = `fechas-${RUN}-${randomUUID().slice(0, 8)}`;

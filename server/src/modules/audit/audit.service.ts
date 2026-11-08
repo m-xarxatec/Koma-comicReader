@@ -40,13 +40,15 @@ export const AUDIT_ACTIONS = [
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-// Tablas que aparecen como entity_type (filtro de la consulta del admin).
+// Tablas que aparecen como entity_type. Es también la lista del filtro de la consulta del admin (CU-40): AuditEntry
+// solo acepta estos valores, así que tsc rechaza auditar una entidad que el filtro no ofrecería.
 export const AUDIT_ENTITY_TYPES = ['users', 'comics', 'chapters', 'comments', 'subscriptions', 'settings', 'tags', 'ads'] as const;
+export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 export interface AuditEntry {
   action: AuditAction;
   actorId: number | null; // NULL = invitado o sistema
-  entityType: string; // nombre de la tabla
+  entityType: AuditEntityType; // nombre de la tabla
   entityId: string | null;
   before?: object | null; // solo los campos cambiados
   after?: object | null;

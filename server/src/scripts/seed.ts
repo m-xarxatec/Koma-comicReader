@@ -88,7 +88,7 @@ function readPasswords(): Map<PasswordVar, string> {
 
 // Auditoría system.seed: actor NULL, entity_type = tabla, after = ids o claves creados (nunca contraseñas).
 // Pasa por audit.service, como el resto: misma lista de acciones y mismo filtro de campos prohibidos.
-async function auditSeed(client: PoolClient, entityType: string, entityId: string, after: object, requestId: string) {
+async function auditSeed(client: PoolClient, entityType: audit.AuditEntityType, entityId: string, after: object, requestId: string) {
   await audit.record(client, { action: 'system.seed', actorId: null, entityType, entityId, after, ip: null, requestId });
 }
 

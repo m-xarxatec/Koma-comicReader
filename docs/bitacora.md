@@ -973,3 +973,17 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - El permiso lo decide el servidor: `withdraw.test.ts` ya cubre que el admin retira cualquier obra, también una importada, y que los demás reciben 403.
 - **Tests:** un test nuevo en `reading-pages.test.ts`: el botón sale una vez, oculto y sin envío, y el aviso puede recibir el foco.
 - **Comprobación (IA):** typecheck, 158 unitarios y 281 de API. Sin probar en el navegador.
+
+### 2026-11-08 · Bloque 4 · Auditoría: entidades tipadas y filtro de suscripciones
+- **Pedido del desarrollador:** online, en `/admin` → Auditoría, la lista de entidades no ofrecía «Suscripciones» (en local sí). Añadir dos protecciones del servidor en un commit aparte.
+- **Diagnóstico (IA):**
+  - `subscriptions` está en las tres listas (`audit.service.ts`, `auditQuery` y `client/src/utils/admin.ts`) desde la T11 (`0de3368`), y en todos los commits desplegados después. `client-parity.test.ts` compara las del cliente y el servidor.
+  - En local, la API filtra bien por `subscriptions`. En Firefox sin interfaz, `/admin` muestra las 9 entidades y el filtro devuelve las entradas.
+  - La causa online queda sin explicar por el código.
+- **Protecciones:**
+  - `AuditEntry.entityType` pasa de `string` a `AuditEntityType` (de `AUDIT_ENTITY_TYPES`): `tsc` rechaza auditar una entidad que el filtro no ofrece. Las bases compartidas (`const base`) llevan `as const`, y `seed.ts` y `demo-data.ts` tipan su parámetro (en `demo-data`, con un import solo de tipo).
+  - `admin-audit.test.ts`: un caso que filtra por `entityType=subscriptions` (actor «Sistema») y comprueba que la API acepta cada entidad de `AUDIT_ENTITY_TYPES`.
+- **Comprobación (IA):** typecheck, 158 unitarios y 282 de API.
+- **Pendiente:**
+  - al integrar el trabajo de Codex, comprobar que el `select` de entidades sale de `AUDIT_ENTITY_TYPES` de `utils/admin.ts` y muestra las 9 opciones;
+  - online, mirar si `/js/utils/admin.js` contiene `subscriptions` y si la consola muestra errores.

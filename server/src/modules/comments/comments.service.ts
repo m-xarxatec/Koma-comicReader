@@ -150,7 +150,7 @@ export async function moderateComment(admin: User, id: number, action: 'hide' | 
     if (!comment) throw new AppError(404, 'NOT_FOUND', 'El comentario no existe');
     if (comment.withdrawn) throw new AppError(410, 'GONE', 'El capítulo o la obra del comentario se han retirado');
     if (comment.deletedAt) throw new AppError(409, 'CONFLICT', 'El comentario ya se eliminó');
-    const base = { actorId: admin.id, entityType: 'comments', entityId: String(id), ...ctx };
+    const base = { actorId: admin.id, entityType: 'comments' as const, entityId: String(id), ...ctx };
     if (action === 'hide') {
       if (comment.hiddenAt) throw new AppError(409, 'CONFLICT', 'El comentario ya está oculto');
       const hiddenAt = await commentsRepository.markHidden(client, id);
