@@ -743,3 +743,64 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - "Ir a la viñeta N";
   - consola sin errores.
 - **Limpieza (desarrollador):** borrar el worktree `../koma-estudio` y la rama `feat/estudio-panel` (sin commits propios). Sus copias de `ENCARGO-CODEX.md`, `docs/ideas_base.md` y `docs/modelo_datos.md` no van a ningún commit.
+
+### 2026-11-07 · Bloque 3 · Panel del autor: columna lateral sin contar secciones
+- **Pedido del desarrollador:** la columna lateral de `/autor` no puede depender de un número fijo de secciones (`grid-row: 1 / span 8`), porque el control editorial aparece o no según el autor.
+- **Resultado:** las secciones de `#studio-view` van dentro de `.author-page__main`. Desde 64rem la rejilla de `.author-page__studio` tiene solo dos hijos: la navegación (columna 1, `sticky`) y ese contenedor (columna 2). Fuera `grid-row: 1 / span 8`, la regla `> :not(.author-page__nav)` y el aviso del HTML. Esto sustituye al comentario y al aviso de la entrada anterior. Por debajo de 64rem no cambia nada.
+- **Revisión del agente `frontend`:** APTO, con 2 observaciones bajas. Se acepta que, desde 64rem, el margen inferior de un mensaje de estado vacío (`.author-page__message`) se funda con el de la sección siguiente: el hueco queda en 2.3rem, como ya pasaba en móvil. La otra (esta entrada de bitácora) queda resuelta.
+- **Comprobación (IA):** typecheck, 132 unitarios y 224 de API. El agente confirmó el anidado del HTML y que `author.ts` no depende de la estructura (solo `id` y `data-nav`).
+
+### 2026-11-08 · Bloque 3 · T12: cierre del bloque
+- **Pedido del desarrollador:**
+  - Auditor sobre lo hecho desde su revisión de T10 y T11: `/crear`, el panel del autor (API y cliente), `demo:data` y su comprobación de BD local, la columna lateral y las correcciones de los hallazgos.
+  - Repaso de la definición de terminado.
+  - Tokens sin uso.
+  - Propuestas para CLAUDE.md, `ideas_base.md` y el plan fuera del contrato, que edita él.
+  - Lo que tiene que hacer él online.
+  - Antes, en el navegador: las funcionalidades están bien; los cambios de aspecto van a una pasada de diseño posterior.
+  - Las obras y los datos de demostración de la BD local se conservan como referencia para esa pasada, y nunca van a producción; el código sí.
+- **Agente `auditor`:** APTO CON OBSERVACIONES. Revisó `db9c8a9..4cc851c` (6 commits) más el árbol sin commit. Comprobó:
+  - Nada de fases 2 y 3: las donaciones son HTML estático, sin código.
+  - Ninguna tabla ni dependencia nueva.
+  - `requireAuthor` en el panel, cuyo SQL filtra por el autor de la sesión, y `requirePageAuth` en `/crear`.
+  - SQL parametrizado y `textContent`.
+  - RN-19 con el día de `Europe/Madrid` y tests en los límites de las ventanas.
+  - El orden 404 → 403 → 410 → 409 del borrado de comentarios.
+  - Tests con prefijo RN o `Seguridad:`.
+  - Que nada empaqueta ni ejecuta `demo:data` online: ni Dockerfile, ni `server.ts`, ni los scripts `:online`. En Render aborta por `NODE_ENV` y por el host.
+
+  Hallazgos (ninguno corregido; pendientes de la decisión del desarrollador):
+  1. Media: `demo-guard.ts` mira el host de `URL.hostname`, pero `pg-connection-string` deja que `?host=` de la query lo sustituya. `postgres://u:p@localhost:5432/koma?host=ep-x.neon.tech` pasa la guarda y se conecta a ese host (comprobado con `parse`).
+  2. Media: `demo-data.ts:179` hace `JSON.parse(text) as T` sin pasar por `unknown`.
+  3. Baja: si cambian las lecturas de los lectores demo, los comentarios se reparten distinto y una nueva ejecución puede añadir hasta 30.
+  4. Baja: `mkdtemp` y `listen` van antes del `try`; si `listen` falla, el temporal no se borra.
+  5. Baja: el `before` de las aprobaciones del script no lleva `rejectionReason` ni `publishedAt` a `null`.
+  6. Baja: `createPage` (`comics.controller.ts`) decide por rol; la regla de capas lo deja para un middleware o el servicio.
+- **Tokens:** 511 en `variables.css`, todos en uso (contando los que solo se usan desde otro token), y los 8 de `layers.css`. No se borra nada.
+- **Auditoría en la BD local (solo lectura):**
+  - Presentes:
+    - `comic.create` (5), `comic.update` (5), `chapter.create` (16) y `chapter.submit` (11);
+    - `user.update_profile` y `user.password_change`;
+    - las de `demo:data` (`comic.approve` 2, `chapter.approve` 6, `comic.reject` 1, `system.seed` 6), con actor `NULL` y un solo `request_id`.
+  - Faltan `comment.delete_own`, `comic.withdraw` y `chapter.withdraw`: no se han hecho en el navegador. Los tests de API las comprueban.
+- **Definición de terminado:**
+  - Cumplido: typecheck y tests (132 unitarios y 224 de API), según el auditor. Hay tests de todas las RN del bloque: RN-05 a 07, 09 a 13, 15, 17 y 19.
+  - Cumplido también:
+    - el diff revisado: auditor y, en cada página, el agente `frontend`;
+    - la auditoría en la misma transacción;
+    - ninguna variable nueva en el bloque (`.env.example` y `env.ts` sin cambios desde `eac1020`);
+    - el log local de la prueba en el navegador: solo 200, 302 y 304, sin avisos ni errores.
+  - Pendiente (desarrollador):
+    - el despliegue y la prueba online;
+    - 360 px y teclado, si no entraron en la prueba del navegador;
+    - la consola del navegador;
+    - las tres acciones de auditoría que faltan.
+- **Contradicciones de la documentación (propuestas al desarrollador):**
+  - `demo:data` no está en la tabla de comandos del plan.
+  - Al árbol de `scripts/` le faltan `demo-guard.ts` y `demo-png.ts`.
+  - "Los dos entornos tienen los mismos datos" ya no es cierto con `demo:data`.
+  - El calendario del bloque 3 no nombra el panel del autor.
+  - `docs/ideas_base.md` está en `.gitignore` y no se versiona.
+  - "No haremos" perdió en `77a12e6` "ni pago simulado en producción" y las marcas inventadas.
+  - La línea "Bloque actual".
+- **Estado:** el bloque 3 queda cerrado por la IA. Se da por cerrado del todo cuando el desarrollador lo pruebe online y decida sobre los hallazgos 1 a 6.
