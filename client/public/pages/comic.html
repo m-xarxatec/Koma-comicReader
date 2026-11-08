@@ -61,6 +61,9 @@
         <div class="work-detail__actions">
           <a class="button button--primary button--large" id="work-read" href="#capitulos" hidden><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> <span id="work-read-label">Leer capítulo 1</span></a>
           <a class="button button--outline button--large" href="#capitulos">Ver capítulos</a>
+          <!-- D4 (contrato del bloque 4): solo para el admin; comic.ts lo muestra según GET /api/me. El permiso lo
+               decide POST /api/comics/:slug/withdraw (403 a quien no es su autor ni admin). -->
+          <button class="button button--outline button--danger button--large" type="button" id="work-withdraw" hidden>Retirar obra</button>
         </div>
       </div>
     </article>
@@ -74,7 +77,7 @@
       </div>
     </aside>
 
-    <p class="work-page__message" id="work-message" role="status"></p>
+    <p class="work-page__message" id="work-message" role="status" tabindex="-1"></p>
     <noscript><p class="work-page__message">Activa JavaScript para ver la sinopsis y los capítulos de la obra.</p></noscript>
 
     <div class="work-page__lower">

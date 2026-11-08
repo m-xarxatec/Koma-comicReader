@@ -53,6 +53,15 @@ test('Seguridad: /obra/:slug sirve la ficha con el título escapado en <title>, 
   }
 });
 
+test('RN-06: /obra/:slug trae el botón «Retirar obra» del admin oculto y sin envío: lo muestra comic.ts (D4)', async () => {
+  const html = await page(`/obra/${plain.slug}`);
+  assert.equal(
+    html.split('<button class="button button--outline button--danger button--large" type="button" id="work-withdraw" hidden>Retirar obra</button>').length - 1,
+    1,
+  );
+  assert.ok(html.includes('id="work-message" role="status" tabindex="-1"'), 'el aviso recibe el foco tras retirar');
+});
+
 test('RN-06: /obra/:slug responde la página 404 si la obra no existe, no está aprobada o el slug no es válido, y la 410 si se retiró', async () => {
   for (const path of [`/obra/no-existe-${plain.slug}`, `/obra/${pending.slug}`, '/obra/Mayusculas', '/obra/con%00nulo']) await page(path, 404);
   await page(`/obra/${withdrawn.slug}`, 410);

@@ -1,5 +1,6 @@
 import type { ComicCardDto, TagDto } from '../components/comic-card.js';
 import { api } from '../services/api.js';
+import { getMe } from '../services/auth.js';
 import { catalogQueryString } from '../utils/catalog.js';
 import { sizeFromRatioToken } from '../utils/ratio.js';
 
@@ -45,7 +46,7 @@ const PREVIEW_STATES: Record<'draft' | 'pending', { meta: string; label: string;
 };
 
 const slug = decodeURIComponent(location.pathname.split('/')[2] ?? '');
-const store = { loading: false };
+const store = { loading: false, title: '', withdrawing: false };
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
 const cover = byId<HTMLElement>('work-cover');
@@ -65,6 +66,7 @@ const message = byId<HTMLElement>('work-message');
 const chapters = byId<HTMLElement>('capitulos');
 const chaptersSummary = byId<HTMLElement>('chapters-summary');
 const chapterItems = byId<HTMLElement>('chapter-items');
+const withdrawButton = byId<HTMLButtonElement>('work-withdraw');
 
 function chapterUrl(number: number): string {
   return `/leer/${encodeURIComponent(slug)}/${number}`;
@@ -186,6 +188,7 @@ function chapterItem(chapter: ChapterSummaryDto): HTMLLIElement {
 }
 
 function renderComic(comic: ComicDto): void {
+  store.title = comic.title;
   renderCover(comic);
   const count = comic.chapters.length;
   if (status) {
@@ -218,6 +221,7 @@ function renderComic(comic: ComicDto): void {
     }
   }
   if (body) body.hidden = false;
+  void showWithdraw();
 
   if (warning && warningText) {
     warningText.textContent = comic.contentWarning ?? '';
@@ -235,6 +239,39 @@ function renderComic(comic: ComicDto): void {
   // mientras la sección estaba oculta.
   if (location.hash === '#capitulos') chapters?.scrollIntoView();
 }
+
+// D4 (contrato del bloque 4): el admin retira cualquier obra desde su ficha. Aquí solo se muestra u oculta el botón;
+// el permiso lo decide el servidor en cada petición.
+const isAdmin = getMe().then((result) => result.ok && result.data.user?.role === 'admin');
+
+async function showWithdraw(): Promise<void> {
+  if (withdrawButton && !store.withdrawing && (await isAdmin)) withdrawButton.hidden = false;
+}
+
+async function withdrawComic(): Promise<void> {
+  if (!withdrawButton || store.withdrawing) return;
+  if (!confirm(`¿Retirar «${store.title}»? Dejará de estar visible para los lectores y para su autor, y no se puede deshacer desde la interfaz.`)) return;
+  store.withdrawing = true;
+  withdrawButton.disabled = true;
+  const result = await api.post<void>(`/api/comics/${encodeURIComponent(slug)}/withdraw`);
+  if (!result.ok) {
+    store.withdrawing = false;
+    withdrawButton.disabled = false;
+    const reference = result.error.requestId ? ` (código de referencia: ${result.error.requestId})` : '';
+    showMessage(`No se pudo retirar la obra. ${result.error.message}${reference}`);
+    withdrawButton.focus();
+    return;
+  }
+  // La ficha, el lector y la API ya responden 410 (RN-06): fuera la ficha y los capítulos; queda el aviso, con el foco.
+  for (const part of [body, status, preview, tags, warning, chapters]) if (part) part.hidden = true;
+  cover?.replaceChildren();
+  showMessage('Obra retirada: ya no la ve nadie y la retirada queda en la auditoría.');
+  message?.focus();
+}
+
+withdrawButton?.addEventListener('click', () => {
+  void withdrawComic();
+});
 
 async function loadComic(): Promise<void> {
   if (store.loading) return;

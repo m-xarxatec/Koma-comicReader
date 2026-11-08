@@ -962,3 +962,14 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - el diálogo dentro de `admin-page.css`.
 - **Tests:** `pages.test.ts` comprueba el aviso nuevo, los cuatro `role="status"` y el aviso de las acciones como último hijo de `main`.
 - **Comprobación (IA):** typecheck, 158 unitarios y 280 de API. Lo visual y el teclado, el desarrollador en el navegador.
+
+### 2026-11-08 · Bloque 4 · T12: retirar obra desde la ficha (admin, D4)
+- **Pedido del desarrollador:** el botón «Retirar» del admin en `/obra/:slug` (D4), sin tocar `/admin` ni `variables.css`, porque Codex trabaja en paralelo en el diseño de `/admin`.
+- **Resultado:**
+  - `comic.html` lleva «Retirar obra» (`button--outline button--danger button--large`, sin CSS nuevo ni tokens) junto a «Ver capítulos», oculto y de `type="button"`.
+  - `comic.ts` lo muestra solo si `GET /api/me` dice `role = admin`. Pide confirmación (como el estudio del autor) y llama a `POST /api/comics/:slug/withdraw` del bloque 3, sin cambios en la API.
+  - **Si sale bien:** oculta la ficha y los capítulos, avisa «Obra retirada: ya no la ve nadie y la retirada queda en la auditoría.» y lleva ahí el foco (`work-message`, `role="status"`, ahora con `tabindex="-1"`).
+  - **Si falla** (409 si ya estaba retirada, 403…): el mensaje con su código de referencia; el botón vuelve a estar activo y con el foco.
+  - El permiso lo decide el servidor: `withdraw.test.ts` ya cubre que el admin retira cualquier obra, también una importada, y que los demás reciben 403.
+- **Tests:** un test nuevo en `reading-pages.test.ts`: el botón sale una vez, oculto y sin envío, y el aviso puede recibir el foco.
+- **Comprobación (IA):** typecheck, 158 unitarios y 281 de API. Sin probar en el navegador.
