@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>Pago simulado · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/fake-checkout.css">
+  <script type="module" src="/js/pages/fake-checkout.js"></script>
+</head>
+<body>
+  <!-- @header -->
+  <!-- Pago simulado mínimo (solo PAYMENTS_DRIVER=fake, en local). "Pagar" y "Cancelar suscripción" llaman a
+       /api/payments/fake/*, que aplican la suscripción con el mismo servicio que el webhook (RN-04). -->
+  <main id="contenido" class="checkout container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/premium">Premium</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Pago simulado</span>
+    </nav>
+    <span class="checkout__flag">ENTORNO DE DEMOSTRACIÓN</span>
+    <h1 class="checkout__title">Pago simulado</h1>
+    <p class="checkout__lead">Este pago es ficticio: no hay tarjeta, cobro ni datos bancarios.</p>
+
+    <div class="checkout__grid">
+      <section class="checkout__card" aria-labelledby="demo-title">
+        <p class="checkout__kicker">PASO ÚNICO</p>
+        <h2 class="checkout__card-title" id="demo-title">Pago de prueba</h2>
+        <div class="fake-card" aria-hidden="true">
+          <span class="fake-card__brand">KOMA <strong>DEMO</strong></span>
+          <span class="fake-card__chip"></span>
+          <span class="fake-card__number">•••• •••• •••• 0000</span>
+          <span class="fake-card__foot">TARJETA FICTICIA · NO VÁLIDA</span>
+        </div>
+        <p class="checkout__note">Sin formularios bancarios: esta pantalla solo activa o cancela una suscripción simulada.</p>
+
+        <noscript><p class="checkout__status">Para pagar o cancelar hace falta JavaScript.</p></noscript>
+        <div class="checkout__actions" data-for="pay" hidden>
+          <button class="button button--primary button--large" type="button" data-pay>Pagar</button>
+        </div>
+        <div class="checkout__actions" data-for="cancel" hidden>
+          <p class="checkout__text" data-period></p>
+          <button class="button button--danger" type="button" data-cancel>Cancelar suscripción</button>
+        </div>
+        <div class="checkout__actions" data-for="none" hidden>
+          <p class="checkout__text" data-none-text></p>
+        </div>
+        <p class="checkout__status" role="status" aria-live="polite" data-status></p>
+        <div class="checkout__actions">
+          <a class="button button--outline" href="/premium">Volver a Premium</a>
+        </div>
+      </section>
+
+      <aside class="checkout__card" aria-labelledby="summary-title">
+        <p class="checkout__kicker">RESUMEN</p>
+        <h2 class="checkout__card-title" id="summary-title">Tu plan</h2>
+        <div class="checkout__row"><span>Koma Premium · mensual</span><strong>5 €</strong></div>
+        <div class="checkout__row checkout__row--total"><span>Importe real a pagar</span><strong>0,00 €</strong></div>
+        <p class="checkout__note">Dura 30 días. Al cancelar, sigues siendo premium hasta el final del periodo.</p>
+      </aside>
+    </div>
+  </main>
+  <!-- @footer -->
+</body>
+</html>

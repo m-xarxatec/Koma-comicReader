@@ -39,6 +39,10 @@ const VALUES = {
   authorCredit: 'Ana',
   // become-author.html (createPage en comics.controller.ts)
   howTo: 'El rol de autor lo activa un administrador.',
+  // premium.html (PREMIUM_VIEWS en payments.controller.ts)
+  view: 'offer',
+  headingAccent: 'Menos pausas.',
+  lead: 'Lectura sin anuncios.',
 };
 const count = (html: string, text: string) => html.split(text).length - 1;
 

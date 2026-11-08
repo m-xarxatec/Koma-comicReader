@@ -16,7 +16,7 @@ import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
 import { chaptersRouter } from './modules/chapters/chapters.routes.js';
 import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
 import { commentsRouter } from './modules/comments/comments.routes.js';
-import { paymentsWebhookRouter } from './modules/payments/payments.routes.js';
+import { paymentsPagesRouter, paymentsRouter, paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
 import { usersPagesRouter, usersRouter } from './modules/users/users.routes.js';
 import { AppError } from './utils/app-error.js';
@@ -100,6 +100,7 @@ app.use('/api', comicsRouter);
 app.use('/api', chaptersRouter);
 app.use('/api', readingRouter);
 app.use('/api', commentsRouter);
+app.use('/api', paymentsRouter);
 
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);
@@ -108,6 +109,7 @@ app.use(authPagesRouter);
 app.use(comicsPagesRouter);
 app.use(readingPagesRouter);
 app.use(usersPagesRouter);
+app.use(paymentsPagesRouter);
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');

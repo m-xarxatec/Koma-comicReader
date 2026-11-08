@@ -91,3 +91,10 @@ export function canComment(user: PermissionSubject | null, chapter: ChapterAcces
 export function canDeleteOwnComment(user: PermissionSubject, comment: { userId: number }): boolean {
   return comment.userId === user.id;
 }
+
+// --- Bloque 4: premium y administración ---
+
+// "Modelo de permisos": se hace premium cualquier cuenta con sesión salvo el admin, que ya lee sin límites ni anuncios.
+export function canSubscribe(user: PermissionSubject): boolean {
+  return !isAdmin(user);
+}

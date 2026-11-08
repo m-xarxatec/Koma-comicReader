@@ -31,6 +31,7 @@ export type AuditAction =
   | 'subscription.start'
   | 'subscription.renew'
   | 'subscription.cancel'
+  | 'subscription.resume' // aprobada el 8-nov (contrato del bloque 4, D14)
   | 'subscription.expire'
   | 'settings.update'
   | 'content.import'

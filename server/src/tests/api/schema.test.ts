@@ -120,3 +120,21 @@ test('RN-11: la BD rechaza un comentario vacío o de más de 500 caracteres (pun
     await client.query(insert, params('😀'.repeat(500))); // 500 caracteres, 1000 unidades UTF-16
   });
 });
+
+test('RN-04: subscriptions solo acepta proveedores y estados conocidos y un id de proveedor único; payment_events, un id por evento', async () => {
+  await inRolledBackTransaction(async (client) => {
+    const { rows } = await client.query<{ id: number }>(
+      `INSERT INTO users (email, password_hash, display_name) VALUES ('schema-sub@demo.test', 'x', 'Suscriptora') RETURNING id`,
+    );
+    const userId = rows[0]!.id;
+    const INSERT_SUB = `INSERT INTO subscriptions (user_id, provider, provider_subscription_id, status, current_period_end)
+      VALUES ($1, $2, $3, $4, now() + interval '30 days')`;
+    await client.query(INSERT_SUB, [userId, 'fake', 'fake_schema', 'active']);
+    await expectViolation(client, INSERT_SUB, [userId, 'paypal', 'pp_1', 'active'], '23514', 'subscriptions_provider_check');
+    await expectViolation(client, INSERT_SUB, [userId, 'stripe', 'sub_1', 'expired'], '23514', 'subscriptions_status_check');
+    await expectViolation(client, INSERT_SUB, [userId, 'stripe', 'fake_schema', 'active'], '23505', 'subscriptions_provider_subscription_id_key');
+
+    await client.query(`INSERT INTO payment_events (id, type) VALUES ('evt_schema', 'invoice.paid')`);
+    await expectViolation(client, `INSERT INTO payment_events (id, type) VALUES ('evt_schema', 'invoice.paid')`, [], '23505', 'payment_events_pkey');
+  });
+});

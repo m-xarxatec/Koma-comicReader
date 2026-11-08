@@ -44,3 +44,6 @@ export const COMMENTS_PAGE_SIZE = 50;
 export const READS_WINDOW_SHORT_DAYS = 7;
 export const READS_WINDOW_LONG_DAYS = 30;
 export const AUTHOR_RECENT_COMMENTS = 10;
+
+// RN-04: pago simulado (driver fake) y seed de la cuenta premium (contrato del bloque 4).
+export const FAKE_PREMIUM_DAYS = 30;

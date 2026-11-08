@@ -21,6 +21,10 @@ if (!AUTH_PATHS.includes(location.pathname)) {
 const result = await getMe();
 const user = result.ok ? result.data.user : null;
 
+// D19: "Premium" (layout.ts lo pinta dentro de la cuenta) para todos menos el admin, que no se hace premium.
+const premiumLink = account?.querySelector<HTMLAnchorElement>('[data-premium-link]') ?? null;
+if (user?.role === 'admin') premiumLink?.remove();
+
 if (user && account) {
   // D16: el nombre lleva a /perfil. data-user-name: profile.ts lo actualiza al cambiar el nombre.
   const name = document.createElement('a');
@@ -40,5 +44,5 @@ if (user && account) {
     location.assign('/'); // la recarga muestra el estado real de la sesión
   });
 
-  account.replaceChildren(name, logoutButton);
+  account.replaceChildren(...(premiumLink && user.role !== 'admin' ? [premiumLink] : []), name, logoutButton);
 }

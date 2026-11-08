@@ -1,4 +1,4 @@
-/* Tarjetas del perfil: datos personales, seguridad y estado Premium (D17: solo el estado, sin enlace). */
+/* Tarjetas del perfil: datos personales, seguridad y estado Premium (D17), con sus acciones desde el bloque 4 (D18). */
 .profile-card {
   min-width: 0;
   padding: var(--profile-card-padding);
@@ -102,8 +102,17 @@
   margin-top: var(--profile-benefits-gap);
 }
 
-/* El servidor pone data-plan; se ve solo el texto de ese plan, también sin JS. */
+/* El servidor pone data-plan (free, premium o admin); se ve solo lo de ese plan, también sin JS. */
 .profile-card--premium[data-plan="free"] .profile-card__only-premium,
-.profile-card--premium[data-plan="premium"] .profile-card__only-free {
+.profile-card--premium[data-plan="free"] .profile-card__only-admin,
+.profile-card--premium[data-plan="premium"] .profile-card__only-free,
+.profile-card--premium[data-plan="premium"] .profile-card__only-admin,
+.profile-card--premium[data-plan="admin"] .profile-card__only-free,
+.profile-card--premium[data-plan="admin"] .profile-card__only-premium,
+.profile-card--premium[data-plan="admin"] .profile-card__hide-admin {
   display: none;
+}
+
+.profile-card__premium-actions {
+  margin-top: var(--space-5);
 }

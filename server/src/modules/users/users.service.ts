@@ -41,7 +41,7 @@ export function profilePageValues(user: User, now: Date = new Date()): Record<st
     email: dto.email,
     initials: initials(dto.displayName),
     accountLabel: ACCOUNT_LABELS[kind],
-    plan: dto.isPremium ? 'premium' : 'free',
+    plan: kind === 'admin' ? 'admin' : dto.isPremium ? 'premium' : 'free', // el admin no se hace premium (D18)
     premiumUntil: dto.isPremium ? dto.premiumUntil! : '',
     premiumUntilDate: dto.isPremium ? dto.premiumUntil!.slice(0, 10) : '',
   };

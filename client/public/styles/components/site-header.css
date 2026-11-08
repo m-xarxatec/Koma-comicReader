@@ -58,6 +58,29 @@
   display: none;
 }
 
+/* "Premium" (D19): solo el icono en pantallas pequeñas (el nombre accesible va en aria-label); con el texto desde 64rem. */
+.site-header__premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: var(--header-premium-padding);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-header-premium);
+  font-weight: var(--font-weight-bold);
+}
+
+.site-header__premium[aria-current="page"] {
+  color: var(--color-text);
+}
+
+.site-header__premium-label {
+  display: none;
+}
+
 /* Con sesión: nombre (textContent, recortado si es largo), enlazado a /perfil (D16), y "Salir" */
 .site-header__user {
   display: inline-block;
@@ -159,6 +182,10 @@
 }
 
 @media (min-width: 64rem) {
+  .site-header__premium-label {
+    display: inline;
+  }
+
   .site-header__inner {
     grid-template-columns: auto auto minmax(var(--header-search-min-wide), 1fr) auto;
     grid-template-areas: "brand nav search account";

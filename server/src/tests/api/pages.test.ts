@@ -330,3 +330,61 @@ test('Seguridad: /crear sirve "¿Aún no eres creador?" a quien no es autor (un 
     assert.equal(html.match(/href="\/crear" aria-current="page"/g)?.length, 2, kind);
   }
 });
+
+// ── Premium y pago simulado (contrato del bloque 4, "Páginas"; driver fake) ────────
+
+// El <h1> de premium.html lleva su segunda línea en un <span>: se compara el texto sin etiquetas.
+const h1Texts = (html: string) => [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/g)].map((m) => m[1]!.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+
+test('RN-04: /premium es público: oferta con un solo h1, el precio de 5 € y, sin JS, las acciones del invitado', async () => {
+  const res = await get('/premium');
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(title(html), 'Premium · Koma');
+  assert.deepEqual(h1Texts(html), ['Más historias. Menos pausas.']);
+  assert.ok(html.includes('<body data-view="offer">'));
+  assert.ok(html.includes('5 €'));
+  assert.ok(html.includes('href="/registro?next=%2Fpremium"') && html.includes('href="/entrar?next=%2Fpremium"'));
+  assert.match(html, /<form class="plan-card__actions" data-for="user" method="post" action="\/api\/payments\/checkout" hidden>/);
+  assert.ok(!html.includes('{{'));
+  assert.match(html, /class="site-header__premium" href="\/premium" aria-label="Premium" data-premium-link aria-current="page"/);
+});
+
+test('Seguridad: sin sesión, /premium/gracias y /pago-simulado redirigen al login con su next', async () => {
+  for (const path of ['/premium/gracias', '/pago-simulado']) {
+    const res = await get(path);
+    assert.equal(res.status, 302, path);
+    assert.equal(res.headers.get('location'), `/entrar?next=${encodeURIComponent(path)}`, path);
+  }
+});
+
+test('RN-04: /premium/gracias es la misma página en la vista de espera y bienvenida (D17)', async () => {
+  const res = await get('/premium/gracias', await profileUser('Lectora Gracias'));
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(title(html), 'Gracias · Koma');
+  assert.deepEqual(h1Texts(html), ['Gracias por pasarte a Premium']);
+  assert.ok(html.includes('<body data-view="thanks">'));
+  assert.ok(html.includes('role="status" aria-live="polite" data-premium-status'));
+  assert.ok(html.includes('src="/icons/koma-mascota-premium.png"'));
+  assert.ok(html.includes('href="/perfil"'), 'sin JS, el enlace al perfil');
+});
+
+test('RN-04: /pago-simulado sirve fake-checkout.html con sesión, sin campos de tarjeta', async () => {
+  const res = await get('/pago-simulado', await profileUser('Lectora Simulada'));
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(title(html), 'Pago simulado · Koma');
+  assert.deepEqual(h1s(html), ['Pago simulado']);
+  assert.equal((html.match(/<input/g) ?? []).length, 1, 'solo el buscador de la cabecera');
+  assert.ok(html.includes('data-pay') && html.includes('data-cancel') && html.includes('href="/premium"'));
+});
+
+test('Seguridad: /perfil del admin no ofrece premium (data-plan="admin", D18); el registrado ve "Hacerse premium"', async () => {
+  const admin = await pageUser('Admin Perfil', 'admin');
+  const adminHtml = await (await get('/perfil', admin)).text();
+  assert.ok(adminHtml.includes('data-plan="admin"'));
+  const readerHtml = await (await get('/perfil', await profileUser('Lectora Plan'))).text();
+  assert.ok(readerHtml.includes('data-plan="free"'));
+  assert.match(readerHtml, /<a class="button button--primary profile-card__only-free" href="\/premium">Hacerse premium<\/a>/);
+});

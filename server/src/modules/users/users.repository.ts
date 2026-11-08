@@ -15,6 +15,7 @@ export interface User {
   status: UserStatus;
   tokenVersion: number;
   premiumUntil: Date | null;
+  stripeCustomerId: string | null; // nunca sale del servidor ni va a la auditoría
 }
 
 interface UserRow {
@@ -27,9 +28,10 @@ interface UserRow {
   status: UserStatus;
   token_version: number;
   premium_until: Date | null;
+  stripe_customer_id: string | null;
 }
 
-const COLUMNS = 'id, email, password_hash, display_name, role, is_author, status, token_version, premium_until';
+const COLUMNS = 'id, email, password_hash, display_name, role, is_author, status, token_version, premium_until, stripe_customer_id';
 
 function toUser(row: UserRow): User {
   return {
@@ -42,6 +44,7 @@ function toUser(row: UserRow): User {
     status: row.status,
     tokenVersion: row.token_version,
     premiumUntil: row.premium_until,
+    stripeCustomerId: row.stripe_customer_id,
   };
 }
 
@@ -116,4 +119,25 @@ export async function updatePassword(db: Queryable, id: number, passwordHash: st
 export async function findCreatedAt(db: Queryable, id: number): Promise<Date | null> {
   const { rows } = await db.query<{ created_at: Date }>('SELECT created_at FROM users WHERE id = $1', [id]);
   return rows[0]?.created_at ?? null;
+}
+
+// --- Bloque 4: premium (RN-04) ---
+
+// Lo recalcula applySubscription con la fila del usuario bloqueada.
+export async function updatePremiumUntil(db: Queryable, id: number, premiumUntil: Date | null): Promise<User> {
+  const { rows } = await db.query<UserRow>(`UPDATE users SET premium_until = $2 WHERE id = $1 RETURNING ${COLUMNS}`, [id, premiumUntil]);
+  return toUser(rows[0]!);
+}
+
+export async function findByStripeCustomerId(db: Queryable, customerId: string): Promise<User | null> {
+  const { rows } = await db.query<UserRow>(`SELECT ${COLUMNS} FROM users WHERE stripe_customer_id = $1`, [customerId]);
+  return rows[0] ? toUser(rows[0]) : null;
+}
+
+// Solo si aún no tiene: de dos checkouts a la vez, gana el primero y el segundo usa ese cliente (devuelve el
+// guardado, que puede no ser el que se le pasó).
+export async function setStripeCustomerIdIfMissing(db: Queryable, id: number, customerId: string): Promise<string | null> {
+  await db.query('UPDATE users SET stripe_customer_id = $2 WHERE id = $1 AND stripe_customer_id IS NULL', [id, customerId]);
+  const { rows } = await db.query<{ stripe_customer_id: string | null }>('SELECT stripe_customer_id FROM users WHERE id = $1', [id]);
+  return rows[0]?.stripe_customer_id ?? null;
 }

@@ -1,0 +1,154 @@
+/* /pago-simulado (pages/fake-checkout.html; maqueta koma_home/pago-simulado): inequívocamente ficticio, sin campos de
+   tarjeta. Los botones dependen del estado (data-state, lo pone fake-checkout.ts). */
+.checkout {
+  padding-block: var(--premium-page-padding);
+}
+
+.checkout__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--checkout-flag-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-secondary);
+  font-size: var(--font-size-checkout-flag);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-checkout-flag);
+}
+
+.checkout__title {
+  margin: var(--checkout-title-margin);
+  font-size: var(--font-size-checkout-title);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.checkout__lead {
+  margin: 0 0 var(--space-8);
+  color: var(--color-text-muted);
+}
+
+.checkout__grid {
+  display: grid;
+  align-items: start;
+  gap: var(--checkout-gap);
+}
+
+.checkout__card {
+  min-width: 0;
+  padding: var(--premium-card-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.checkout__kicker {
+  margin: 0 0 var(--space-1);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-premium-tag);
+}
+
+.checkout__card-title {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-xl);
+}
+
+.fake-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: min(100%, var(--fake-card-width));
+  aspect-ratio: var(--fake-card-ratio);
+  margin: 0 auto var(--space-6);
+  padding: var(--fake-card-padding);
+  border: var(--border-width) solid var(--color-fake-card-border);
+  border-radius: var(--fake-card-radius);
+  background: var(--gradient-fake-card);
+  box-shadow: var(--shadow-fake-card);
+  color: var(--color-fake-card-text);
+}
+
+.fake-card__brand {
+  font-size: var(--font-size-fake-card-brand);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-fake-card);
+}
+
+.fake-card__brand strong {
+  color: var(--color-fake-card-accent);
+}
+
+.fake-card__chip {
+  width: var(--fake-card-chip-width);
+  height: var(--fake-card-chip-height);
+  border-radius: var(--fake-card-chip-radius);
+  background: var(--gradient-fake-card-chip);
+}
+
+.fake-card__number {
+  font-size: var(--font-size-fake-card-number);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-fake-card);
+  white-space: nowrap;
+}
+
+.fake-card__foot {
+  font-size: var(--font-size-fake-card-foot);
+  letter-spacing: var(--letter-spacing-fake-card);
+}
+
+.checkout__note,
+.checkout__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.checkout__actions {
+  display: grid;
+  gap: var(--premium-actions-gap);
+  margin-top: var(--space-6);
+}
+
+.checkout__actions[hidden] {
+  display: none;
+}
+
+.checkout__status {
+  margin: var(--space-4) 0 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.checkout__status:empty {
+  display: none;
+}
+
+.checkout__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.checkout__row--total {
+  border-top: var(--border-width) solid var(--color-border);
+  font-weight: var(--font-weight-heavy);
+}
+
+.checkout__row--total strong {
+  color: var(--color-success);
+}
+
+@media (min-width: 40rem) {
+  .checkout {
+    padding-block: var(--premium-page-padding-medium);
+  }
+
+  .checkout__grid {
+    grid-template-columns: var(--checkout-grid-columns-medium);
+  }
+}

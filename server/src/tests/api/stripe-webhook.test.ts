@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test, type Mock } from 'node:test';
+import { before, mock, test, type Mock } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import Stripe from 'stripe';
 import { INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
@@ -16,6 +16,20 @@ process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
 process.env.LOG_LEVEL = 'info'; // el test del log lee las líneas info
 
 const srv = startTestServer();
+
+// Desde el bloque 4 el webhook consulta la suscripción en Stripe (syncSubscription): aquí, sin red, la de un
+// cliente que no es de Koma, así que se registra el evento y se responde 200 sin tocar nada más. La
+// sincronización de verdad se prueba en stripe-sync.test.ts.
+before(async () => {
+  const { payments } = await import('../../integrations/payments/index.js');
+  mock.method(payments, 'retrieveSubscription', async (id: string) => ({
+    providerSubscriptionId: id,
+    customerId: 'cus_koma_ajeno',
+    status: 'active' as const,
+    currentPeriodEnd: new Date(Date.now() + 86_400_000),
+    cancelAtPeriodEnd: false,
+  }));
+});
 
 const WEBHOOK_PATH = '/api/stripe/webhook';
 const KB = 1024;
@@ -53,7 +67,7 @@ test('Seguridad: el webhook de Stripe acepta un evento firmado sin Origin o con 
     });
     assert.equal(res.status, 200, `Origin ${origin}`);
     assert.deepEqual(await res.json(), { received: true });
-    assert.equal(res.headers.get('set-cookie'), null, 'no pasa por auth (ni por la BD)');
+    assert.equal(res.headers.get('set-cookie'), null, 'no pasa por auth');
   }
 });
 

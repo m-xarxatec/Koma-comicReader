@@ -1,0 +1,274 @@
+/* /premium y /premium/gracias (pages/premium.html): oferta, espera del pago y bienvenida (maqueta koma_home/premium,
+   premium/gracias y premium/bienvenida, en una sola página, D17). El servidor pone data-view en <body>; el cliente,
+   data-state en la tarjeta del plan y data-step en la espera. Todo valor visual, en variables.css. */
+.premium {
+  padding-block: var(--premium-page-padding);
+}
+
+.premium__layout {
+  display: grid;
+  align-items: start;
+  gap: var(--premium-layout-gap);
+}
+
+.premium__title {
+  max-width: var(--measure-premium-title);
+  margin: var(--premium-title-margin);
+  font-size: var(--font-size-premium-title);
+  line-height: var(--line-height-premium-title);
+  letter-spacing: var(--letter-spacing-premium-title);
+}
+
+.premium__title-accent {
+  display: block;
+  color: var(--color-accent-soft);
+}
+
+.premium__lead {
+  max-width: var(--measure-premium-lead);
+  margin: var(--premium-lead-margin);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-premium-lead);
+}
+
+/* Cada vista muestra solo lo suyo, también sin JS. */
+[data-view="offer"] .premium__only-thanks,
+[data-view="thanks"] .premium__only-offer {
+  display: none;
+}
+
+.premium__benefits {
+  display: grid;
+  gap: var(--premium-benefits-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.premium__benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.premium__benefit-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--premium-benefit-icon-size);
+  height: var(--premium-benefit-icon-size);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-secondary);
+}
+
+.premium__benefit-icon .icon {
+  width: var(--premium-benefit-icon-glyph);
+  height: var(--premium-benefit-icon-glyph);
+}
+
+.premium__benefit-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-premium-benefit-title);
+}
+
+.premium__benefit-text {
+  max-width: var(--measure-premium-benefit);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Tarjeta del plan */
+.plan-card {
+  min-width: 0;
+  padding: var(--premium-card-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--gradient-premium-card), var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.plan-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--premium-card-top-margin);
+}
+
+.plan-card__symbol {
+  display: grid;
+  place-items: center;
+  width: var(--premium-card-symbol-size);
+  height: var(--premium-card-symbol-size);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  color: var(--color-accent-soft);
+}
+
+.plan-card__symbol .icon {
+  width: var(--premium-card-symbol-glyph);
+  height: var(--premium-card-symbol-glyph);
+}
+
+.plan-card__tag {
+  padding: var(--premium-tag-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-soft);
+  font-size: var(--font-size-premium-tag);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-premium-tag);
+}
+
+.plan-card__title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-premium-card-title);
+}
+
+.plan-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.plan-card__amount {
+  font-size: var(--font-size-premium-price);
+  line-height: var(--line-height-premium-title);
+  letter-spacing: var(--letter-spacing-premium-price);
+}
+
+.plan-card__period,
+.plan-card__note {
+  color: var(--color-text-muted);
+}
+
+.plan-card__note {
+  margin: 0;
+  font-size: var(--font-size-premium-note);
+}
+
+.plan-card__list {
+  display: grid;
+  gap: var(--premium-list-gap);
+  margin: var(--premium-list-margin);
+  padding: 0;
+  list-style: none;
+}
+
+.plan-card__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.plan-card__item .icon {
+  color: var(--color-success);
+}
+
+/* Acciones según quién mira (data-state): sin JS, las del invitado. */
+.plan-card__actions {
+  display: grid;
+  gap: var(--premium-actions-gap);
+}
+
+.plan-card__actions[hidden],
+.premium__step[hidden] {
+  display: none;
+}
+
+.plan-card__error {
+  margin: var(--space-3) 0 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.plan-card__error:empty {
+  display: none;
+}
+
+/* Espera y bienvenida (/premium/gracias) */
+.premium__status {
+  min-height: var(--space-12);
+  margin: 0 0 var(--space-6);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+.premium__spinner {
+  width: var(--premium-spinner-size);
+  height: var(--premium-spinner-size);
+  border: var(--premium-spinner-border) solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: var(--radius-circle);
+  animation: premium-spin var(--premium-spinner-duration) linear infinite;
+}
+
+.premium__welcome-art {
+  display: grid;
+  place-items: center;
+  min-height: var(--premium-welcome-art-height);
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--gradient-premium-welcome);
+}
+
+.premium__mascot {
+  display: block;
+  width: var(--premium-welcome-mascot-width);
+  height: auto;
+  filter: var(--shadow-premium-mascot);
+  animation: premium-float var(--premium-float-duration) ease-in-out infinite;
+}
+
+.premium__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--premium-actions-gap);
+  margin-top: var(--space-6);
+}
+
+@keyframes premium-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes premium-float {
+  50% {
+    transform: translateY(var(--premium-float-distance));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium__spinner,
+  .premium__mascot {
+    animation: none;
+  }
+}
+
+@media (min-width: 40rem) {
+  .premium {
+    padding-block: var(--premium-page-padding-medium);
+  }
+
+  .premium__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 64rem) {
+  .premium__layout {
+    grid-template-columns: var(--premium-layout-columns-wide);
+    gap: var(--premium-layout-gap-wide);
+  }
+
+  .premium__welcome-art {
+    min-height: var(--premium-welcome-art-height-wide);
+  }
+}
