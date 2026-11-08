@@ -211,6 +211,7 @@ CREATE TABLE audit_log (
 - Nunca se guardan contraseñas, hashes, tokens ni datos de pago en `before`/`after`.
 - Los scripts (seed, importación) generan su propio `request_id` con `crypto.randomUUID()`.
 - `system.seed`: una entrada por cada fila que el seed crea de verdad (no las omitidas por `ON CONFLICT`), con actor `NULL`, `entity_type` = la tabla y `after` = los ids o claves creados; nunca contraseñas ni hashes.
+- `npm run demo:data` (solo local) audita las aprobaciones y el rechazo que simula y los lectores que crea (`system.seed`); sus lecturas y comentarios no se auditan, como los que se registran al leer y comentar.
 - En fase 2, restaurar creará una entrada nueva con `reverts_id`; la original no se toca.
 - `request_id` enlaza cada entrada con los logs del servidor para depurar.
 
@@ -352,6 +353,7 @@ Un solo `package.json` en la raíz, con `"type": "module"` y `"engines": { "node
 | `npm run content:import` | Importa `content/` (RN-18) |
 | `npm run seed:online` | `seed` con `--env-file=.env.online` (Neon + R2); imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm run content:import:online` | `content:import` con `--env-file=.env.online`; imprime al empezar el host de la BD y `STORAGE_DRIVER` |
+| `npm run demo:data` | Datos de demostración del panel del autor (obras, lectores, lecturas y comentarios); solo BD local de desarrollo: aborta si no lo es. Nunca online |
 | `npm test` | Compila y ejecuta `node --test` sobre las funciones puras |
 | `npm run test:api` | Reinicia `koma_test` (`DROP SCHEMA` + migraciones + seed) y ejecuta las pruebas de API |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo) |
@@ -434,7 +436,7 @@ SEED_READER_PASSWORD=
 
 ## Entornos de despliegue
 
-La presentación se hace con el entorno que esté disponible ese día: online si hay red, local si no. Los dos tienen los mismos datos de seed, el mismo contenido importado y las mismas cuentas demo.
+La presentación se hace con el entorno que esté disponible ese día: online si hay red, local si no. Los dos tienen los mismos datos de seed, el mismo contenido importado y las mismas cuentas demo. Los datos de `npm run demo:data` (obras, lectores, lecturas y comentarios del panel del autor) solo existen en local: nunca van a producción.
 
 |  | Local | Online |
 | --- | --- | --- |
@@ -662,7 +664,7 @@ interface ReadingDto {
 
 Aprobado el 4-nov. (Dn) remite a la decisión aprobada del informe de arranque del bloque (bitácora).
 
-Comunidad y autor (CU-05, CU-06, CU-13, CU-23, CU-28 a CU-30; RN-05 a RN-07, RN-09 a RN-13, RN-15 y RN-17). Migración 006. Sin variables de entorno nuevas ni cambios en el seed. La aprobación y la moderación (ocultar y eliminar comentarios ajenos) son del bloque 4: en este bloque una obra o un capítulo enviados se quedan en `pending` (los tests los aprueban con SQL).
+Comunidad y autor (CU-05, CU-06, CU-13, CU-23, CU-28 a CU-31; RN-05 a RN-07, RN-09 a RN-13, RN-15, RN-17 y RN-19). Migración 006. Sin variables de entorno nuevas ni cambios en el seed. La aprobación y la moderación (ocultar y eliminar comentarios ajenos) son del bloque 4: en este bloque una obra o un capítulo enviados se quedan en `pending` (los tests los aprueban con SQL).
 
 **Comunes a todo el bloque:**
 
@@ -1009,7 +1011,7 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | 1 · Base y despliegue | 30 oct – 3 nov | Monorepo, Docker (BD), Render + Neon, migraciones 001–003, `AppError`, logger, páginas de error, API del bloque 1, roles, auditoría, prueba mínima de Stripe, verificación de `trust proxy` |
 | 2 · Catálogo y lector | 4 – 9 nov | Migraciones 004–005 y 007–008, seed, importación de `content/` (RN-18), R2 y URLs firmadas, catálogo con etiquetas, ficha, lector, RN-01 a RN-03, RN-08, anuncios (al final: intersticial) |
 | Control | 12 nov | Si el bloque 2 no estaba cerrado el 11, se activa la contingencia |
-| 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar (al final: editar obra) |
+| 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
 | 5 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
 

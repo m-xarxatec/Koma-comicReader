@@ -36,7 +36,7 @@
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
-│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts (solo local)
+│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
@@ -69,7 +69,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 
 - Frameworks de frontend (React, Vue…), bundler, frameworks CSS (Bootstrap, Tailwind), ORM (Prisma, Sequelize…), microservicios ni WebSockets.
 - Depender de internet el día de la presentación (ni fuentes, scripts o estilos desde CDN o servicios externos); redes públicas o desconocidas ni HTTPS en local (la demo local es en la LAN de confianza, `http://koma.local`).
-- Pagos reales; anuncios reales
+- Pagos reales (online, Stripe solo en modo prueba) ni guardar datos de tarjeta; el driver `fake` nunca en producción (`env.ts` lo rechaza); anuncios reales (solo marcas inventadas).
 - Imágenes con URL pública permanente; alojar vídeos; borrado físico desde la interfaz (salvo viñetas de un borrador); internacionalización.
 - Verificación de identidad real ni contenido +18 real; obras con licencia NC; APK o apps nativas antes de la entrega.
 - **Nada de las fases 2 y 3:** ni carpetas, ni tablas, ni rutas, ni dependencias (listas en `docs/plan_mvp.md`).
