@@ -8,6 +8,7 @@
 
   /* Página */
   --layer-header: 40;
+  --layer-admin-feedback: 50; /* aviso de las acciones de /admin, sobre las tablas y bajo la navegación móvil */
   --layer-mobile-nav: 60;
   --layer-skip-link: 200;
 

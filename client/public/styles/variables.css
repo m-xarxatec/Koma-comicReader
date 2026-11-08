@@ -683,4 +683,6 @@
   --admin-settings-width: 32rem;
   --admin-json-width: 28rem;
   --admin-dialog-width: 32rem;
+  --admin-feedback-offset: calc(var(--mobile-nav-height) + var(--space-3)); /* por encima de la navegación móvil */
+  --admin-feedback-offset-wide: var(--space-4);
 }

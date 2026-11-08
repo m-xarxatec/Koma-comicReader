@@ -6,14 +6,19 @@
   min-width: var(--admin-metric-min-width);
 }
 
-/* Avisos de las acciones: siempre en el árbol (role="status"); solo ocupa sitio con texto. */
-.admin-page__live {
+/* Avisos de las acciones: siempre en el árbol (role="status"), último hijo de main y pegado al borde inferior de la
+   pantalla mientras se recorre el panel (por encima de la navegación móvil); solo ocupa sitio con texto. Posición
+   mínima funcional: el aviso flotante de la maqueta (demo-feedback) lo sustituye. */
+.admin-page__feedback {
+  position: sticky;
+  bottom: var(--admin-feedback-offset);
+  z-index: var(--layer-admin-feedback);
   margin: 0;
   font-weight: var(--font-weight-semibold);
 }
 
-.admin-page__live:not(:empty) {
-  margin-bottom: var(--space-4);
+.admin-page__feedback:not(:empty) {
+  margin-top: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -53,8 +58,10 @@
 }
 
 /* Celdas */
+/* Título de la fila (obra, usuario, actor): en negrita, como td strong de la maqueta. */
 .admin-page__strong {
   display: block;
+  font-weight: var(--font-weight-bold);
   overflow-wrap: anywhere;
 }
 
@@ -131,4 +138,10 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
+}
+
+@media (min-width: 64rem) {
+  .admin-page__feedback {
+    bottom: var(--admin-feedback-offset-wide);
+  }
 }

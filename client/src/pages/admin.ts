@@ -57,10 +57,15 @@ function actionButton(label: string, onClick: (button: HTMLButtonElement) => voi
 
 const errorText = (error: ApiError) => (error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message);
 
-// Avisos de las acciones (role="status").
+// Avisos de las acciones (role="status", al final de main). Se vacía antes de escribir para que se anuncie también
+// un aviso igual al anterior (p. ej. dos "Comentario ocultado." seguidos).
 const live = document.querySelector<HTMLElement>('[data-live]');
 const announce = (message: string) => {
-  if (live) live.textContent = message;
+  if (!live) return;
+  live.textContent = '';
+  requestAnimationFrame(() => {
+    live.textContent = message;
+  });
 };
 
 // --- Diálogo de confirmación (y motivo del rechazo) ---
@@ -82,68 +87,93 @@ interface ConfirmOptions {
   withReason?: boolean;
 }
 
-// Resuelve con el motivo ('' si no se pide) o null si se cancela. El foco vuelve al botón que lo abrió (lo hace
-// el propio <dialog> al cerrarse).
+const showReasonError = (problem: string | null) => {
+  if (!reasonInput || !reasonError) return;
+  reasonError.textContent = problem ?? '';
+  reasonError.hidden = problem === null;
+  if (problem === null) reasonInput.removeAttribute('aria-invalid');
+  else reasonInput.setAttribute('aria-invalid', 'true');
+};
+
+// Resuelve con el motivo ('' si no se pide) o null si se cancela. La única salida es el evento close, sea cual sea
+// la vía (Confirmar, Cancelar, Escape o un close() del navegador): solo cuenta como confirmación si returnValue es
+// "confirm", el value del botón de envío de method="dialog". Los listeners de cada apertura cuelgan de un
+// AbortController que se aborta al cerrar, así que ninguno sobrevive para resolver la acción de otra apertura. El
+// foco vuelve al botón que lo abrió (lo hace el propio <dialog> al cerrarse).
 function confirmAction(options: ConfirmOptions): Promise<string | null> {
   if (!dialog || !dialogForm || !dialogTitle || !dialogText || !reasonField || !reasonInput || !reasonError || !confirmButton) {
     return Promise.resolve(null);
   }
+  if (dialog.open) return Promise.resolve(null);
   dialogTitle.textContent = options.title;
   dialogText.textContent = options.text;
   confirmButton.textContent = options.confirm;
   confirmButton.className = `button ${options.danger ? 'button--danger' : 'button--primary'}`;
   reasonField.hidden = !options.withReason;
   reasonInput.value = '';
-  reasonInput.removeAttribute('aria-invalid');
-  reasonError.hidden = true;
+  showReasonError(null);
+  dialog.returnValue = '';
 
   return new Promise((resolve) => {
-    const finish = (value: string | null) => {
-      dialogForm.removeEventListener('submit', onSubmit);
-      dialog.removeEventListener('cancel', onCancel);
-      cancel?.removeEventListener('click', onCancelClick);
-      dialog.close();
-      resolve(value);
-    };
-    const onSubmit = (event: SubmitEvent) => {
-      event.preventDefault();
-      if (options.withReason) {
-        const problem = reasonProblem(reasonInput.value);
-        if (problem) {
-          reasonError.textContent = problem;
-          reasonError.hidden = false;
-          reasonInput.setAttribute('aria-invalid', 'true');
-          reasonInput.focus();
-          return;
-        }
-      }
-      finish(options.withReason ? reasonInput.value.trim() : '');
-    };
-    const onCancel = () => finish(null);
-    const onCancelClick = () => finish(null);
+    const listeners = new AbortController();
+    const { signal } = listeners;
     const cancel = dialog.querySelector<HTMLButtonElement>('[data-dialog-cancel]');
-    dialogForm.addEventListener('submit', onSubmit);
-    dialog.addEventListener('cancel', onCancel);
-    cancel?.addEventListener('click', onCancelClick);
+    // Con un motivo no válido se cancela el envío y el diálogo sigue abierto; si es válido, method="dialog" lo cierra.
+    dialogForm.addEventListener(
+      'submit',
+      (event) => {
+        if (!options.withReason) return;
+        const problem = reasonProblem(reasonInput.value);
+        if (problem === null) return;
+        event.preventDefault();
+        showReasonError(problem);
+        reasonInput.focus();
+      },
+      { signal },
+    );
+    reasonInput.addEventListener('input', () => showReasonError(null), { signal });
+    cancel?.addEventListener('click', () => dialog.close('cancel'), { signal });
+    dialog.addEventListener(
+      'close',
+      () => {
+        listeners.abort();
+        if (dialog.returnValue !== 'confirm') resolve(null);
+        else resolve(options.withReason ? reasonInput.value.trim() : '');
+      },
+      { signal },
+    );
     dialog.showModal();
     (options.withReason ? reasonInput : cancel)?.focus();
   });
 }
 
 // Ejecuta una acción con el botón desactivado; anuncia el resultado y recarga su lista y la auditoría (donde aparece
-// la entrada nueva).
-async function run(button: HTMLButtonElement, request: () => Promise<ApiResult<unknown>>, success: string, reload: () => Promise<void>) {
+// la entrada nueva). La recarga sustituye las filas (y con ellas el botón que tenía el foco): el foco pasa a la tabla
+// de la sección o, si queda vacía, a su mensaje. Si la acción falla sin recargar, vuelve al botón.
+async function run(
+  button: HTMLButtonElement,
+  request: () => Promise<ApiResult<unknown>>,
+  success: string,
+  view: ListView,
+  reload: () => Promise<void>,
+) {
   button.disabled = true;
   const result = await request();
   if (result.ok) {
     announce(success);
     await Promise.all([reload(), loadAudit()]);
+    focusList(view);
     return;
   }
   announce(errorText(result.error));
+  // Un 409, 410 o 404 significan que otro admin (u otra pestaña) cambió el estado: se recarga para verlo.
+  if (result.status === 409 || result.status === 410 || result.status === 404) {
+    await reload();
+    focusList(view);
+    return;
+  }
   button.disabled = false;
-  // Un 409 o un 410 significan que otro admin (u otra pestaña) cambió el estado: se recarga para verlo.
-  if (result.status === 409 || result.status === 410 || result.status === 404) await reload();
+  button.focus();
 }
 
 // --- Listas con mensaje, tabla y paginación ---
@@ -161,6 +191,12 @@ const listView = (name: string): ListView => ({
   rows: document.querySelector<HTMLElement>(`[data-rows="${name}"]`),
   pager: document.querySelector<HTMLElement>(`[data-pager="${name}"]`),
 });
+
+// La tabla (región desplazable con tabindex="0") si se ve; si no, el mensaje de la sección (tabindex="-1").
+function focusList(view: ListView): void {
+  const target = view.table && !view.table.hidden ? view.table : view.message;
+  target?.focus();
+}
 
 function showRows(view: ListView, rows: HTMLTableRowElement[], empty: string): void {
   view.rows?.replaceChildren(...rows);
@@ -247,13 +283,13 @@ function reviewRow(item: ReviewItemDto): HTMLTableRowElement {
 
   const approve = actionButton('Aprobar', async (button) => {
     const ok = await confirmAction({ title: 'Aprobar', text: `Se publicará ${label}.`, confirm: 'Aprobar' });
-    if (ok !== null) await run(button, () => decide('approve'), `Aprobado: ${label}.`, loadReview);
+    if (ok !== null) await run(button, () => decide('approve'), `Aprobado: ${label}.`, reviewView, loadReview);
   });
   const reject = actionButton(
     'Rechazar',
     async (button) => {
       const reason = await confirmAction({ title: 'Rechazar', text: `Rechazar ${label}.`, confirm: 'Rechazar', danger: true, withReason: true });
-      if (reason !== null) await run(button, () => decide('reject', reason), `Rechazado: ${label}.`, loadReview);
+      if (reason !== null) await run(button, () => decide('reject', reason), `Rechazado: ${label}.`, reviewView, loadReview);
     },
     true,
   );
@@ -296,7 +332,7 @@ function commentRow(comment: AdminCommentDto): HTMLTableRowElement {
           confirm: 'Ocultar',
           danger: true,
         });
-        if (ok !== null) await run(button, () => hideComment(comment.id), 'Comentario ocultado.', loadComments);
+        if (ok !== null) await run(button, () => hideComment(comment.id), 'Comentario ocultado.', commentsView, loadComments);
       }),
     );
   }
@@ -305,7 +341,7 @@ function commentRow(comment: AdminCommentDto): HTMLTableRowElement {
       'Eliminar',
       async (button) => {
         const ok = await confirmAction({ title: 'Eliminar comentario', text: 'Desaparece de esta lista y de la viñeta.', confirm: 'Eliminar', danger: true });
-        if (ok !== null) await run(button, () => deleteComment(comment.id), 'Comentario eliminado.', loadComments);
+        if (ok !== null) await run(button, () => deleteComment(comment.id), 'Comentario eliminado.', commentsView, loadComments);
       },
       true,
     ),
@@ -350,7 +386,7 @@ function userRow(user: AdminUserDto): HTMLTableRowElement {
       label,
       async (button) => {
         const ok = await confirmAction({ title: label, text: `${text} (${user.displayName}, ${user.email})`, confirm: label, danger });
-        if (ok !== null) await run(button, () => changeUser(user.id, payload), done, loadUsers);
+        if (ok !== null) await run(button, () => changeUser(user.id, payload), done, usersView, loadUsers);
       },
       danger,
     );
@@ -396,10 +432,16 @@ async function setUpSettings(): Promise<void> {
   const form = document.querySelector<HTMLFormElement>('#settings-form');
   if (!form) return;
   const status = form.querySelector<HTMLElement>('[data-form-status]');
+  const formError = form.querySelector<HTMLElement>('[data-form-error]');
   const input = (name: string) => form.querySelector<HTMLInputElement>(`[name="${name}"]`);
   const result = await getSettings();
   if (!result.ok) {
-    if (status) status.textContent = errorText(result.error);
+    // Sin los valores actuales no se puede guardar: el fallo va en la caja de error del formulario (role="alert") y
+    // el botón sigue desactivado.
+    if (formError) {
+      formError.textContent = errorText(result.error);
+      formError.hidden = false;
+    }
     return;
   }
   for (const [name, value] of Object.entries(result.data.settings)) {

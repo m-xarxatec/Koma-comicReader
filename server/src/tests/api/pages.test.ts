@@ -421,4 +421,9 @@ test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadore
   assert.match(html, /<button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros<\/button>/);
   assert.ok(!html.includes('Ir al estudio del autor'), 'un admin nunca es autor');
   assert.equal((html.match(/<caption/g) ?? []).length, 4, 'cuatro tablas con caption');
+  assert.ok(html.includes('<strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba'));
+  assert.ok(!html.includes('no modifican información real'), 'sin el aviso de la maqueta, que aquí sería falso');
+  // Los mensajes de las cuatro listas se anuncian, y el aviso de las acciones es el último hijo de main.
+  assert.equal((html.match(/data-message="(review|comments|users|audit)" role="status" tabindex="-1"/g) ?? []).length, 4);
+  assert.match(html, /<p class="admin-page__feedback" role="status" aria-live="polite" data-live><\/p>\s*<\/main>/);
 });

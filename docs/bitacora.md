@@ -936,3 +936,29 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 
     Log sin errores.
 - **Sin hacer:** T12 (botón de retirar en `/obra` para el admin, recortable), T13 (online) y T14 (Test Clocks). Falta revisar `/admin` en el navegador y pasarle el agente `frontend`.
+
+### 2026-11-08 · Bloque 4 · Agente frontend sobre /admin: lo funcional
+- **Pedido del desarrollador:** pasar el agente `frontend` por `/admin` y corregir solo lo funcional. El diseño de lo recuperado de la maqueta lo hará Codex con el encargo de `.claude/encargos/codex-admin.md`: el distintivo «N pendientes», los contadores «N resultados», la tarjeta «Notas para el equipo» y el aviso flotante.
+- **Revisión del agente `frontend`:** NO APTO, con un bloqueante (elementos de la maqueta quitados sin anotar), 2 altos, 9 medios y 8 bajos. Sin fallos de CSP, `textContent`, enlaces, tokens ni paridad.
+- **Corregido:**
+  - **Navegación de secciones:** desde 64rem, la regla de columna fija de `author-page.css` vale solo dentro de `.author-page__studio`. En `/admin` la navegación sigue en fila.
+  - **Aviso de las acciones:** pasa al final de `main` (`admin-page__feedback`, siempre en el árbol, `role="status"`). Va pegado abajo de la pantalla con `position: sticky` (por encima de la navegación móvil; `--layer-admin-feedback` en `layers.css`), así que se ve desde cualquier sección. Se vacía antes de escribir, para que se anuncie también un aviso repetido. Es la posición mínima funcional: el aviso flotante de la maqueta la sustituye.
+  - **Foco:** tras una acción (o un 409/410/404 que recarga la lista), el foco pasa a la tabla de la sección o, si queda vacía, a su mensaje (`tabindex="-1"`). Si falla sin recargar, vuelve al botón.
+  - **Mensajes de carga y error de cada lista:** `role="status"`.
+  - **Diálogo:** la única salida es el evento `close`, por cualquier vía. Solo confirma si `returnValue` es `confirm`. Los listeners de cada apertura cuelgan de un `AbortController` que se aborta al cerrar, así que no pueden ejecutar la acción de otra apertura. El error del motivo se limpia al escribir.
+  - **Parámetros:** si falla la carga, el error va en la caja de error del formulario (`role="alert"`), no en el aviso de éxito.
+  - Los títulos de las filas, en negrita.
+  - El aviso de datos de demostración de la maqueta pasa a «Plataforma de demostración: los pagos son de Stripe en modo prueba».
+- **Sin corregir (bajos, quedan anotados):**
+  - el paginador, con «Página 3 de 2» al vaciar la última página;
+  - los límites escritos a mano en el HTML;
+  - `type="email"` sin `noValidate`;
+  - «Filtrar» sin `data-needs-js`;
+  - «Aprobar» en obras +18;
+  - la entidad en crudo en la auditoría;
+  - `button--danger` sin `button--outline`;
+  - el contador del motivo;
+  - «Admin» activo, distinguido solo por el color;
+  - el diálogo dentro de `admin-page.css`.
+- **Tests:** `pages.test.ts` comprueba el aviso nuevo, los cuatro `role="status"` y el aviso de las acciones como último hijo de `main`.
+- **Comprobación (IA):** typecheck, 158 unitarios y 280 de API. Lo visual y el teclado, el desarrollador en el navegador.

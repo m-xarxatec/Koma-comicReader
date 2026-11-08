@@ -205,7 +205,8 @@
     min-width: 0;
   }
 
-  .author-page__nav {
+  /* Solo dentro de la rejilla del estudio: en /admin (sin .author-page__studio) la navegación sigue en fila. */
+  .author-page__studio > .author-page__nav {
     position: sticky;
     top: var(--scroll-offset);
     display: flex;
@@ -215,7 +216,7 @@
     padding: 0;
   }
 
-  .author-page__nav-link {
+  .author-page__studio > .author-page__nav .author-page__nav-link {
     white-space: normal;
   }
 

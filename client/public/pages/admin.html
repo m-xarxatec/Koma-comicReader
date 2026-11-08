@@ -29,7 +29,8 @@
        (.workspace) entre el estudio del autor y la administración: aquí se reutilizan las clases de author-page.css y
        admin-page.css añade solo lo propio. Cada sección pide su lista a /api/admin/*; todo dato se pinta con
        textContent. Respecto a la maqueta (respuestas a los choques): una sola métrica, la cola solo con lo pendiente,
-       comentarios recientes sin reportes, solo los tres parámetros de RN-16 y la auditoría con los filtros de CU-40. -->
+       comentarios recientes sin reportes, solo los tres parámetros de RN-16 y la auditoría con los filtros de CU-40.
+       El aviso de demostración cambia de texto (los pagos sí son de Stripe en modo prueba). -->
   <main id="contenido" class="author-page container">
     <nav class="breadcrumb" aria-label="Ruta de navegación">
       <a class="breadcrumb__link" href="/">Inicio</a>
@@ -50,6 +51,8 @@
       </div>
     </div>
 
+    <p class="form__notice author-page__notice"><strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba</p>
+
     <noscript>
       <p class="form__notice author-page__notice">El panel de administración necesita JavaScript.</p>
     </noscript>
@@ -62,9 +65,6 @@
       <a class="author-page__nav-link" href="#auditoria">Auditoría</a>
     </nav>
 
-    <!-- Avisos de las acciones (aprobado, oculto, suspendido…), siempre en el árbol. -->
-    <p class="admin-page__live" role="status" aria-live="polite" data-live></p>
-
     <!-- CU-32 · RN-05, RN-17 -->
     <section id="aprobaciones" class="author-page__section" aria-labelledby="aprobaciones-title">
       <div class="author-page__heading">
@@ -74,7 +74,7 @@
           <p class="author-page__muted">Obras y capítulos enviados a revisión, del más antiguo al más reciente. Ábrelos con la vista previa antes de decidir.</p>
         </div>
       </div>
-      <p class="author-page__message" data-message="review">Cargando la cola…</p>
+      <p class="author-page__message" data-message="review" role="status" tabindex="-1">Cargando la cola…</p>
       <div class="chapter-table__scroll" role="region" aria-labelledby="review-caption" tabindex="0" data-table="review" hidden>
         <table class="chapter-table">
           <caption class="chapter-table__caption" id="review-caption">Envíos pendientes</caption>
@@ -114,7 +114,7 @@
         </div>
         <button class="button button--outline" type="submit">Filtrar</button>
       </form>
-      <p class="author-page__message" data-message="comments">Cargando comentarios…</p>
+      <p class="author-page__message" data-message="comments" role="status" tabindex="-1">Cargando comentarios…</p>
       <div class="chapter-table__scroll" role="region" aria-labelledby="comments-caption" tabindex="0" data-table="comments" hidden>
         <table class="chapter-table">
           <caption class="chapter-table__caption" id="comments-caption">Comentarios</caption>
@@ -168,7 +168,7 @@
         </div>
         <button class="button button--outline" type="submit">Filtrar</button>
       </form>
-      <p class="author-page__message" data-message="users">Cargando usuarios…</p>
+      <p class="author-page__message" data-message="users" role="status" tabindex="-1">Cargando usuarios…</p>
       <div class="chapter-table__scroll" role="region" aria-labelledby="users-caption" tabindex="0" data-table="users" hidden>
         <table class="chapter-table">
           <caption class="chapter-table__caption" id="users-caption">Usuarios</caption>
@@ -261,7 +261,7 @@
         </div>
         <button class="button button--outline" type="submit">Filtrar</button>
       </form>
-      <p class="author-page__message" data-message="audit">Cargando la auditoría…</p>
+      <p class="author-page__message" data-message="audit" role="status" tabindex="-1">Cargando la auditoría…</p>
       <div class="chapter-table__scroll" role="region" aria-labelledby="audit-caption" tabindex="0" data-table="audit" hidden>
         <table class="chapter-table">
           <caption class="chapter-table__caption" id="audit-caption">Entradas de la auditoría</caption>
@@ -300,6 +300,10 @@
         </div>
       </form>
     </dialog>
+
+    <!-- Avisos de las acciones (aprobado, oculto, suspendido…): siempre en el árbol para que se anuncien, y al final
+         de main, fijos abajo de la pantalla mientras se recorre el panel (admin-page.css). -->
+    <p class="admin-page__feedback" role="status" aria-live="polite" data-live></p>
   </main>
   <!-- @footer -->
 </body>
