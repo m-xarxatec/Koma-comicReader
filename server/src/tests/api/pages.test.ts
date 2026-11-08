@@ -363,7 +363,10 @@ test('RN-04: /premium/gracias es la misma página en la vista de espera y bienve
   const html = await res.text();
   assert.equal(res.status, 200);
   assert.equal(title(html), 'Gracias · Koma');
-  assert.deepEqual(h1Texts(html), ['Gracias por pasarte a Premium']);
+  assert.deepEqual(h1Texts(html), ['Estamos confirmando tu pago…'], 'la espera; premium.ts pone la bienvenida al confirmarse');
+  assert.ok(html.includes('<span class="breadcrumb__current" aria-current="page">Gracias</span>'));
+  assert.ok(!html.includes('data-premium-link aria-current'), 'en gracias, «Premium» de la cabecera no es la página actual');
+  assert.ok(html.includes('loading="lazy"'), 'la mascota oculta no se descarga hasta mostrarse');
   assert.ok(html.includes('<body data-view="thanks">'));
   assert.ok(html.includes('role="status" aria-live="polite" data-premium-status'));
   assert.ok(html.includes('src="/icons/koma-mascota-premium.png"'));
@@ -375,7 +378,7 @@ test('RN-04: /pago-simulado sirve fake-checkout.html con sesión, sin campos de 
   const html = await res.text();
   assert.equal(res.status, 200);
   assert.equal(title(html), 'Pago simulado · Koma');
-  assert.deepEqual(h1s(html), ['Pago simulado']);
+  assert.deepEqual(h1s(html), ['Finaliza tu prueba.']);
   assert.equal((html.match(/<input/g) ?? []).length, 1, 'solo el buscador de la cabecera');
   assert.ok(html.includes('data-pay') && html.includes('data-cancel') && html.includes('href="/premium"'));
 });
@@ -387,4 +390,35 @@ test('Seguridad: /perfil del admin no ofrece premium (data-plan="admin", D18); e
   const readerHtml = await (await get('/perfil', await profileUser('Lectora Plan'))).text();
   assert.ok(readerHtml.includes('data-plan="free"'));
   assert.match(readerHtml, /<a class="button button--primary profile-card__only-free" href="\/premium">Hacerse premium<\/a>/);
+});
+
+// ── /admin (contrato del bloque 4, "Páginas") ─────────────────────────────────
+
+test('Seguridad: sin sesión, /admin redirige al login; un lector o un autor reciben la página 403', async () => {
+  const res = await get('/admin');
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get('location'), '/entrar?next=%2Fadmin');
+  for (const kind of ['reader', 'author'] as const) {
+    const page = await get('/admin', await pageUser(`No admin ${kind}`, kind));
+    assert.equal(page.status, 403, kind);
+    assert.match(page.headers.get('content-type') ?? '', /text\/html/);
+  }
+});
+
+test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadores, sus cinco secciones y el diálogo', async () => {
+  const res = await get('/admin', await pageUser('Admin Panel', 'admin'));
+  const html = await res.text();
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.equal(title(html), 'Panel de administración · Koma');
+  assert.deepEqual(h1s(html), ['Panel de administración']);
+  assert.ok(!html.includes('{{'));
+  for (const id of ['aprobaciones', 'comentarios', 'usuarios', 'parametros', 'auditoria']) {
+    assert.ok(html.includes(`<section id="${id}"`), id);
+    assert.ok(html.includes(`href="#${id}"`), `enlace a #${id}`);
+  }
+  assert.ok(html.includes('<dialog class="admin-dialog" id="admin-dialog"'));
+  assert.match(html, /<button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros<\/button>/);
+  assert.ok(!html.includes('Ir al estudio del autor'), 'un admin nunca es autor');
+  assert.equal((html.match(/<caption/g) ?? []).length, 4, 'cuatro tablas con caption');
 });

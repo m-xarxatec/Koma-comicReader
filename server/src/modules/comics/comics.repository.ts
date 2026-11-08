@@ -491,3 +491,76 @@ export async function listAuthorChapterReads(db: Queryable, authorId: number, wi
     reads: { total: row.total, lastShort: row.last_short, lastLong: row.last_long },
   }));
 }
+
+// --- Bloque 4: aprobación de contenido (CU-32; RN-05, RN-17) ---
+
+export interface ReviewComicRow {
+  id: number;
+  slug: string;
+  title: string;
+  status: 'pending' | 'approved' | 'rejected';
+  publishedBy: string; // nombre visible del autor; las importadas nunca están pending
+  isAdult: boolean;
+  contentWarning: string | null;
+  createdAt: Date;
+}
+
+interface ReviewComicDbRow {
+  id: number;
+  slug: string;
+  title: string;
+  status: ReviewComicRow['status'];
+  published_by: string;
+  is_adult: boolean;
+  content_warning: string | null;
+  created_at: Date;
+}
+
+const toReviewComic = (row: ReviewComicDbRow): ReviewComicRow => ({
+  id: row.id,
+  slug: row.slug,
+  title: row.title,
+  status: row.status,
+  publishedBy: row.published_by,
+  isAdult: row.is_adult,
+  contentWarning: row.content_warning,
+  createdAt: row.created_at,
+});
+
+// Cola: obras pending sin retirar, de la más antigua a la más reciente; total = todas las de la cola.
+export async function listPendingComics(db: Queryable, limit: number): Promise<{ total: number; comics: ReviewComicRow[] }> {
+  const { rows } = await db.query<ReviewComicDbRow & { total: number }>(
+    `SELECT c.id, c.slug, c.title, c.status, coalesce(u.display_name, 'la plataforma') AS published_by, c.is_adult,
+            c.content_warning, c.created_at, count(*) OVER ()::int AS total
+     FROM comics c
+     LEFT JOIN users u ON u.id = c.author_id
+     WHERE c.status = 'pending' AND c.deleted_at IS NULL
+     ORDER BY c.created_at, c.id
+     LIMIT $1`,
+    [limit],
+  );
+  // Con LIMIT ≥ 1, sin filas la cola está vacía.
+  return { total: rows[0]?.total ?? 0, comics: rows.map(toReviewComic) };
+}
+
+export interface ComicReviewState {
+  id: number;
+  status: 'pending' | 'approved' | 'rejected';
+  isAdult: boolean;
+  deletedAt: Date | null;
+}
+
+// Fila bloqueada hasta el final de la transacción: de dos admins que deciden a la vez, el segundo ve el estado nuevo.
+export async function findComicForReview(db: Queryable, slug: string): Promise<ComicReviewState | null> {
+  const { rows } = await db.query<{ id: number; status: ComicReviewState['status']; is_adult: boolean; deleted_at: Date | null }>(
+    'SELECT id, status, is_adult, deleted_at FROM comics WHERE slug = $1 FOR UPDATE',
+    [slug],
+  );
+  const row = rows[0];
+  return row ? { id: row.id, status: row.status, isAdult: row.is_adult, deletedAt: row.deleted_at } : null;
+}
+
+// RN-05: aprobar (sin motivo) o rechazar con motivo.
+export async function setComicReview(db: Queryable, id: number, status: 'approved' | 'rejected', reason: string | null): Promise<void> {
+  await db.query('UPDATE comics SET status = $2, rejection_reason = $3 WHERE id = $1', [id, status, reason]);
+}

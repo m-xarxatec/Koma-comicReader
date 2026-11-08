@@ -864,3 +864,75 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - En la BD local, `migrate` aplicó 009 y el seed creó 1 suscripción; los datos de `demo:data` siguen igual (7 obras, 21 capítulos, 30 comentarios) y repetir el seed no crea nada.
   - Con `curl`, contra un servidor sobre `koma_test`: registro, páginas y estáticos 200, checkout → `/pago-simulado`, pagar → premium, cancelar → `cancelAtPeriodEnd`, repetir → 409. Log sin errores ni avisos.
 - **Sin verificar:** el navegador (360 px, teclado y consola) y Stripe online (Checkout real con tarjeta de prueba, portal y entregas en Workbench).
+
+### 2026-11-08 · Bloque 4 · Agente `frontend` sobre premium, gracias, pago simulado, perfil y cabecera
+- **Pedido del desarrollador:** pasar el agente `frontend` por `/premium`, `/premium/gracias`, `/pago-simulado`, `/perfil` y la cabecera, corregir lo que proceda y actualizar en el contrato la línea del driver con `createCustomer` (aprobado).
+- **Agente `frontend`:** NO APTO. Sin fallos de CSP, `textContent`, enlaces ni tokens. El veredicto se debe a elementos de la maqueta quitados sin anotarlo (hallazgos 1–3); el resto son 4 a 17.
+- **Corregido:**
+  - **1–3, 16 (maqueta):** vuelven los elementos de la maqueta que siguen siendo ciertos con Stripe en modo prueba:
+    - **`/premium`:** «Sigue explorando» con «Explorar cómics» (a `/#catalogo`, porque `#tendencias` no existe); el pie «Modo de prueba · Sin pagos reales»; la corona del antetítulo; «PLAN DE PRUEBA»; «Sin esperar recargas», y los textos de la maqueta.
+    - **`/premium/gracias`:** el distintivo «Modo de prueba · sin cobros»; el indicador con la corona; «Volver a Premium» durante la espera y si tarda; la nota final; en la bienvenida, el antetítulo, la tercera ventaja y la insignia «PREMIUM».
+    - **`/pago-simulado`:** el título «Finaliza tu prueba.»; el producto del resumen con la corona; el aviso con el check; «Sin formularios bancarios» en negrita, y «4242».
+    - «Entrar», como dice el contrato, en lugar de «Ya tengo cuenta».
+  - **4:** la vista de gracias empieza con «Estamos confirmando tu pago…». Al confirmarse, `premium.ts` cambia el antetítulo, el título y la entrada (con `textContent`) a los de la bienvenida.
+  - **5:** si falla la consulta de la suscripción, `/pago-simulado` muestra el error y ningún botón. Tiene un texto propio para una suscripción que no es simulada.
+  - **6:** al cancelar, el foco pasa al texto del resultado (`tabindex="-1"`).
+  - **7:** el `role="status"` ya no se oculta con `display: none` (solo cambia su margen con `:not(:empty)`).
+  - **8:** la tarjeta de premium del perfil se prepara al final y sin `await` en el nivel superior: los formularios ya tienen `bindForm` mientras tanto.
+  - **9:** la mascota lleva `loading="lazy"`.
+  - **10, 17:** fuera las reglas `[hidden]` duplicadas (las cubre `base.css`), y comentarios corregidos.
+  - **11:** espacio entre las dos líneas del título.
+  - **12:** en gracias, la miga es «Inicio / Premium / Gracias» y «Premium» de la cabecera no lleva `aria-current`.
+  - **13:** un solo texto para el fin de periodo («Tu suscripción Premium está activa hasta el …»).
+  - **14:** los errores del pago simulado llevan el código de referencia.
+  - **15:** el admin no ve el bloque de acciones vacío.
+- **Para la pasada de diseño, a propósito:**
+  - los valores exactos que lista el agente (márgenes, tamaños, pesos, `letter-spacing`, el `max-width` del pago simulado desde 64rem);
+  - la bienvenida como `welcome-card` centrada, con halo y destellos;
+  - la rotación de la mascota;
+  - los iconos de escudo y tarjeta, que no están en el sprite (se usan candado y corona);
+  - la mascota en WebP.
+
+  La cabecera muestra solo el icono por debajo de 64rem: el corte de 82rem de la maqueta no está permitido.
+- **Contrato:** la línea del driver nombra `createCustomer({ userId, email })` y las firmas reales.
+- **Comprobación (IA):** typecheck, 149 unitarios y 265 de API. Falta mirarlo en el navegador (lista del agente).
+
+### 2026-11-08 · Bloque 4 · T6–T11: panel del admin
+- **Pedido del desarrollador:** seguir con las T6 a T11 (admin) y parar con el informe al terminar la T11.
+- **Resultado:**
+  - **Módulo `admin`** (`routes`, `schema`, `controller`, `service` y `rules`) en `/api/admin/*`, con `requireAdmin` en el router (D1). El SQL va en los repositorios de cada tabla.
+  - **T6, aprobación (CU-32; RN-05, RN-09, RN-17):**
+    - La cola trae obras y capítulos `pending`, hasta 100 de cada tipo, con `counts`. No trae borradores, retirados ni capítulos de obras rechazadas (D2).
+    - Aprobar y rechazar (con motivo de 1 a 500, D3), con la fila bloqueada. Una obra +18 da 409.
+    - Aprobar un capítulo fija `published_at`; rechazarlo libera su número.
+    - Reglas puras en `admin.rules.ts`.
+  - **T7, moderación (CU-33; RN-11):** lista con búsqueda (`ILIKE` escapado) y filtro de estado, sin eliminados ni comentarios de lo retirado. Ocultar y eliminar, en el orden 404 → 410 → 409, con `comment.hide` y `comment.delete` sin el texto.
+  - **T8, usuarios (CU-35; RN-14, RN-15):**
+    - Búsqueda por correo y nombre, filtros de rol y estado, e `isSelf`.
+    - `PATCH` con exactamente un campo (D6). Regla pura `adminUserChangeProblem` en `permissions.ts`: sobre sí mismo, mismo valor, admin y autor (D7) y último admin activo, con las filas de los admins bloqueadas en orden de id.
+    - Rol y estado incrementan `token_version`; el rol de autor no (D8).
+    - `User` gana `createdAt`.
+  - **T9, parámetros (CU-36; RN-16):** `GET` y `PUT` de los tres, con los rangos en `limits.ts`. `settingsChange` (pura) decide qué se guarda y se audita; sin cambios, no hay entrada.
+  - **T10, auditoría (CU-40, D9):**
+    - Filtros: actor por correo exacto, acción y entidad de listas cerradas (`AUDIT_ACTIONS` y `AUDIT_ENTITY_TYPES`, ahora arrays) e id solo con su entidad.
+    - «Desde» y «Hasta», como días de `Europe/Madrid` con los dos extremos incluidos.
+    - La consulta vive en `admin.service.ts`, para que `audit.service.ts` no cargue `env` (lo importa el test unitario de auditoría).
+  - **T11, `/admin`** (`requirePageAdmin`: 302 o 403):
+    - Una página con las cinco secciones de la maqueta. Reutiliza `author-page.css` (la maqueta comparte `.workspace` entre los dos paneles), `chapter-table`, `status-badge` y `form`. `admin-page.css` añade la métrica, los filtros, la paginación, las celdas, el detalle JSON y el `<dialog>` de confirmación y motivo.
+    - `services/admin.ts` y `utils/admin.ts` duplican DTO y constantes (comprobadas por `client-parity`).
+    - En la cabecera, «Admin» para el admin (D19).
+    - Según los choques resueltos: una sola métrica, la cola solo con lo pendiente, «Comentarios recientes» sin reportes, botones en cada fila, los tres parámetros, la columna «Actor» («Sistema» si es `NULL`) con «Desde» y «Hasta», y sin «Ir al estudio del autor».
+- **Tests:**
+  - Unitarios: `admin.test.ts` (4: RN-05, RN-17, RN-16), 4 de RN-14 en `permissions.test.ts`, 1 de RN-16 en `reading.test.ts` (bajar el máximo) y 3 de paridad.
+  - API: `admin-review` (9), `admin-comments` (5), `admin-users` (6), `admin-settings` (3) y `admin-audit` (4), más 2 de páginas.
+- **Límite de los tests:** el `PUT` de parámetros con cambios reales no está en la suite, porque otros archivos leen los del seed en paralelo. Se comprobó a mano.
+- **Comprobación (IA):**
+  - typecheck, 158 unitarios y 280 de API.
+  - Con `curl`, contra un servidor sobre `koma_test`:
+    - `/admin` y sus estáticos, 200;
+    - la cola;
+    - `maxBalance` de 5 a 6 y de vuelta a 5: dos `settings.update` con solo `maxBalance` y `entityId` nulo;
+    - la lista de usuarios.
+
+    Log sin errores.
+- **Sin hacer:** T12 (botón de retirar en `/obra` para el admin, recortable), T13 (online) y T14 (Test Clocks). Falta revisar `/admin` en el navegador y pasarle el agente `frontend`.

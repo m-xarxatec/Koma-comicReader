@@ -67,8 +67,9 @@ export interface ReadResult {
   guestReadsCookie: string | null; // nuevo valor de koma_guest_reads (solo invitado, si se contó la lectura)
 }
 
-// Parámetros de RN-16 vigentes. Sin ellos (seed sin ejecutar) no se puede calcular el saldo: 500.
-async function loadReadingSettings(): Promise<ReadingSettings> {
+// Parámetros de RN-16 vigentes. Sin ellos (seed sin ejecutar) no se puede calcular el saldo: 500. También los usa el
+// panel del admin (CU-36).
+export async function loadReadingSettings(): Promise<ReadingSettings> {
   const values = await readingRepository.findReadingSettings(pool);
   const positive = (key: readingRepository.ReadingSettingKey): number => {
     const value = values[key];

@@ -638,6 +638,7 @@
   --premium-spinner-duration: 1.1s;
   --checkout-grid-columns-medium: minmax(0, 1.5fr) minmax(270px, 1fr);
   --checkout-gap: 1.25rem;
+  --checkout-symbol-size: 45px;
   --checkout-flag-padding: 0.45rem 0.7rem;
   --font-size-checkout-flag: 0.72rem;
   --letter-spacing-checkout-flag: 0.065em;
@@ -665,6 +666,21 @@
   --font-size-fake-card-number: clamp(1rem, 3.6vw, 1.3rem);
   --font-size-fake-card-foot: 0.62rem;
   --letter-spacing-fake-card: 0.1em;
+  --premium-disclaimer-padding: 1.3rem;
+  --premium-indicator-glyph: 2.5rem;
+  --premium-badge-padding: 0.4rem 0.8rem;
+  --color-premium-badge-bg: #21102ee8;
+  --color-premium-badge-text: #ffc0e0;
+  --color-premium-badge-border: #b86af6;
+  --measure-premium-bottom: 28ch;
+  --font-size-premium-bottom: clamp(1.25rem, 2.5vw, 1.6rem);
   --header-premium-padding: 0.4rem 0.65rem;
   --font-size-header-premium: 0.78rem;
+
+  /* Panel de administración (bloque 4; maqueta koma_home/admin) */
+  --admin-metric-min-width: 12rem;
+  --admin-filter-min-width: 12rem;
+  --admin-settings-width: 32rem;
+  --admin-json-width: 28rem;
+  --admin-dialog-width: 32rem;
 }

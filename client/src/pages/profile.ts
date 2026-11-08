@@ -21,37 +21,6 @@ const premiumUntil = document.querySelector<HTMLElement>('[data-premium-until]')
 const until = premiumUntil?.dataset['premiumUntil'];
 if (premiumUntil && until) premiumUntil.textContent = dateFormat.format(new Date(until));
 
-// D18: con premium, "Se cancela el …" si la suscripción está cancelada al fin de periodo (CU-27), y "Gestionar
-// suscripción" abre el portal de Stripe o el pago simulado.
-const premiumCard = document.querySelector<HTMLElement>('.profile-card--premium');
-if (premiumCard?.dataset['plan'] === 'premium' && until) {
-  const subscription = await getSubscription();
-  const period = premiumCard.querySelector<HTMLElement>('[data-premium-period]');
-  if (period && subscription.ok) period.textContent = periodText(until, subscription.data.subscription);
-
-  const manage = premiumCard.querySelector<HTMLButtonElement>('[data-manage-subscription]');
-  const manageError = premiumCard.querySelector<HTMLElement>('[data-manage-error]');
-  if (manage) {
-    manage.disabled = false;
-    manage.addEventListener('click', async () => {
-      manage.disabled = true;
-      if (manageError) manageError.hidden = true;
-      const result = await openPortal();
-      if (result.ok) {
-        location.assign(result.data.url);
-        return;
-      }
-      if (manageError) {
-        manageError.textContent = result.error.requestId
-          ? `${result.error.message} (código de referencia: ${result.error.requestId})`
-          : result.error.message;
-        manageError.hidden = false;
-      }
-      manage.disabled = false;
-    });
-  }
-}
-
 // Aviso de éxito del formulario (role="status", siempre en el árbol). Se borra al volver a escribir.
 function statusOf(form: HTMLFormElement): (message: string) => void {
   const status = form.querySelector<HTMLElement>('[data-form-status]');
@@ -109,3 +78,38 @@ if (passwordForm) {
     return { ok: true };
   });
 }
+
+// D18: con premium, "Se cancela el …" si la suscripción está cancelada al fin de periodo (CU-27), y "Gestionar
+// suscripción" abre el portal de Stripe o el pago simulado.
+// Va al final y sin await en el nivel superior: mientras se pide la suscripción, los formularios ya tienen bindForm
+// (si no, el de la contraseña se enviaría de forma nativa y la respuesta JSON saldría como página).
+async function setUpPremium(premiumCard: HTMLElement, until: string): Promise<void> {
+  const subscription = await getSubscription();
+  const period = premiumCard.querySelector<HTMLElement>('[data-premium-period]');
+  if (period && subscription.ok) period.textContent = periodText(until, subscription.data.subscription);
+
+  const manage = premiumCard.querySelector<HTMLButtonElement>('[data-manage-subscription]');
+  const manageError = premiumCard.querySelector<HTMLElement>('[data-manage-error]');
+  if (manage) {
+    manage.disabled = false;
+    manage.addEventListener('click', async () => {
+      manage.disabled = true;
+      if (manageError) manageError.hidden = true;
+      const result = await openPortal();
+      if (result.ok) {
+        location.assign(result.data.url);
+        return;
+      }
+      if (manageError) {
+        manageError.textContent = result.error.requestId
+          ? `${result.error.message} (código de referencia: ${result.error.requestId})`
+          : result.error.message;
+        manageError.hidden = false;
+      }
+      manage.disabled = false;
+    });
+  }
+}
+
+const premiumCard = document.querySelector<HTMLElement>('.profile-card--premium');
+if (premiumCard?.dataset['plan'] === 'premium' && until) void setUpPremium(premiumCard, until);

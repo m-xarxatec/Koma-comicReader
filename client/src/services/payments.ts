@@ -27,5 +27,5 @@ export function periodText(premiumUntil: string, subscription: SubscriptionDto |
   const canceled = subscription?.status === 'active' && subscription.cancelAtPeriodEnd;
   return canceled
     ? `Tu suscripción se cancela el ${formatDate(subscription.currentPeriodEnd)}: hasta entonces sigues siendo premium.`
-    : `Tu Premium está activo hasta el ${formatDate(premiumUntil)}.`;
+    : `Tu suscripción Premium está activa hasta el ${formatDate(premiumUntil)}.`; // el mismo texto que pinta el servidor
 }

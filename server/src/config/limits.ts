@@ -47,3 +47,17 @@ export const AUTHOR_RECENT_COMMENTS = 10;
 
 // RN-04: pago simulado (driver fake) y seed de la cuenta premium (contrato del bloque 4).
 export const FAKE_PREMIUM_DAYS = 30;
+
+// Administración (contrato del bloque 4).
+export const REVIEW_QUEUE_MAX = 100; // de cada tipo (obras y capítulos); counts da el total real
+export const REJECTION_REASON_MAX = 500; // D3
+export const ADMIN_PAGE_SIZE = 50;
+export const ADMIN_QUERY_MAX_LENGTH = 100;
+export const AUDIT_ENTITY_ID_MAX = 40;
+
+// RN-16: rangos de los parámetros de lectura (el panel del admin, CU-36). El cliente los duplica.
+export const READING_SETTINGS_RANGES = {
+  waitMinutes: { min: 1, max: 1440 },
+  maxBalance: { min: 1, max: 20 },
+  refill: { min: 1, max: 10 },
+} as const;

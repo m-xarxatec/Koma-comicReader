@@ -2,40 +2,46 @@ import type { Queryable } from '../../db/pool.js';
 import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
 import * as auditRepository from './audit.repository.js';
 
-// Nombres exactos de la tabla de auditoría de docs/plan_mvp.md ("Registro de auditoría y reversión").
-export type AuditAction =
-  | 'auth.login_ok'
-  | 'auth.login_fail'
-  | 'auth.logout'
-  | 'user.register'
-  | 'user.update_profile'
-  | 'user.password_change'
-  | 'user.role_change'
-  | 'user.author_grant'
-  | 'user.author_revoke'
-  | 'user.suspend'
-  | 'user.reactivate'
-  | 'comic.create'
-  | 'comic.update'
-  | 'comic.approve'
-  | 'comic.reject'
-  | 'comic.withdraw'
-  | 'chapter.create'
-  | 'chapter.submit'
-  | 'chapter.approve'
-  | 'chapter.reject'
-  | 'chapter.withdraw'
-  | 'comment.delete_own'
-  | 'comment.hide'
-  | 'comment.delete'
-  | 'subscription.start'
-  | 'subscription.renew'
-  | 'subscription.cancel'
-  | 'subscription.resume' // aprobada el 8-nov (contrato del bloque 4, D14)
-  | 'subscription.expire'
-  | 'settings.update'
-  | 'content.import'
-  | 'system.seed';
+// Nombres exactos de la tabla de auditoría de docs/plan_mvp.md ("Registro de auditoría y reversión"). Lista en
+// tiempo de ejecución: la valida también el filtro de la consulta del admin (CU-40).
+export const AUDIT_ACTIONS = [
+  'auth.login_ok',
+  'auth.login_fail',
+  'auth.logout',
+  'user.register',
+  'user.update_profile',
+  'user.password_change',
+  'user.role_change',
+  'user.author_grant',
+  'user.author_revoke',
+  'user.suspend',
+  'user.reactivate',
+  'comic.create',
+  'comic.update',
+  'comic.approve',
+  'comic.reject',
+  'comic.withdraw',
+  'chapter.create',
+  'chapter.submit',
+  'chapter.approve',
+  'chapter.reject',
+  'chapter.withdraw',
+  'comment.delete_own',
+  'comment.hide',
+  'comment.delete',
+  'subscription.start',
+  'subscription.renew',
+  'subscription.cancel',
+  'subscription.resume', // aprobada el 8-nov (contrato del bloque 4, D14)
+  'subscription.expire',
+  'settings.update',
+  'content.import',
+  'system.seed',
+] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+// Tablas que aparecen como entity_type (filtro de la consulta del admin).
+export const AUDIT_ENTITY_TYPES = ['users', 'comics', 'chapters', 'comments', 'subscriptions', 'settings', 'tags', 'ads'] as const;
 
 export interface AuditEntry {
   action: AuditAction;

@@ -1,3 +1,4 @@
+import type { ApiError } from '../services/api.js';
 import { getMe } from '../services/auth.js';
 import { fakeCancel, fakePay, formatDate, getSubscription, type SubscriptionDto } from '../services/payments.js';
 
@@ -8,6 +9,8 @@ const status = document.querySelector<HTMLElement>('[data-status]');
 const say = (message: string) => {
   if (status) status.textContent = message;
 };
+// Como en premium.ts y profile.ts: el mensaje con su código de referencia.
+const sayError = (error: ApiError) => say(error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message);
 
 type Step = 'pay' | 'cancel' | 'none';
 function show(step: Step, text = ''): void {
@@ -16,12 +19,18 @@ function show(step: Step, text = ''): void {
   if (target && text) target.textContent = text;
 }
 
-const cancelable = (sub: SubscriptionDto | null): sub is SubscriptionDto =>
-  sub !== null && sub.provider === 'fake' && sub.status === 'active' && !sub.cancelAtPeriodEnd && Date.parse(sub.currentPeriodEnd) > Date.now();
+// Booleano, no guarda de tipo: en la rama contraria la suscripción puede seguir existiendo (ya cancelada).
+const cancelable = (sub: SubscriptionDto): boolean =>
+  sub.provider === 'fake' && sub.status === 'active' && !sub.cancelAtPeriodEnd && Date.parse(sub.currentPeriodEnd) > Date.now();
 
 async function render(): Promise<void> {
   const me = await getMe();
-  const user = me.ok ? me.data.user : null;
+  if (!me.ok) {
+    show('none');
+    sayError(me.error);
+    return;
+  }
+  const user = me.data.user;
   if (!user) {
     show('none', 'Tu sesión ha caducado: vuelve a entrar.');
     return;
@@ -31,11 +40,22 @@ async function render(): Promise<void> {
     return;
   }
   const result = await getSubscription();
-  const subscription = result.ok ? result.data.subscription : null;
-  if (cancelable(subscription)) {
+  // Sin la suscripción no se sabe qué ofrecer: el error, y ningún botón.
+  if (!result.ok) {
+    show('none');
+    sayError(result.error);
+    return;
+  }
+  const subscription = result.data.subscription;
+  if (subscription && cancelable(subscription)) {
     show('cancel', `Tu suscripción simulada está activa hasta el ${formatDate(subscription.currentPeriodEnd)}.`);
   } else if (user.isPremium && user.premiumUntil) {
-    show('none', `Ya cancelada: sigues siendo premium hasta el ${formatDate(user.premiumUntil)}.`);
+    show(
+      'none',
+      subscription?.provider === 'fake' && subscription.cancelAtPeriodEnd
+        ? `Ya cancelada: sigues siendo premium hasta el ${formatDate(user.premiumUntil)}.`
+        : `Ya eres premium hasta el ${formatDate(user.premiumUntil)}; tu suscripción no es simulada.`,
+    );
   } else {
     show('pay');
   }
@@ -50,7 +70,7 @@ payButton?.addEventListener('click', async () => {
     location.assign('/premium/gracias');
     return;
   }
-  say(result.error.message);
+  sayError(result.error);
   payButton.disabled = false;
 });
 
@@ -62,9 +82,11 @@ cancelButton?.addEventListener('click', async () => {
   if (result.ok) {
     show('none', `Suscripción cancelada: sigues siendo premium hasta el ${formatDate(result.data.subscription.currentPeriodEnd)}.`);
     say('Cancelación guardada.');
+    // El botón con el foco se oculta: el foco pasa al resultado (tabindex="-1") y no cae a <body>.
+    document.querySelector<HTMLElement>('[data-none-text]')?.focus();
     return;
   }
-  say(result.error.message);
+  sayError(result.error);
   cancelButton.disabled = false;
 });
 

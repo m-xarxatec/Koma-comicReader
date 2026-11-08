@@ -41,6 +41,24 @@ export async function findReadingSettings(db: Queryable): Promise<Partial<Record
   return Object.fromEntries(rows.map((row) => [row.key, row.value]));
 }
 
+// CU-36 (RN-16): las filas de los parámetros bloqueadas hasta el final de la transacción, para comparar y guardar.
+export async function findReadingSettingsForUpdate(db: Queryable): Promise<Partial<Record<ReadingSettingKey, unknown>>> {
+  const { rows } = await db.query<{ key: ReadingSettingKey; value: unknown }>(
+    'SELECT key, value FROM settings WHERE key = ANY($1::text[]) FOR UPDATE',
+    [READING_SETTING_KEYS],
+  );
+  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+}
+
+// Inserta o actualiza un parámetro (el seed los crea; aquí se cubre también una BD sin ellos).
+export async function saveSetting(db: Queryable, key: ReadingSettingKey, value: number): Promise<void> {
+  await db.query(
+    `INSERT INTO settings (key, value) VALUES ($1, $2::jsonb)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [key, JSON.stringify(value)],
+  );
+}
+
 export interface CreditsRow {
   balance: number;
   periodStartedAt: Date | null; // NULL = lleno con el máximo vigente

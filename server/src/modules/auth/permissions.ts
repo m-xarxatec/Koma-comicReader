@@ -98,3 +98,29 @@ export function canDeleteOwnComment(user: PermissionSubject, comment: { userId: 
 export function canSubscribe(user: PermissionSubject): boolean {
   return !isAdmin(user);
 }
+
+// CU-35 (RN-14, D6, D7): un cambio de la gestión de usuarios, de uno en uno.
+export type AdminUserChange = { role: 'user' | 'admin' } | { isAuthor: boolean } | { status: 'active' | 'suspended' };
+
+export type AdminUserChangeProblem = 'self' | 'unchanged' | 'admin_author' | 'last_admin';
+
+// null = se puede. Orden: sobre sí mismo no cambia rol ni estado (403, RN-14); el mismo valor (409); un admin no es
+// autor (409, D7: primero se quita el rol de autor); y nunca dejar la plataforma sin admins activos (409, RN-14).
+// `activeAdminIds`: los admins activos, leídos con sus filas bloqueadas.
+export function adminUserChangeProblem(
+  actor: PermissionSubject,
+  target: PermissionSubject,
+  change: AdminUserChange,
+  activeAdminIds: readonly number[],
+): AdminUserChangeProblem | null {
+  if (target.id === actor.id && ('role' in change || 'status' in change)) return 'self';
+  if ('role' in change && change.role === target.role) return 'unchanged';
+  if ('status' in change && change.status === target.status) return 'unchanged';
+  if ('isAuthor' in change && change.isAuthor === target.isAuthor) return 'unchanged';
+  if ('isAuthor' in change && change.isAuthor && target.role === 'admin') return 'admin_author';
+  if ('role' in change && change.role === 'admin' && target.isAuthor) return 'admin_author';
+  const losesAdmin = ('role' in change && change.role === 'user') || ('status' in change && change.status === 'suspended');
+  const isActiveAdmin = activeAdminIds.includes(target.id);
+  if (losesAdmin && isActiveAdmin && activeAdminIds.length <= 1) return 'last_admin';
+  return null;
+}

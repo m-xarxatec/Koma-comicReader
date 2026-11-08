@@ -1,5 +1,5 @@
 /* /pago-simulado (pages/fake-checkout.html; maqueta koma_home/pago-simulado): inequívocamente ficticio, sin campos de
-   tarjeta. Los botones dependen del estado (data-state, lo pone fake-checkout.ts). */
+   tarjeta. fake-checkout.ts muestra el grupo data-for del estado (con el atributo hidden de base.css). */
 .checkout {
   padding-block: var(--premium-page-padding);
 }
@@ -113,17 +113,54 @@
   margin-top: var(--space-6);
 }
 
-.checkout__actions[hidden] {
-  display: none;
-}
-
+/* role="status" sigue siempre en el árbol (si no, el primer aviso puede no anunciarse); solo ocupa sitio con texto. */
 .checkout__status {
-  margin: var(--space-4) 0 0;
+  margin: 0;
   font-weight: var(--font-weight-semibold);
 }
 
-.checkout__status:empty {
-  display: none;
+.checkout__status:not(:empty) {
+  margin-top: var(--space-4);
+}
+
+.checkout__note strong {
+  color: var(--color-text);
+}
+
+.checkout__product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.checkout__product > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.checkout__symbol {
+  display: grid;
+  place-items: center;
+  width: var(--checkout-symbol-size);
+  height: var(--checkout-symbol-size);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-accent-soft);
+}
+
+.checkout__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-premium-note);
+}
+
+.checkout__notice .icon {
+  flex: none;
+  color: var(--color-success);
 }
 
 .checkout__row {

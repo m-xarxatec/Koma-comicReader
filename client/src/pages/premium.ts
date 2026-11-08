@@ -58,16 +58,34 @@ async function setUpOffer(user: UserDto | null): Promise<void> {
 }
 
 const status = document.querySelector<HTMLElement>('[data-premium-status]');
+// data-step admite varios pasos separados por espacios ("waiting late").
 const setStep = (step: 'waiting' | 'welcome' | 'late') => {
-  for (const element of document.querySelectorAll<HTMLElement>('[data-step]')) element.hidden = element.dataset['step'] !== step;
+  for (const element of document.querySelectorAll<HTMLElement>('[data-step]')) {
+    element.hidden = !(element.dataset['step'] ?? '').split(' ').includes(step);
+  }
 };
+
+// Textos de la bienvenida (maqueta premium/bienvenida), con textContent.
+function showWelcome(): void {
+  const texts: [string, string][] = [
+    ['[data-premium-eyebrow]', 'Bienvenido a Koma Premium'],
+    ['[data-premium-title]', '¡Gracias por pasarte a'],
+    ['[data-premium-title-accent]', 'Premium!'],
+    ['[data-premium-lead]', 'Desde ahora tienes todo para disfrutar tus historias sin interrupciones.'],
+  ];
+  for (const [selector, text] of texts) {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (element) element.textContent = text;
+  }
+  setStep('welcome');
+}
 
 async function waitForPremium(): Promise<void> {
   const started = Date.now();
   for (;;) {
     const me = await getMe();
     if (me.ok && me.data.user?.isPremium) {
-      setStep('welcome');
+      showWelcome();
       if (status) status.textContent = 'Pago confirmado: ya eres premium. Desde ahora lees sin límites y sin anuncios.';
       return;
     }

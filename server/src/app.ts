@@ -12,6 +12,7 @@ import { csrf } from './middlewares/csrf.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { requestId } from './middlewares/request-id.js';
 import { trailingSlash } from './middlewares/trailing-slash.js';
+import { adminPagesRouter, adminRouter } from './modules/admin/admin.routes.js';
 import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
 import { chaptersRouter } from './modules/chapters/chapters.routes.js';
 import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
@@ -101,6 +102,7 @@ app.use('/api', chaptersRouter);
 app.use('/api', readingRouter);
 app.use('/api', commentsRouter);
 app.use('/api', paymentsRouter);
+app.use('/api/admin', adminRouter);
 
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);
@@ -110,6 +112,7 @@ app.use(comicsPagesRouter);
 app.use(readingPagesRouter);
 app.use(usersPagesRouter);
 app.use(paymentsPagesRouter);
+app.use(adminPagesRouter);
 
 app.use(() => {
   throw new AppError(404, 'NOT_FOUND', 'La página o el recurso no existe');

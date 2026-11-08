@@ -10,6 +10,8 @@ import { createChapterBody } from '../../modules/chapters/chapters.schema.js';
 import { catalogQuery, createComicBody } from '../../modules/comics/comics.schema.js';
 import { commentBody } from '../../modules/comments/comments.schema.js';
 import { profileBody } from '../../modules/users/users.schema.js';
+import { readingSettingsBody, rejectBody } from '../../modules/admin/admin.schema.js';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '../../modules/audit/audit.service.js';
 import { passwordProblem } from '../../utils/password.js';
 import { safeNext } from '../../utils/redirect.js';
 import { initials as serverInitials, normalizeText, textProblem } from '../../utils/text.js';
@@ -265,4 +267,51 @@ test('Seguridad: las etiquetas del cliente siguen D5 con los mensajes del servid
   assert.equal(client.tagsProblem([theme, theme]), 'Elige al menos un género');
   assert.equal(client.tagsProblem([theme, genre]), null);
   assert.equal(client.tagsProblem(Array.from({ length: 10 }, () => genre)), null);
+});
+
+// --- Bloque 4: panel del admin (client/src/utils/admin.ts) ---
+
+interface ClientAdmin {
+  REJECTION_REASON_MAX: number;
+  ADMIN_QUERY_MAX_LENGTH: number;
+  READING_SETTINGS_RANGES: Record<'waitMinutes' | 'maxBalance' | 'refill', { min: number; max: number }>;
+  AUDIT_ACTIONS: readonly string[];
+  AUDIT_ENTITY_TYPES: Record<string, string>;
+  reasonProblem: Problem;
+  settingProblem: (field: 'waitMinutes' | 'maxBalance' | 'refill', raw: string) => string | null;
+}
+const clientAdmin = await load<ClientAdmin>('utils/admin.js');
+
+test('Seguridad: el panel del admin usa los mismos límites, acciones y entidades de auditoría que el servidor', () => {
+  assert.equal(clientAdmin.REJECTION_REASON_MAX, limits.REJECTION_REASON_MAX);
+  assert.equal(clientAdmin.ADMIN_QUERY_MAX_LENGTH, limits.ADMIN_QUERY_MAX_LENGTH);
+  for (const field of ['waitMinutes', 'maxBalance', 'refill'] as const) {
+    assert.equal(clientAdmin.READING_SETTINGS_RANGES[field].min, limits.READING_SETTINGS_RANGES[field].min, field);
+    assert.equal(clientAdmin.READING_SETTINGS_RANGES[field].max, limits.READING_SETTINGS_RANGES[field].max, field);
+  }
+  assert.deepEqual([...clientAdmin.AUDIT_ACTIONS], [...AUDIT_ACTIONS]);
+  assert.deepEqual(Object.keys(clientAdmin.AUDIT_ENTITY_TYPES), [...AUDIT_ENTITY_TYPES]);
+});
+
+test('RN-05: el motivo de rechazo se acepta y rechaza igual que en el servidor, con su mensaje', () => {
+  for (const value of ['', '   ', 'Motivo', 'x'.repeat(500), 'x'.repeat(501), '🙂'.repeat(500), 'línea\nsegunda', 'con\u0007control']) {
+    const server = rejectBody.safeParse({ reason: value });
+    const expected = server.success ? null : server.error.issues[0]!.message;
+    assert.equal(clientAdmin.reasonProblem(value), expected, JSON.stringify(value).slice(0, 30));
+  }
+});
+
+test('RN-16: los parámetros se aceptan y rechazan igual que en el servidor, con su mensaje', () => {
+  const valid = { waitMinutes: 1, maxBalance: 5, refill: 2 };
+  for (const field of ['waitMinutes', 'maxBalance', 'refill'] as const) {
+    const { min, max } = limits.READING_SETTINGS_RANGES[field];
+    for (const value of [min - 1, min, max, max + 1]) {
+      const server = readingSettingsBody.safeParse({ ...valid, [field]: value });
+      const expected = server.success ? null : server.error.issues[0]!.message;
+      assert.equal(clientAdmin.settingProblem(field, String(value)), expected, `${field}=${value}`);
+    }
+    // El cliente envía Number(valor): un decimal no es un entero en ninguno de los dos.
+    assert.equal(clientAdmin.settingProblem(field, '1.5'), 'Debe ser un número entero');
+    assert.equal(readingSettingsBody.safeParse({ ...valid, [field]: 1.5 }).error?.issues[0]?.message, 'Debe ser un número entero');
+  }
 });

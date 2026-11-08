@@ -46,6 +46,15 @@ export const requirePageAuthor: RequestHandler = (req, res, next) => {
   });
 };
 
+// /admin (mapa de rutas): sin sesión, 302 al login; con sesión y sin rol admin, la página 403. La API del admin lo
+// vuelve a comprobar en cada petición (requireAdmin en su router).
+export const requirePageAdmin: RequestHandler = (req, res, next) => {
+  requirePageAuth(req, res, () => {
+    if (!isAdmin(res.locals.user!)) throw forbidden();
+    next();
+  });
+};
+
 // /crear (mapa de rutas), después de requirePageAuth: el autor va a su estudio con 302; quien no lo es (también el
 // admin) sigue hacia la página informativa.
 export const redirectAuthorToStudio: RequestHandler = (_req, res, next) => {

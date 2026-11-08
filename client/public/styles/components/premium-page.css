@@ -1,6 +1,7 @@
 /* /premium y /premium/gracias (pages/premium.html): oferta, espera del pago y bienvenida (maqueta koma_home/premium,
-   premium/gracias y premium/bienvenida, en una sola página, D17). El servidor pone data-view en <body>; el cliente,
-   data-state en la tarjeta del plan y data-step en la espera. Todo valor visual, en variables.css. */
+   premium/gracias y premium/bienvenida, en una sola página, D17). El servidor pone data-view en <body>; premium.ts
+   muestra el grupo data-for de quien mira y el paso data-step de la espera (con el atributo hidden de base.css).
+   Todo valor visual, en variables.css. */
 .premium {
   padding-block: var(--premium-page-padding);
 }
@@ -169,15 +170,38 @@
   color: var(--color-success);
 }
 
-/* Acciones según quién mira (data-state): sin JS, las del invitado. */
+/* Acciones según quién mira (data-for): sin JS, las del invitado. */
 .plan-card__actions {
   display: grid;
   gap: var(--premium-actions-gap);
 }
 
-.plan-card__actions[hidden],
-.premium__step[hidden] {
-  display: none;
+.plan-card__lead {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.plan-card__disclaimer {
+  margin: 0;
+  padding-bottom: var(--premium-disclaimer-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-premium-note);
+}
+
+.plan-card__foot,
+.premium__note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-premium-note);
+}
+
+.premium__note {
+  justify-content: flex-start;
 }
 
 .plan-card__error {
@@ -191,10 +215,50 @@
 }
 
 /* Espera y bienvenida (/premium/gracias) */
+.premium__flag {
+  display: inline-flex;
+  margin-bottom: var(--space-4);
+  padding: var(--checkout-flag-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-secondary);
+  font-size: var(--font-size-checkout-flag);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-checkout-flag);
+  text-transform: uppercase;
+}
+
+.premium__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.premium__indicator {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--premium-spinner-size);
+  height: var(--premium-spinner-size);
+  margin-bottom: var(--space-6);
+  color: var(--color-secondary);
+}
+
+.premium__indicator .premium__spinner {
+  position: absolute;
+  inset: 0;
+}
+
+.premium__indicator-icon {
+  width: var(--premium-indicator-glyph);
+  height: var(--premium-indicator-glyph);
+}
+
 .premium__status {
   min-height: var(--space-12);
   margin: 0 0 var(--space-6);
-  color: var(--color-text-muted);
+  color: var(--color-secondary);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -208,6 +272,7 @@
 }
 
 .premium__welcome-art {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: var(--premium-welcome-art-height);
@@ -223,6 +288,48 @@
   height: auto;
   filter: var(--shadow-premium-mascot);
   animation: premium-float var(--premium-float-duration) ease-in-out infinite;
+}
+
+.premium__badge {
+  position: absolute;
+  bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--premium-badge-padding);
+  border: var(--border-width) solid var(--color-premium-badge-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-premium-badge-bg);
+  color: var(--color-premium-badge-text);
+  font-size: var(--font-size-premium-tag);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--letter-spacing-fake-card);
+}
+
+/* Sigue explorando (oferta) */
+.premium__bottom {
+  display: grid;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.premium__bottom-title {
+  max-width: var(--measure-premium-bottom);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-premium-bottom);
+}
+
+.premium__bottom-text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.premium__bottom .button {
+  justify-self: start;
 }
 
 .premium__actions {
@@ -259,6 +366,10 @@
   .premium__actions {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .premium__bottom {
+    grid-template-columns: 1fr auto;
   }
 }
 

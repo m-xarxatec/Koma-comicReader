@@ -35,21 +35,26 @@ export async function fakeCancel(req: Request, res: Response): Promise<void> {
   res.json({ subscription: await paymentsService.fakeCancel(res.locals.user!, context(req, res)) });
 }
 
-// /premium y /premium/gracias: la misma página (mapa de rutas); cambian la vista, el <title> y el <h1> (D17).
+// /premium y /premium/gracias: la misma página (mapa de rutas); cambian la vista, el <title>, la miga y el título
+// principal (D17). En gracias empieza con la espera de la maqueta; premium.ts pone la bienvenida al confirmarse.
 const PREMIUM_VIEWS = {
   offer: {
     view: 'offer',
     title: 'Premium',
+    crumb: 'Premium',
+    eyebrow: 'Koma Premium',
     heading: 'Más historias.',
     headingAccent: 'Menos pausas.',
-    lead: 'Lectura sin anuncios y sin límites de capítulos. Premium es opcional: también puedes seguir leyendo gratis.',
+    lead: 'La mejor viñeta es la siguiente. Descubre una lectura sin anuncios y sin límites de capítulos.',
   },
   thanks: {
     view: 'thanks',
     title: 'Gracias',
-    heading: 'Gracias por pasarte a',
-    headingAccent: 'Premium',
-    lead: 'En cuanto el proveedor de pagos lo confirme, tu cuenta será premium.',
+    crumb: 'Gracias',
+    eyebrow: 'Koma Premium',
+    heading: 'Estamos confirmando',
+    headingAccent: 'tu pago…',
+    lead: 'En cuanto el proveedor de pagos lo confirme, tu cuenta será premium. Suele tardar unos segundos.',
   },
 } as const;
 

@@ -215,3 +215,11 @@ test('Seguridad: la cookie del invitado conserva solo los últimos 50 capítulos
   assert.deepEqual([next[0], next.at(-1)], [2, 99]);
   assert.deepEqual(parseGuestReads(guestKey, serializeGuestReads(guestKey, next)), next);
 });
+
+test('RN-16: al bajar el máximo, el saldo guardado se queda en el nuevo máximo y uno lleno sigue al máximo vigente', () => {
+  const now = new Date('2026-11-08T12:00:00Z');
+  const lowered = { maxBalance: 3, refill: 2, waitMinutes: 1 };
+  const running = { balance: 4, periodStartedAt: new Date('2026-11-08T11:59:30Z') }; // sin ninguna recarga aún
+  assert.deepEqual(recalculateCredits(running, lowered, now), { balance: 3, periodStartedAt: null, retryAt: null });
+  assert.deepEqual(recalculateCredits(null, { ...lowered, maxBalance: 8 }, now), { balance: 8, periodStartedAt: null, retryAt: null });
+});

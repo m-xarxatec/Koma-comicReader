@@ -19,20 +19,23 @@
   <script type="module" src="/js/pages/premium.js"></script>
 </head>
 <!-- /premium (oferta) y /premium/gracias (espera del pago y bienvenida, D17): la misma página; el servidor elige la
-     vista (data-view) y el texto del título principal. Contrato del bloque 4, "Páginas"; CU-21. -->
+     vista (data-view), el título principal y el texto de entrada. Contrato del bloque 4, "Páginas"; CU-21. -->
 <body data-view="{{view}}">
   <!-- @header -->
   <main id="contenido" class="premium container">
     <nav class="breadcrumb" aria-label="Ruta de navegación">
       <a class="breadcrumb__link" href="/">Inicio</a>
       <span class="breadcrumb__separator" aria-hidden="true">/</span>
-      <span class="breadcrumb__current" aria-current="page">Premium</span>
+      <a class="breadcrumb__link premium__only-thanks" href="/premium">Premium</a>
+      <span class="breadcrumb__separator premium__only-thanks" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">{{crumb}}</span>
     </nav>
 
     <div class="premium__layout">
-      <div>
-        <p class="eyebrow">Koma Premium</p>
-        <h1 class="premium__title" data-premium-title>{{heading}}<span class="premium__title-accent" data-premium-title-accent>{{headingAccent}}</span></h1>
+      <div class="premium__intro">
+        <span class="premium__flag premium__only-thanks">Modo de prueba · sin cobros</span>
+        <p class="eyebrow premium__eyebrow"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-crown"/></svg> <span data-premium-eyebrow>{{eyebrow}}</span></p>
+        <h1 class="premium__title"><span data-premium-title>{{heading}}</span> <span class="premium__title-accent" data-premium-title-accent>{{headingAccent}}</span></h1>
         <p class="premium__lead" data-premium-lead>{{lead}}</p>
 
         <ul class="premium__benefits premium__only-offer" aria-label="Ventajas de Premium">
@@ -46,55 +49,61 @@
           </li>
           <li class="premium__benefit">
             <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-crown"/></svg></span>
-            <div><h2 class="premium__benefit-title">Tu lectura, a tu manera</h2><p class="premium__benefit-text">Una experiencia más fluida para tus historias favoritas.</p></div>
+            <div><h2 class="premium__benefit-title">Tu lectura, a tu manera</h2><p class="premium__benefit-text">Una experiencia más fluida, pensada para tus historias favoritas.</p></div>
           </li>
         </ul>
 
-        <!-- Espera (/premium/gracias): premium.ts consulta /api/me hasta ver premium. Sin JS, el enlace al perfil. -->
+        <!-- Espera (/premium/gracias): premium.ts consulta /api/me hasta ver premium y entonces cambia el título y el
+             texto (textContent) y muestra la bienvenida. Sin JS, los enlaces al perfil y a Premium. -->
         <div class="premium__only-thanks">
-          <div class="premium__step" data-step="waiting">
-            <div class="premium__spinner" aria-hidden="true"></div>
+          <div class="premium__indicator" data-step="waiting" aria-hidden="true">
+            <span class="premium__spinner"></span>
+            <svg class="icon premium__indicator-icon"><use href="/icons/sprite.svg#icon-crown"/></svg>
           </div>
-          <p class="premium__status" role="status" aria-live="polite" data-premium-status>Estamos confirmando tu pago con el proveedor.</p>
-          <div class="premium__step" data-step="welcome" hidden>
-            <ul class="premium__benefits" aria-label="Lo que ya tienes">
-              <li class="premium__benefit">
-                <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg></span>
-                <div><h2 class="premium__benefit-title">Lectura sin límites</h2><p class="premium__benefit-text">Lee tantos capítulos como quieras.</p></div>
-              </li>
-              <li class="premium__benefit">
-                <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg></span>
-                <div><h2 class="premium__benefit-title">Sin anuncios</h2><p class="premium__benefit-text">Solo tú y la historia.</p></div>
-              </li>
-            </ul>
-          </div>
+          <p class="premium__status" role="status" aria-live="polite" data-premium-status>Comprobando el pago con el proveedor…</p>
+          <ul class="premium__benefits" aria-label="Ventajas de Premium" data-step="welcome" hidden>
+            <li class="premium__benefit">
+              <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg></span>
+              <div><h2 class="premium__benefit-title">Lectura sin límites</h2><p class="premium__benefit-text">Lee tantos capítulos como quieras.</p></div>
+            </li>
+            <li class="premium__benefit">
+              <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg></span>
+              <div><h2 class="premium__benefit-title">Sin anuncios</h2><p class="premium__benefit-text">Solo tú y la historia, sin interrupciones.</p></div>
+            </li>
+            <li class="premium__benefit">
+              <span class="premium__benefit-icon"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-spark"/></svg></span>
+              <div><h2 class="premium__benefit-title">Acceso a todos los capítulos</h2><p class="premium__benefit-text">Descubre cada obra a tu ritmo.</p></div>
+            </li>
+          </ul>
           <div class="premium__actions">
             <a class="button button--primary" href="/perfil">Ir a mi perfil</a>
             <a class="button button--outline" href="/#catalogo">Descubrir historias</a>
+            <a class="button button--outline" href="/premium" data-step="waiting late">Volver a Premium</a>
           </div>
+          <p class="premium__note"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-lock"/></svg> Modo de prueba: se paga con una tarjeta de prueba y no se cobra nada.</p>
         </div>
       </div>
 
       <aside class="plan-card premium__only-offer" aria-labelledby="plan-title" data-plan-card>
         <div class="plan-card__top">
           <span class="plan-card__symbol" aria-hidden="true"><svg class="icon"><use href="/icons/sprite.svg#icon-crown"/></svg></span>
-          <span class="plan-card__tag">MODO DE PRUEBA</span>
+          <span class="plan-card__tag">PLAN DE PRUEBA</span>
         </div>
         <h2 class="plan-card__title" id="plan-title">Koma Premium</h2>
-        <p class="plan-card__note">Todo el cómic. A tu ritmo.</p>
+        <p class="plan-card__lead">Todo el cómic. A tu ritmo.</p>
         <!-- D16: el importe del precio de Stripe (STRIPE_PRICE_ID), fijo aquí. -->
-        <p class="plan-card__price"><strong class="plan-card__amount">5 €</strong><span class="plan-card__period">al mes</span></p>
-        <p class="plan-card__note">Suscripción de prueba: se paga con una tarjeta de prueba y no se cobra nada.</p>
+        <p class="plan-card__price"><strong class="plan-card__amount">5 €</strong><span class="plan-card__period">/ mes</span></p>
+        <p class="plan-card__disclaimer">Suscripción de prueba: se paga con una tarjeta de prueba y no se cobra nada.</p>
         <ul class="plan-card__list">
           <li class="plan-card__item"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg> Lectura ilimitada</li>
           <li class="plan-card__item"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg> Sin anuncios</li>
-          <li class="plan-card__item"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg> Cancela cuando quieras</li>
+          <li class="plan-card__item"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-check"/></svg> Sin esperar recargas</li>
         </ul>
 
         <!-- Invitado (también sin JS): registrarse o entrar y volver aquí. -->
         <div class="plan-card__actions" data-for="guest">
           <a class="button button--primary button--large" href="/registro?next=%2Fpremium">Regístrate para hacerte premium</a>
-          <a class="button button--outline" href="/entrar?next=%2Fpremium">Ya tengo cuenta</a>
+          <a class="button button--outline" href="/entrar?next=%2Fpremium">Entrar</a>
         </div>
         <!-- Registrado: POST /api/payments/checkout por api.ts (D11) y navega a la URL que devuelve. -->
         <form class="plan-card__actions" data-for="user" method="post" action="/api/payments/checkout" hidden>
@@ -109,13 +118,24 @@
           <p class="plan-card__note">La cuenta de administración ya lee sin límites ni anuncios.</p>
         </div>
         <p class="plan-card__error" role="alert" data-plan-error></p>
+        <p class="plan-card__foot"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-lock"/></svg> Modo de prueba · Sin pagos reales</p>
       </aside>
 
-      <!-- Bienvenida: la mascota de la maqueta, solo cuando se confirma el pago. -->
-      <div class="premium__welcome-art premium__only-thanks premium__step" data-step="welcome" hidden>
-        <img class="premium__mascot" src="/icons/koma-mascota-premium.png" width="414" height="392" alt="La mascota de Koma sonríe y levanta la patita para darte la bienvenida.">
+      <!-- Bienvenida: la mascota de la maqueta, solo cuando se confirma el pago (lazy: oculta, no se descarga). -->
+      <div class="premium__welcome-art premium__only-thanks" data-step="welcome" hidden>
+        <img class="premium__mascot" src="/icons/koma-mascota-premium.png" width="414" height="392" loading="lazy" alt="La mascota de Koma sonríe y levanta la patita para darte la bienvenida.">
+        <span class="premium__badge" aria-hidden="true"><svg class="icon"><use href="/icons/sprite.svg#icon-crown"/></svg> PREMIUM</span>
       </div>
     </div>
+
+    <section class="premium__bottom premium__only-offer" aria-labelledby="premium-bottom-title">
+      <div>
+        <p class="eyebrow">Sigue explorando</p>
+        <h2 class="premium__bottom-title" id="premium-bottom-title">Tus historias siempre tienen un siguiente capítulo.</h2>
+        <p class="premium__bottom-text">También puedes seguir leyendo gratis. Premium es completamente opcional.</p>
+      </div>
+      <a class="button button--outline" href="/#catalogo">Explorar cómics</a>
+    </section>
   </main>
   <!-- @footer -->
 </body>

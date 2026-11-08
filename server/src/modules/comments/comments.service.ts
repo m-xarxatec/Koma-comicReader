@@ -1,17 +1,18 @@
-import { COMMENTS_PAGE_SIZE } from '../../config/limits.js';
+import { ADMIN_PAGE_SIZE, COMMENTS_PAGE_SIZE } from '../../config/limits.js';
 import { pool, withTransaction } from '../../db/pool.js';
 import { AppError } from '../../utils/app-error.js';
 import * as audit from '../audit/audit.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
 import { canComment, canDeleteOwnComment } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
+import { escapeLike } from '../comics/comics.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import { requirePublicChapter } from '../reading/reading.service.js';
 import type { User } from '../users/users.repository.js';
 import * as commentsRepository from './comments.repository.js';
 
 // Comentarios por viñeta (CU-05, CU-13; RN-11; contrato del bloque 3). Solo en viñetas de capítulos públicos
-// (aprobados, no retirados, de una obra pública). La moderación del admin (ocultar, eliminar) es del bloque 4.
+// (aprobados, no retirados, de una obra pública). La moderación del admin (ocultar, eliminar), al final (bloque 4).
 
 export interface CommentDto {
   id: number;
@@ -93,5 +94,70 @@ export async function deleteOwnComment(id: number, user: User, ctx: RequestConte
       after: { deletedAt: deletedAt.toISOString() },
       ...ctx,
     });
+  });
+}
+
+// --- Bloque 4: moderación (CU-33; RN-11; contrato del bloque 4) ---
+
+export interface AdminCommentDto {
+  id: number;
+  body: string; // texto plano; el cliente lo pinta con textContent
+  author: { id: number; displayName: string };
+  createdAt: string; // ISO 8601
+  hiddenAt: string | null;
+  comic: { slug: string; title: string };
+  chapterNumber: number;
+  panelPosition: number;
+}
+
+export interface AdminCommentsPageDto {
+  comments: AdminCommentDto[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export async function listForModeration(query: { q: string; status?: 'visible' | 'hidden' | undefined; page: number }): Promise<AdminCommentsPageDto> {
+  const { total, comments } = await commentsRepository.listForModeration(pool, {
+    q: escapeLike(query.q),
+    status: query.status ?? null,
+    limit: ADMIN_PAGE_SIZE,
+    offset: (query.page - 1) * ADMIN_PAGE_SIZE,
+  });
+  return {
+    comments: comments.map((row) => ({
+      id: row.id,
+      body: row.body,
+      author: { id: row.authorId, displayName: row.authorName },
+      createdAt: row.createdAt.toISOString(),
+      hiddenAt: row.hiddenAt?.toISOString() ?? null,
+      comic: row.comic,
+      chapterNumber: row.chapterNumber,
+      panelPosition: row.panelPosition,
+    })),
+    page: query.page,
+    pageSize: ADMIN_PAGE_SIZE,
+    total,
+  };
+}
+
+// Ocultar (comment.hide) o eliminar (comment.delete). Orden del contrato: 404 (no existe), 410 (su obra o su capítulo
+// se retiraron, RN-06), 409 (ya eliminado; al ocultar, también ya oculto). Eliminar vale también para uno oculto. Ni
+// la auditoría ni el log llevan el texto. En el MVP no se deshace (la restauración es de fase 2).
+export async function moderateComment(admin: User, id: number, action: 'hide' | 'delete', ctx: RequestContext): Promise<void> {
+  await withTransaction(async (client) => {
+    const comment = await commentsRepository.findStateForUpdate(client, id);
+    if (!comment) throw new AppError(404, 'NOT_FOUND', 'El comentario no existe');
+    if (comment.withdrawn) throw new AppError(410, 'GONE', 'El capítulo o la obra del comentario se han retirado');
+    if (comment.deletedAt) throw new AppError(409, 'CONFLICT', 'El comentario ya se eliminó');
+    const base = { actorId: admin.id, entityType: 'comments', entityId: String(id), ...ctx };
+    if (action === 'hide') {
+      if (comment.hiddenAt) throw new AppError(409, 'CONFLICT', 'El comentario ya está oculto');
+      const hiddenAt = await commentsRepository.markHidden(client, id);
+      await audit.record(client, { ...base, action: 'comment.hide', before: { hiddenAt: null }, after: { hiddenAt: hiddenAt.toISOString() } });
+    } else {
+      const deletedAt = await commentsRepository.markDeleted(client, id);
+      await audit.record(client, { ...base, action: 'comment.delete', before: { deletedAt: null }, after: { deletedAt: deletedAt.toISOString() } });
+    }
   });
 }

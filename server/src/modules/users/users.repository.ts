@@ -16,6 +16,7 @@ export interface User {
   tokenVersion: number;
   premiumUntil: Date | null;
   stripeCustomerId: string | null; // nunca sale del servidor ni va a la auditoría
+  createdAt: Date;
 }
 
 interface UserRow {
@@ -29,9 +30,10 @@ interface UserRow {
   token_version: number;
   premium_until: Date | null;
   stripe_customer_id: string | null;
+  created_at: Date;
 }
 
-const COLUMNS = 'id, email, password_hash, display_name, role, is_author, status, token_version, premium_until, stripe_customer_id';
+const COLUMNS = 'id, email, password_hash, display_name, role, is_author, status, token_version, premium_until, stripe_customer_id, created_at';
 
 function toUser(row: UserRow): User {
   return {
@@ -45,6 +47,7 @@ function toUser(row: UserRow): User {
     tokenVersion: row.token_version,
     premiumUntil: row.premium_until,
     stripeCustomerId: row.stripe_customer_id,
+    createdAt: row.created_at,
   };
 }
 
@@ -140,4 +143,54 @@ export async function setStripeCustomerIdIfMissing(db: Queryable, id: number, cu
   await db.query('UPDATE users SET stripe_customer_id = $2 WHERE id = $1 AND stripe_customer_id IS NULL', [id, customerId]);
   const { rows } = await db.query<{ stripe_customer_id: string | null }>('SELECT stripe_customer_id FROM users WHERE id = $1', [id]);
   return rows[0]?.stripe_customer_id ?? null;
+}
+
+// --- Bloque 4: gestión de usuarios (CU-35; RN-14, RN-15) ---
+
+export interface UserSearch {
+  q: string; // ya escapado para ILIKE ('' = sin filtro): correo y nombre visible
+  role: 'user' | 'author' | 'admin' | null; // author = is_author
+  status: UserStatus | null;
+  limit: number;
+  offset: number;
+}
+
+// Fragmento fijo; los datos van en $1 a $3. role=user son las cuentas sin admin ni autor.
+const SEARCH_WHERE = `($1 = '' OR email ILIKE '%' || $1 || '%' OR display_name ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL
+       OR ($2 = 'admin' AND role = 'admin')
+       OR ($2 = 'author' AND is_author)
+       OR ($2 = 'user' AND role = 'user' AND NOT is_author))
+  AND ($3::text IS NULL OR status = $3)`;
+
+export async function search(db: Queryable, filter: UserSearch): Promise<{ total: number; users: User[] }> {
+  const params = [filter.q, filter.role, filter.status];
+  const count = await db.query<{ total: number }>(`SELECT count(*)::int AS total FROM users WHERE ${SEARCH_WHERE}`, params);
+  const { rows } = await db.query<UserRow>(
+    `SELECT ${COLUMNS} FROM users WHERE ${SEARCH_WHERE} ORDER BY created_at DESC, id DESC LIMIT $4 OFFSET $5`,
+    [...params, filter.limit, filter.offset],
+  );
+  return { total: count.rows[0]?.total ?? 0, users: rows.map(toUser) };
+}
+
+// RN-14: ids de los admins activos, bloqueados (en orden de id, para que dos cambios a la vez no se crucen) hasta
+// el final de la transacción.
+export async function lockActiveAdminIds(db: Queryable): Promise<number[]> {
+  const { rows } = await db.query<{ id: number }>(`SELECT id FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id FOR UPDATE`);
+  return rows.map((row) => row.id);
+}
+
+// RN-15: cambiar el rol incrementa token_version (las sesiones abiertas dejan de valer, D8).
+export async function updateRole(db: Queryable, id: number, role: Role): Promise<User> {
+  const { rows } = await db.query<UserRow>(
+    `UPDATE users SET role = $2, token_version = token_version + 1 WHERE id = $1 RETURNING ${COLUMNS}`,
+    [id, role],
+  );
+  return toUser(rows[0]!);
+}
+
+// D8: el rol de autor no cierra sesiones (los permisos se leen de la BD en cada petición).
+export async function updateIsAuthor(db: Queryable, id: number, isAuthor: boolean): Promise<User> {
+  const { rows } = await db.query<UserRow>(`UPDATE users SET is_author = $2 WHERE id = $1 RETURNING ${COLUMNS}`, [id, isAuthor]);
+  return toUser(rows[0]!);
 }

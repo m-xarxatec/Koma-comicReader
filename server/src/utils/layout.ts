@@ -62,7 +62,7 @@ function siteHeader(path: string): string {
         <button class="site-search__submit" type="submit" aria-label="Buscar">${icon('arrow')}</button>
       </form>
       <div class="site-header__account" data-account>
-        <a class="site-header__premium" href="/premium" aria-label="Premium" data-premium-link${path === '/premium' || path === '/premium/gracias' ? ' aria-current="page"' : ''}>${icon('crown')}<span class="site-header__premium-label">Premium</span></a>
+        <a class="site-header__premium" href="/premium" aria-label="Premium" data-premium-link${path === '/premium' ? ' aria-current="page"' : ''}>${icon('crown')}<span class="site-header__premium-label">Premium</span></a>
         <a class="button button--outline site-header__login" href="/entrar" data-login-link>Entrar</a>
         <a class="button button--primary site-header__signup" href="/registro" data-login-link>Registrarse</a>
       </div>

@@ -140,3 +140,79 @@ export async function listRecentOnAuthorComics(db: Queryable, authorId: number, 
     panelPosition: row.panel_position,
   }));
 }
+
+// --- Bloque 4: moderación (CU-33; RN-11) ---
+
+export interface AdminCommentRow {
+  id: number;
+  body: string;
+  authorId: number;
+  authorName: string;
+  createdAt: Date;
+  hiddenAt: Date | null;
+  comic: { slug: string; title: string };
+  chapterNumber: number;
+  panelPosition: number;
+}
+
+export interface AdminCommentSearch {
+  q: string; // ya escapado para ILIKE ('' = sin filtro)
+  status: 'visible' | 'hidden' | null; // null = los dos
+  limit: number;
+  offset: number;
+}
+
+// Sin eliminados ni comentarios de obras o capítulos retirados (D5); q en el texto y en el nombre del autor. Del
+// más reciente al más antiguo. Fragmento fijo; los datos van en $1 y $2.
+const ADMIN_WHERE = `c.deleted_at IS NULL AND ch.deleted_at IS NULL AND co.deleted_at IS NULL
+  AND ($1 = '' OR c.body ILIKE '%' || $1 || '%' OR u.display_name ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL OR ($2 = 'hidden') = (c.hidden_at IS NOT NULL))`;
+const ADMIN_FROM = `FROM comments c
+  JOIN users u ON u.id = c.user_id
+  JOIN panels p ON p.id = c.panel_id
+  JOIN chapters ch ON ch.id = p.chapter_id
+  JOIN comics co ON co.id = ch.comic_id`;
+
+export async function listForModeration(db: Queryable, search: AdminCommentSearch): Promise<{ total: number; comments: AdminCommentRow[] }> {
+  const params = [search.q, search.status];
+  const count = await db.query<{ total: number }>(`SELECT count(*)::int AS total ${ADMIN_FROM} WHERE ${ADMIN_WHERE}`, params);
+  const { rows } = await db.query<{
+    id: number;
+    body: string;
+    user_id: number;
+    author_name: string;
+    created_at: Date;
+    hidden_at: Date | null;
+    slug: string;
+    title: string;
+    number: number;
+    position: number;
+  }>(
+    `SELECT c.id, c.body, c.user_id, u.display_name AS author_name, c.created_at, c.hidden_at,
+            co.slug, co.title, ch.number, p.position
+     ${ADMIN_FROM}
+     WHERE ${ADMIN_WHERE}
+     ORDER BY c.created_at DESC, c.id DESC
+     LIMIT $3 OFFSET $4`,
+    [...params, search.limit, search.offset],
+  );
+  return {
+    total: count.rows[0]?.total ?? 0,
+    comments: rows.map((row) => ({
+      id: row.id,
+      body: row.body,
+      authorId: row.user_id,
+      authorName: row.author_name,
+      createdAt: row.created_at,
+      hiddenAt: row.hidden_at,
+      comic: { slug: row.slug, title: row.title },
+      chapterNumber: row.number,
+      panelPosition: row.position,
+    })),
+  };
+}
+
+export async function markHidden(db: Queryable, id: number): Promise<Date> {
+  const { rows } = await db.query<{ hidden_at: Date }>('UPDATE comments SET hidden_at = now() WHERE id = $1 RETURNING hidden_at', [id]);
+  return rows[0]!.hidden_at;
+}

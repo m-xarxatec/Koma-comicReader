@@ -41,6 +41,8 @@ const VALUES = {
   howTo: 'El rol de autor lo activa un administrador.',
   // premium.html (PREMIUM_VIEWS en payments.controller.ts)
   view: 'offer',
+  crumb: 'Premium',
+  eyebrow: 'Koma Premium',
   headingAccent: 'Menos pausas.',
   lead: 'Lectura sin anuncios.',
 };

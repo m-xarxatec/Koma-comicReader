@@ -1,0 +1,134 @@
+/* Página /admin (pages/admin.html; maqueta koma_home/admin). La maquetación de panel es la de author-page.css (la
+   maqueta la comparte, .workspace); aquí solo lo propio: métrica, filtros, paginación, celdas, detalle de la
+   auditoría y el diálogo de confirmación. Todo valor visual, en variables.css. */
+
+.admin-page__metric {
+  min-width: var(--admin-metric-min-width);
+}
+
+/* Avisos de las acciones: siempre en el árbol (role="status"); solo ocupa sitio con texto. */
+.admin-page__live {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.admin-page__live:not(:empty) {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.admin-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-page__filters .form__field {
+  flex: 1 1 var(--admin-filter-min-width);
+  min-width: 0;
+}
+
+.admin-page__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.admin-page__settings {
+  max-width: var(--admin-settings-width);
+}
+
+.admin-page__form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Celdas */
+.admin-page__strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.admin-page__small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+.admin-page__comment {
+  display: block;
+  max-width: var(--measure-story);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.admin-page__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.admin-page__json {
+  max-width: var(--admin-json-width);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  font-size: var(--font-size-code);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-page__summary {
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+
+.admin-page__code {
+  font-size: var(--font-size-code);
+  overflow-wrap: anywhere;
+}
+
+/* Diálogo de confirmación (y motivo del rechazo) */
+.admin-dialog {
+  width: min(100% - var(--space-8), var(--admin-dialog-width));
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-dialog::backdrop {
+  background: var(--color-comments-backdrop);
+}
+
+.admin-dialog__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.admin-dialog__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

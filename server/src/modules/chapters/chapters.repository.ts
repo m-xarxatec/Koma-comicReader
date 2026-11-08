@@ -306,3 +306,75 @@ export async function listLiveChapters(db: Queryable, comicId: number): Promise<
   );
   return rows.map((row) => ({ id: row.id, number: row.number, title: row.title, status: row.status, publishedAt: row.published_at }));
 }
+
+// --- Bloque 4: aprobación de contenido (CU-32; RN-05, RN-09) ---
+
+export interface ReviewChapterRow {
+  id: number;
+  number: number;
+  title: string;
+  panelCount: number;
+  submittedAt: Date; // updated_at: el envío es su último cambio (desde pending ya no se edita, RN-05)
+  comic: { slug: string; title: string; status: 'pending' | 'approved'; publishedBy: string; isAdult: boolean; contentWarning: string | null };
+}
+
+// Cola: capítulos vivos pending de obras sin retirar y no rechazadas (D2), del envío más antiguo al más reciente.
+export async function listPendingChapters(db: Queryable, limit: number): Promise<{ total: number; chapters: ReviewChapterRow[] }> {
+  const { rows } = await db.query<{
+    id: number;
+    number: number;
+    title: string;
+    panel_count: number;
+    updated_at: Date;
+    slug: string;
+    comic_title: string;
+    comic_status: 'pending' | 'approved';
+    published_by: string;
+    is_adult: boolean;
+    content_warning: string | null;
+    total: number;
+  }>(
+    `SELECT ch.id, ch.number, ch.title, (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panel_count,
+            ch.updated_at, c.slug, c.title AS comic_title, c.status AS comic_status,
+            coalesce(u.display_name, 'la plataforma') AS published_by, c.is_adult, c.content_warning,
+            count(*) OVER ()::int AS total
+     FROM chapters ch
+     JOIN comics c ON c.id = ch.comic_id
+     LEFT JOIN users u ON u.id = c.author_id
+     WHERE ch.status = 'pending' AND ch.deleted_at IS NULL AND c.deleted_at IS NULL AND c.status <> 'rejected'
+     ORDER BY ch.updated_at, ch.id
+     LIMIT $1`,
+    [limit],
+  );
+  return {
+    total: rows[0]?.total ?? 0, // con LIMIT ≥ 1, sin filas la cola está vacía
+    chapters: rows.map((row) => ({
+      id: row.id,
+      number: row.number,
+      title: row.title,
+      panelCount: row.panel_count,
+      submittedAt: row.updated_at,
+      comic: {
+        slug: row.slug,
+        title: row.comic_title,
+        status: row.comic_status,
+        publishedBy: row.published_by,
+        isAdult: row.is_adult,
+        contentWarning: row.content_warning,
+      },
+    })),
+  };
+}
+
+// Aprobar fija published_at (CHECK chapters_published); rechazar guarda el motivo y libera el número (RN-09).
+export async function approveChapter(db: Queryable, id: number): Promise<Date> {
+  const { rows } = await db.query<{ published_at: Date }>(
+    `UPDATE chapters SET status = 'approved', published_at = now() WHERE id = $1 RETURNING published_at`,
+    [id],
+  );
+  return rows[0]!.published_at;
+}
+
+export async function rejectChapter(db: Queryable, id: number, reason: string): Promise<void> {
+  await db.query(`UPDATE chapters SET status = 'rejected', rejection_reason = $2 WHERE id = $1`, [id, reason]);
+}

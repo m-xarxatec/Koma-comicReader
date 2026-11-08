@@ -44,5 +44,17 @@ if (user && account) {
     location.assign('/'); // la recarga muestra el estado real de la sesión
   });
 
-  account.replaceChildren(...(premiumLink && user.role !== 'admin' ? [premiumLink] : []), name, logoutButton);
+  // D19: el admin ve "Admin" (a /admin) donde los demás ven "Premium".
+  const extra: HTMLAnchorElement[] = [];
+  if (user.role === 'admin') {
+    const adminLink = document.createElement('a');
+    adminLink.className = 'site-header__admin';
+    adminLink.href = '/admin';
+    adminLink.textContent = 'Admin';
+    if (location.pathname === '/admin') adminLink.setAttribute('aria-current', 'page');
+    extra.push(adminLink);
+  } else if (premiumLink) {
+    extra.push(premiumLink);
+  }
+  account.replaceChildren(...extra, name, logoutButton);
 }

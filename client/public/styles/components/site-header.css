@@ -58,8 +58,10 @@
   display: none;
 }
 
-/* "Premium" (D19): solo el icono en pantallas pequeñas (el nombre accesible va en aria-label); con el texto desde 64rem. */
-.site-header__premium {
+/* "Premium" (D19): solo el icono en pantallas pequeñas (el nombre accesible va en aria-label); con el texto desde 64rem.
+   "Admin" (header.ts, solo para el admin) usa el mismo aspecto, con su texto siempre. */
+.site-header__premium,
+.site-header__admin {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +75,8 @@
   font-weight: var(--font-weight-bold);
 }
 
-.site-header__premium[aria-current="page"] {
+.site-header__premium[aria-current="page"],
+.site-header__admin[aria-current="page"] {
   color: var(--color-text);
 }
 

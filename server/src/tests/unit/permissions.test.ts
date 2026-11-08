@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import type { NextFunction, Request, Response } from 'express';
 import { redirectAuthorToStudio, requireAdmin, requireAuth, requireAuthor } from '../../middlewares/roles.js';
 import {
+  adminUserChangeProblem,
   canComment,
   canDeleteOwnComment,
   canLogIn,
@@ -173,4 +174,43 @@ test('RN-11: cada usuario borra solo sus comentarios', () => {
   assert.equal(canDeleteOwnComment(reader, { userId: reader.id }), true);
   assert.equal(canDeleteOwnComment(reader, { userId: author.id }), false);
   assert.equal(canDeleteOwnComment(admin, { userId: reader.id }), false); // el admin modera en el bloque 4
+});
+
+// --- Bloque 4: gestión de usuarios (RN-14, D6, D7) ---
+
+test('RN-14: el admin no cambia su propio rol ni su estado', () => {
+  const admin = { ...reader, id: 9, role: 'admin' as const };
+  assert.equal(adminUserChangeProblem(admin, admin, { role: 'user' }, [9, 10]), 'self');
+  assert.equal(adminUserChangeProblem(admin, admin, { status: 'suspended' }, [9, 10]), 'self');
+});
+
+test('RN-14: el mismo valor que ya tiene la cuenta es un conflicto', () => {
+  const admin = { ...reader, id: 9, role: 'admin' as const };
+  assert.equal(adminUserChangeProblem(admin, reader, { role: 'user' }, [9]), 'unchanged');
+  assert.equal(adminUserChangeProblem(admin, reader, { status: 'active' }, [9]), 'unchanged');
+  assert.equal(adminUserChangeProblem(admin, reader, { isAuthor: false }, [9]), 'unchanged');
+  assert.equal(adminUserChangeProblem(admin, reader, { isAuthor: true }, [9]), null);
+  assert.equal(adminUserChangeProblem(admin, reader, { status: 'suspended' }, [9]), null);
+});
+
+test('RN-14: un admin no es autor (D7): ni autor a un admin ni admin a un autor', () => {
+  const admin = { ...reader, id: 9, role: 'admin' as const };
+  const other = { ...reader, id: 10, role: 'admin' as const };
+  const author = { ...reader, id: 11, isAuthor: true };
+  assert.equal(adminUserChangeProblem(admin, other, { isAuthor: true }, [9, 10]), 'admin_author');
+  assert.equal(adminUserChangeProblem(admin, author, { role: 'admin' }, [9]), 'admin_author');
+  assert.equal(adminUserChangeProblem(admin, reader, { role: 'admin' }, [9]), null);
+});
+
+test('RN-14: nunca deja la plataforma sin admins activos', () => {
+  const admin = { ...reader, id: 9, role: 'admin' as const };
+  const other = { ...reader, id: 10, role: 'admin' as const };
+  // Con otro admin activo además del que actúa, se puede quitar el rol o suspender.
+  assert.equal(adminUserChangeProblem(admin, other, { role: 'user' }, [9, 10]), null);
+  assert.equal(adminUserChangeProblem(admin, other, { status: 'suspended' }, [9, 10]), null);
+  // Si al bloquear las filas solo queda él (el que actúa perdió el rol en otra petición), no.
+  assert.equal(adminUserChangeProblem(admin, other, { role: 'user' }, [10]), 'last_admin');
+  assert.equal(adminUserChangeProblem(admin, other, { status: 'suspended' }, [10]), 'last_admin');
+  // Un admin ya suspendido no cuenta: quitarle el rol no deja a nadie sin admin.
+  assert.equal(adminUserChangeProblem(admin, { ...other, status: 'suspended' }, { role: 'user' }, [9]), null);
 });
