@@ -199,16 +199,15 @@
     column-gap: var(--space-8);
   }
 
-  .author-page__studio > :not(.author-page__nav) {
-    grid-column: 2;
+  /* Dos hijos: la navegación (columna 1, fija al desplazar) y .author-page__main (columna 2, con todas las
+     secciones, se vean o no). */
+  .author-page__main {
     min-width: 0;
   }
 
   .author-page__nav {
     position: sticky;
     top: var(--scroll-offset);
-    grid-column: 1;
-    grid-row: 1 / span 8; /* las 8 secciones de #studio-view que van en la columna 2 */
     display: flex;
     flex-direction: column;
     align-self: start;
