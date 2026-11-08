@@ -894,6 +894,262 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 - Sin códigos nuevos. `error-handler` traduce los de multer: `LIMIT_FILE_SIZE` → 413 `FILE_TOO_LARGE`; `LIMIT_FILE_COUNT`, `LIMIT_UNEXPECTED_FILE`, `LIMIT_FIELD_COUNT` y `LIMIT_PART_COUNT` → 400 `VALIDATION_ERROR`. Sin archivo (incluida una petición que no es `multipart/form-data`) → 400 en `fields.image`.
 - Permiso y limitador van antes de multer: un 401, 403 o 429 no escribe nada en disco. Si multer corta la subida (413 o 400), no queda el archivo parcial en el temporal (lo comprueba un test).
 
+## Contrato de la API del bloque 4
+
+**Borrador del 8-nov, pendiente de aprobación.** (Dn) remite a las decisiones abiertas del informe de arranque del bloque (bitácora).
+
+Admin y Stripe (CU-21, CU-27, CU-32, CU-33, CU-35, CU-36 y CU-40; RN-04, RN-05, RN-09, RN-11 y RN-14 a RN-17). Migración 009 y seed del bloque 4 (`modelo_datos.md`). Sin variables de entorno nuevas (`STRIPE_TEST_CLOCK_ID` ya existe), sin dependencias nuevas y sin códigos de error nuevos. Online, Stripe en modo prueba con el producto, el precio, el portal y el destino del webhook creados en el bloque 1; en local, el pago simulado (`env.ts` lo rechaza en producción).
+
+**Comunes a todo el bloque:**
+
+- Rutas del admin bajo `/api/admin/*`, con `requireAdmin` en su router (D1): sin sesión, 401; sin rol admin, 403 `FORBIDDEN`.
+- Las reglas, en `permissions.ts` y en funciones puras (`*.rules.ts`). El estado se comprueba en el servicio con la fila bloqueada (`SELECT … FOR UPDATE`) dentro de su `withTransaction`: de dos admins que actúan a la vez sobre lo mismo, uno recibe 409.
+- Toda acción auditada escribe en `audit_log` con el mismo `client`. `before` y `after`, solo con los campos cambiados y en camelCase. `entityId` = el id de nuestra tabla; nunca ids de Stripe (cliente, suscripción, evento), `token_version` ni datos de pago.
+- Una acción ya hecha (aprobar lo que no está `pending`, ocultar un oculto, suspender a un suspendido…) → 409 `CONFLICT`, como en el bloque 3.
+- Textos (motivo de rechazo, búsquedas): la regla común del bloque 3 (`utils/text.ts`); límites en `limits.ts`, duplicados en el cliente.
+- Listas del admin: `page` (≥ 1), 50 por página (`ADMIN_PAGE_SIZE`) y respuesta `{ …, page, pageSize, total }`. `q` de 0 a 100 caracteres con `ILIKE`, escapando `%` y `_`.
+
+### Aprobación de contenido (CU-32; RN-05, RN-09, RN-17)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/review` | `requireAdmin` | — | 200 `{ items: ReviewItemDto[], counts: { comics, chapters } }`, del envío más antiguo al más reciente | 401, 403 | — |
+| `POST /api/admin/comics/:slug/approve` | `requireAdmin` | — | 204 | 401, 403, 404, 409 `CONFLICT` (no está `pending`, o está marcada +18), 410 | `comic.approve` |
+| `POST /api/admin/comics/:slug/reject` | `requireAdmin` | `reason` | 204 | 400, 401, 403, 404, 409 (no está `pending`), 410 | `comic.reject` |
+| `POST /api/admin/comics/:slug/chapters/:number/approve` | `requireAdmin` | — | 204 | 401, 403, 404, 409 (no está `pending`, u obra rechazada), 410 (obra retirada) | `chapter.approve` |
+| `POST /api/admin/comics/:slug/chapters/:number/reject` | `requireAdmin` | `reason` | 204 | 400, 401, 403, 404, 409 (no está `pending`, u obra rechazada), 410 | `chapter.reject` |
+
+```ts
+interface ReviewItemDto {
+  kind: 'comic' | 'chapter';
+  comic: {
+    slug: string;
+    title: string;
+    status: 'pending' | 'approved';  // un capítulo puede llegar con su obra aún en revisión (D2)
+    publishedBy: string;             // nombre visible del autor (las importadas nunca están pending)
+    isAdult: boolean;                // RN-17
+    contentWarning: string | null;   // RN-08
+  };
+  chapter: { number: number; title: string; panelCount: number } | null; // null si kind = 'comic'
+  submittedAt: string; // ISO 8601. Obra: created_at; capítulo: updated_at (el envío es su último cambio, RN-05)
+}
+```
+
+- **Cola:** obras `pending` y capítulos vivos `pending` (los `draft` no llegan: CU-32), sin obras ni capítulos retirados ni capítulos de obras rechazadas (D2). Hasta 100 de cada tipo (`REVIEW_QUEUE_MAX`); `counts` da el total real. El admin revisa con la vista previa del bloque 3 (`/obra/:slug` y `/leer/:slug/:numero`).
+- **Aprobar una obra:** de `pending` a `approved`. Con `is_adult = true`, 409 "Las obras +18 no se pueden aprobar en el MVP" (RN-17); el admin la rechaza con motivo, igual que una +18 sin marcar. Auditoría: `before { status: 'pending' }`, `after { status: 'approved' }`.
+- **Rechazar:** `reason` de 1 a 500 caracteres (`REJECTION_REASON_MAX`, D3). Se guarda en `rejection_reason` y el autor lo ve en `GET /api/author/comics`. Auditoría: `before { status: 'pending', rejectionReason: null }`, `after { status: 'rejected', rejectionReason }`. Un capítulo rechazado libera su número (RN-09).
+- **Aprobar un capítulo:** de `pending` a `approved`, con `published_at = now()`. Auditoría: `before { status: 'pending', publishedAt: null }`, `after { status: 'approved', publishedAt }`, el mismo formato que `demo:data`. Se admite con la obra en `pending` (D2): el capítulo se hace público al aprobarse la obra. Con la obra `rejected`, 409.
+- **Retirar cualquier obra:** el `POST /api/comics/:slug/withdraw` del bloque 3, sin cambios. El botón, en `/obra/:slug` y solo para el admin (D4, recortable).
+
+### Moderación de comentarios (CU-33; RN-11)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/comments` | `requireAdmin` | Query: `q`, `status` (`visible` \| `hidden`; sin él, los dos), `page` | 200 `{ comments: AdminCommentDto[], page, pageSize, total }`, del más reciente al más antiguo | 400, 401, 403 | — |
+| `POST /api/admin/comments/:id/hide` | `requireAdmin` | — | 204 | 401, 403, 404, 409 (ya oculto o eliminado), 410 | `comment.hide` |
+| `DELETE /api/admin/comments/:id` | `requireAdmin` | — | 204 | 401, 403, 404, 409 (ya eliminado), 410 | `comment.delete` |
+
+```ts
+interface AdminCommentDto {
+  id: number;
+  body: string;                                // texto plano; el cliente lo pinta con textContent
+  author: { id: number; displayName: string }; // para buscarlo en Usuarios
+  createdAt: string;                           // ISO 8601
+  hiddenAt: string | null;
+  comic: { slug: string; title: string };
+  chapterNumber: number;
+  panelPosition: number;                       // enlace a /leer/:slug/:numero#v-:posición
+}
+```
+
+- **Lista (D5):** sin eliminados ni comentarios de obras o capítulos retirados. `q` busca en el texto y en el nombre del autor. Sin reportes ni prioridad: los reportes son de fase 2 (idea 22).
+- **Ocultar:** `hidden_at = now()`. Deja de verse en la lista pública, en el contador de la viñeta y en el panel del autor, también para quien lo escribió (RN-11). En el MVP no se deshace (la restauración es de fase 2). Auditoría: `before { hiddenAt: null }`, `after { hiddenAt }`, sin el texto, como `comment.delete_own`.
+- **Eliminar:** `deleted_at = now()`, también de uno oculto. Auditoría: `before { deletedAt: null }`, `after { deletedAt }`.
+- **Orden de comprobación:** 404 (no existe), 410 (su obra o su capítulo se retiraron, RN-06) y 409.
+- Solo desde `/admin`: el panel de comentarios del lector no gana botones de moderación (D5).
+
+### Usuarios (CU-35; RN-14, RN-15)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/users` | `requireAdmin` | Query: `q`, `role` (`user` \| `author` \| `admin`), `status` (`active` \| `suspended`), `page` | 200 `{ users: AdminUserDto[], page, pageSize, total }`, del más reciente al más antiguo | 400, 401, 403 | — |
+| `PATCH /api/admin/users/:id` | `requireAdmin` | Exactamente uno de `role` (`user` \| `admin`), `isAuthor` o `status` (`active` \| `suspended`) (D6) | 200 `{ user: AdminUserDto }` | 400, 401, 403 (sobre sí mismo), 404, 409 | `user.role_change`, `user.author_grant`, `user.author_revoke`, `user.suspend` o `user.reactivate` |
+
+```ts
+interface AdminUserDto {
+  id: number;
+  email: string;
+  displayName: string;
+  role: 'user' | 'admin';
+  isAuthor: boolean;
+  status: 'active' | 'suspended';
+  isPremium: boolean;
+  premiumUntil: string | null; // ISO 8601
+  createdAt: string;
+  isSelf: boolean;             // el cliente desactiva sus botones de rol y estado
+}
+```
+
+- **Búsqueda:** `q` en el correo y en el nombre visible; `role=author` filtra por `is_author`.
+- **Reglas** (función pura en `permissions.ts`, con tests de RN-14):
+  - Sobre sí mismo, el admin no cambia su rol ni su estado → 403 "No puedes cambiar tu propio rol ni suspenderte" (RN-14).
+  - El mismo valor que ya tiene → 409.
+  - `isAuthor: true` a un admin, o `role: 'admin'` a un autor → 409 "Un admin no puede ser autor; quita antes el rol de autor" (`users_admin_not_author`, D7).
+  - Quitar el rol a un admin activo o suspenderlo cuando es el único admin activo → 409 (RN-14). Con la primera regla solo puede pasar con dos admins a la vez: se comprueba con las filas de los admins activos bloqueadas.
+- **Sesiones (RN-15, D8):** cambiar `role` o `status` incrementa `token_version` y cierra las sesiones de esa cuenta; `isAuthor`, no, porque los permisos se leen de la BD en cada petición. Un suspendido no entra (403 `ACCOUNT_SUSPENDED`) y su contenido sigue visible.
+- **Quitar el rol de autor:** sus obras siguen publicadas, pero ya no las gestiona (`canManageComic`).
+- **Auditoría:** el campo cambiado en `before` y en `after` (`{ role }`, `{ isAuthor }` o `{ status }`).
+
+### Parámetros de lectura (CU-36; RN-16)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/settings` | `requireAdmin` | — | 200 `{ settings: ReadingSettingsDto }` | 401, 403 | — |
+| `PUT /api/admin/settings` | `requireAdmin` | `ReadingSettingsDto` (los tres) | 200 `{ settings: ReadingSettingsDto }` | 400, 401, 403 | `settings.update` (sin cambios, sin entrada) |
+
+```ts
+interface ReadingSettingsDto {
+  waitMinutes: number; // reading.wait_minutes: 1–1440
+  maxBalance: number;  // reading.max_balance: 1–20
+  refill: number;      // reading.refill: 1–10
+}
+```
+
+- Enteros en el rango de RN-16; fuera → 400 con `fields`. Los rangos, en `limits.ts` y duplicados en el cliente.
+- Una entrada `settings.update` por petición (`entityType 'settings'`, `entityId` null) con solo las claves que cambian; si no cambia nada, 200 sin entrada, como `PATCH /api/me`.
+- Efecto inmediato: la lectura lee los parámetros en cada petición (RN-02, cálculo perezoso). Al bajar el máximo, el saldo guardado se queda en el nuevo máximo al recalcularse, y un saldo lleno (`period_started_at` NULL) sigue al máximo vigente (`modelo_datos.md`).
+- Los capítulos libres (`FREE_CHAPTERS`, RN-01) y la espera del anuncio (`AD_MIN_SECONDS`) no se configuran desde el panel.
+
+### Auditoría (CU-40)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/audit` | `requireAdmin` | Query: `actor`, `action`, `entityType`, `entityId`, `from`, `to`, `page` | 200 `{ entries: AuditEntryDto[], page, pageSize, total }`, de la más reciente a la más antigua (`created_at DESC, id DESC`) | 400, 401, 403 | — |
+
+```ts
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+interface AuditEntryDto {
+  id: string;            // BIGINT, como texto
+  createdAt: string;     // ISO 8601
+  actor: { id: number; displayName: string; email: string } | null; // null = invitado o sistema
+  action: string;        // uno de la tabla de auditoría
+  entityType: string;
+  entityId: string | null;
+  before: JsonValue | null;
+  after: JsonValue | null;
+  ip: string | null;
+  requestId: string;     // une la entrada con los logs
+}
+```
+
+- **Filtros (D9),** combinables con Y:
+  - `actor`: correo exacto, sin distinguir mayúsculas; un correo sin cuenta da la lista vacía.
+  - `action`: uno de la tabla de auditoría; si no, 400.
+  - `entityType`: una tabla auditada (`users`, `comics`, `chapters`, `comments`, `subscriptions`, `settings`, `tags`, `ads`); `entityId`, de 1 a 40 caracteres y solo junto a `entityType`.
+  - `from` y `to`: `YYYY-MM-DD`, días de `Europe/Madrid` con los dos extremos incluidos; `from` posterior a `to` → 400.
+- `before` y `after` se pintan con `textContent` (JSON con sangría). Solo lectura: la restauración es de fase 2.
+
+### Premium: Checkout, portal y pago simulado (CU-21, CU-27; RN-04)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/payments/subscription` | `requireAuth` | — | 200 `{ subscription: SubscriptionDto \| null }` | 401 | — |
+| `POST /api/payments/checkout` | `requireAuth`; no admin | — | 200 `{ url }` | 401, 403 (admin), 409 `CONFLICT` (ya es premium), 503 `SERVICE_UNAVAILABLE` | — (el alta llega por el webhook) |
+| `POST /api/payments/portal` | `requireAuth` | — | 200 `{ url }` | 401, 409 (sin cliente de Stripe), 503 | — |
+| `POST /api/payments/fake/pay` | Solo con `PAYMENTS_DRIVER=fake`; `requireAuth`; no admin | — | 200 `{ user: UserDto }` | 401, 403 (admin), 409 (ya es premium) | `subscription.start` |
+| `POST /api/payments/fake/cancel` | Solo con `PAYMENTS_DRIVER=fake`; `requireAuth` | — | 200 `{ subscription: SubscriptionDto }` | 401, 409 (sin suscripción activa o ya cancelada) | `subscription.cancel` |
+
+```ts
+type SubscriptionStatus =
+  | 'incomplete' | 'incomplete_expired' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
+
+interface SubscriptionDto {
+  provider: 'stripe' | 'fake';
+  status: SubscriptionStatus;
+  currentPeriodEnd: string;   // ISO 8601
+  cancelAtPeriodEnd: boolean; // CU-27: sigue premium hasta currentPeriodEnd
+}
+```
+
+- **Cuál devuelve `GET /api/payments/subscription`:** la `active` con el fin de periodo mayor; si no hay, la más reciente; si no tiene ninguna, `null`.
+- **Driver (D10):** `integrations/payments/` con la misma interfaz para `stripe` y `fake`: `createCheckout(user)`, `createPortal(user)` y `retrieveSubscription(id)`. Es un objeto, para que los tests sustituyan sus métodos con `mock.method` sin red. Con `fake`, checkout y portal devuelven `{ url: '/pago-simulado' }`.
+- **Checkout con Stripe:**
+  - Cliente de Stripe con `apiVersion: '2026-10-28.endive'` en el constructor.
+  - Si el usuario no tiene `stripe_customer_id`, se crea el cliente (correo y `metadata.userId`; con `STRIPE_TEST_CLOCK_ID`, asociado a ese reloj) y se guarda con `UPDATE … WHERE stripe_customer_id IS NULL`. Sin auditoría: no es una acción de la tabla.
+  - Sesión con `mode: 'subscription'`, `STRIPE_PRICE_ID`, `client_reference_id` y `subscription_data.metadata.userId`, `locale: 'es'`, `success_url = APP_URL + '/premium/gracias'` y `cancel_url = APP_URL + '/premium'` (CU-21: cancelar el pago vuelve sin cambios). La tarjeta solo la ve Stripe.
+  - Ya premium → 409 "Ya eres premium; gestiona tu suscripción desde tu perfil". Dos checkouts abiertos a la vez pueden crear dos suscripciones: riesgo aceptado (modo prueba; `premium_until` toma la mayor).
+- **Envío desde el cliente (D11):** el botón va dentro de un `<form method="post">`, pero `premium.ts` lo envía por `api.ts` y navega a `url`; sin JavaScript no hay pago. La CSP `form-action` no cambia.
+- **Portal:** `billingPortal.sessions.create` con el cliente guardado y `return_url = APP_URL + '/perfil'`. Cancelar y cambiar de tarjeta se hacen allí (CU-27). Sin cliente guardado, 409.
+- **Stripe no responde:** 503 `SERVICE_UNAVAILABLE` "El proveedor de pagos no responde"; en el log, el tipo y el código del error de Stripe, nunca el cuerpo.
+- **Sin limitador:** RN-13 no prevé uno para los pagos. Cada usuario tiene como mucho un cliente de Stripe.
+- **Pago simulado:** `pay` crea una suscripción `provider 'fake'`, con `provider_subscription_id 'fake_<uuid>'`, `active` y `current_period_end = now + 30 días` (`FAKE_PREMIUM_DAYS`, que pasa a `limits.ts`), y la aplica con el mismo `applySubscription` que el webhook (RN-04). `cancel` pone `cancel_at_period_end = true`: sigue premium hasta el fin del periodo. No simula portal ni renovación; al vencer, reglas de registrado sin intervención y sin `subscription.expire` (no llega ningún evento).
+- **Admin:** no se hace premium ("Modelo de permisos") → 403; lee sin límites igualmente.
+
+### Webhook de Stripe y `syncSubscription` (RN-04)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `POST /api/stripe/webhook` (bloque 1) | Firma `Stripe-Signature`; sin CSRF ni sesión | Cuerpo crudo del evento | 200 `{ received: true }` | 400 (firma), 413, 503 (Stripe o la BD no responden: Stripe reintenta) | `subscription.start`, `subscription.renew`, `subscription.cancel` o `subscription.expire` (actor `NULL`, D12) |
+
+```ts
+// Lo que se guarda de una suscripción, de Stripe o simulada. De Stripe.Subscription sale con una función pura.
+interface SubscriptionSnapshot {
+  providerSubscriptionId: string;
+  customerId: string | null;   // Stripe; null en fake
+  status: SubscriptionStatus;
+  currentPeriodEnd: Date;      // items.data[0].current_period_end, no la suscripción
+  cancelAtPeriodEnd: boolean;  // cancel_at_period_end, o cancel_at no nulo
+}
+```
+
+Recorrido, después de la verificación de firma del bloque 1:
+
+1. `livemode: true` → aviso en el log y 200, sin tocar nada (D20).
+2. Solo se procesan los seis eventos del plan; el resto, 200 sin tocar nada.
+3. Id de la suscripción: en `checkout.session.completed`, `session.subscription` (solo con `mode = 'subscription'`); en `customer.subscription.*`, el propio objeto; en `invoice.paid` e `invoice.payment_failed`, `invoice.parent.subscription_details.subscription` (versión fijada). Sin suscripción, 200 sin tocar nada.
+4. Si el id del evento ya está en `payment_events`, 200 sin hacer nada (evento repetido).
+5. `syncSubscription(subscriptionId)`: `retrieveSubscription` fuera de la transacción (estado actual, así el orden de llegada no importa; si falla, 503). El usuario sale de `users.stripe_customer_id`. Si no hay ninguno (p. ej. `stripe trigger`), aviso en el log, se registra el evento y 200 (D20).
+6. En una transacción: usuario bloqueado (`FOR UPDATE`, que serializa sus eventos); `INSERT INTO payment_events … ON CONFLICT DO NOTHING` (si no inserta, otro proceso ya lo procesó: `COMMIT` y 200); `applySubscription`, que inserta o actualiza `subscriptions`, recalcula `users.premium_until` y audita las transiciones.
+7. En el log, el `eventId`, el tipo, las acciones aplicadas y el `requestId`; nunca el cuerpo ni la cabecera.
+
+**Transiciones** (función pura `subscriptionTransitions(antes, después)`, con tests de RN-04; una entrada por cada fila que aplique):
+
+| Antes → después | Acción |
+| --- | --- |
+| Sin fila, o no `active` → `active` | `subscription.start` |
+| `active` → `active` con `currentPeriodEnd` mayor | `subscription.renew` |
+| `cancelAtPeriodEnd` de `false` a `true` | `subscription.cancel` |
+| `active` → otro estado (`past_due`, `canceled`, `unpaid`…) | `subscription.expire` (D13) |
+| `cancelAtPeriodEnd` de `true` a `false` (renovar en el portal), o sin cambios | Sin entrada (D14) |
+
+- `before` y `after`: `status`, `currentPeriodEnd` y `cancelAtPeriodEnd`, solo los que cambian; `after` de `subscription.start` lleva además `provider` y `userId`.
+- `premium_until` = el `current_period_end` mayor entre las suscripciones `active` del usuario, o `NULL` (`modelo_datos.md`). Premium solo con `active` y fin de periodo futuro (RN-04): `past_due` ya no lo es.
+
+### Seed del bloque 4
+
+- `modelo_datos.md`, "Bloque 4": con `PAYMENTS_DRIVER=fake`, si `premium@demo.test` no tiene una suscripción `fake` activa con fin de periodo futuro (D15), se le crea una (`system.seed`, `entityType 'subscriptions'`, `after { id, userId }`) y `premium_until` se recalcula con `applySubscription`. El `INSERT` de las cuentas deja de escribir `premium_until`. Con `stripe`, nada: la cuenta premium paga con una tarjeta de prueba.
+- No toca los datos de `demo:data`.
+
+### Páginas
+
+Ya figuran en el mapa de rutas; se implementan en este bloque.
+
+| Ruta | Página | Comprobación en servidor | Códigos |
+| --- | --- | --- | --- |
+| `/premium` | `premium` | — | 200 |
+| `/premium/gracias` | `premium` | Sesión | 200, 302 a `/entrar?next=/premium/gracias` |
+| `/pago-simulado` | `fake-checkout` | Solo con `PAYMENTS_DRIVER=fake` (si no, 404); sesión | 200, 302, 404 |
+| `/admin` | `admin` | Sesión y `role = admin` | 200, 302 a `/entrar?next=/admin`, 403 |
+
+- **`/premium`:** según `GET /api/me` y la suscripción. Invitado: "Regístrate" y "Entrar" con `next=/premium`. Registrado: "Hacerse premium". Premium: fecha de fin (y "Se cancela el …") y "Gestionar suscripción". Admin: sin botón. El precio va fijo en el HTML (D16).
+- **`/premium/gracias`** (misma página, otro estado): consulta `/api/me` cada 2 s hasta ver `isPremium`, como mucho 30 s (constantes). Al confirmarse, muestra la bienvenida de la maqueta (D17); si no, "El pago tarda más de lo normal", con enlace a `/perfil`. El estado se anuncia con `aria-live`.
+- **`/pago-simulado`:** "Pagar" sin premium o "Cancelar suscripción" con una suscripción `fake` activa sin cancelar, y "Volver a Premium". Sin campos de tarjeta.
+- **`/perfil`:** la tarjeta de premium gana "Hacerse premium" o "Gestionar suscripción" (portal o pago simulado) y "Se cancela el …" (D18).
+- **`/admin`:** una sola página con las cinco secciones y anclas de la maqueta (Aprobaciones, Comentarios, Usuarios, Parámetros, Auditoría). Cada sección pide su lista al cargar; los filtros van a la API, no filtran en el cliente. Tablas con `<caption>` y `<th scope>`. Rechazar pide el motivo en un `<dialog>`; eliminar, suspender y quitar un rol piden confirmación. Los cambios se anuncian en una región `aria-live`.
+- **Cabecera:** enlace "Premium" (maqueta) para todos menos el admin, y "Admin" para el admin (D19).
+- **Test Clocks** (`npm run stripe:demo-reset`, contingencia nivel 1): al final del bloque y solo si sobra tiempo (D21).
+
 ## Convenciones, tests y definición de terminado
 
 ### Convenciones
