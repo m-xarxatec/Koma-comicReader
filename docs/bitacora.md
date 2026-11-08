@@ -840,3 +840,27 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - webhook idempotente con `syncSubscription` y la tabla de transiciones a `subscription.*`;
   - seed del bloque 4 y páginas `/premium`, `/premium/gracias`, `/pago-simulado` y `/admin`.
 - **Pendiente (desarrollador):** aprobar el contrato y las decisiones D1–D21, responder a los choques con la maqueta y actualizar la línea "Bloque actual" de CLAUDE.md.
+
+### 2026-11-08 · Bloque 4 · Contrato aprobado y T0–T5: pagos y sus páginas
+- **Decisiones del desarrollador:** contrato aprobado con D1–D21 como se recomendaron y los quince choques resueltos (entre otros: `subscription.resume`, 5 €/mes, `/pago-simulado` con sesión, `fetch` para el checkout y la bienvenida en `/premium/gracias`). La IA marcó el contrato como aprobado y aplicó en él `subscription.resume`, el precio y las respuestas sobre `/admin`.
+- **Aviso de la IA:** el desarrollador indicó que ya había editado el mapa de rutas, la tabla de auditoría, el seed de `modelo_datos.md` y CLAUDE.md, pero `main` (`e8bca66`) no tiene esos cambios. La IA siguió con las respuestas aprobadas y lo deja como pendiente.
+- **Orden:** el seed recalcula `premium_until` con `applySubscription`, así que la T1 (núcleo de pagos) se hizo antes que el seed de la T0.
+- **Resultado:**
+  - **T0:** `009_billing.sql`, copiada de `modelo_datos.md`. El seed ya no escribe `premium_until`; con `fake`, crea la suscripción simulada de `premium@` si no tiene una activa y vigente (D15) y la audita con `system.seed`. `FAKE_PREMIUM_DAYS` pasa a `limits.ts`.
+  - **T1:** `payments.rules.ts` (puras: transiciones con `resume`, campos cambiados, `premium_until`, la suscripción que se muestra, la lectura de una suscripción de Stripe y el id de la suscripción de cada evento), `payments.repository.ts`, y en `users.repository.ts` `stripe_customer_id` y `premium_until`. `applySubscription` bloquea el usuario, inserta o actualiza, recalcula y audita.
+  - **T2:** `integrations/payments/{driver,stripe,fake,index}.ts`. La interfaz tiene un cuarto método, `createCustomer`, para que el servicio guarde el cliente antes del checkout. Rutas `GET /api/payments/subscription` y `POST /api/payments/checkout|portal`; los errores de Stripe dan 503 y en el log solo van su tipo y su código.
+  - **T3:** el webhook hace el recorrido del contrato: `livemode`, los seis tipos, idempotencia con `payment_events`, consulta a Stripe fuera de la transacción, cliente desconocido → 200 y actor `NULL`.
+  - **T4:** `POST /api/payments/fake/pay|cancel` y `/pago-simulado` (con sesión), con «Pagar», «Cancelar suscripción» y «Volver a Premium».
+  - **T5:** `/premium` y `/premium/gracias` (una plantilla con dos vistas, espera de 2 s / 30 s y la mascota de la maqueta). En `/perfil`, «Hacerse premium», «Gestionar suscripción» y «Se cancela el…», y `data-plan="admin"`. En la cabecera, «Premium» para todos menos el admin.
+- **Tests:**
+  - `unit/payments.test.ts` (10, RN-04).
+  - `api/stripe-sync.test.ts` (12, driver stripe con `mock.method`, sin red), con el evento repetido que pide el plan.
+  - `api/payments.test.ts` (7, fake).
+  - Seed (2) y esquema (1).
+  - 5 de páginas en `api/pages.test.ts`.
+  - `stripe-webhook.test.ts` sustituye `retrieveSubscription`: desde este bloque, el webhook consulta Stripe.
+- **Comprobación (IA):**
+  - typecheck, 146 unitarios y 251 de API.
+  - En la BD local, `migrate` aplicó 009 y el seed creó 1 suscripción; los datos de `demo:data` siguen igual (7 obras, 21 capítulos, 30 comentarios) y repetir el seed no crea nada.
+  - Con `curl`, contra un servidor sobre `koma_test`: registro, páginas y estáticos 200, checkout → `/pago-simulado`, pagar → premium, cancelar → `cancelAtPeriodEnd`, repetir → 409. Log sin errores ni avisos.
+- **Sin verificar:** el navegador (360 px, teclado y consola) y Stripe online (Checkout real con tarjeta de prueba, portal y entregas en Workbench).

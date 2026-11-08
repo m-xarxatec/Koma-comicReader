@@ -896,7 +896,7 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 
 ## Contrato de la API del bloque 4
 
-**Borrador del 8-nov, pendiente de aprobación.** (Dn) remite a las decisiones abiertas del informe de arranque del bloque (bitácora).
+Aprobado el 8-nov. (Dn) remite a la decisión aprobada del informe de arranque del bloque (bitácora).
 
 Admin y Stripe (CU-21, CU-27, CU-32, CU-33, CU-35, CU-36 y CU-40; RN-04, RN-05, RN-09, RN-11 y RN-14 a RN-17). Migración 009 y seed del bloque 4 (`modelo_datos.md`). Sin variables de entorno nuevas (`STRIPE_TEST_CLOCK_ID` ya existe), sin dependencias nuevas y sin códigos de error nuevos. Online, Stripe en modo prueba con el producto, el precio, el portal y el destino del webhook creados en el bloque 1; en local, el pago simulado (`env.ts` lo rechaza en producción).
 
@@ -1090,7 +1090,7 @@ interface SubscriptionDto {
 
 | Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
 | --- | --- | --- | --- | --- | --- |
-| `POST /api/stripe/webhook` (bloque 1) | Firma `Stripe-Signature`; sin CSRF ni sesión | Cuerpo crudo del evento | 200 `{ received: true }` | 400 (firma), 413, 503 (Stripe o la BD no responden: Stripe reintenta) | `subscription.start`, `subscription.renew`, `subscription.cancel` o `subscription.expire` (actor `NULL`, D12) |
+| `POST /api/stripe/webhook` (bloque 1) | Firma `Stripe-Signature`; sin CSRF ni sesión | Cuerpo crudo del evento | 200 `{ received: true }` | 400 (firma), 413, 503 (Stripe o la BD no responden: Stripe reintenta) | `subscription.start`, `subscription.renew`, `subscription.cancel`, `subscription.resume` o `subscription.expire` (actor `NULL`, D12) |
 
 ```ts
 // Lo que se guarda de una suscripción, de Stripe o simulada. De Stripe.Subscription sale con una función pura.
@@ -1121,7 +1121,8 @@ Recorrido, después de la verificación de firma del bloque 1:
 | `active` → `active` con `currentPeriodEnd` mayor | `subscription.renew` |
 | `cancelAtPeriodEnd` de `false` a `true` | `subscription.cancel` |
 | `active` → otro estado (`past_due`, `canceled`, `unpaid`…) | `subscription.expire` (D13) |
-| `cancelAtPeriodEnd` de `true` a `false` (renovar en el portal), o sin cambios | Sin entrada (D14) |
+| `cancelAtPeriodEnd` de `true` a `false` (renovar en el portal), con la suscripción `active` | `subscription.resume` (D14) |
+| Sin cambios en `status`, `currentPeriodEnd` ni `cancelAtPeriodEnd` | Sin entrada |
 
 - `before` y `after`: `status`, `currentPeriodEnd` y `cancelAtPeriodEnd`, solo los que cambian; `after` de `subscription.start` lleva además `provider` y `userId`.
 - `premium_until` = el `current_period_end` mayor entre las suscripciones `active` del usuario, o `NULL` (`modelo_datos.md`). Premium solo con `active` y fin de periodo futuro (RN-04): `past_due` ya no lo es.
@@ -1142,11 +1143,11 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 | `/pago-simulado` | `fake-checkout` | Solo con `PAYMENTS_DRIVER=fake` (si no, 404); sesión | 200, 302, 404 |
 | `/admin` | `admin` | Sesión y `role = admin` | 200, 302 a `/entrar?next=/admin`, 403 |
 
-- **`/premium`:** según `GET /api/me` y la suscripción. Invitado: "Regístrate" y "Entrar" con `next=/premium`. Registrado: "Hacerse premium". Premium: fecha de fin (y "Se cancela el …") y "Gestionar suscripción". Admin: sin botón. El precio va fijo en el HTML (D16).
+- **`/premium`:** según `GET /api/me` y la suscripción. Invitado: "Regístrate" y "Entrar" con `next=/premium`. Registrado: "Hacerse premium". Premium: fecha de fin (y "Se cancela el …") y "Gestionar suscripción". Admin: sin botón. El precio va fijo en el HTML: 5 € al mes, el del precio de Stripe (D16).
 - **`/premium/gracias`** (misma página, otro estado): consulta `/api/me` cada 2 s hasta ver `isPremium`, como mucho 30 s (constantes). Al confirmarse, muestra la bienvenida de la maqueta (D17); si no, "El pago tarda más de lo normal", con enlace a `/perfil`. El estado se anuncia con `aria-live`.
 - **`/pago-simulado`:** "Pagar" sin premium o "Cancelar suscripción" con una suscripción `fake` activa sin cancelar, y "Volver a Premium". Sin campos de tarjeta.
 - **`/perfil`:** la tarjeta de premium gana "Hacerse premium" o "Gestionar suscripción" (portal o pago simulado) y "Se cancela el …" (D18).
-- **`/admin`:** una sola página con las cinco secciones y anclas de la maqueta (Aprobaciones, Comentarios, Usuarios, Parámetros, Auditoría). Cada sección pide su lista al cargar; los filtros van a la API, no filtran en el cliente. Tablas con `<caption>` y `<th scope>`. Rechazar pide el motivo en un `<dialog>`; eliminar, suspender y quitar un rol piden confirmación. Los cambios se anuncian en una región `aria-live`.
+- **`/admin`:** una sola página con las cinco secciones y anclas de la maqueta (Aprobaciones, Comentarios, Usuarios, Parámetros, Auditoría). Cada sección pide su lista al cargar; los filtros van a la API, no filtran en el cliente. Tablas con `<caption>` y `<th scope>`. Rechazar pide el motivo en un `<dialog>`; eliminar, suspender y quitar un rol piden confirmación. Los cambios se anuncian en una región `aria-live`. Respecto a la maqueta: la única métrica es «Revisión pendiente» (`counts`); la cola muestra solo lo `pending` (el historial está en la auditoría); «Comentarios recientes» con Ocultar y Eliminar, sin reportes; Usuarios con botones de rol, autor y estado en cada fila; Parámetros, solo los tres de RN-16; Auditoría con la columna «Actor» («Sistema» si es `NULL`) y los filtros de CU-40, con «Desde» y «Hasta»; sin «Ir al estudio del autor».
 - **Cabecera:** enlace "Premium" (maqueta) para todos menos el admin, y "Admin" para el admin (D19).
 - **Test Clocks** (`npm run stripe:demo-reset`, contingencia nivel 1): al final del bloque y solo si sobra tiempo (D21).
 
