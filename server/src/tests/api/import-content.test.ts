@@ -6,7 +6,7 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { pool } from '../../db/pool.js';
 import { createLocalStorage } from '../../integrations/storage/local.js';
-import { importContent, type ImportSummary } from '../../scripts/import-content.js';
+import { importContent, parseImportArgs, type ImportSummary, type ReplaceRequest } from '../../scripts/import-content.js';
 import { IMAGE_KEY_PATTERN } from '../../utils/image.js';
 import { deriveKey } from '../../utils/signing.js';
 
@@ -75,7 +75,7 @@ async function writeFiles(dir: string, files: Files): Promise<void> {
 interface Fixture {
   contentDir: string;
   storageDir: string;
-  run: (requestId?: string) => Promise<ImportSummary>;
+  run: (requestId?: string, replace?: ReplaceRequest) => Promise<ImportSummary>;
 }
 
 // Un content/ con tags.json y las obras dadas (slug → archivos), y un almacenamiento local vacío.
@@ -87,7 +87,11 @@ async function fixture(comics: Record<string, Files>, tagsJson: string | null = 
   if (tagsJson !== null) await writeFile(path.join(contentDir, 'tags.json'), tagsJson);
   for (const [slug, files] of Object.entries(comics)) await writeFiles(path.join(contentDir, slug), files);
   const storage = createLocalStorage({ dir: storageDir, ttlSeconds: 60, signingKey: deriveKey('k'.repeat(48), 'files') });
-  return { contentDir, storageDir, run: (requestId = randomUUID()) => importContent({ contentDir, storage, requestId }) };
+  return {
+    contentDir,
+    storageDir,
+    run: (requestId = randomUUID(), replace?: ReplaceRequest) => importContent({ contentDir, storage, requestId, ...(replace && { replace }) }),
+  };
 }
 
 const storedFiles = (dir: string) => readdir(dir).catch(() => [] as string[]);
@@ -106,7 +110,7 @@ test('RN-18: importa una obra nueva aprobada, con etiquetas, capítulos, viñeta
     },
   });
   const requestId = randomUUID();
-  assert.deepEqual(await run(requestId), { comicsCreated: 1, chaptersAdded: 2, chaptersSkipped: 0, errors: [] });
+  assert.deepEqual(await run(requestId), { comicsCreated: 1, chaptersAdded: 2, chaptersReplaced: 0, chaptersSkipped: 0, errors: [] });
 
   const { rows: comics } = await pool.query(
     `SELECT id, title, author_id, status, is_adult, license_url, content_warning, cover_key, deleted_at FROM comics WHERE slug = $1`,
@@ -178,7 +182,7 @@ test('RN-18: repetir la importación no duplica nada; un capítulo nuevo se aña
   const filesAfterFirst = (await storedFiles(storageDir)).length;
 
   const noop = randomUUID();
-  assert.deepEqual(await run(noop), { comicsCreated: 0, chaptersAdded: 0, chaptersSkipped: 1, errors: [] });
+  assert.deepEqual(await run(noop), { comicsCreated: 0, chaptersAdded: 0, chaptersReplaced: 0, chaptersSkipped: 1, errors: [] });
   assert.equal((await storedFiles(storageDir)).length, filesAfterFirst, 'no vuelve a subir imágenes');
   assert.equal((await pool.query('SELECT 1 FROM audit_log WHERE request_id = $1', [noop])).rowCount, 0, 'sin auditoría si no cambia nada');
 
@@ -188,7 +192,7 @@ test('RN-18: repetir la importación no duplica nada; un capítulo nuevo se aña
     '002/001.webp': webp(800, 700),
   });
   const added = randomUUID();
-  assert.deepEqual(await run(added), { comicsCreated: 0, chaptersAdded: 1, chaptersSkipped: 1, errors: [] });
+  assert.deepEqual(await run(added), { comicsCreated: 0, chaptersAdded: 1, chaptersReplaced: 0, chaptersSkipped: 1, errors: [] });
   assert.equal((await storedFiles(storageDir)).length, filesAfterFirst + 1, 'solo la viñeta nueva');
 
   const { rows } = await pool.query(
@@ -451,4 +455,181 @@ test('Seguridad: sin un tags.json válido no se importa nada', async () => {
   );
   await assert.rejects((await fixture(files, '[{"slug": "x",')).run(), /Importación cancelada: Error al leer tags\.json/);
   assert.equal(await comicExists(slug), false);
+});
+
+// --- Pulido: capítulos vivos y --replace (RN-18, RN-09; D12, D13) ---
+
+interface ChapterRow {
+  id: number;
+  number: number;
+  title: string;
+  live: boolean;
+  panels: number;
+}
+const chaptersOf = async (slug: string) =>
+  (
+    await pool.query<ChapterRow>(
+      `SELECT ch.id, ch.number, ch.title, ch.deleted_at IS NULL AS live, (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panels
+       FROM chapters ch JOIN comics c ON c.id = ch.comic_id WHERE c.slug = $1 ORDER BY ch.number, ch.id`,
+      [slug],
+    )
+  ).rows;
+
+test('RN-18: solo un capítulo vivo se omite; un número con solo capítulos retirados recibe el importado (RN-09)', async () => {
+  const slug = slugOf('vivos');
+  const { run } = await fixture({
+    [slug]: { 'comic.json': comicJson(), '001/001.webp': webp(800, 600), '002/001.webp': webp(800, 600) },
+  });
+  await run();
+  const [, second] = await chaptersOf(slug);
+  await pool.query('UPDATE chapters SET deleted_at = now() WHERE id = $1', [second!.id]);
+
+  assert.deepEqual(await run(), { comicsCreated: 0, chaptersAdded: 1, chaptersReplaced: 0, chaptersSkipped: 1, errors: [] });
+  const rows = await chaptersOf(slug);
+  assert.deepEqual(
+    rows.map(({ number, live }) => [number, live]),
+    [
+      [1, true],
+      [2, false],
+      [2, true],
+    ],
+  );
+});
+
+test('RN-18: --replace retira los capítulos vivos y los reimporta con el mismo número en una transacción, con su auditoría', async () => {
+  const slug = slugOf('reemplazo');
+  const { run, contentDir, storageDir } = await fixture({
+    [slug]: {
+      'comic.json': comicJson({ chapters: { '2': { title: 'Provisional' } } }),
+      '001/001.webp': webp(800, 600),
+      '002/001.webp': webp(800, 600),
+      '002/002.webp': webp(800, 600),
+    },
+  });
+  await run();
+  const [first, old] = await chaptersOf(slug);
+  const filesBefore = await storedFiles(storageDir);
+
+  // Las páginas reales del cap. 2: tres en lugar de dos, y su título.
+  await rm(path.join(contentDir, slug, '002'), { recursive: true });
+  await writeFiles(path.join(contentDir, slug), {
+    'comic.json': comicJson({ chapters: { '2': { title: 'Definitivo' } } }),
+    '002/001.webp': webp(800, 900),
+    '002/002.webp': webp(800, 900),
+    '002/003.webp': webp(800, 900),
+  });
+  const requestId = randomUUID();
+  assert.deepEqual(await run(requestId, new Map([[slug, [2]]])), {
+    comicsCreated: 0,
+    chaptersAdded: 0,
+    chaptersReplaced: 1,
+    chaptersSkipped: 1,
+    errors: [],
+  });
+
+  const rows = await chaptersOf(slug);
+  assert.deepEqual(rows.find((row) => row.id === first!.id), first, 'el cap. 1 no se toca');
+  assert.deepEqual(rows.find((row) => row.id === old!.id), { ...old, live: false }, 'el antiguo queda retirado, con sus viñetas');
+  const replacement = rows.find((row) => row.number === 2 && row.live);
+  assert.deepEqual(replacement && { title: replacement.title, panels: replacement.panels }, { title: 'Definitivo', panels: 3 });
+
+  // Las imágenes antiguas siguen (las referencian las viñetas retiradas); se suben solo las nuevas.
+  const filesAfter = await storedFiles(storageDir);
+  assert.ok(filesBefore.every((file) => filesAfter.includes(file)));
+  assert.equal(filesAfter.length, filesBefore.length + 3);
+
+  interface AuditRow {
+    action: string;
+    actor_id: number | null;
+    entity_type: string;
+    entity_id: string | null;
+    before: unknown;
+    after: unknown;
+    ip: string | null;
+  }
+  const { rows: audits } = await pool.query<AuditRow>(
+    'SELECT action, actor_id, entity_type, entity_id, before, after, ip FROM audit_log WHERE request_id = $1 ORDER BY id',
+    [requestId],
+  );
+  assert.equal(audits.length, 2);
+  const [withdraw, imported] = audits;
+  // deletedAt es la hora de la retirada: se comprueba que es una fecha y se compara el resto entero.
+  const after = withdraw?.after;
+  const deletedAt = typeof after === 'object' && after !== null && 'deletedAt' in after ? after.deletedAt : null;
+  assert.ok(typeof deletedAt === 'string' && !Number.isNaN(Date.parse(deletedAt)), 'after.deletedAt es una fecha ISO');
+  assert.deepEqual(withdraw, {
+    action: 'chapter.withdraw',
+    actor_id: null,
+    entity_type: 'chapters',
+    entity_id: String(old!.id),
+    before: { deletedAt: null },
+    after: { deletedAt },
+    ip: null,
+  });
+  const { rows: comicRows } = await pool.query<{ id: number }>('SELECT id FROM comics WHERE slug = $1', [slug]);
+  assert.deepEqual(imported, {
+    action: 'content.import',
+    actor_id: null,
+    entity_type: 'comics',
+    entity_id: String(comicRows[0]!.id),
+    before: null,
+    after: { slug, chapters: [2], replaced: [old!.id] },
+    ip: null,
+  });
+
+  // Repetir sin --replace no toca nada: el reemplazo ya es el capítulo vivo.
+  assert.deepEqual(await run(), { comicsCreated: 0, chaptersAdded: 0, chaptersReplaced: 0, chaptersSkipped: 2, errors: [] });
+});
+
+test('RN-18: --replace de un capítulo que no está vivo, sin carpeta o de una obra que no está en content/ no retira ni sube nada', async () => {
+  const slug = slugOf('sin-reemplazo');
+  const { run, contentDir, storageDir } = await fixture({
+    [slug]: { 'comic.json': comicJson(), '001/001.webp': webp(800, 600), '002/001.webp': webp(800, 600) },
+  });
+  await run();
+  const before = await chaptersOf(slug);
+  const filesBefore = (await storedFiles(storageDir)).length;
+  await rm(path.join(contentDir, slug, '002'), { recursive: true });
+  await writeFiles(path.join(contentDir, slug), { '003/001.webp': webp(800, 600) });
+
+  const missing = slugOf('no-esta');
+  const cases: [ReplaceRequest, string, string][] = [
+    [new Map([[slug, [3]]]), slug, '--replace: el capítulo 3 no es un capítulo vivo de la obra'],
+    [new Map([[slug, [2]]]), slug, '--replace: el capítulo 2 no tiene carpeta en content/'],
+    [new Map([[missing, [1]]]), missing, '--replace: la obra no tiene carpeta en content/'],
+  ];
+  for (const [replace, failed, message] of cases) {
+    const summary = await run(randomUUID(), replace);
+    assert.deepEqual(summary.errors, [{ slug: failed, message }], message);
+    assert.equal(summary.chaptersReplaced, 0);
+  }
+  // Ningún caso con error retiró nada; solo la última pasada (obra ausente) importó el cap. 3, que es nuevo.
+  const after = await chaptersOf(slug);
+  assert.deepEqual(after.filter((row) => row.number !== 3), before);
+  assert.equal((await storedFiles(storageDir)).length, filesBefore + 1);
+});
+
+test('Seguridad: un --replace mal escrito o un argumento desconocido cancela la importación antes de tocar nada', () => {
+  assert.deepEqual(parseImportArgs([]), new Map());
+  assert.deepEqual(
+    parseImportArgs(['--replace', 'mi-obra:4,2,3', '--replace=otra:1']),
+    new Map([
+      ['mi-obra', [2, 3, 4]],
+      ['otra', [1]],
+    ]),
+  );
+  const invalid: [string[], RegExp][] = [
+    [['--reemplazar', 'a:1'], /Argumento no reconocido/],
+    [['--replace'], /necesita <obra>/],
+    [['--replace', 'mi-obra'], /necesita <obra>/],
+    [['--replace', 'mi-obra:'], /necesita <obra>/],
+    [['--replace', 'mi-obra:2,,3'], /necesita <obra>/],
+    [['--replace', 'Mi_Obra:2'], /nombre de obra no válido/],
+    [['--replace', '../x:2'], /nombre de obra no válido/],
+    [['--replace', 'mi-obra:0'], /número de capítulo no válido/],
+    [['--replace', 'mi-obra:99999999999'], /número de capítulo no válido/],
+    [['--replace', 'mi-obra:2,2'], /aparece dos veces/],
+    [['--replace', 'mi-obra:2', '--replace', 'mi-obra:3'], /aparece dos veces/],
+  ];
+  for (const [args, message] of invalid) assert.throws(() => parseImportArgs(args), message, args.join(' '));
 });

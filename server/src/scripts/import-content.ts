@@ -16,7 +16,11 @@ import { logger } from '../utils/logger.js';
 // Importación de content/ (RN-18; formato en docs/plan_mvp.md, "Contenido desde directorios").
 // - Cada obra se valida entera antes de subir nada; con un error se omite con su motivo y el resto sigue.
 // - Una obra se identifica por su carpeta (= slug). Si ya existe, sus datos no se tocan: solo se añaden
-//   los capítulos nuevos; uno ya existente (en cualquier estado) se omite.
+//   los capítulos nuevos. Se omite un número que ya tiene un capítulo vivo (ni retirado ni rechazado); con solo
+//   retirados o rechazados, el importado es su reemplazo (RN-09).
+// - `--replace <slug>:<n>,<n>…` (una vez por obra): en la transacción de la obra se retiran esos capítulos vivos
+//   (chapter.withdraw, actor NULL) y se importan los de content/ con el mismo número. Si alguno no es un capítulo
+//   vivo de la obra o no tiene carpeta, la obra se omite sin retirar ni subir nada.
 // - Imágenes: firma, 5 MB y 60 por capítulo (RN-10); ancho y alto de la cabecera; claves UUID.ext.
 // - Una transacción por obra, con su entrada content.import (actor NULL = sistema), solo si añade algo.
 // - Ningún enlace simbólico, en ningún nivel: todo lo que se lee está dentro de content/. Los tipos de
@@ -81,15 +85,47 @@ interface Plan {
   existing: comicsRepository.ComicRef | null;
   comic: ComicFile;
   cover: ImageFile | null; // solo si la obra es nueva
-  chapters: PlannedChapter[]; // solo los nuevos
+  chapters: PlannedChapter[]; // los nuevos y los que reemplazan
+  replaced: Map<number, number>; // --replace: número → id del capítulo vivo que se retira
   skipped: number[]; // ya existentes
 }
 
 export interface ImportSummary {
   comicsCreated: number;
-  chaptersAdded: number;
+  chaptersAdded: number; // números nuevos
+  chaptersReplaced: number; // --replace
   chaptersSkipped: number;
   errors: { slug: string; message: string }[];
+}
+
+// --replace: slug de la obra → números de los capítulos que se reemplazan.
+export type ReplaceRequest = ReadonlyMap<string, readonly number[]>;
+
+// Argumentos de la línea de comandos: solo `--replace <slug>:<n>,<n>…` o `--replace=<slug>:<n>,…`, una vez por obra.
+// Cualquier otro argumento, o uno mal formado, cancela la importación antes de tocar nada.
+export function parseImportArgs(args: readonly string[]): Map<string, number[]> {
+  const replace = new Map<string, number[]>();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    let value: string | undefined;
+    if (arg === '--replace') value = args[++i];
+    else if (arg.startsWith('--replace=')) value = arg.slice('--replace='.length);
+    else throw new Error(`Argumento no reconocido: ${arg} (solo --replace <obra>:<n>,<n>…)`);
+    const match = value === undefined ? null : /^([^:]+):(\d+(?:,\d+)*)$/.exec(value);
+    if (!match) throw new Error(`--replace necesita <obra>:<n>,<n>… (por ejemplo, mi-obra:2,3), no ${value ?? 'nada'}`);
+    const slugName = match[1]!;
+    if (!SLUG.test(slugName)) throw new Error(`--replace: nombre de obra no válido: ${slugName}`);
+    if (replace.has(slugName)) throw new Error(`--replace: la obra ${slugName} aparece dos veces; junta sus capítulos en uno`);
+    const numbers: number[] = [];
+    for (const digits of match[2]!.split(',')) {
+      const number = Number(digits);
+      if (!Number.isSafeInteger(number) || number < 1 || number > PG_MAX_INT) throw new Error(`--replace: número de capítulo no válido: ${digits}`);
+      if (numbers.includes(number)) throw new Error(`--replace: el capítulo ${number} de ${slugName} aparece dos veces`);
+      numbers.push(number);
+    }
+    replace.set(slugName, numbers.sort((a, b) => a - b));
+  }
+  return replace;
 }
 
 // Motivo legible de una obra omitida; el resto de errores (BD, almacenamiento) se relanzan tal cual.
@@ -164,7 +200,13 @@ async function readChapter(dir: string, number: number): Promise<ImageFile[]> {
 }
 
 // Valida la carpeta de una obra y decide qué hay que crear. No escribe nada.
-async function planComic(contentDir: string, slugName: string, knownTags: ReadonlySet<string>, requestId: string): Promise<Plan> {
+async function planComic(
+  contentDir: string,
+  slugName: string,
+  knownTags: ReadonlySet<string>,
+  replaceNumbers: readonly number[],
+  requestId: string,
+): Promise<Plan> {
   if (!SLUG.test(slugName)) {
     throw new ContentError('Nombre de carpeta no válido: solo minúsculas, números y guiones entre palabras (sin acentos, espacios ni guiones bajos)');
   }
@@ -209,12 +251,21 @@ async function planComic(contentDir: string, slugName: string, knownTags: Readon
     throw new ContentError('El nombre ya lo usa una obra de un autor: la importación no la modifica');
   }
   if (existing?.deletedAt) throw new ContentError('La obra está retirada (RN-06): no se le añaden capítulos');
-  const existingNumbers = existing ? await chaptersRepository.findChapterNumbers(pool, existing.id) : new Set<number>();
+  const live = existing ? await chaptersRepository.findLiveChapterIds(pool, existing.id) : new Map<number, number>();
+
+  // --replace: se comprueba todo antes de leer imágenes; con un fallo, la obra se omite sin retirar nada.
+  const replaced = new Map<number, number>();
+  for (const number of replaceNumbers) {
+    const chapterId = live.get(number);
+    if (chapterId === undefined) throw new ContentError(`--replace: el capítulo ${number} no es un capítulo vivo de la obra`);
+    if (!chapterDirs.has(number)) throw new ContentError(`--replace: el capítulo ${number} no tiene carpeta en content/`);
+    replaced.set(number, chapterId);
+  }
 
   const chapters: PlannedChapter[] = [];
   const skipped: number[] = [];
   for (const [number, name] of [...chapterDirs.entries()].sort(([a], [b]) => a - b)) {
-    if (existingNumbers.has(number)) {
+    if (live.has(number) && !replaced.has(number)) {
       skipped.push(number);
       continue;
     }
@@ -226,7 +277,7 @@ async function planComic(contentDir: string, slugName: string, knownTags: Readon
   }
 
   const cover = !existing && coverName ? await readImage(path.join(dir, coverName), coverName) : null;
-  return { slug: slugName, existing, comic, cover, chapters, skipped };
+  return { slug: slugName, existing, comic, cover, chapters, replaced, skipped };
 }
 
 async function upload(storage: StorageDriver, image: ImageFile): Promise<string> {
@@ -266,6 +317,28 @@ async function applyPlan(plan: Plan, storage: StorageDriver, requestId: string):
       });
       await comicsRepository.addComicTags(client, comicId, comic.tags);
     }
+    // --replace: primero se retiran los vivos (libera el número del índice único), con su auditoría. Se bloquean
+    // y se comprueba que siguen siendo los planeados; si no, se deshace todo.
+    const replacedIds = [...plan.replaced.values()];
+    if (replacedIds.length > 0) {
+      const locked = await chaptersRepository.lockLiveChapterIds(client, comicId, [...plan.replaced.keys()]);
+      for (const [number, chapterId] of plan.replaced) {
+        if (locked.get(number) !== chapterId) throw new ContentError(`--replace: el capítulo ${number} cambió durante la importación; repítela`);
+      }
+      for (const chapterId of replacedIds) {
+        const deletedAt = await chaptersRepository.withdrawChapter(client, chapterId);
+        await audit.record(client, {
+          action: 'chapter.withdraw',
+          actorId: null,
+          entityType: 'chapters',
+          entityId: String(chapterId),
+          before: { deletedAt: null },
+          after: { deletedAt: deletedAt.toISOString() },
+          ip: null,
+          requestId,
+        });
+      }
+    }
     for (const chapter of chapters) {
       const chapterId = await chaptersRepository.insertApprovedChapter(client, comicId, chapter.number, chapter.title);
       await chaptersRepository.insertPanels(client, chapterId, chapter.panels);
@@ -275,7 +348,7 @@ async function applyPlan(plan: Plan, storage: StorageDriver, requestId: string):
       actorId: null,
       entityType: 'comics',
       entityId: String(comicId),
-      after: { slug: plan.slug, chapters: chapters.map((chapter) => chapter.number) },
+      after: { slug: plan.slug, chapters: chapters.map((chapter) => chapter.number), ...(replacedIds.length > 0 && { replaced: replacedIds }) },
       ip: null,
       requestId,
     });
@@ -325,10 +398,12 @@ export interface ImportOptions {
   contentDir: string; // ruta absoluta
   storage: StorageDriver;
   requestId: string;
+  replace?: ReplaceRequest; // --replace
 }
 
-export async function importContent({ contentDir, storage, requestId }: ImportOptions): Promise<ImportSummary> {
-  logger.info('Importación: destino', { requestId, ...databaseTarget(), storageDriver: storage.name, contentDir });
+export async function importContent({ contentDir, storage, requestId, replace = new Map() }: ImportOptions): Promise<ImportSummary> {
+  const replaceLog = Object.fromEntries(replace);
+  logger.info('Importación: destino', { requestId, ...databaseTarget(), storageDriver: storage.name, contentDir, replace: replaceLog });
 
   // Sin un tags.json válido no se puede validar ninguna obra: se para todo.
   let tags: z.infer<typeof tagsFileSchema>;
@@ -343,7 +418,7 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
   await applyTags(tags, requestId);
   const knownTags = new Set(tags.map((tag) => tag.slug));
 
-  const summary: ImportSummary = { comicsCreated: 0, chaptersAdded: 0, chaptersSkipped: 0, errors: [] };
+  const summary: ImportSummary = { comicsCreated: 0, chaptersAdded: 0, chaptersReplaced: 0, chaptersSkipped: 0, errors: [] };
   const entries = await readdir(contentDir, { withFileTypes: true });
   const comicDirs = entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.')).map((entry) => entry.name).sort();
   for (const entry of entries) {
@@ -358,9 +433,17 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
     }
   }
 
+  // Una obra de --replace sin carpeta en content/ es un error (el comando sale con código 1).
+  for (const slugName of replace.keys()) {
+    if (comicDirs.includes(slugName)) continue;
+    const message = '--replace: la obra no tiene carpeta en content/';
+    summary.errors.push({ slug: slugName, message });
+    logger.warn('Obra omitida', { requestId, slug: slugName, reason: message });
+  }
+
   for (const slugName of comicDirs) {
     try {
-      const plan = await planComic(contentDir, slugName, knownTags, requestId);
+      const plan = await planComic(contentDir, slugName, knownTags, replace.get(slugName) ?? [], requestId);
       summary.chaptersSkipped += plan.skipped.length;
       if (plan.existing && plan.chapters.length === 0) {
         logger.info('Obra sin cambios', { requestId, slug: slugName, skipped: plan.skipped });
@@ -368,12 +451,14 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
       }
       await applyPlan(plan, storage, requestId);
       if (!plan.existing) summary.comicsCreated++;
-      summary.chaptersAdded += plan.chapters.length;
+      summary.chaptersAdded += plan.chapters.length - plan.replaced.size;
+      summary.chaptersReplaced += plan.replaced.size;
       logger.info('Obra importada', {
         requestId,
         slug: slugName,
         created: !plan.existing,
         chapters: plan.chapters.map((chapter) => chapter.number),
+        replaced: [...plan.replaced.keys()],
         skipped: plan.skipped,
       });
     } catch (err) {
@@ -388,6 +473,7 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
     requestId,
     comicsCreated: summary.comicsCreated,
     chaptersAdded: summary.chaptersAdded,
+    chaptersReplaced: summary.chaptersReplaced,
     chaptersSkipped: summary.chaptersSkipped,
     comicsWithErrors: summary.errors.length,
   });
@@ -397,8 +483,9 @@ export async function importContent({ contentDir, storage, requestId }: ImportOp
 if (import.meta.main) {
   const requestId = randomUUID();
   try {
+    const replace = parseImportArgs(process.argv.slice(2)); // antes de tocar la BD o el almacenamiento
     const { storage } = await import('../integrations/storage/index.js');
-    const summary = await importContent({ contentDir: path.resolve(paths.root, env.CONTENT_DIR), storage, requestId });
+    const summary = await importContent({ contentDir: path.resolve(paths.root, env.CONTENT_DIR), storage, requestId, replace });
     if (summary.errors.length > 0) process.exitCode = 1;
   } catch (err) {
     logger.error('Importación fallida', { requestId, err });

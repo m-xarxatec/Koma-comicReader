@@ -8,11 +8,25 @@ export interface NewPanel {
   height: number;
 }
 
-// Números con alguna fila en la obra, en cualquier estado (también retirados o rechazados): la importación
-// no vuelve a crear un capítulo que un admin retiró (RN-18, "un capítulo ya existente se omite").
-export async function findChapterNumbers(db: Queryable, comicId: number): Promise<Set<number>> {
-  const { rows } = await db.query<{ number: number }>('SELECT DISTINCT number FROM chapters WHERE comic_id = $1', [comicId]);
-  return new Set(rows.map((row) => row.number));
+// Capítulos vivos de una obra (ni retirados ni rechazados: la condición del índice único de número), número → id.
+// Un número con solo capítulos retirados o rechazados está libre: el capítulo que llegue lo reemplaza (RN-09).
+export async function findLiveChapterIds(db: Queryable, comicId: number): Promise<Map<number, number>> {
+  const { rows } = await db.query<{ id: number; number: number }>(
+    `SELECT id, number FROM chapters WHERE comic_id = $1 AND deleted_at IS NULL AND status <> 'rejected'`,
+    [comicId],
+  );
+  return new Map(rows.map((row) => [row.number, row.id]));
+}
+
+// Los mismos, solo con esos números y bloqueados (FOR UPDATE) dentro de la transacción que los va a retirar.
+export async function lockLiveChapterIds(db: Queryable, comicId: number, numbers: readonly number[]): Promise<Map<number, number>> {
+  const { rows } = await db.query<{ id: number; number: number }>(
+    `SELECT id, number FROM chapters
+     WHERE comic_id = $1 AND number = ANY($2::int[]) AND deleted_at IS NULL AND status <> 'rejected'
+     FOR UPDATE`,
+    [comicId, numbers],
+  );
+  return new Map(rows.map((row) => [row.number, row.id]));
 }
 
 // Capítulo publicado al crearse: el contenido importado nace aprobado (RN-05, RN-18).

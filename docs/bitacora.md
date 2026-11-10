@@ -1255,3 +1255,32 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - un actor a medias en la auditoría: el 400 con su mensaje;
   - sin JS, «Filtrar» desactivado;
   - una obra +18 en la cola.
+
+### 2026-11-10 · Pulido · Importación: capítulos vivos y `--replace` (RN-18; D12, D13)
+- **Pedido del desarrollador:** que la importación solo cuente como existentes los capítulos vivos, y `--replace` para sustituir capítulos importados (D13), con RN-18 actualizada y sus tests. Sin ejecutarlo sobre ninguna obra real: las páginas de los caps. 2–4 de la segunda obra llegan más adelante.
+- **Resultado:**
+  - `chapters.repository.ts`: fuera `findChapterNumbers`, que contaba los números en cualquier estado.
+    - `findLiveChapterIds` da los vivos con la condición del índice único (`deleted_at IS NULL AND status <> 'rejected'`).
+    - `lockLiveChapterIds` hace lo mismo con `number = ANY($2::int[])` y `FOR UPDATE`.
+    - Un número con solo capítulos retirados o rechazados recibe el importado como reemplazo (RN-09).
+  - `import-content.ts`:
+    - `parseImportArgs` acepta solo `--replace <obra>:<n>,…` o `--replace=…`, una vez por obra. Cualquier otro argumento o uno mal formado cancela antes de tocar la BD o el almacenamiento.
+    - En `planComic`, cada número tiene que ser un capítulo vivo de la obra y tener su carpeta; si no, la obra se omite sin subir ni retirar nada. Una obra de `--replace` sin carpeta en `content/` es un error del resumen.
+    - En la transacción de la obra: se bloquean y se comprueban los capítulos (si cambiaron, ROLLBACK); se retiran, con un `chapter.withdraw` por capítulo (actor `NULL`); se insertan los nuevos con el mismo número; y queda el `content.import` con `replaced`.
+    - El resumen gana `chaptersReplaced`.
+  - README: «Sustituir capítulos ya cargados», con lo que pasa con las lecturas, los comentarios, el abandono, las imágenes y la auditoría, y una fila en Comandos.
+- **Tests:** 4 de API en `import-content.test.ts`:
+  - un capítulo retirado se reimporta y uno vivo se omite;
+  - el reemplazo completo: cap. 1 intacto, el antiguo retirado con sus viñetas, el nuevo con 3 viñetas y su título, las imágenes antiguas conservadas, auditoría exacta, y repetir no cambia nada;
+  - los tres errores sin retirar ni subir nada;
+  - `parseImportArgs` con 11 argumentos no válidos.
+
+  Los tres resúmenes existentes ganan `chaptersReplaced: 0`.
+- **Agente `auditor`:** APTO CON OBSERVACIONES, con 3 hallazgos corregidos:
+  - el test nuevo usaba las filas de la auditoría sin tipo (`any` implícito): ahora van tipadas y se compara la entrada entera;
+  - quedaba el comentario de la función borrada;
+  - el README no nombraba los reemplazados en el resumen.
+
+  Sin test: la rama «el capítulo cambió durante la importación», revisada por el auditor pero sin ejecutar.
+- **Comprobación (IA):** typecheck, 184 unitarios y 310 de API. Por la línea de comandos, `--reemplazar` y `--replace Mal:0` cancelan con código 1 sin conectarse. No se ha ejecutado `--replace` sobre ninguna obra.
+- **Pendiente (desarrollador):** cuando lleguen las páginas, el procedimiento de `plan_mvp.md` («Pulido» → «Reemplazo de capítulos importados»), en local y después online.

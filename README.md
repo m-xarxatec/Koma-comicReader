@@ -169,7 +169,7 @@ npm run seed              # solo la primera vez: cuentas demo y etiquetas base
 npm run content:import
 ```
 
-Cada obra deja una línea (`Obra importada`, `Obra sin cambios` u `Obra omitida` con su motivo) y al final verás un resumen (`Importación terminada`) con las obras creadas, los capítulos añadidos, los ya existentes y las obras con errores. Si alguna tiene errores, el comando termina con código 1. Después, con `npm run dev`, abre:
+Cada obra deja una línea (`Obra importada`, `Obra sin cambios` u `Obra omitida` con su motivo) y al final verás un resumen (`Importación terminada`) con las obras creadas, los capítulos añadidos, los reemplazados (`--replace`), los ya existentes y las obras con errores. Si alguna tiene errores, el comando termina con código 1. Después, con `npm run dev`, abre:
 
 - `http://localhost:3000`: la obra aparece en el catálogo con su portada.
 - `http://localhost:3000/obra/el-amante-de-las-princesas`: título, sinopsis, autor, "Publicado por la plataforma", licencia "Obra propia", etiquetas y el capítulo 1.
@@ -178,6 +178,27 @@ Cada obra deja una línea (`Obra importada`, `Obra sin cambios` u `Obra omitida`
 Puedes repetir la carga sin miedo: no duplica nada. Para añadir un capítulo más adelante, crea la carpeta `002`, añade su título en `comic.json` si quieres y vuelve a ejecutar `npm run content:import`. Los datos de una obra ya cargada (título, sinopsis, etiquetas, portada) no cambian al repetir la carga: solo se añaden capítulos nuevos.
 
 Con un solo capítulo, cualquiera puede leer la obra entera: los capítulos 1 y 2 son libres. Para ver en la demo el anuncio (capítulo 3), la invitación a registrarse (capítulo 4) y el saldo de capítulos, la obra necesita al menos cuatro capítulos.
+
+#### Sustituir capítulos ya cargados
+
+Repetir la carga no cambia un capítulo que ya está publicado. Para cambiar sus páginas (por ejemplo, unas provisionales por las definitivas):
+
+1. Sustituye las imágenes de su carpeta (`002/`, `003/`…) con los comandos del paso 3 y, si quieres, cambia su título en `comic.json`.
+2. Carga indicando la obra y los capítulos que se sustituyen:
+
+   ```bash
+   npm run build
+   npm run content:import -- --replace el-senor-de-los-anillos-de-cebolla:2,3,4
+   ```
+
+En una sola operación se retiran los capítulos publicados con esos números y se cargan los nuevos, que conservan su número y su dirección (`/leer/<obra>/2`). Si algo falla, no se retira nada. Lo que conviene saber:
+
+- Las lecturas, los comentarios y el punto de abandono de los capítulos antiguos se quedan con ellos, retirados: el capítulo nuevo empieza de cero y las estadísticas dejan de contarlos.
+- Las imágenes antiguas no se borran: siguen en el almacenamiento, asociadas a los capítulos retirados.
+- En la auditoría queda un `chapter.withdraw` por capítulo y el `content.import` de la obra, con actor «Sistema».
+- Si un número no es un capítulo publicado de esa obra o no tiene carpeta, la obra se omite con su motivo y no cambia nada.
+
+Online es igual, con `npm run content:import:online -- --replace …` (la primera línea tiene que mostrar Neon sin `-pooler` y `r2`). Antes, puedes ver lo que dejará de contarse en `docs/plan_mvp.md`, sección «Pulido» → «Reemplazo de capítulos importados».
 
 ### 5. Cárgala en la versión online
 
@@ -231,6 +252,7 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | `npm run test:api` | Tests de la API (vacía y vuelve a llenar la base `koma_test`) |
 | `npm run migrate` · `npm run seed` | Tablas y datos demo en local |
 | `npm run seed:online` · `npm run content:import:online` (desde el bloque 2) | Lo mismo, hacia la versión online |
+| `npm run content:import -- --replace <obra>:<n>,…` (y `:online`) | Sustituye capítulos ya cargados por los de `content/` (ver «Sustituir capítulos ya cargados») |
 | `npm run demo:data` | Solo en tu ordenador: la autora demo con 4 obras de 4 capítulos (aprobadas, en revisión, rechazada y borradores), 6 lectores (`lector1…6@demo.test`, con la contraseña de `SEED_READER_PASSWORD`), lecturas de los últimos 14 días y 30 comentarios, para ver el panel del autor. Necesita `migrate` y `seed`. Se puede repetir sin duplicar nada. Se niega a ejecutarse si la base de datos no es local, si es `koma_test`, con `NODE_ENV=production` o sin los drivers locales |
 
 ## Variables
