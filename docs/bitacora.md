@@ -1045,3 +1045,63 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - decidir sobre los hallazgos 1 a 3;
   - hacer el commit, el despliegue y la revisión de la integración de `/admin`;
   - aplicar los cambios de documentación.
+
+### 2026-11-09 · Bloque 4 · Hallazgos 1–3 del auditor del cierre
+- **Pedido del desarrollador:** corregir los hallazgos 1 a 3 en un solo commit, con el test «rechazar dos veces → 409», y cambiar la línea de Test Clocks del contrato.
+- **Resultado:**
+  - **1:** si no hay capítulo vivo con ese número pero hay uno rechazado sin retirar (`hasRejectedChapter`), aprobarlo o rechazarlo da 409 «no está pendiente de revisión», no 404. Va por `chapterReviewProblem`, así que una obra retirada sigue dando 410 antes. De dos admins que rechazan a la vez, el segundo recibe 409, como dice el contrato.
+  - **2:** los tres tests `CU-40:` de `admin-audit.test.ts` pasan a `Seguridad: (CU-40) …`.
+  - **3:** el filtro de actor de la auditoría usa `EMAIL_MAX_CHARS`.
+  - **Contrato:** la línea de Test Clocks dice «recortado el 9-nov (contingencia nivel 1)».
+- **Tests:**
+  - en `admin.test.ts`, el estado `rejected` (409, y 410 si la obra se retiró);
+  - en `admin-review.test.ts`, «rechazar dos veces → 409», también al aprobar el rechazado, con una sola entrada de auditoría;
+  - en `admin-review.test.ts`, «dos admins rechazan a la vez → 204 y 409», repetido 5 veces sin fallos.
+- **Comprobación (IA):** typecheck, 158 unitarios y 284 de API.
+
+### 2026-11-09 · Bloque 4 · Diseño de /admin (Codex), recuperado de su sesión
+- **Pedido del desarrollador:** el worktree `../koma-admin` se borró antes de traer a `main` el trabajo de Codex. Recuperarlo de `~/.codex/sessions` (solo lectura), aplicarlo sin commit, revisarlo frente a lo aprobado y pasar el agente `frontend`.
+- **Recuperación (IA):** la sesión de Codex del 8-nov (`rollout-2026-11-08T12-54-21-…`) guarda un `git diff` completo a mitad del trabajo y, después, cada `apply_patch` y cada script de sangrado.
+  - El diff parte de los mismos blobs que `main` (`7b146c5`, `d928ef3`, `d039bbf` y `1b32af0`). Al aplicarlo da exactamente los blobs que Codex tenía en ese punto.
+  - El resto se reprodujo paso a paso y coincide con las instantáneas de la sesión: el HTML de las líneas 65–335, los dos CSS nuevos completos y el recuento final de líneas (251 añadidas y 178 quitadas en 4 archivos). Está completo.
+- **Lo que trae** (diseño aprobado el 8-nov, con los dos ajustes del desarrollador):
+  - el distintivo «N pendientes», con el total real y oculto en 0;
+  - «N resultados» en las cuatro tablas: la cola cuenta sus filas y las demás, el `total` filtrado de la API;
+  - las tablas, en tarjetas (`admin-data-panel.css`);
+  - «Notas para el equipo», estática y junto a «Parámetros» (`admin-notes.css`);
+  - el aviso de las acciones, flotante y centrado. En móvil se coloca a `--mobile-nav-height` + 20 px + el área segura; desde 64rem, a 22 px del borde. Va por encima del pie y por debajo de la navegación móvil (`--layer-admin-feedback` 50), y el diálogo, abierto con `showModal()`, queda en la capa superior.
+- **Agente `frontend`:** APTO CON OBSERVACIONES, con 3 medios y 5 bajos. Todo lo aprobado se cumple y lo funcional de `53abff6` sigue igual. Corregido:
+  - **1:** sin recortar la tarjeta (el contorno de foco se ve entero), la región de la tabla ya no pinta su fondo sobre las esquinas redondeadas.
+  - **2:** las dos tarjetas usan `.panel-card` (`panel-card.css`, sin tocarlo), y `admin-notes.css` se queda con la rejilla y lo propio de las notas.
+  - **3:** el aviso con texto se queda hasta la siguiente acción, como en la maqueta, y ahora deja su hueco:
+    - el cuerpo gana `--admin-feedback-clearance` (6rem), así que el pie sube por encima del aviso;
+    - `scroll-padding-bottom` evita que el foco de teclado quede debajo.
+  - **4, 5:** el contador y el antetítulo de las notas vuelven a los márgenes de la maqueta.
+  - **6:** la barra de la cola (solo con el contador) no deja una franja vacía mientras carga o si falla.
+  - **7:** los tokens que repetían valores apuntan a `--space-3`, `--space-4` y `--author-section-margin`.
+  - **8:** `pages.test.ts` comprueba el distintivo, los cuatro contadores, las notas y que no esté «Cuando se conecte el backend».
+- **Desvíos aceptados** (aprobados con el diseño):
+  - la cola sin filtros, porque la API no los tiene;
+  - el aviso cambia de posición desde 64rem;
+  - el área segura en el cálculo móvil;
+  - la tarjeta no recorta el contorno de foco.
+- **Comprobación (IA):**
+  - typecheck, 158 unitarios y 284 de API;
+  - 627 tokens, todos usados y definidos.
+
+  Sin probar en el navegador.
+- **Pendiente (desarrollador):**
+  - en el navegador, 360 px, entre 40 y 64rem, desde 64rem y con teclado: esquinas de las tarjetas, aviso sobre la navegación y el pie, diálogo por encima del aviso, dos columnas con el degradado y contadores tras filtrar o tras un 400;
+  - desplegar y comprobar `/admin` online, con 9 entidades en la auditoría.
+
+### 2026-11-10 · Bloque 4 · Cierre: auditor sobre el diff de /admin y demo en contenedores
+- **Pedido del desarrollador:** cerrar lo pendiente del bloque 4 (diseño de `/admin`, hallazgos 1–3 y bitácora) con los comandos git, y probar la demo en contenedores de punta a punta, que no se probaba desde el bloque 1.
+- **Agente `auditor` sobre el diff sin commit:** APTO CON OBSERVACIONES, un hallazgo bajo. El contador de la cola usaba `items.length` (tope de 100 por tipo) y no el total real de `counts`, que sí usaban el distintivo y la métrica. Corregido: `showRows` recibe `counts.comics + counts.chapters`, como las otras tres listas.
+- **Demo en contenedores (IA):** en un proyecto Compose aparte (`koma-e2e`), con volumen y `storage` propios, para no tocar la BD de desarrollo, que comparte volumen con el contenedor `app`. `docker compose up --build`:
+  - migraciones 001–009 desde una BD vacía y `/api/health` en 200;
+  - `seed` y `content:import` desde el host, dos veces: la segunda no crea nada;
+  - por HTTP contra `http://localhost` (puerto 80): login de las 4 cuentas, lectura de invitado con imagen firmada (200 `image/webp`; con la firma alterada, 403), cap. 4 de invitado 401, POST sin `Origin` 403, el autor crea obra y capítulo, sube una imagen (201; un texto disfrazado de PNG, 415) y lo envía, el admin lo ve en la cola y lo aprueba, pago simulado y cancelación, `/admin` (200 admin, 403 lector, 302 invitado) con sus CSS y JS, las cuatro listas del admin y la auditoría con cada acción;
+  - logs del contenedor sin `error` ni `warn`. Después, `down -v` del proyecto de prueba y el contenedor `db` de desarrollo otra vez arriba.
+- **Observación:** la importación escribe también un `content.import` con `entity_type` `tags` cuando cambian las etiquetas; RN-18 solo habla de una entrada por obra.
+- **Comprobación (IA):** typecheck, 158 unitarios y 284 de API.
+- **Pendiente (desarrollador):** la revisión de `/admin` en el navegador (360 px, entre 40 y 64rem, desde 64rem, teclado y consola), los commits, el despliegue y ver `/admin` online. Sin probar `http://koma.local` desde otro dispositivo de la LAN (mDNS).
