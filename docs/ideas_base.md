@@ -46,7 +46,7 @@ Un solo `package.json` en la raíz. Las versiones exactas se fijan al crearlo y 
 | `@aws-sdk/s3-request-presigner` | 3.1160.0 | | |
 
 ## Estructura del proyecto
-Monorepo con `client` y `server`. Un solo servidor Express sirve la API y el frontend. Las carpetas marcadas con fase **no se crean** en el MVP.
+Monorepo con `client` y `server`. Un solo servidor Express sirve la API y el frontend. Las carpetas marcadas con fase **no se crean** antes de la entrega, salvo lo aprobado para el bloque 5 (ver "Decisiones tras el MVP").
 
 ```
 koma/
@@ -69,7 +69,7 @@ koma/
 │   │   │                  # reading/reading.rules.ts: reglas puras de RN-01–03 (sin BD ni reloj) · comics/comics.rules.ts: slug (RN-09)
 │   │   ├── middlewares/   # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   │   ├── integrations/  # storage/ (driver.ts, index.ts, local.ts, r2.ts), payments (stripe, fake)
-│   │   │                  # (fase 2: discord, mailer)
+│   │   │                  # (fase 2: discord —webhook—, mailer)
 │   │   ├── db/            # pool.ts, migrations/, seeds/
 │   │   ├── scripts/       # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo BD local)
 │   │   ├── config/        # env.ts, paths.ts, limits.ts (valores fijos del plan)
@@ -101,7 +101,7 @@ koma/
 - Cada módulo: routes → schema → controller → service → repository.
 - El SQL solo vive en los repositorios; la lógica de negocio, en los servicios.
 - Frontend multipágina en TypeScript compilado con `tsc`, sin bundler. Cada página es `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`. `express.static` solo sirve `/styles`, `/icons` y `client/dist` en `/js`; los HTML salen por el mapa de rutas.
-- Páginas: HTML estático por página + datos desde `/api`. Express comprueba cada ruta en la BD (404/410/301) e inyecta el `requestId` (y las meta etiquetas Open Graph en fase 2).
+- Páginas: HTML estático por página + datos desde `/api`. Express comprueba cada ruta en la BD (404/410/301) e inyecta el `requestId` (y, en el bloque 5, las meta etiquetas Open Graph de `/obra` y `/leer`).
 - Todas las imágenes con URLs firmadas que caducan (2 h). Driver `r2` online; driver `local` (disco + firma HMAC) en desarrollo y como respaldo sin internet.
 - Pagos con driver `stripe` online y driver `fake` (pago simulado mínimo) sin internet; `fake` prohibido en producción.
 - Las obras se añaden copiando carpetas en `content/` y ejecutando `npm run content:import`.
@@ -145,15 +145,36 @@ Doble despliegue con el mismo código; solo cambian las variables de entorno.
 - Editar los datos de una obra aprobada no exige reaprobación; queda en la auditoría.
 - Dedicación prevista: 6 h o más al día, fines de semana incluidos.
 
+## Decisiones tras el MVP (10 de noviembre)
+El MVP (bloques 1–4) se cerró el 9 de noviembre, antes de lo previsto. Se abre un **bloque 5** con funciones de la fase 2 elegidas por su valor en la presentación. Es la única excepción a "nada de las fases 2 y 3".
+
+Orden de construcción:
+
+| # | Función | Idea | Notas |
+|---|---|---|---|
+| 1 | Estadísticas globales del admin (CU-39) | 7 | Solo lectura; parte de las métricas de la maqueta del admin |
+| 2 | Punto de abandono (CU-31, resto) | 7 | Viñeta máxima alcanzada; sin migración (`chapter_reads.last_panel`) |
+| 3 | Open Graph (CU-06) | 1 | Imagen propia de Koma, no la portada |
+| 4 | Enlace «Únete a nuestro Discord» | 10 | Solo el enlace de invitación; el webhook sigue en fase 2 |
+| 5 | Exportar las estadísticas | 7 | Vista de impresión para guardar como PDF; sin dependencias |
+
+- Las funciones 4 y 5 empiezan solo con las tres primeras desplegadas y auditadas.
+- Antes de la primera: cerrar lo pendiente del bloque 4 y probar la demo en contenedores de punta a punta.
+- Quedan fuera antes de la entrega: avatar, PWA, reportes (descartados), todo lo que necesita correo o cambia el login, puntos y logros, restauración y apelaciones, y la fase 3 entera.
+- Actividad simulada antes de la demo (idea 24): excepción a la regla de que los datos de demostración solo viven en local.
+- Test Clocks de Stripe: recortado el 9 de noviembre (contingencia nivel 1).
+
 ## Aprobadas
-Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP.
+Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 5" = se construye antes de la entrega (ver "Decisiones tras el MVP").
 
 ### 1. Compartir la viñeta exacta
 - Enlace profundo que abre el capítulo directamente en la viñeta compartida: `/leer/:slug/:numero#v-:n`.
 - Slug de obra fijo; el capítulo se identifica por número y su reemplazo hereda número y URL.
 - Viñeta = cada imagen del capítulo, en orden.
 - En móvil, menú nativo de compartir (Web Share API); en escritorio, botones y copiar enlace.
-- (Fase 2) Vista previa en redes sociales (Open Graph) con portada, título y capítulo.
+- (Bloque 5) Vista previa en redes sociales (Open Graph) con título y capítulo en `/obra/:slug` y `/leer/:slug/:numero`.
+  - Imagen: una propia de Koma, en PNG y servida desde `/icons`. No se usa la portada: las imágenes de las obras van con URL firmada que caduca.
+  - `og:image` y `og:url` son URLs absolutas, construidas con `APP_URL`.
 
 ### 2. Seguridad visible
 - Contraseñas con hash (bcrypt).
@@ -184,10 +205,18 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP.
 ### 6. PWA (fase 2; descarga en fase 3)
 - Instalable para todos.
 - Descarga de capítulos para lectura sin conexión: exclusiva de premium.
+- No entra antes de la entrega: `http://koma.local` no es un contexto seguro y un service worker con fallos se queda instalado en los dispositivos de la demo.
 
-### 7. Estadísticas (autor en el MVP; resto en fase 2)
-- Autor (MVP): lecturas por obra y por capítulo (total, 7 y 30 días) y comentarios recientes en su panel. (Fase 2) punto de abandono.
-- Admin: estadísticas de toda la plataforma.
+### 7. Estadísticas (autor en el MVP; admin, punto de abandono y exportación en el bloque 5)
+- Autor (MVP): lecturas por obra y por capítulo (total, 7 y 30 días) y comentarios recientes en su panel.
+- (Bloque 5) Punto de abandono en el panel del autor:
+  - Se guarda la viñeta máxima alcanzada por cada lector registrado (no la última vista). Los invitados no cuentan.
+  - Por capítulo: lectores que llegan al final (en número y en porcentaje) y viñeta donde más se abandona.
+  - El progreso solo actualiza una lectura ya registrada; nunca la crea. El valor solo sube.
+  - Fuera del cálculo: el admin y el autor dueño.
+  - El observador del lector es pasivo: si el envío falla, la lectura sigue igual.
+- (Bloque 5) Admin: estadísticas de toda la plataforma (CU-39), solo lectura y sin datos personales. Parten de las métricas de la maqueta del admin: usuarios por rol y estado, premium activos, lecturas (total, 7 y 30 días; invitados y registrados por separado), obras más leídas y comentarios recientes.
+- (Bloque 5) Exportar las estadísticas del admin: vista de impresión (`@media print`) que el navegador guarda como PDF. Sin dependencias nuevas ni generación de archivos en el servidor.
 
 ### 8. Zona +18 (fase 3; campo `is_adult` en el MVP)
 - Pestaña visible solo para usuarios con edad verificada (vacía en la demo).
@@ -198,13 +227,14 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP.
 - Suscripción mensual con Stripe en modo de prueba (tarjetas de prueba, sin dinero real).
 - Al completar el pago, el usuario sube a premium; el estado se actualiza por webhook.
 - Cancelación y cambio de tarjeta en el portal de cliente de Stripe.
-- Renovación demostrada en vivo con Test Clocks de Stripe, solo si queda tiempo.
+- Renovación con Test Clocks de Stripe: recortada el 9 de noviembre. La demo muestra alta, portal, cancelación y renovación desde el portal.
 - Sin internet: pago simulado mínimo (pagar y cancelar) por el mismo servicio.
 - La plataforma nunca maneja datos de tarjeta.
 
-### 10. Discord (fase 2)
+### 10. Discord (enlace en el bloque 5; webhook en fase 2)
 - Canal real de la comunidad.
-- Webhook que publica automáticamente cada capítulo nuevo aprobado.
+- (Bloque 5) Enlace «Únete a nuestro Discord» que abre la invitación en otra pestaña. Sin la URL de invitación configurada, el enlace no se muestra. Sin internet no abre nada, y la plataforma sigue funcionando igual.
+- (Fase 2) Webhook que publica automáticamente cada capítulo nuevo aprobado.
 
 ### 11. Anuncios falsos
 - Anuncios divertidos de marcas inventadas (nunca marcas reales).
@@ -248,10 +278,15 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP.
 ### 21. Eventos (fase 3)
 - El admin crea eventos: sorteos (tableta de dibujo, pase premium), concursos de dibujo y convocatorias de obras.
 
-### 22. Reportes (fase 2)
-- Botón de reportar en obras, contenidos, usuarios y comentarios.
-- Todo reporte llega al panel del admin para su revisión y aprobación.
+### 22. Reportes (descartada el 10 de noviembre)
+- Botón de reportar en obras, contenidos, usuarios y comentarios, con revisión en el panel del admin.
+- No se construye: la moderación ya se hace desde el panel del admin.
 
 ### 23. Importación de obras desde directorios
 - El desarrollador copia cada obra en `content/<slug>/` con `comic.json`, portada y una carpeta por capítulo.
 - `npm run content:import` valida, sube las imágenes y publica las obras ya aprobadas; es idempotente.
+
+### 24. Actividad simulada para la demo (antes de la presentación)
+- Un par de bots que actúan como usuarios reales, para que la plataforma muestre actividad: lecturas, comentarios y datos en las estadísticas y en el punto de abandono.
+- Es una excepción aprobada a la regla de que los datos de demostración solo viven en local: Koma se trata como producto real, pero es una demo de clase.
+- Forma por definir (cuentas, qué acciones hacen y en qué entorno) después del bloque 5.
