@@ -1105,3 +1105,41 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Observación:** la importación escribe también un `content.import` con `entity_type` `tags` cuando cambian las etiquetas; RN-18 solo habla de una entrada por obra.
 - **Comprobación (IA):** typecheck, 158 unitarios y 284 de API.
 - **Pendiente (desarrollador):** la revisión de `/admin` en el navegador (360 px, entre 40 y 64rem, desde 64rem, teclado y consola), los commits, el despliegue y ver `/admin` online. Sin probar `http://koma.local` desde otro dispositivo de la LAN (mDNS).
+
+### 2026-11-10 · Bloque 5 · Documentación aprobada y CU-39: estadísticas globales (RN-20)
+- **Pedido del desarrollador:** pasar a `docs/` la propuesta del bloque 5 con sus decisiones (D1–D13) y correcciones, y construir CU-39 completa (constructor → tests → `frontend` → auditor).
+- **Documentación:**
+  - `plan_mvp.md`: «Fase 2 · bloque 5», tabla de fase 2 (los reportes salen: descartados), RN-13 (progreso 60/min), RN-18 (`content.import` de `tags`), RN-20, RN-21, `DISCORD_INVITE_URL`, convención de `APP_URL`, Open Graph en el mapa de rutas, calendario, contingencia del 14, Decisiones (avatar, PWA y webhook de Discord siguen en fase 2) y el «Contrato de la API del bloque 5».
+  - `CLAUDE.md`: tres sustituciones; sigue con 149 líneas. También `casos_de_uso.md`, `modelo_datos.md` (con el riesgo de `#v-n`) y el README.
+- **Choque con el código (corrección 1):** `env.ts` termina el proceso si falta una variable y `npm test` no carga `.env`. Por eso `layout.ts` no lee `env`: la URL de Discord le llegará como parámetro de `renderTemplate` desde `page.ts` y `error-handler.ts`.
+- **CU-39:**
+  - Servidor: `GET /api/admin/stats`, con `requireAdmin` y `no-store`. El SQL está en `admin.repository.ts`, nuevo (cuentas, lecturas y obras más leídas). `buildAdminStats` está en `admin.rules.ts`: el total es la suma de las cuentas activas por rol y las suspendidas, y las lecturas son invitados más registrados. Los días van con `MADRID_TODAY` y `addReads`, que ahora se exportan.
+  - Cliente: las cuatro métricas de la maqueta (D1–D3), «Estadísticas» como primera ancla (D5), cuatro tablas y la vista de impresión (`admin-stats.css`). La cabecera de informe va sin logo: el logo es blanco sobre transparente y sobre blanco no se lee.
+- **Tests:**
+  - 3 unitarios `RN-20:`.
+  - `admin-stats.test.ts`, 7 de API. Como los archivos de test corren en paralelo sobre `koma_test`, no se comparan cifras absolutas: cada test lee las estadísticas dentro de una transacción REPEATABLE READ, escribe sus datos, compara la diferencia y hace ROLLBACK. Cubren:
+    - los bordes de los días de Madrid (el primer instante del día 7 y del 30, y un segundo antes);
+    - las 24 h ± 1 min;
+    - los moderados distintos;
+    - el desempate del top por slug;
+    - que lo retirado no cuente.
+  - `pages.test.ts` comprueba las seis secciones, las ocho tablas con `caption`, las métricas y el botón de impresión.
+- **Agente `frontend`:** APTO CON OBSERVACIONES, con 6 hallazgos, todos corregidos:
+  - 4 columnas desde 40rem y 1rem de hueco desde 64rem, como la maqueta;
+  - sin margen extra;
+  - BEM `.admin-stats__metrics`;
+  - `aria-describedby` en el botón;
+  - el mensaje de error sale al imprimir;
+  - la fecha, con `timeZone: 'Europe/Madrid'`;
+  - el contrato pasa a «cuatro tablas» (pendiente de aprobación).
+- **Agente `auditor`:** APTO CON OBSERVACIONES, sin nada bloqueante. Corregido: CU-39 pasa a «Fase: 2 (bloque 5)». Pendientes de decisión del desarrollador:
+  - la vista de impresión ya está hecha dentro de CU-39, aunque el orden aprobado la dejaba para después de B–D;
+  - las «cuatro tablas»;
+  - D9 (Open Graph en `/`) aún no está en `ideas_base.md`;
+  - `DISCORD_INVITE_URL` está en el README antes que en `.env.example` y `env.ts`, que llegan con el enlace de Discord.
+- **Comprobación (IA):**
+  - typecheck, 161 unitarios y 291 de API;
+  - `/api/admin/stats` contra la BD local, desde un servidor en el puerto 3999, ya parado, con los logs sin errores.
+
+  Sin probar en el navegador ni online.
+- **Pendiente (desarrollador):** las decisiones anteriores; `/admin` a 360 px, entre 40 y 64rem, desde 64rem y con teclado; la vista previa de impresión en Chrome y Firefox; el commit, el despliegue y `/api/admin/stats` contra Neon.
