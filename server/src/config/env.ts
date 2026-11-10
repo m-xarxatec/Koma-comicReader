@@ -16,12 +16,18 @@ const originList = z
     ),
   );
 
+// Invitación de Discord (idea 10; contrato del bloque 5, D12): solo https y host discord.gg o discord.com. Se
+// guarda serializada por URL (codifica, p. ej., las llaves), y layout.ts la escapa al inyectarla en el pie.
+const discordInvite = z
+  .url({ protocol: /^https$/, hostname: /^discord\.(gg|com)$/, error: 'Debe ser una invitación https de discord.gg o discord.com' })
+  .transform((value) => new URL(value).href);
+
 const schema = z
   .object({
     NODE_ENV: z.enum(['development', 'production']),
     PORT: z.coerce.number().int().min(1).max(65535),
     HOST: z.string(),
-    APP_URL: z.url({ protocol: /^https?$/ }), // URLs absolutas que salen de la app (retorno de Stripe)
+    APP_URL: z.url({ protocol: /^https?$/ }), // URLs absolutas que salen de la app (retorno de Stripe y Open Graph)
     ALLOWED_ORIGINS: originList.optional(), // control CSRF; si falta, el origen de APP_URL
     DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
     JWT_SECRET: secret,
@@ -32,6 +38,7 @@ const schema = z
     SIGNED_URL_TTL_SECONDS: positiveInt,
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']),
     CONTENT_DIR: z.string(),
+    DISCORD_INVITE_URL: discordInvite.optional(), // sin ella, el pie no muestra el enlace y «Comunidad» sigue en «Próximamente» (D13)
 
     STORAGE_DRIVER: z.enum(['local', 'r2']),
     STORAGE_LOCAL_DIR: z.string(),

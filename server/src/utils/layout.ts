@@ -1,14 +1,17 @@
-import { fillTemplate } from './html.js';
+import { escapeHtml, fillTemplate } from './html.js';
 
 // Cabecera, pie y navegación comunes, en un solo sitio. Las plantillas de client/public (pages/ y errors/)
-// llevan los marcadores <!-- @head --> (dentro de <head>), <!-- @header --> y <!-- @footer -->, y todas las
-// páginas (sendPage, plantillas de error y la página genérica del error-handler) pasan por renderTemplate.
+// llevan los marcadores <!-- @head --> (dentro de <head>), <!-- @header --> y <!-- @footer --> (y home.html,
+// además, <!-- @community -->), y todas las páginas (sendPage, plantillas de error y la página genérica del
+// error-handler) pasan por renderTemplate.
 // Son fragmentos fijos, sin datos de usuario: el nombre del usuario lo pinta components/header.ts con
 // textContent. La página activa (aria-current) la marca el servidor, así funciona también sin JavaScript.
 
 export const HEAD_MARKER = '<!-- @head -->';
 export const HEADER_MARKER = '<!-- @header -->';
 export const FOOTER_MARKER = '<!-- @footer -->';
+// Solo en home.html: el acceso rápido «Comunidad» (enlace de Discord, contrato del bloque 5, D13).
+export const COMMUNITY_MARKER = '<!-- @community -->';
 
 // Excepción a "todo valor visual en variables.css": theme-color es un <meta> y el navegador no lee custom
 // properties en él. Repite --color-bg (tests/unit/layout.test.ts comprueba que coinciden). Un solo valor:
@@ -71,10 +74,18 @@ function siteHeader(path: string): string {
   <script type="module" src="/js/components/header.js"></script>`;
 }
 
-function siteFooter(path: string): string {
+// Enlace de Discord (idea 10; D12 y D13): la URL llega validada por env.ts (https, discord.gg o discord.com) y se
+// escapa aquí. layout.ts no importa env (los tests unitarios no cargan .env): se la pasan page.ts y error-handler.ts.
+const NEW_TAB = ' target="_blank" rel="noopener noreferrer"';
+const NEW_TAB_NOTE = '<span class="visually-hidden"> (se abre en otra pestaña)</span>';
+
+function siteFooter(path: string, discordUrl: string | null): string {
+  const discord = discordUrl
+    ? `\n      <p><a class="site-footer__link" href="${escapeHtml(discordUrl)}"${NEW_TAB}>Únete a nuestro Discord${NEW_TAB_NOTE}</a></p>`
+    : '';
   return `<footer class="site-footer">
     <div class="site-footer__inner container">
-      <p>© 2026 Koma · Hecho para quienes viven entre viñetas.</p>
+      <p>© 2026 Koma · Hecho para quienes viven entre viñetas.</p>${discord}
       <p>Proyecto final de XarxaTec Activa.</p>
     </div>
   </footer>
@@ -83,15 +94,26 @@ function siteFooter(path: string): string {
   </nav>`;
 }
 
+// «Comunidad» de la portada: con URL, enlace a la invitación en otra pestaña; sin ella, «Próximamente» (D13).
+function communityLink(discordUrl: string | null): string {
+  const copy = '<span class="quick-link__copy"><strong>Comunidad</strong><small>Comenta y comparte</small>';
+  if (!discordUrl) {
+    return `<span class="quick-link quick-link--soon">${icon('users', 'icon quick-link__icon')}${copy}<small class="quick-link__soon">Próximamente</small></span></span>`;
+  }
+  return `<a class="quick-link" href="${escapeHtml(discordUrl)}"${NEW_TAB}>${icon('users', 'icon quick-link__icon')}${copy}${NEW_TAB_NOTE}</span>${icon('arrow', 'icon quick-link__arrow')}</a>`;
+}
+
 // `path` es la ruta de la petición (req.path): marca con aria-current el enlace de la página actual.
-export function applyLayout(template: string, path = ''): string {
+// `discordUrl`: DISCORD_INVITE_URL ya validada, o null sin ella.
+export function applyLayout(template: string, path = '', discordUrl: string | null = null): string {
   return template
     .replaceAll(HEAD_MARKER, SITE_HEAD)
     .replaceAll(HEADER_MARKER, siteHeader(path))
-    .replaceAll(FOOTER_MARKER, siteFooter(path));
+    .replaceAll(FOOTER_MARKER, siteFooter(path, discordUrl))
+    .replaceAll(COMMUNITY_MARKER, communityLink(discordUrl));
 }
 
 // Cabecera, pie y navegación, y después los valores ({{clave}}), siempre escapados.
-export function renderTemplate(template: string, values: Readonly<Record<string, string>>, path = ''): string {
-  return fillTemplate(applyLayout(template, path), values);
+export function renderTemplate(template: string, values: Readonly<Record<string, string>>, path = '', discordUrl: string | null = null): string {
+  return fillTemplate(applyLayout(template, path, discordUrl), values);
 }

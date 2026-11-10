@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Response } from 'express';
+import { env } from '../config/env.js';
 import { paths } from '../config/paths.js';
 import { renderTemplate } from './layout.js';
 
@@ -15,5 +16,5 @@ export async function sendPage(res: Response, page: PageName, values: Readonly<R
   res
     .set('Cache-Control', 'no-store')
     .type('html')
-    .send(renderTemplate(template, { ...values, requestId: res.locals.requestId }, res.req.path));
+    .send(renderTemplate(template, { ...values, requestId: res.locals.requestId }, res.req.path, env.DISCORD_INVITE_URL ?? null));
 }

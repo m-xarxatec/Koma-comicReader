@@ -14,9 +14,22 @@
   font-size: var(--font-size-xs);
 }
 
+/* Enlace de Discord (solo con DISCORD_INVITE_URL): como en la maqueta, color del pie y subrayado al pasar el
+   puntero; área táctil de 44 px. */
+.site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+.site-footer__link:hover {
+  text-decoration: underline;
+}
+
 @media (min-width: 40rem) {
   .site-footer__inner {
     flex-direction: row;
+    align-items: center;
   }
 }
 

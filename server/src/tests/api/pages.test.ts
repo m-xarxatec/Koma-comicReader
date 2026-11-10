@@ -82,6 +82,13 @@ test('Seguridad: / sirve home.html con el requestId de la petición inyectado', 
   assert.ok(!html.includes('{{'), 'sin marcadores sin rellenar');
 });
 
+test('Seguridad: sin DISCORD_INVITE_URL, la portada deja «Comunidad» en «Próximamente» y el pie sin enlace', async () => {
+  const html = await (await get('/')).text();
+  assert.ok(!html.includes('Únete a nuestro Discord'));
+  assert.ok(!html.includes('target="_blank"'));
+  assert.equal(html.split('Próximamente').length - 1, 2, '«Comunidad» y «Tutoriales»');
+});
+
 test('Seguridad: Referrer-Policy es same-origin (con no-referrer, un formulario POST enviaría Origin: null)', async () => {
   for (const path of ['/', '/api/no-existe', '/no-existe']) { // página, error JSON de la API y página de error
     const res = await get(path);

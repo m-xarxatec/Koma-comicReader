@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { ErrorRequestHandler, Request } from 'express';
 import multer from 'multer';
+import { env } from '../config/env.js';
 import { MAX_IMAGE_BYTES } from '../config/limits.js';
 import { paths } from '../config/paths.js';
 import { AppError, INTERNAL_ERROR_MESSAGE, type ErrorCode } from '../utils/app-error.js';
@@ -117,7 +118,7 @@ const GENERIC_PAGE = `<!doctype html>
 `;
 
 function genericPage(error: AppError, requestId: string, requestPath: string): string {
-  return renderTemplate(GENERIC_PAGE, { status: String(error.status), message: error.message, requestId }, requestPath);
+  return renderTemplate(GENERIC_PAGE, { status: String(error.status), message: error.message, requestId }, requestPath, env.DISCORD_INVITE_URL ?? null);
 }
 
 // Página del código (o 500.html para otros 5xx), con cabecera, pie y {{requestId}} escapado; si no
@@ -127,7 +128,7 @@ async function renderErrorPage(error: AppError, requestId: string, requestPath: 
   if (page !== null) {
     try {
       const template = await readFile(path.join(paths.publicDir, 'errors', `${page}.html`), 'utf8');
-      return renderTemplate(template, { requestId }, requestPath);
+      return renderTemplate(template, { requestId }, requestPath, env.DISCORD_INVITE_URL ?? null);
     } catch (err) {
       if ((err as { code?: unknown }).code !== 'ENOENT') logger.warn('Plantilla de error ilegible', { requestId, page, err });
     }
