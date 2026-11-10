@@ -101,7 +101,7 @@ koma/
 - Cada módulo: routes → schema → controller → service → repository.
 - El SQL solo vive en los repositorios; la lógica de negocio, en los servicios.
 - Frontend multipágina en TypeScript compilado con `tsc`, sin bundler. Cada página es `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`. `express.static` solo sirve `/styles`, `/icons` y `client/dist` en `/js`; los HTML salen por el mapa de rutas.
-- Páginas: HTML estático por página + datos desde `/api`. Express comprueba cada ruta en la BD (404/410/301) e inyecta el `requestId` (y, en el bloque 5, las meta etiquetas Open Graph de `/obra` y `/leer`).
+- Páginas: HTML estático por página + datos desde `/api`. Express comprueba cada ruta en la BD (404/410/301) e inyecta el `requestId` (y, en el bloque 5, las meta etiquetas Open Graph de `/`, `/obra` y `/leer`).
 - Todas las imágenes con URLs firmadas que caducan (2 h). Driver `r2` online; driver `local` (disco + firma HMAC) en desarrollo y como respaldo sin internet.
 - Pagos con driver `stripe` online y driver `fake` (pago simulado mínimo) sin internet; `fake` prohibido en producción.
 - Las obras se añaden copiando carpetas en `content/` y ejecutando `npm run content:import`.
@@ -152,13 +152,12 @@ Orden de construcción:
 
 | # | Función | Idea | Notas |
 |---|---|---|---|
-| 1 | Estadísticas globales del admin (CU-39) | 7 | Solo lectura; parte de las métricas de la maqueta del admin |
+| 1 | Estadísticas globales del admin (CU-39) y su exportación | 7 | Solo lectura; parte de las métricas de la maqueta del admin. Exportación: vista de impresión para guardar como PDF, sin dependencias |
 | 2 | Punto de abandono (CU-31, resto) | 7 | Viñeta máxima alcanzada; sin migración (`chapter_reads.last_panel`) |
-| 3 | Open Graph (CU-06) | 1 | Imagen propia de Koma, no la portada |
+| 3 | Open Graph (CU-06) | 1 | En `/`, `/obra` y `/leer`; imagen propia de Koma, no la portada |
 | 4 | Enlace «Únete a nuestro Discord» | 10 | Solo el enlace de invitación; el webhook sigue en fase 2 |
-| 5 | Exportar las estadísticas | 7 | Vista de impresión para guardar como PDF; sin dependencias |
 
-- Las funciones 4 y 5 empiezan solo con las tres primeras desplegadas y auditadas.
+- El enlace de Discord empieza solo con las tres primeras desplegadas y auditadas.
 - Antes de la primera: cerrar lo pendiente del bloque 4 y probar la demo en contenedores de punta a punta.
 - Quedan fuera antes de la entrega: avatar, PWA, reportes (descartados), todo lo que necesita correo o cambia el login, puntos y logros, restauración y apelaciones, y la fase 3 entera.
 - Actividad simulada antes de la demo (idea 24): excepción a la regla de que los datos de demostración solo viven en local.
@@ -172,7 +171,7 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 - Slug de obra fijo; el capítulo se identifica por número y su reemplazo hereda número y URL.
 - Viñeta = cada imagen del capítulo, en orden.
 - En móvil, menú nativo de compartir (Web Share API); en escritorio, botones y copiar enlace.
-- (Bloque 5) Vista previa en redes sociales (Open Graph) con título y capítulo en `/obra/:slug` y `/leer/:slug/:numero`.
+- (Bloque 5) Vista previa en redes sociales (Open Graph) en `/` (texto fijo), `/obra/:slug` (título y sinopsis) y `/leer/:slug/:numero` (obra y capítulo).
   - Imagen: una propia de Koma, en PNG y servida desde `/icons`. No se usa la portada: las imágenes de las obras van con URL firmada que caduca.
   - `og:image` y `og:url` son URLs absolutas, construidas con `APP_URL`.
 
@@ -215,8 +214,10 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
   - El progreso solo actualiza una lectura ya registrada; nunca la crea. El valor solo sube.
   - Fuera del cálculo: el admin y el autor dueño.
   - El observador del lector es pasivo: si el envío falla, la lectura sigue igual.
-- (Bloque 5) Admin: estadísticas de toda la plataforma (CU-39), solo lectura y sin datos personales. Parten de las métricas de la maqueta del admin: usuarios por rol y estado, premium activos, lecturas (total, 7 y 30 días; invitados y registrados por separado), obras más leídas y comentarios recientes.
-- (Bloque 5) Exportar las estadísticas del admin: vista de impresión (`@media print`) que el navegador guarda como PDF. Sin dependencias nuevas ni generación de archivos en el servidor.
+- (Bloque 5) Admin: estadísticas de toda la plataforma (CU-39), solo lectura y sin datos personales.
+  - Cuatro métricas de la maqueta: revisión pendiente, comentarios de 7 días con los moderados (sustituye a «Comentarios reportados»), usuarios activos (con alguna lectura en los últimos 30 días) y eventos recientes de 24 h.
+  - Sección «Estadísticas» con cuatro tablas: usuarios por rol y estado, lecturas (total, 7 y 30 días; invitados y registrados por separado), obras más leídas, y actividad y catálogo (premium activos, obras y capítulos publicados, comentarios).
+- (Bloque 5) Exportar las estadísticas del admin: vista de impresión (`@media print`) que el navegador guarda como PDF, con cabecera «Koma · Informe de la plataforma» y la fecha. Solo se imprime la sección «Estadísticas». Sin dependencias nuevas ni generación de archivos en el servidor. Se construye junto con CU-39.
 
 ### 8. Zona +18 (fase 3; campo `is_adult` en el MVP)
 - Pestaña visible solo para usuarios con edad verificada (vacía en la demo).

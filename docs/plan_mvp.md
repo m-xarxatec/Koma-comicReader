@@ -1172,7 +1172,7 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 
 Aprobado el 10-nov. (Dn) remite a la decisión aprobada de la propuesta del bloque 5 (bitácora del 10-nov).
 
-Fase 2 seleccionada (CU-39 con su exportación, CU-31 resto, CU-06 Open Graph e idea 10; RN-20 y RN-21). Sin migraciones, sin dependencias, sin códigos de error nuevos y sin archivos generados en el servidor. Variable nueva: `DISCORD_INVITE_URL` (opcional). Orden: CU-39 → punto de abandono → Open Graph; el enlace de Discord y la vista de impresión, solo con los tres anteriores desplegados y auditados.
+Fase 2 seleccionada (CU-39 con su exportación, CU-31 resto, CU-06 Open Graph e idea 10; RN-20 y RN-21). Sin migraciones, sin dependencias, sin códigos de error nuevos y sin archivos generados en el servidor. Variable nueva: `DISCORD_INVITE_URL` (opcional). Orden: CU-39 con su vista de impresión → punto de abandono → Open Graph; el enlace de Discord, solo con los tres anteriores desplegados y auditados (la vista de impresión pasó a CU-39 el 10-nov).
 
 **Comunes a todo el bloque:**
 
@@ -1428,7 +1428,7 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | Control | 12 nov | Si el bloque 2 no estaba cerrado el 11, se activa la contingencia |
 | 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
-| 5 · Fase 2 seleccionada | 10 – 15 nov | 10: cierre del bloque 4, demo en contenedores y CU-39. 12: punto de abandono. 13: Open Graph. Con los tres desplegados y auditados: 14, enlace de Discord y vista de impresión |
+| 5 · Fase 2 seleccionada | 10 – 15 nov | 10: cierre del bloque 4, demo en contenedores y CU-39 con su vista de impresión. 11–12: punto de abandono. 13: Open Graph. Con los tres desplegados y auditados: 14, enlace de Discord |
 | Pulido | 15 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real, demo en Docker con la red apagada, prueba completa de roles |
 | 6 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
 
@@ -1444,7 +1444,7 @@ Se activa por niveles, en orden, hasta recuperar el retraso:
 
 ### Contingencia del 14 de noviembre
 
-Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: vista de impresión, enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí.
+Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí.
 
 ## Decisiones
 
