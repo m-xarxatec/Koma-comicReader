@@ -1196,3 +1196,15 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Agente `auditor`:** APTO, 1 bajo corregido: `OG_DESCRIPTION_MAX` a `config/limits.ts`.
 - **Comprobación (IA):** typecheck, 174 unitarios y 303 de API. Demo levantada en Docker para revisarla desde el móvil. Sin probar online.
 - **Pendiente (desarrollador):** vista previa al compartir, solo desplegado (Render): depurador de Open Graph, WhatsApp, Telegram y Discord; decidir la imagen definitiva; commit y despliegue.
+
+## 2026-11-10 · Bloque 5 · Enlace de Discord (idea 10; D12, D13)
+
+- **Servidor:**
+  - `env.ts` valida `DISCORD_INVITE_URL` opcional: `https` y host `discord.gg` o `discord.com` (anclado: ni subdominios falsos ni `www.`), guardada como `URL.href` (codifica las llaves). Vacía = ausente; otro valor, la app no arranca.
+  - `layout.ts` no importa `env`: `renderTemplate` recibe la URL desde `page.ts` y `error-handler.ts`, y la escapa. Con URL, el pie de todas las páginas (también las de error) muestra «Únete a nuestro Discord» en otra pestaña, con `noopener noreferrer` y el aviso oculto.
+  - «Comunidad» de la portada sale de un marcador nuevo, `<!-- @community -->` (solo en `home.html`): con URL, enlace con los mismos atributos; sin ella, el «Próximamente» de antes, idéntico. Desvío de mecanismo pendiente de aprobar y documentar.
+- **Tests:** 6 unitarios (válidos, vacía y ausente; no válidos en un proceso hijo que termina con 1; las dos situaciones del layout; escapado; marcador solo en la portada) y 3 de API (con URL en portada, `/entrar` y 404; sin URL en `pages.test.ts`).
+- **Agente `frontend`:** APTO CON OBSERVACIONES, 2 corregidos: enlace del pie como la maqueta (color heredado, subrayado al pasar el puntero) y alineación en fila desde 40rem.
+- **Agente `auditor`:** APTO CON OBSERVACIONES: el marcador nuevo, para el desarrollador; el comentario de cabecera de `layout.ts`, corregido.
+- **Comprobación (IA):** typecheck, 180 unitarios y 306 de API. Sin probar en el navegador ni online.
+- **Pendiente (desarrollador):** `DISCORD_INVITE_URL` en `.env` y en Render; portada y pie a 360 px, escritorio y teclado, con y sin URL; commit y despliegue.
