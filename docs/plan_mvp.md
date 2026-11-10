@@ -27,13 +27,13 @@ El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 01, 02 | Catálogo, búsqueda combinando etiquetas (Y), ficha con licencia y advertencias | El género es una etiqueta de tipo `genre` |
 | 03, 04 | Lectura de invitado: caps. 1–2 libres, cap. 3 tras anuncio | — |
 | 05, 13 | Comentarios por viñeta (leer y publicar), con contador por viñeta | Sin respuestas anidadas ni likes |
-| 06 | Compartir viñeta: enlace profundo + Web Share / copiar enlace | Open Graph pasa a fase 2 |
+| 06 | Compartir viñeta: enlace profundo + Web Share / copiar enlace | Open Graph pasa a fase 2 (entra en el bloque 5) |
 | 07, 08 | Registro e inicio de sesión | Sin 2FA ni referido |
 | 12, 24 | Límites de lectura de registrado y lectura sin límites premium | — |
 | 21, 27 | Suscripción premium con Stripe (modo prueba) y cancelación | Cancelar y cambiar tarjeta en el portal de Stripe; pago simulado mínimo sin internet |
 | 23 | Editar perfil | Nombre y contraseña; avatar en fase 2 |
 | 28, 29, 30 | Autor: crear obra, subir capítulo (borrador → revisión), editar o retirar | El rol autor lo activa el admin |
-| 31 | Panel del autor: resumen, lecturas por obra y capítulo (total, 7 y 30 días) y comentarios recientes | Sin punto de abandono ni puntos recibidos (fase 2); donaciones solo como «Próximamente» |
+| 31 | Panel del autor: resumen, lecturas por obra y capítulo (total, 7 y 30 días) y comentarios recientes | Sin puntos recibidos (fase 2; el punto de abandono entra en el bloque 5); donaciones solo como «Próximamente» |
 | 32, 33 | Admin: aprobar contenido y moderar comentarios (ocultar y eliminar) | Ilustraciones en fase 3 |
 | 35, 36 | Admin: gestionar usuarios y parámetros de lectura | — |
 | 40 | Consultar auditoría con filtros | Sin restauración ni apelaciones |
@@ -49,7 +49,7 @@ Tras cerrar el MVP, entra una selección cerrada de la fase 2. El resto de la fa
 | 39 | Estadísticas globales del admin (RN-20) y su exportación | Solo lectura; sin gráficos; exportación = vista de impresión (`@media print`) para guardar como PDF, sin archivos generados en el servidor |
 | 31 (resto) | Punto de abandono en el panel del autor (RN-21) | Solo lectores registrados; sin puntos recibidos |
 | Idea 1 (CU-06) | Open Graph en `/`, `/obra/:slug` y `/leer/:slug/:numero` | Imagen propia de Koma (`/icons`), nunca la portada ni una viñeta |
-| Idea 10 | Enlace «Únete a nuestro Discord» | Sin webhook ni lógica de servidor; sin `DISCORD_INVITE_URL`, no se muestra |
+| Idea 10 | Enlace «Únete a nuestro Discord» | Sin webhook; el servidor solo valida la URL y pinta el enlace (pie y «Comunidad»); sin `DISCORD_INVITE_URL`, no se muestra y «Comunidad» sigue en «Próximamente» |
 
 ### Fase 2 — si sobra tiempo antes de la entrega
 
@@ -1428,9 +1428,11 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | Control | 12 nov | Si el bloque 2 no estaba cerrado el 11, se activa la contingencia |
 | 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
-| 5 · Fase 2 seleccionada | 10 – 15 nov | 10: cierre del bloque 4, demo en contenedores y CU-39 con su vista de impresión. 11–12: punto de abandono. 13: Open Graph. Con los tres desplegados y auditados: 14, enlace de Discord |
-| Pulido | 15 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real, demo en Docker con la red apagada, prueba completa de roles |
+| 5 · Fase 2 seleccionada | 10 – 15 nov | Hecho el 10-nov: cierre del bloque 4, demo en contenedores, CU-39 con su vista de impresión, punto de abandono, Open Graph y enlace de Discord |
+| Pulido | 11 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real y pruebas (demo en Docker con la red apagada, prueba completa de roles); sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), pendiente de definir |
 | 6 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
+
+Calendario original. Fechas reales en `bitacora.md`: el bloque 3 cerró el 8-nov, el 4 el 10-nov y el 5 el 10-nov (las cuatro funciones en el día). El pulido empieza el 11-nov.
 
 Cada bloque se da por cerrado solo cuando funciona desplegado, no solo en local.
 
@@ -1444,7 +1446,7 @@ Se activa por niveles, en orden, hasta recuperar el retraso:
 
 ### Contingencia del 14 de noviembre
 
-Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí.
+Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí. (No se activó: el bloque 5 cerró el 10-nov.)
 
 ## Decisiones
 
