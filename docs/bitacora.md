@@ -1226,3 +1226,13 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - `casos_de_uso.md` (CU-41), `modelo_datos.md` (las cuentas de actividad fuera del seed y el riesgo de los comentarios con `--replace`) y CLAUDE.md (bloque actual, comandos, `scripts/` y cuentas demo; sigue con 149 líneas).
 - **Propuesta de la IA pendiente de confirmar:** 3 invitados por pasada (como mucho 9 lecturas de invitado) y los seis nombres visibles de las cuentas de actividad.
 - **Siguiente:** el encargo E1 para Codex; la mascota a WebP y la nueva imagen de Open Graph; los seis bajos de `/admin` (D8) y `--replace` (D13) mientras Codex trabaja.
+
+### 2026-11-10 · Pulido · Mascota en WebP, imagen de Open Graph y encargo E1
+- **Pedido del desarrollador:** pasar la mascota a WebP para premium, rehacer `koma-og.png` con la versión de fondo transparente (D9) y escribir el encargo E1 para Codex.
+- **Choque con lo aprobado (resuelto por el desarrollador):** `mascota.png` no era transparente, sino un PNG de 324 × 315 con fondo blanco opaco (alfa 255 en todos los píxeles). Además era el gato del portátil, y premium usa el gato que saluda («levanta la patita»). Decisión: en premium, el gato que saluda, que ya era transparente; en Open Graph, el del portátil, sin fondo.
+- **Resultado:**
+  - `koma-mascota-premium.webp`: el PNG de premium (414 × 392) en WebP sin pérdida, con transparencia; 109 kB frente a 179 kB. El PNG sigue en uso hasta E1, que cambia el `src` y lo borra.
+  - `koma-og.png` (1200 × 630, PNG): el fondo blanco se quitó rellenando desde los bordes, y el borde claro se convirtió en transparencia. La mascota va a 500 px de alto a la izquierda y el logo a 450 px de ancho a la derecha, sobre `--color-bg`.
+  - `.claude/encargos/codex-premium.md` (E1): valores exactos con una tabla maqueta → token, la bienvenida como `welcome-card` con halo, destellos y giro, los iconos `icon-shield` e `icon-credit` de la maqueta, la mascota en WebP y el pago simulado. Sin tocar `client/src/` ni los tokens existentes.
+- **Comprobación (IA):** 180 unitarios, con el de las medidas de `koma-og.png`.
+- **Pendiente (desarrollador):** ver la vista previa al compartir, una vez desplegado.
