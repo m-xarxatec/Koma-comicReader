@@ -377,9 +377,13 @@ Las contraseñas salen de `SEED_*_PASSWORD`. Si falta alguna, el script termina 
 
 - Con `PAYMENTS_DRIVER=fake`, si la cuenta premium no tiene una suscripción `active` con `current_period_end` futuro, recibe una suscripción `provider = 'fake'`, `status = 'active'` y `current_period_end = now() + 30 días`, y `premium_until` se recalcula con `syncSubscription`. Así, repetir el seed renueva la cuenta demo cuando ha caducado y no hace nada mientras sigue vigente. Desde aquí, el seed ya no escribe `premium_until` directamente.
 
+### Fuera del seed
+
+- **Cuentas de la actividad simulada** (`actividad1…6@demo.test`, idea 24): no son seed. Se registran por la API con `npm run demo:activity` (o `:online`), como cualquier lector, y quedan con `user.register` en la auditoría (`plan_mvp.md`, «Pulido»).
+
 ## Riesgos aceptados
 
-- Al reemplazar un capítulo, sus comentarios quedan en las viñetas antiguas y el nuevo empieza sin comentarios.
+- Al reemplazar un capítulo (también con `content:import -- --replace`, RN-18), sus comentarios quedan en las viñetas antiguas y el nuevo empieza sin comentarios.
 - Los borradores descartados, los capítulos rechazados y las obras cuya importación falla dentro de la transacción (RN-18) dejan sus imágenes en el almacenamiento. En fase 2 se puede añadir un script de limpieza de claves sin referencia.
 - Un invitado que borra sus cookies vuelve a sumar en `guest_reads`.
 - Releer un capítulo que reemplazó a otro (nuevo `chapter_id`) vuelve a consumir saldo.

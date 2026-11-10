@@ -4,7 +4,7 @@
 
 **Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
 
-- Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño, contenido real y pruebas; sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), pendiente de definir. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño (encargos E1–E4 de Codex), contenido real y pruebas; sin funciones nuevas, salvo `--replace` de la importación y la actividad simulada (idea 24). Todo en `docs/plan_mvp.md`, «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos
@@ -15,15 +15,15 @@
 | `npm run watch` · `npm run dev` | `tsc -b --watch` (terminal 1) · `node --watch --env-file=.env server/dist/server.js` (terminal 2; ejecuta lo compilado) |
 | `npm run build` / `npm run typecheck` | `tsc -b` (raíz con referencias a `server/` y `client/`); compilar es comprobar tipos |
 | `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
-| `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
-| `npm run demo:data` | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es |
+| `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`; `-- --replace <slug>:<n>,…` retira y reimporta capítulos). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
+| `npm run demo:data` · `npm run demo:activity` (y `:online`) | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es · actividad simulada (idea 24), solo por la API; online exige `--confirm <host>` y lo lanza el usuario |
 | `npm test` | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras) |
 | `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
 - Tests en `server/src/tests/unit/` y `server/src/tests/api/`, archivos `<tema>.test.ts`; el nombre de cada test empieza por su RN (`'RN-02: recarga 2 por periodo'`) o, si no tiene, por `'Seguridad:'`. Un solo test: `npm run build && node --test server/dist/tests/unit/<tema>.test.js`, o filtrar con `--test-name-pattern="RN-02"`.
 - Pruebas de API: BD `koma_test` (`.env.test` solo sobrescribe `DATABASE_URL`); `reset-test-db.ts` hace `DROP SCHEMA` + migraciones + seed y aborta si la BD no termina en `_test`. Usan `startTestServer()` de `tests/api/helpers.ts`: importa `app` de `app.ts`, `listen(0)` en `before()` y cierra servidor y pool en `after()`.
-- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test`; contraseñas en `docs/credenciales.local.md` (ignorado por git).
+- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test` (y `actividad1…6@demo.test`, de la API, idea 24); contraseñas en `docs/credenciales.local.md` (ignorado por git).
 
 ## Estructura
 
@@ -36,7 +36,7 @@
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
-│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
+│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local), demo-activity.ts y demo-activity-guard.ts (idea 24)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts

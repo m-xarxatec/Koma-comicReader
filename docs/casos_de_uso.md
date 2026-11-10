@@ -291,4 +291,4 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - Una etiqueta no existe en `tags.json`.
 - La obra está marcada +18.
 - Una imagen no cumple formato, tamaño o máximo por capítulo.
-- El capítulo ya existe: se omite.
+- Ya hay un capítulo vivo con ese número: se omite, salvo con `--replace`, que lo retira y lo sustituye en la misma transacción (RN-18).

@@ -184,7 +184,7 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 - **RN-09 URLs y viñetas:** slug de obra generado al crearla (minúsculas, sin acentos, sufijo `-2` si existe) e inmutable. Capítulo identificado por número; el que reemplaza a uno retirado o rechazado hereda número y URL. Viñeta = cada imagen, en orden. Enlace profundo: `/leer/:slug/:numero#v-:n`.
 - **RN-10 Subidas:** JPEG, PNG o WebP comprobados por firma del archivo. Máximo 5 MB por imagen y 60 por capítulo, subidas de una en una (multer en disco temporal, nunca en memoria). Claves de almacenamiento generadas por el servidor: `UUID.ext`.
 - **RN-17 Contenido adulto:** toda obra declara `is_adult`. En el MVP una obra con `is_adult = true` no se puede aprobar ni importar; el admin rechaza con motivo una obra +18 no marcada (CU-32). La zona +18 llega en fase 3.
-- **RN-18 Importación de contenido:** el script `npm run content:import` lee `content/` (formato en "Contenido desde directorios"), valida con zod y con las reglas de RN-10, sube las imágenes con el driver de almacenamiento activo y registra obras, etiquetas, capítulos y viñetas en una transacción por obra. Es idempotente: una obra se identifica por el nombre de su carpeta (= slug) y un capítulo ya existente se omite. Las obras importadas tienen `author_id = NULL` y nacen `approved`. Cada obra importada genera una entrada `content.import` en la auditoría (actor `NULL` = sistema). Si `tags.json` crea o cambia etiquetas, otra entrada `content.import` con `entity_type` `tags` y sin `entity_id`: en `after`, las creadas y los campos cambiados de las actualizadas; en `before`, esos campos antes del cambio.
+- **RN-18 Importación de contenido:** el script `npm run content:import` lee `content/` (formato en "Contenido desde directorios"), valida con zod y con las reglas de RN-10, sube las imágenes con el driver de almacenamiento activo y registra obras, etiquetas, capítulos y viñetas en una transacción por obra. Es idempotente: una obra se identifica por el nombre de su carpeta (= slug) y se omite un capítulo cuyo número ya tiene un capítulo vivo (ni retirado ni rechazado, la condición del índice único); si solo hay retirados o rechazados con ese número, el importado es su reemplazo y hereda número y URL (RN-09). Con `--replace <slug>:<n>,<n>…`, en la misma transacción de la obra, se retiran esos capítulos vivos (`chapter.withdraw`, actor `NULL`) y se importan los de `content/` con el mismo número; si alguno de esos números no es un capítulo vivo de la obra o no tiene carpeta en `content/`, la obra se omite sin retirar nada. Las obras importadas tienen `author_id = NULL` y nacen `approved`. Cada obra importada genera una entrada `content.import` en la auditoría (actor `NULL` = sistema). Si `tags.json` crea o cambia etiquetas, otra entrada `content.import` con `entity_type` `tags` y sin `entity_id`: en `after`, las creadas y los campos cambiados de las actualizadas; en `before`, esos campos antes del cambio.
 
 ### Comunidad y cuentas
 
@@ -226,6 +226,8 @@ CREATE TABLE audit_log (
 - Los scripts (seed, importación) generan su propio `request_id` con `crypto.randomUUID()`.
 - `system.seed`: una entrada por cada fila que el seed crea de verdad (no las omitidas por `ON CONFLICT`), con actor `NULL`, `entity_type` = la tabla y `after` = los ids o claves creados; nunca contraseñas ni hashes.
 - `npm run demo:data` (solo local) audita las aprobaciones y el rechazo que simula y los lectores que crea (`system.seed`); sus lecturas y comentarios no se auditan, como los que se registran al leer y comentar.
+- `npm run content:import -- --replace …` audita cada capítulo retirado con `chapter.withdraw` (actor `NULL`, `before { deletedAt: null }`, `after { deletedAt }`) en la misma transacción que el `content.import` de la obra, cuyo `after` añade `replaced` (los ids retirados).
+- La actividad simulada (`npm run demo:activity`, idea 24) no escribe en `audit_log` por su cuenta: queda solo lo que audita la API al usarla (`user.register`, `auth.login_ok`, `auth.logout`).
 - En fase 2, restaurar creará una entrada nueva con `reverts_id`; la original no se toca.
 - `request_id` enlaza cada entrada con los logs del servidor para depurar.
 
@@ -291,7 +293,8 @@ content/
 - `comic.json` validado con zod; `tags` deben existir en `tags.json`; `isAdult: true` se rechaza (RN-17).
 - Carpetas de capítulo y archivos de viñeta solo con dígitos; se ordenan por valor numérico.
 - Cada imagen cumple RN-10 (firma, 5 MB, 60 por capítulo). El título de capítulo es opcional; por defecto "Capítulo N".
-- Al final se imprime un resumen: obras creadas, capítulos añadidos, omitidos y errores.
+- Con `--replace <slug>:<n>,…` (se puede repetir, una vez por obra): cada número tiene que ser un capítulo vivo de esa obra importada y tener su carpeta en `content/`. Online: `npm run content:import:online -- --replace …`.
+- Al final se imprime un resumen: obras creadas, capítulos añadidos, reemplazados, omitidos y errores.
 
 ## Frontend: HTML, CSS y TypeScript
 
@@ -364,10 +367,12 @@ Un solo `package.json` en la raíz, con `"type": "module"` y `"engines": { "node
 | `npm start` | `node server/dist/server.js` (online; migra al arrancar) |
 | `npm run migrate` | Aplica las migraciones pendientes |
 | `npm run seed` | Cuentas demo, etiquetas base, anuncios y `settings` |
-| `npm run content:import` | Importa `content/` (RN-18) |
+| `npm run content:import` | Importa `content/` (RN-18); con `-- --replace <slug>:<n>,…`, retira esos capítulos y los reimporta con el mismo número |
 | `npm run seed:online` | `seed` con `--env-file=.env.online` (Neon + R2); imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm run content:import:online` | `content:import` con `--env-file=.env.online`; imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm run demo:data` | Datos de demostración del panel del autor (obras, lectores, lecturas y comentarios); solo BD local de desarrollo: aborta si no lo es. Nunca online |
+| `npm run demo:activity` | Actividad simulada (idea 24) contra la app local, solo por la API: registra las cuentas que falten, lee, envía progreso y comenta. Aborta si `APP_URL` no es `http` a `localhost`, `127.0.0.1` o `koma.local` |
+| `npm run demo:activity:online` | Lo mismo con `--env-file=.env.online`, contra la web online (sin tocar la BD). Exige `--confirm <host>` igual al host de `APP_URL` (`https`). Lo lanza el desarrollador |
 | `npm test` | Compila y ejecuta `node --test` sobre las funciones puras |
 | `npm run test:api` | Reinicia `koma_test` (`DROP SCHEMA` + migraciones + seed) y ejecuta las pruebas de API |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo) |
@@ -451,7 +456,7 @@ SEED_READER_PASSWORD=
 
 ## Entornos de despliegue
 
-La presentación se hace con el entorno que esté disponible ese día: online si hay red, local si no. Los dos tienen los mismos datos de seed, el mismo contenido importado y las mismas cuentas demo. Los datos de `npm run demo:data` (obras, lectores, lecturas y comentarios del panel del autor) solo existen en local: nunca van a producción.
+La presentación se hace con el entorno que esté disponible ese día: online si hay red, local si no. Los dos tienen los mismos datos de seed, el mismo contenido importado y las mismas cuentas demo. Los datos de `npm run demo:data` (obras, lectores, lecturas y comentarios del panel del autor) solo existen en local: nunca van a producción. Excepción aprobada (idea 24): la actividad simulada de `npm run demo:activity:online` crea seis cuentas `@demo.test` en la web online y actúa solo a través de su API (sección «Pulido»).
 
 |  | Local | Online |
 | --- | --- | --- |
@@ -1308,6 +1313,105 @@ Sin API. `env.ts` valida `DISCORD_INVITE_URL` opcional: `https:` y host `discord
 | D12 | `DISCORD_INVITE_URL`: solo `https:` y host `discord.gg` o `discord.com` |
 | D13 | Enlace de Discord en el pie y en «Comunidad» de la portada; sin URL, nada de eso cambia |
 
+## Pulido (11 – 19 nov)
+
+Aprobado el 10-nov. (Dn) remite a las decisiones de la tabla del final de esta sección. Sin migraciones, sin dependencias, sin variables nuevas y sin funciones nuevas, salvo la actividad simulada (idea 24).
+
+### Pasada de diseño
+
+El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude/encargos/`). La IA de este repositorio revisa el diff, lo trae al árbol principal, pasa el agente `frontend` y después el `auditor`, y entrega los comandos git. Nada se integra si rompe el typecheck o los tests. Un encargo de Codex entregado tiene prioridad sobre el resto del trabajo.
+
+| Encargo | Alcance |
+| --- | --- |
+| E1 | `/premium`, `/premium/gracias` (con la bienvenida) y `/pago-simulado`: los valores exactos de la maqueta, la bienvenida como `welcome-card` centrada con halo, destellos y la mascota girada, los iconos de escudo y tarjeta en el sprite, la mascota en WebP (D9) y el ancho máximo del pago simulado desde 64rem |
+| E2 | `/admin`: la sección «Estadísticas» con sus cuatro tablas, las cuatro métricas y la vista de impresión (sin logo, D7), más los bajos visuales anotados: «Admin» activo distinguido solo por el color, `button--danger` sin `button--outline`, el diálogo en su propio CSS y el contador del motivo |
+| E3 | Estudio del autor: se pule el diseño actual, más intuitivo y más cuidado; no se vuelve a la maqueta (D2). El punto de abandono, con texto y barra `<meter>`, como las lecturas (D3) |
+| E4 | Conjunto: cabecera, pie, «Comunidad», portada (banner del hero, D6), ficha («Descubrir Premium», D4), lector, perfil, auth y errores, con el repaso de los valores de la maqueta frente a los tokens |
+
+- **Orden:** E1 → E2 → E3 → E4. E4 va el último porque es el único que puede cambiar tokens compartidos, con una lista cerrada; E1–E3 solo añaden tokens con el prefijo de su página.
+- **Fuera de todos los encargos:** `server/` (salvo `server/src/tests/api/pages.test.ts`, justificado), `client/src/services/`, `client/src/utils/`, `docs/`, `CLAUDE.md` y `package.json`. `layout.ts`, solo en E4. En el TS, solo clases y presentación, nunca el flujo; el HTML semántico que comprueban los tests (ids, `data-*`, `role="status"`, un solo `h1`) se mantiene.
+- **Antes de E2**, la IA de este repositorio corrige los seis bajos funcionales de `/admin` anotados en el bloque 4 (D8): el paginador («Página 3 de 2» al vaciarse la última página), los límites escritos a mano en el HTML, `type="email"` sin `noValidate`, «Filtrar» sin `data-needs-js`, «Aprobar» en obras +18 y la entidad en crudo en la auditoría.
+- **Antes de E3**, la IA de este repositorio pasa el estudio del autor al aviso flotante y al `<dialog>` de confirmación de `/admin`, en lugar de los mensajes por sección y de `confirm()` (D2), con el agente `frontend`.
+- **Mascota (D9):** la versión con fondo transparente pasa a WebP (`client/public/icons/koma-mascota-premium.webp`) para premium, y con ella se rehace `koma-og.png` con las mismas medidas, 1200 × 630 (el test de medidas sigue igual).
+- **Banner del hero (D6):** imagen temporal en `client/public/icons/koma-hero.webp`, pintada como fondo decorativo de `.hero__art` desde un token de `variables.css`, con `cover`. La definitiva sustituye el archivo con el mismo nombre, sin tocar código.
+
+**Desvíos de la maqueta anotados (D4, D5):**
+
+| Página | Maqueta | Koma | Motivo |
+| --- | --- | --- | --- |
+| Ficha | «En publicación» junto al número de capítulos | No se muestra | El modelo de datos no tiene ese dato |
+| Cabecera y navegación móvil | «Comunidad» y «Tutoriales» | No están | No tienen página. «Comunidad» está en los accesos rápidos de la portada (D13 del bloque 5) |
+| Pie | «Ayuda» | No está | No tiene página |
+
+Se recuperan de la maqueta: «Descubrir Premium» en «¿Cómo funciona la lectura?» de la ficha, enlazado a `/premium` (D4), y «Premium» en el pie (D5).
+
+### Reemplazo de capítulos importados (D12, D13)
+
+Para sustituir capítulos de una obra importada (por ejemplo, los caps. 2–4 de `el-senor-de-los-anillos-de-cebolla`, provisionales hasta que lleguen las páginas reales). Usa `--replace` (RN-18): en una sola transacción se retiran los capítulos vivos y se importan los nuevos con el mismo número.
+
+1. **Local:** poner las páginas en `content/<slug>/00N/` con los comandos de la guía del README (WebP, medidas exactas) y sus títulos en `comic.json`; `npm run build && npm run content:import -- --replace <slug>:2,3,4`; comprobar la ficha, el lector y la auditoría.
+2. **Online (lo ejecuta el desarrollador),** con el código desplegado:
+   - antes, solo lectura, lo que dejará de verse: `psql "<DATABASE_URL de .env.online>" -c "SELECT ch.number, (SELECT count(*) FROM chapter_reads r WHERE r.chapter_id = ch.id) AS lectores, (SELECT count(*) FROM comments m JOIN panels p ON p.id = m.panel_id WHERE p.chapter_id = ch.id) AS comentarios FROM chapters ch JOIN comics c ON c.id = ch.comic_id WHERE c.slug = '<slug>' AND ch.deleted_at IS NULL ORDER BY 1;"`;
+   - `npm run build && npm run content:import:online -- --replace <slug>:2,3,4`. La primera línea tiene que mostrar Neon sin `-pooler` y `r2`.
+
+Qué pasa con los capítulos reemplazados:
+
+- **Lecturas:** las filas de `chapter_reads` y `chapter_read_counts` se quedan en los capítulos retirados. RN-19 y RN-20 no cuentan lo retirado, así que las lecturas de la obra bajan en las estadísticas. Releer el capítulo nuevo vuelve a consumir saldo y un invitado vuelve a contar (su cookie va por id de capítulo): riesgos aceptados.
+- **Comentarios:** se quedan ocultos en las viñetas del capítulo retirado (RN-06) y no pasan al nuevo.
+- **Punto de abandono:** el capítulo nuevo empieza sin datos. En una obra importada no se ve en ninguna parte: no tiene autor.
+- **Auditoría:** un `chapter.withdraw` por capítulo (actor `NULL`) y el `content.import` de la obra con `replaced`. Las entradas anteriores no se tocan.
+- **Almacenamiento:** las imágenes antiguas se quedan en el disco o en R2, todavía referenciadas por las viñetas de los capítulos retirados: no son huérfanas. Solo quedan huérfanas, como siempre, si la transacción falla después de subir las nuevas (riesgo aceptado de RN-18).
+- **URLs:** `/leer/:slug/:numero` sigue funcionando; `#v-n` lleva a la viñeta n del capítulo nuevo.
+
+### Actividad simulada para la demo (idea 24; D14–D21)
+
+Excepción aprobada a "los datos de demostración solo viven en local": seis cuentas que actúan como lectores reales para que la demo muestre actividad en las estadísticas y en los comentarios. Todo pasa por la API real, nunca por la BD.
+
+- **Cuentas (D14–D17):**
+  - Seis, `actividad1@demo.test` … `actividad6@demo.test`, con nombres visibles naturales: «Lucía_lee», «MarcoV», «Nerea Sol», «DaniTinta», «Sara R.» y «Leo Campos».
+  - Contraseña: la de `SEED_READER_PASSWORD`, sin variable nueva, anotada en `docs/credenciales.local.md`.
+  - Alta por `POST /api/auth/register`. Para respetar RN-13 (3 / h por IP), cada pasada registra como mucho 3 de las que falten; con un 429 deja de registrar y sigue con las que ya existen. El resto se registran en una pasada posterior, al menos 1 h después. Una cuenta que ya existe entra con login (también tras un 409).
+- **Acciones de cada cuenta**, con `Origin` = `APP_URL`:
+  - entra, lee capítulos aprobados del catálogo (`POST …/read`) y respeta el saldo (RN-02): con `READING_LIMIT` espera a `retryAt` o deja la cuenta para la siguiente pasada;
+  - envía el progreso (`POST …/progress`) con una viñeta máxima determinista, función de la cuenta y del capítulo (unos 6 de cada 10 llegan al final);
+  - en algunos capítulos (determinista) publica un comentario de una lista fija de textos, después de comprobar que esa cuenta no tiene ya uno en esa viñeta, y con al menos 15 s entre comentarios de la misma cuenta (RN-13: 5 / min);
+  - con un 429, espera a `retryAt`; al terminar, cierra la sesión.
+- **Invitados (D18):** 3 por pasada, cada uno con su propia cookie. Cada invitado lee los caps. 1 y 2 de una obra (en rotación) y, si tiene cap. 3, completa el anuncio esperando `AD_MIN_SECONDS` (RN-01) y lo lee. Como mucho, 9 lecturas de invitado por pasada. Nunca intentan el cap. 4.
+- **Ritmo (D20):** pausas de unos segundos entre acciones; una pasada dura unos 15–20 minutos. Una pasada al día los días previos a la demo, lanzada por el desarrollador.
+- **Obras (D19):** las aprobadas que devuelve el catálogo: en local, también las de `demo:data`; online, las importadas. El script no crea obras. El punto de abandono solo se ve en local, en el panel del autor.
+- **Guarda** (`demo-activity-guard.ts`, pura, con tests `Seguridad:`): con `demo:activity`, `APP_URL` en `http` y host `localhost`, `127.0.0.1` o `koma.local`; con `demo:activity:online`, `https` y `--confirm <host>` igual al host de `APP_URL`. Solo correos `@demo.test`. Aborta si `/api/health` no responde 200. El script no importa `env.ts`, el pool ni `app`: solo habla HTTP. Nunca va en el Dockerfile, `server.ts` ni `npm start`.
+- **Rastro:**
+  - En `/admin` → Usuarios se reconocen por el correo `actividad*@demo.test`.
+  - Auditoría: `user.register`, `auth.login_ok` y `auth.logout`. Las lecturas, el progreso y los comentarios no se auditan, como los de cualquier lector.
+  - Estadísticas: suman cuentas de lector, usuarios activos de 30 días, lecturas de registrados y de invitados, comentarios de 7 días, obras más leídas y eventos de 24 h.
+- **Retirada después de la demo (D21):** desde `/admin`, suspender las seis cuentas (`user.suspend`) y eliminar sus comentarios (`comment.delete`). Sus lecturas se quedan en los totales (no hay borrado físico): riesgo aceptado.
+
+### Decisiones aprobadas del pulido (10-nov)
+
+| # | Decisión |
+| --- | --- |
+| D1 | Reparto E1–E4 para Codex, en ese orden, con premium primero |
+| D2 | Estudio del autor: se pule el diseño actual, no se vuelve a la maqueta; aviso flotante y `<dialog>` como en `/admin`, hechos por la IA de este repositorio antes de E3 |
+| D3 | Punto de abandono con texto y barra `<meter>` |
+| D4 | Vuelve «Descubrir Premium» a la ficha; «En publicación», desvío anotado |
+| D5 | «Premium» vuelve al pie; «Comunidad» y «Tutoriales» en la navegación y «Ayuda» en el pie, desvíos anotados |
+| D6 | Banner del hero con una imagen temporal, sustituible sin tocar código |
+| D7 | Vista de impresión sin logo |
+| D8 | Los seis bajos funcionales de `/admin`, antes de E2, fuera de los encargos de Codex |
+| D9 | Mascota con fondo transparente: WebP para premium y nueva imagen de Open Graph |
+| D12 | Reemplazo de capítulos importados: retirar y reimportar (`--replace`) |
+| D13 | La importación considera solo los capítulos vivos; `--replace` se construye ya, sin ejecutarlo sobre la obra |
+| D14 | Seis cuentas de actividad, registradas por la API en varias pasadas (RN-13) |
+| D15 | Alta por la API, no por el seed |
+| D16 | Nombres visibles naturales y correos `@demo.test` |
+| D17 | Contraseña de `SEED_READER_PASSWORD` |
+| D18 | Pocas lecturas de invitado: caps. libres y el del anuncio, con `AD_MIN_SECONDS` |
+| D19 | Punto de abandono solo en local; el script no crea obras |
+| D20 | Una pasada al día antes de la demo, lanzada por el desarrollador |
+| D21 | Retirada: suspensión y eliminación de comentarios desde `/admin` |
+
+D10 y D11 no se usaron.
+
 
 ## Convenciones, tests y definición de terminado
 
@@ -1429,7 +1533,7 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
 | 5 · Fase 2 seleccionada | 10 – 15 nov | Hecho el 10-nov: cierre del bloque 4, demo en contenedores, CU-39 con su vista de impresión, punto de abandono, Open Graph y enlace de Discord |
-| Pulido | 11 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real y pruebas (demo en Docker con la red apagada, prueba completa de roles); sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), pendiente de definir |
+| Pulido | 11 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real y pruebas (demo en Docker con la red apagada, prueba completa de roles); sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), definida el 10-nov (sección «Pulido») |
 | 6 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
 
 Calendario original. Fechas reales en `bitacora.md`: el bloque 3 cerró el 8-nov, el 4 el 10-nov y el 5 el 10-nov (las cuatro funciones en el día). El pulido empieza el 11-nov.
@@ -1482,7 +1586,7 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Entorno técnico | ESM, Node 24 LTS, Express 5, jsonwebtoken, `node:test` sobre JS compilado, un solo `package.json` |
 | Cuentas demo | Contraseñas por variables de entorno, anotadas en `docs/credenciales.local.md` (ignorado por git) |
 | Idioma | Código y API en inglés; interfaz, URLs de páginas y mensajes en español |
-| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas; en el punto de abandono (RN-21), un enlace `#v-n` cuenta como viñeta alcanzada |
+| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas; en el punto de abandono (RN-21), un enlace `#v-n` cuenta como viñeta alcanzada; las lecturas de la actividad simulada (idea 24) no se pueden retirar y se quedan en los totales |
 | Estado en el navegador | Lo que es preferencia o comodidad (advertencias aceptadas, ocultar iconos) vive en `localStorage`; permisos, saldo y límites, siempre en el servidor |
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |

@@ -1214,3 +1214,15 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Comprobación (IA):** typecheck, 180 unitarios y 306 de API; tokens de variables.css y layers.css: 642, todos en uso; demo en Docker por la LAN con DISCORD_INVITE_URL: salud, metas OG, 404 sin metas, obra pending en 404, /api/admin/stats 401 sin sesión, sin errores en los logs.
 - **Las cuatro funciones, hechas el 10-nov** (calendario previsto: 10–14).
 - **Pendiente (desarrollador):** despliegue y pruebas online de las cuatro funciones; revisión a 360 px y con teclado; imagen OG definitiva.
+
+### 2026-11-10 · Pulido · Informe aprobado y documentación
+- **Pedido del desarrollador:** un informe con tres encargos (preparar la pasada de diseño, el procedimiento para reemplazar los caps. 2–4 de la segunda obra y la definición de la actividad simulada, idea 24), sin código hasta aprobarlo. Aprobado con las decisiones D1–D9 y D12–D21; después, pasarlas a `docs/` y a CLAUDE.md (`ideas_base.md` lo actualiza él).
+- **Hallazgos del informe:**
+  - La importación da por existente un capítulo **en cualquier estado** (`SELECT DISTINCT number FROM chapters WHERE comic_id = $1`), también si está retirado. Además, nadie puede retirar un capítulo importado por la API, porque la retirada exige al autor dueño. Por eso volver a importar no podía sustituir nada.
+  - Online solo hay las dos obras importadas (5 capítulos), sin autor: el punto de abandono no se vería online con la actividad simulada (D19: solo en local).
+  - En el inventario de la maqueta, sin decisión escrita: «Descubrir Premium» en la ficha, «En publicación», la navegación sin «Comunidad» ni «Tutoriales», el pie sin «Ayuda» ni «Premium» y el banner del hero.
+- **Documentación:**
+  - `plan_mvp.md`: RN-18 (solo los capítulos vivos cuentan como existentes y `--replace`), reglas de validación, tabla de comandos (`--replace`, `demo:activity` y `demo:activity:online`), dos reglas de auditoría, la excepción de la idea 24 en «Entornos de despliegue», un riesgo aceptado, el calendario y la sección nueva «Pulido»: reparto E1–E4, desvíos de la maqueta anotados, el procedimiento de reemplazo con sus efectos, la actividad simulada y la tabla de decisiones.
+  - `casos_de_uso.md` (CU-41), `modelo_datos.md` (las cuentas de actividad fuera del seed y el riesgo de los comentarios con `--replace`) y CLAUDE.md (bloque actual, comandos, `scripts/` y cuentas demo; sigue con 149 líneas).
+- **Propuesta de la IA pendiente de confirmar:** 3 invitados por pasada (como mucho 9 lecturas de invitado) y los seis nombres visibles de las cuentas de actividad.
+- **Siguiente:** el encargo E1 para Codex; la mascota a WebP y la nueva imagen de Open Graph; los seis bajos de `/admin` (D8) y `--replace` (D13) mientras Codex trabaja.
