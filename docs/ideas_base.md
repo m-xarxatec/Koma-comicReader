@@ -51,7 +51,7 @@ Monorepo con `client` y `server`. Un solo servidor Express sirve la API y el fro
 ```
 koma/
 ├── client/
-│   ├── public/            # pages/<página>.html, errors/<código>.html, styles/, icons/ (favicon.svg, sprite.svg, koma-logo.webp, error-<código>.webp)
+│   ├── public/            # pages/<página>.html, errors/<código>.html, styles/, icons/ (favicon.svg, sprite.svg, koma-logo.webp, error-<código>.webp, koma-mascota-premium.png, koma-og.png)
 │   │   ├── styles/        # variables.css, layers.css, base.css, components/ (CSS sin compilar)
 │   │   ├── manifest.json  # (fase 2: PWA; ruta propia en la raíz)
 │   │   └── sw.js          # (fase 2: PWA; ruta propia en la raíz)
@@ -73,7 +73,7 @@ koma/
 │   │   ├── db/            # pool.ts, migrations/, seeds/
 │   │   ├── scripts/       # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo BD local)
 │   │   ├── config/        # env.ts, paths.ts, limits.ts (valores fijos del plan)
-│   │   ├── utils/         # logger.ts, app-error.ts, html.ts, origin.ts, password.ts, page.ts, layout.ts, redirect.ts, image.ts, signing.ts, text.ts
+│   │   ├── utils/         # logger.ts, app-error.ts, html.ts, origin.ts, password.ts, page.ts, layout.ts, redirect.ts, image.ts, signing.ts, text.ts, open-graph.ts
 │   │   ├── tests/         # unit/ y api/: <tema>.test.ts
 │   │   ├── app.ts
 │   │   └── server.ts
@@ -234,7 +234,7 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 
 ### 10. Discord (enlace en el bloque 5; webhook en fase 2)
 - Canal real de la comunidad.
-- (Bloque 5) Enlace «Únete a nuestro Discord» que abre la invitación en otra pestaña. Sin la URL de invitación configurada, el enlace no se muestra. Sin internet no abre nada, y la plataforma sigue funcionando igual.
+- (Bloque 5) Enlace «Únete a nuestro Discord» que abre la invitación en otra pestaña: en el pie de todas las páginas y en el acceso rápido «Comunidad» de la portada. Sin la URL de invitación configurada (`DISCORD_INVITE_URL`), el pie no lo muestra y «Comunidad» sigue en «Próximamente». Sin internet no abre nada, y la plataforma sigue funcionando igual.
 - (Fase 2) Webhook que publica automáticamente cada capítulo nuevo aprobado.
 
 ### 11. Anuncios falsos

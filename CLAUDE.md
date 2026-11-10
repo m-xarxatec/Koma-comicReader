@@ -38,10 +38,10 @@
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
-│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos)
+│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
-│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo e ilustraciones de error)
+│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
@@ -59,7 +59,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 5. `repository`: único lugar con SQL (parametrizado); recibe como primer parámetro un `Queryable` (`Pool | PoolClient`: `pool` o el `client` de la transacción); convierte snake_case ↔ camelCase.
 6. `error-handler`: decide código y formato de cualquier error.
 
-- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, e inyección de `requestId`), nunca por `express.static`.
+- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, y `<!-- @community -->` solo en `home.html`, e inyección de `requestId`), nunca por `express.static`.
 - Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`. Una página solo informativa (`become-author`) no lleva `.ts`.
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
 - Local y online son el mismo código; solo cambian `STORAGE_DRIVER` y `PAYMENTS_DRIVER`. `env.ts` rechaza `PAYMENTS_DRIVER=fake` con `NODE_ENV=production`.

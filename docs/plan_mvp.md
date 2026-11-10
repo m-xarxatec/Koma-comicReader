@@ -308,7 +308,7 @@ Cada página HTML funciona y se entiende sin JavaScript a nivel de estructura; T
 | Premium | 21 | `<section>` con precio y `<form method="post">` hacia la API |
 | Panel de autor y admin | 28–40 | `<nav>` lateral, `<table>` con `<caption>` y `<th scope>` |
 
-Común: `<title>` "Koma" o "<página> · Koma" (también en las páginas de error) y el nombre Koma en la cabecera y el pie, que salen de una sola plantilla (`server/src/utils/layout.ts`, marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, también en las páginas de error); un solo `<h1>` por página, `<header>`/`<nav>`/`<main>`/`<footer>`, enlace "Saltar al contenido", `lang="es"`, imágenes con `loading="lazy"` salvo las de la primera pantalla, y `<link rel="icon" href="/icons/favicon.svg">` (sin él, el navegador pide `/favicon.ico` y cada página genera un 404 en los logs).
+Común: `<title>` "Koma" o "<página> · Koma" (también en las páginas de error) y el nombre Koma en la cabecera y el pie, que salen de una sola plantilla (`server/src/utils/layout.ts`, marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, también en las páginas de error; `home.html` lleva además `<!-- @community -->`, el acceso rápido «Comunidad» (enlace de Discord o «Próximamente», bloque 5)); un solo `<h1>` por página, `<header>`/`<nav>`/`<main>`/`<footer>`, enlace "Saltar al contenido", `lang="es"`, imágenes con `loading="lazy"` salvo las de la primera pantalla, y `<link rel="icon" href="/icons/favicon.svg">` (sin él, el navegador pide `/favicon.ico` y cada página genera un 404 en los logs).
 
 **Imagen que no carga (CU-03):** el lector muestra un mensaje en la viñeta y un botón "Recargar", que vuelve a pedir el capítulo (URLs firmadas nuevas).
 
