@@ -1143,3 +1143,43 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 
   Sin probar en el navegador ni online.
 - **Pendiente (desarrollador):** las decisiones anteriores; `/admin` a 360 px, entre 40 y 64rem, desde 64rem y con teclado; la vista previa de impresión en Chrome y Firefox; el commit, el despliegue y `/api/admin/stats` contra Neon.
+
+### 2026-11-10 · Bloque 5 · Punto de abandono (CU-31 resto, RN-21)
+- **Pedido del desarrollador:**
+  - CU-39 aprobada, con la vista de impresión y las cuatro tablas. En `plan_mvp.md` se corrige el orden: contrato, calendario y contingencia.
+  - Nueva regla para el resto del bloque: si conviene salirse de lo aprobado, parar y preguntar antes.
+  - Construir el punto de abandono completo, con las condiciones del contrato.
+- **Servidor:**
+  - `POST /api/comics/:slug/chapters/:number/progress` pasa por `requireAuth`, `validate` y el limitador de 60/min por usuario (`progressRateLimit`).
+  - `requirePublicChapter` responde 404 o 410. `progressProblem` compara con `countPanels` y da 400 en `fields.panel`.
+  - `recordLastPanel` hace solo `UPDATE … GREATEST`, nunca INSERT: si no hay fila, responde 204 sin escribir nada.
+  - El panel del autor gana `abandonment` en cada capítulo: `listAuthorAbandonment` reparte los lectores por viñeta máxima, sin NULL, sin el admin y sin el dueño, y `abandonmentOf` calcula la moda (en un empate, la menor) y el porcentaje redondeado.
+- **Cliente:**
+  - `reader.ts` usa dos `IntersectionObserver`. Una viñeta cuenta al entrar en la mitad superior de la pantalla, y la última también cuando se ve entera, para que funcione en pantalla completa.
+  - Solo hay observador con sesión (`GET /api/me` una vez) y nunca en la vista previa.
+  - El progreso se envía con `keepalive` al ocultar la página o al llegar al final, solo si ha subido. Cualquier fallo se ignora.
+  - `author.ts` muestra «N de M llegan al final · P %» y «Más abandono: viñeta X de Y (Z lectores)», o «Sin datos de abandono».
+- **`demo:data`:**
+  - `demoLastPanel` es determinista: unos 6 de cada 10 lectores llegan al final.
+  - `addProgress` solo rellena donde `last_panel` es NULL.
+  - Comprobado contra la BD local: la primera ejecución pone 26 viñetas máximas, la segunda 0, y la tabla queda idéntica (mismo md5).
+- **Tests:**
+  - 6 unitarios `RN-21:`: la moda, el empate, el redondeo, el tope del 100 %, el tope de la viñeta y el determinismo de `demo:data`.
+  - `progress.test.ts`, 7 de API: 401 del invitado, 204 sin fila, GREATEST, 400, 404 y 410, 429 en el envío 61 (por usuario) y el abandono del panel sin admin, dueño ni NULL.
+  - `author-dashboard.test.ts` (RN-19) se adapta al campo nuevo.
+- **Agente `frontend`:** APTO CON OBSERVACIONES, con 3 hallazgos corregidos:
+  - la última viñeta, vista entera en pantalla completa;
+  - un contador de generación para no duplicar observadores;
+  - el progreso guardado en `store`.
+- **Agente `auditor`:** APTO, con dos hallazgos bajos:
+  - el texto «llegan al final» se ajusta al ejemplo del contrato;
+  - el cambio de `ideas_base.md` (del desarrollador) va en el commit de documentación.
+- **Comprobación (IA):** typecheck, 167 unitarios y 298 de API.
+
+  Sin probar en el navegador ni online.
+- **Pendiente (desarrollador):**
+  - pestaña de red con sesión: un POST al cambiar de pestaña y otro al llegar al final, también en pantalla completa; ninguno como invitado ni en la vista previa;
+  - consola sin errores propios;
+  - `/autor` a 360 px y con teclado;
+  - ejecutar `npm run demo:data` en local si se quiere ver el panel con datos; ya hecho en esta sesión;
+  - commit, despliegue y prueba online.
