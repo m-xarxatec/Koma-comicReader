@@ -21,6 +21,7 @@ import { paymentsPagesRouter, paymentsRouter, paymentsWebhookRouter } from './mo
 import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
 import { usersPagesRouter, usersRouter } from './modules/users/users.routes.js';
 import { AppError } from './utils/app-error.js';
+import { homeOpenGraph } from './utils/open-graph.js';
 import { sendPage } from './utils/page.js';
 
 // URLs prefirmadas de R2: bucket como subdominio o en la ruta (los mismos orígenes que firma r2.ts).
@@ -106,7 +107,7 @@ app.use('/api/admin', adminRouter);
 
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);
-app.get('/', (_req, res) => sendPage(res, 'home'));
+app.get('/', (_req, res) => sendPage(res, 'home', homeOpenGraph(env.APP_URL))); // Open Graph de la portada (bloque 5)
 app.use(authPagesRouter);
 app.use(comicsPagesRouter);
 app.use(readingPagesRouter);

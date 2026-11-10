@@ -27,6 +27,11 @@ const VALUES = {
   chapterTitle: 'Capítulo 1',
   number: '1',
   contentWarning: '',
+  // Open Graph de home, comic y reader (utils/open-graph.ts, bloque 5)
+  ogTitle: 'Koma',
+  ogDescription: 'Descripción',
+  ogUrl: 'http://localhost:3000/',
+  ogImage: 'http://localhost:3000/icons/koma-og.png',
   // profile.html (profilePageValues en users.service.ts)
   displayName: 'Ana',
   email: 'ana@demo.test',

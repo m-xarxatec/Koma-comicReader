@@ -2,6 +2,7 @@ import { env } from '../../config/env.js';
 import { pool, withTransaction } from '../../db/pool.js';
 import { storage } from '../../integrations/storage/index.js';
 import { AppError, INTERNAL_ERROR_MESSAGE } from '../../utils/app-error.js';
+import { chapterOpenGraph, type OpenGraphValues } from '../../utils/open-graph.js';
 import { deriveKey } from '../../utils/signing.js';
 import { chapterAccess, isAdmin, isPremium } from '../auth/permissions.js';
 import * as chaptersRepository from '../chapters/chapters.repository.js';
@@ -171,7 +172,7 @@ export async function requirePublicChapter(slug: string, number: number): Promis
 
 // Datos de la página /leer/:slug/:numero, que el servidor inyecta escapados (título y advertencia, para
 // que se vean antes de pedir el capítulo a la API). El permiso de lectura lo decide después la API.
-export interface ReaderPageValues {
+export interface ReaderPageValues extends OpenGraphValues {
   slug: string; // ya validado con la regex del slug: los enlaces de la barra funcionan sin JS
   comicTitle: string;
   chapterTitle: string;
@@ -181,7 +182,14 @@ export interface ReaderPageValues {
 
 export async function getReaderPage(slug: string, number: number, user: User | null): Promise<ReaderPageValues> {
   const { comic, chapter } = await requireReadableChapter(slug, number, user);
-  return { slug: comic.slug, comicTitle: comic.title, chapterTitle: chapter.title, number: String(chapter.number), contentWarning: comic.contentWarning ?? '' };
+  return {
+    slug: comic.slug,
+    comicTitle: comic.title,
+    chapterTitle: chapter.title,
+    number: String(chapter.number),
+    contentWarning: comic.contentWarning ?? '',
+    ...chapterOpenGraph(env.APP_URL, comic, chapter.number), // contrato del bloque 5
+  };
 }
 
 async function readAsGuest(

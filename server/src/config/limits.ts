@@ -65,3 +65,6 @@ export const READING_SETTINGS_RANGES = {
   maxBalance: { min: 1, max: 20 },
   refill: { min: 1, max: 10 },
 } as const;
+
+// Open Graph (contrato del bloque 5): sinopsis de og:description en /obra/:slug, en puntos de código y «…» incluido.
+export const OG_DESCRIPTION_MAX = 200;

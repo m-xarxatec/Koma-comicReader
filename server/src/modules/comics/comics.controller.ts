@@ -20,11 +20,10 @@ export async function getComic(_req: Request, res: Response): Promise<void> {
 }
 
 // /obra/:slug (mapa de rutas HTML): obra pública o, para su dueño y el admin, también pending (D10; 404 o 410 si no);
-// el título va escapado en <title> y <h1>.
+// el título va escapado en <title> y <h1>, y las meta Open Graph, escapadas en sus atributos.
 export async function comicPage(_req: Request, res: Response): Promise<void> {
   const { slug } = res.locals.validated.params as ComicParams;
-  const { comic } = await comicsService.requireVisibleComic(slug, res.locals.user);
-  await sendPage(res, 'comic', { title: comic.title });
+  await sendPage(res, 'comic', await comicsService.getComicPage(slug, res.locals.user));
 }
 
 // --- Obras del autor (contrato del bloque 3). requireAuthor va antes en la ruta: aquí siempre hay usuario. ---

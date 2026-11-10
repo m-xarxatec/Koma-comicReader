@@ -1,5 +1,6 @@
 import { readFile, rm } from 'node:fs/promises';
 import pg from 'pg';
+import { env } from '../../config/env.js';
 import { AUTHOR_RECENT_COMMENTS, CATALOG_PAGE_SIZE, READS_WINDOW_LONG_DAYS, READS_WINDOW_SHORT_DAYS } from '../../config/limits.js';
 import { pool, withTransaction, type Queryable } from '../../db/pool.js';
 import { storage } from '../../integrations/storage/index.js';
@@ -12,6 +13,7 @@ import * as commentsRepository from '../comments/comments.repository.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import { IMAGE_CONTENT_TYPES, newImageKey, readImageInfo } from '../../utils/image.js';
 import { logger } from '../../utils/logger.js';
+import { comicOpenGraph, type OpenGraphValues } from '../../utils/open-graph.js';
 import * as usersRepository from '../users/users.repository.js';
 import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
@@ -122,6 +124,14 @@ export async function requireVisibleComic(slug: string, user: User | null): Prom
   }
   if (comic.deletedAt) throw new AppError(410, 'GONE', 'La obra se ha retirado');
   return { comic, preview };
+}
+
+// Valores de comic.html (sendPage los escapa): título y Open Graph (contrato del bloque 5). Con la misma
+// comprobación que la API: una obra pending sin sesión de su dueño o del admin da 404, así que un rastreador nunca
+// ve sus datos.
+export async function getComicPage(slug: string, user: User | null): Promise<{ title: string } & OpenGraphValues> {
+  const { comic } = await requireVisibleComic(slug, user);
+  return { title: comic.title, ...comicOpenGraph(env.APP_URL, comic) };
 }
 
 export async function getComic(slug: string, user: User | null): Promise<ComicDto> {
