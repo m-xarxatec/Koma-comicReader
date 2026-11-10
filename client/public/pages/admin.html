@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="/styles/components/status-badge.css">
   <link rel="stylesheet" href="/styles/components/chapter-table.css">
   <link rel="stylesheet" href="/styles/components/admin-page.css">
+  <link rel="stylesheet" href="/styles/components/panel-card.css">
+  <link rel="stylesheet" href="/styles/components/admin-data-panel.css">
+  <link rel="stylesheet" href="/styles/components/admin-notes.css">
   <script type="module" src="/js/pages/admin.js"></script>
 </head>
 <body>
@@ -73,20 +76,26 @@
           <h2 class="author-page__heading-title" id="aprobaciones-title">Cola de aprobación</h2>
           <p class="author-page__muted">Obras y capítulos enviados a revisión, del más antiguo al más reciente. Ábrelos con la vista previa antes de decidir.</p>
         </div>
+        <span class="status-badge status-badge--warning" data-pending-badge></span>
       </div>
-      <p class="author-page__message" data-message="review" role="status" tabindex="-1">Cargando la cola…</p>
-      <div class="chapter-table__scroll" role="region" aria-labelledby="review-caption" tabindex="0" data-table="review" hidden>
-        <table class="chapter-table">
-          <caption class="chapter-table__caption" id="review-caption">Envíos pendientes</caption>
-          <thead><tr>
-            <th class="chapter-table__head" scope="col">Envío</th>
-            <th class="chapter-table__head" scope="col">Publicado por</th>
-            <th class="chapter-table__head" scope="col">Recibido</th>
-            <th class="chapter-table__head" scope="col">Avisos</th>
-            <th class="chapter-table__head" scope="col">Acciones</th>
-          </tr></thead>
-          <tbody data-rows="review"></tbody>
-        </table>
+      <div class="admin-data-panel">
+        <div class="admin-data-panel__toolbar">
+          <p class="admin-data-panel__count" data-count="review"></p>
+        </div>
+        <p class="author-page__message admin-data-panel__message" data-message="review" role="status" tabindex="-1">Cargando la cola…</p>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="review-caption" tabindex="0" data-table="review" hidden>
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="review-caption">Envíos pendientes</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Envío</th>
+              <th class="chapter-table__head" scope="col">Publicado por</th>
+              <th class="chapter-table__head" scope="col">Recibido</th>
+              <th class="chapter-table__head" scope="col">Avisos</th>
+              <th class="chapter-table__head" scope="col">Acciones</th>
+            </tr></thead>
+            <tbody data-rows="review"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -99,40 +108,45 @@
           <p class="author-page__muted">Cada comentario con su obra, capítulo y viñeta. Ocultar no se deshace en esta versión.</p>
         </div>
       </div>
-      <form class="admin-page__filters" data-filters="comments" role="search" aria-label="Buscar comentarios">
-        <div class="form__field">
-          <label class="form__label" for="comments-q">Buscar</label>
-          <input class="form__input" id="comments-q" name="q" type="search" maxlength="100" placeholder="Texto o usuario">
+      <div class="admin-data-panel">
+        <div class="admin-data-panel__toolbar">
+          <form class="admin-page__filters" data-filters="comments" role="search" aria-label="Buscar comentarios">
+            <div class="form__field">
+              <label class="form__label" for="comments-q">Buscar</label>
+              <input class="form__input" id="comments-q" name="q" type="search" maxlength="100" placeholder="Texto o usuario">
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="comments-status">Estado</label>
+              <select class="form__input" id="comments-status" name="status">
+                <option value="">Todos</option>
+                <option value="visible">Visibles</option>
+                <option value="hidden">Ocultos</option>
+              </select>
+            </div>
+            <button class="button button--outline" type="submit">Filtrar</button>
+          </form>
+          <p class="admin-data-panel__count" data-count="comments"></p>
         </div>
-        <div class="form__field">
-          <label class="form__label" for="comments-status">Estado</label>
-          <select class="form__input" id="comments-status" name="status">
-            <option value="">Todos</option>
-            <option value="visible">Visibles</option>
-            <option value="hidden">Ocultos</option>
-          </select>
+        <p class="author-page__message admin-data-panel__message" data-message="comments" role="status" tabindex="-1">Cargando comentarios…</p>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="comments-caption" tabindex="0" data-table="comments" hidden>
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="comments-caption">Comentarios</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Comentario</th>
+              <th class="chapter-table__head" scope="col">Usuario</th>
+              <th class="chapter-table__head" scope="col">Ubicación</th>
+              <th class="chapter-table__head" scope="col">Estado</th>
+              <th class="chapter-table__head" scope="col">Acciones</th>
+            </tr></thead>
+            <tbody data-rows="comments"></tbody>
+          </table>
         </div>
-        <button class="button button--outline" type="submit">Filtrar</button>
-      </form>
-      <p class="author-page__message" data-message="comments" role="status" tabindex="-1">Cargando comentarios…</p>
-      <div class="chapter-table__scroll" role="region" aria-labelledby="comments-caption" tabindex="0" data-table="comments" hidden>
-        <table class="chapter-table">
-          <caption class="chapter-table__caption" id="comments-caption">Comentarios</caption>
-          <thead><tr>
-            <th class="chapter-table__head" scope="col">Comentario</th>
-            <th class="chapter-table__head" scope="col">Usuario</th>
-            <th class="chapter-table__head" scope="col">Ubicación</th>
-            <th class="chapter-table__head" scope="col">Estado</th>
-            <th class="chapter-table__head" scope="col">Acciones</th>
-          </tr></thead>
-          <tbody data-rows="comments"></tbody>
-        </table>
+        <nav class="admin-page__pager" aria-label="Páginas de comentarios" data-pager="comments" hidden>
+          <button class="button button--outline" type="button" data-page="prev">Anterior</button>
+          <span class="author-page__muted" data-page="label"></span>
+          <button class="button button--outline" type="button" data-page="next">Siguiente</button>
+        </nav>
       </div>
-      <nav class="admin-page__pager" aria-label="Páginas de comentarios" data-pager="comments" hidden>
-        <button class="button button--outline" type="button" data-page="prev">Anterior</button>
-        <span class="author-page__muted" data-page="label"></span>
-        <button class="button button--outline" type="button" data-page="next">Siguiente</button>
-      </nav>
     </section>
 
     <!-- CU-35 · RN-14, RN-15 -->
@@ -144,86 +158,101 @@
           <p class="author-page__muted">Cambiar el rol o suspender cierra las sesiones de esa cuenta. No puedes cambiar tu propio rol ni suspenderte.</p>
         </div>
       </div>
-      <form class="admin-page__filters" data-filters="users" role="search" aria-label="Buscar usuarios">
-        <div class="form__field">
-          <label class="form__label" for="users-q">Buscar</label>
-          <input class="form__input" id="users-q" name="q" type="search" maxlength="100" placeholder="Nombre o correo">
+      <div class="admin-data-panel">
+        <div class="admin-data-panel__toolbar">
+          <form class="admin-page__filters" data-filters="users" role="search" aria-label="Buscar usuarios">
+            <div class="form__field">
+              <label class="form__label" for="users-q">Buscar</label>
+              <input class="form__input" id="users-q" name="q" type="search" maxlength="100" placeholder="Nombre o correo">
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="users-role">Rol</label>
+              <select class="form__input" id="users-role" name="role">
+                <option value="">Todos</option>
+                <option value="user">Lector</option>
+                <option value="author">Autor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="users-status">Estado</label>
+              <select class="form__input" id="users-status" name="status">
+                <option value="">Todos</option>
+                <option value="active">Activos</option>
+                <option value="suspended">Suspendidos</option>
+              </select>
+            </div>
+            <button class="button button--outline" type="submit">Filtrar</button>
+          </form>
+          <p class="admin-data-panel__count" data-count="users"></p>
         </div>
-        <div class="form__field">
-          <label class="form__label" for="users-role">Rol</label>
-          <select class="form__input" id="users-role" name="role">
-            <option value="">Todos</option>
-            <option value="user">Lector</option>
-            <option value="author">Autor</option>
-            <option value="admin">Admin</option>
-          </select>
+        <p class="author-page__message admin-data-panel__message" data-message="users" role="status" tabindex="-1">Cargando usuarios…</p>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="users-caption" tabindex="0" data-table="users" hidden>
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="users-caption">Usuarios</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Usuario</th>
+              <th class="chapter-table__head" scope="col">Rol</th>
+              <th class="chapter-table__head" scope="col">Plan</th>
+              <th class="chapter-table__head" scope="col">Estado</th>
+              <th class="chapter-table__head" scope="col">Acciones</th>
+            </tr></thead>
+            <tbody data-rows="users"></tbody>
+          </table>
         </div>
-        <div class="form__field">
-          <label class="form__label" for="users-status">Estado</label>
-          <select class="form__input" id="users-status" name="status">
-            <option value="">Todos</option>
-            <option value="active">Activos</option>
-            <option value="suspended">Suspendidos</option>
-          </select>
-        </div>
-        <button class="button button--outline" type="submit">Filtrar</button>
-      </form>
-      <p class="author-page__message" data-message="users" role="status" tabindex="-1">Cargando usuarios…</p>
-      <div class="chapter-table__scroll" role="region" aria-labelledby="users-caption" tabindex="0" data-table="users" hidden>
-        <table class="chapter-table">
-          <caption class="chapter-table__caption" id="users-caption">Usuarios</caption>
-          <thead><tr>
-            <th class="chapter-table__head" scope="col">Usuario</th>
-            <th class="chapter-table__head" scope="col">Rol</th>
-            <th class="chapter-table__head" scope="col">Plan</th>
-            <th class="chapter-table__head" scope="col">Estado</th>
-            <th class="chapter-table__head" scope="col">Acciones</th>
-          </tr></thead>
-          <tbody data-rows="users"></tbody>
-        </table>
+        <nav class="admin-page__pager" aria-label="Páginas de usuarios" data-pager="users" hidden>
+          <button class="button button--outline" type="button" data-page="prev">Anterior</button>
+          <span class="author-page__muted" data-page="label"></span>
+          <button class="button button--outline" type="button" data-page="next">Siguiente</button>
+        </nav>
       </div>
-      <nav class="admin-page__pager" aria-label="Páginas de usuarios" data-pager="users" hidden>
-        <button class="button button--outline" type="button" data-page="prev">Anterior</button>
-        <span class="author-page__muted" data-page="label"></span>
-        <button class="button button--outline" type="button" data-page="next">Siguiente</button>
-      </nav>
     </section>
 
     <!-- CU-36 · RN-16: PUT /api/admin/settings con bindForm. Sin JS no se envía (sin action, botón desactivado). -->
-    <section id="parametros" class="author-page__section" aria-labelledby="parametros-title">
-      <div class="author-page__heading">
-        <div>
-          <p class="eyebrow author-page__heading-eyebrow">Reglas de lectura</p>
-          <h2 class="author-page__heading-title" id="parametros-title">Parámetros</h2>
-          <p class="author-page__muted">Se aplican desde la siguiente lectura. Los capítulos libres (1 y 2) y la espera del anuncio son fijos.</p>
+    <div class="admin-notes">
+      <section id="parametros" class="panel-card" aria-labelledby="parametros-title">
+        <div class="author-page__heading panel-card__heading">
+          <div>
+            <p class="eyebrow author-page__heading-eyebrow">Reglas de lectura</p>
+            <h2 class="author-page__heading-title" id="parametros-title">Parámetros</h2>
+            <p class="author-page__muted">Se aplican desde la siguiente lectura. Los capítulos libres (1 y 2) y la espera del anuncio son fijos.</p>
+          </div>
         </div>
-      </div>
-      <form class="form admin-page__settings" id="settings-form">
-        <div class="form__field">
-          <label class="form__label" for="setting-wait">Periodo de espera (minutos)</label>
-          <input class="form__input" id="setting-wait" name="waitMinutes" type="number" inputmode="numeric" min="1" max="1440" step="1" required aria-describedby="setting-wait-hint setting-wait-error">
-          <p class="form__hint" id="setting-wait-hint">De 1 a 1440. Cada periodo recarga el saldo.</p>
-          <p class="form__error" id="setting-wait-error" hidden></p>
-        </div>
-        <div class="form__field">
-          <label class="form__label" for="setting-max">Saldo máximo de capítulos</label>
-          <input class="form__input" id="setting-max" name="maxBalance" type="number" inputmode="numeric" min="1" max="20" step="1" required aria-describedby="setting-max-hint setting-max-error">
-          <p class="form__hint" id="setting-max-hint">De 1 a 20.</p>
-          <p class="form__error" id="setting-max-error" hidden></p>
-        </div>
-        <div class="form__field">
-          <label class="form__label" for="setting-refill">Capítulos por recarga</label>
-          <input class="form__input" id="setting-refill" name="refill" type="number" inputmode="numeric" min="1" max="10" step="1" required aria-describedby="setting-refill-hint setting-refill-error">
-          <p class="form__hint" id="setting-refill-hint">De 1 a 10.</p>
-          <p class="form__error" id="setting-refill-error" hidden></p>
-        </div>
-        <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
-        <div class="admin-page__form-actions">
-          <button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros</button>
-          <p class="form__status" data-form-status role="status"></p>
-        </div>
-      </form>
-    </section>
+        <form class="form admin-page__settings" id="settings-form">
+          <div class="form__field">
+            <label class="form__label" for="setting-wait">Periodo de espera (minutos)</label>
+            <input class="form__input" id="setting-wait" name="waitMinutes" type="number" inputmode="numeric" min="1" max="1440" step="1" required aria-describedby="setting-wait-hint setting-wait-error">
+            <p class="form__hint" id="setting-wait-hint">De 1 a 1440. Cada periodo recarga el saldo.</p>
+            <p class="form__error" id="setting-wait-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="setting-max">Saldo máximo de capítulos</label>
+            <input class="form__input" id="setting-max" name="maxBalance" type="number" inputmode="numeric" min="1" max="20" step="1" required aria-describedby="setting-max-hint setting-max-error">
+            <p class="form__hint" id="setting-max-hint">De 1 a 20.</p>
+            <p class="form__error" id="setting-max-error" hidden></p>
+          </div>
+          <div class="form__field">
+            <label class="form__label" for="setting-refill">Capítulos por recarga</label>
+            <input class="form__input" id="setting-refill" name="refill" type="number" inputmode="numeric" min="1" max="10" step="1" required aria-describedby="setting-refill-hint setting-refill-error">
+            <p class="form__hint" id="setting-refill-hint">De 1 a 10.</p>
+            <p class="form__error" id="setting-refill-error" hidden></p>
+          </div>
+          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+          <div class="admin-page__form-actions">
+            <button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros</button>
+            <p class="form__status" data-form-status role="status"></p>
+          </div>
+        </form>
+      </section>
+      <section class="panel-card admin-notes__info" aria-labelledby="admin-notes-title">
+        <p class="eyebrow">Notas para el equipo</p>
+        <h2 class="admin-notes__title" id="admin-notes-title">Moderación clara, sin sorpresas.</h2>
+        <p class="admin-notes__description">Cada aprobación, rechazo, ocultación, cambio de cuenta y modificación de parámetros indica quién la hizo y queda registrada en la auditoría.</p>
+        <div class="admin-notes__item"><span class="status-badge status-badge--warning">Pendiente</span><span>La cola requiere revisión humana.</span></div>
+        <div class="admin-notes__item"><span class="status-badge status-badge--danger">Rechazo</span><span>Debe acompañarse siempre de un motivo visible para el autor.</span></div>
+        <div class="admin-notes__item"><span class="status-badge status-badge--success">Aprobado</span><span>La decisión la confirma el servidor antes de publicarse.</span></div>
+      </section>
+    </div>
 
     <!-- CU-40 (D9): filtros por actor (correo), acción, entidad e id, y días de Europe/Madrid. -->
     <section id="auditoria" class="author-page__section" aria-labelledby="auditoria-title">
@@ -234,53 +263,58 @@
           <p class="author-page__muted">Registro de solo inserción de las acciones sensibles. La referencia une cada entrada con los logs.</p>
         </div>
       </div>
-      <form class="admin-page__filters" data-filters="audit" role="search" aria-label="Filtrar la auditoría">
-        <div class="form__field">
-          <label class="form__label" for="audit-actor">Actor (correo)</label>
-          <input class="form__input" id="audit-actor" name="actor" type="email" autocomplete="off" maxlength="254" placeholder="admin@demo.test">
+      <div class="admin-data-panel">
+        <div class="admin-data-panel__toolbar">
+          <form class="admin-page__filters" data-filters="audit" role="search" aria-label="Filtrar la auditoría">
+            <div class="form__field">
+              <label class="form__label" for="audit-actor">Actor (correo)</label>
+              <input class="form__input" id="audit-actor" name="actor" type="email" autocomplete="off" maxlength="254" placeholder="admin@demo.test">
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="audit-action">Acción</label>
+              <select class="form__input" id="audit-action" name="action"><option value="">Todas</option></select>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="audit-entity">Entidad</label>
+              <select class="form__input" id="audit-entity" name="entityType"><option value="">Todas</option></select>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="audit-entity-id">Id de la entidad</label>
+              <input class="form__input" id="audit-entity-id" name="entityId" type="text" maxlength="40" inputmode="numeric">
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="audit-from">Desde</label>
+              <input class="form__input" id="audit-from" name="from" type="date">
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="audit-to">Hasta</label>
+              <input class="form__input" id="audit-to" name="to" type="date">
+            </div>
+            <button class="button button--outline" type="submit">Filtrar</button>
+          </form>
+          <p class="admin-data-panel__count" data-count="audit"></p>
         </div>
-        <div class="form__field">
-          <label class="form__label" for="audit-action">Acción</label>
-          <select class="form__input" id="audit-action" name="action"><option value="">Todas</option></select>
+        <p class="author-page__message admin-data-panel__message" data-message="audit" role="status" tabindex="-1">Cargando la auditoría…</p>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="audit-caption" tabindex="0" data-table="audit" hidden>
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="audit-caption">Entradas de la auditoría</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Fecha</th>
+              <th class="chapter-table__head" scope="col">Actor</th>
+              <th class="chapter-table__head" scope="col">Acción</th>
+              <th class="chapter-table__head" scope="col">Entidad</th>
+              <th class="chapter-table__head" scope="col">Detalle</th>
+              <th class="chapter-table__head" scope="col">Referencia</th>
+            </tr></thead>
+            <tbody data-rows="audit"></tbody>
+          </table>
         </div>
-        <div class="form__field">
-          <label class="form__label" for="audit-entity">Entidad</label>
-          <select class="form__input" id="audit-entity" name="entityType"><option value="">Todas</option></select>
-        </div>
-        <div class="form__field">
-          <label class="form__label" for="audit-entity-id">Id de la entidad</label>
-          <input class="form__input" id="audit-entity-id" name="entityId" type="text" maxlength="40" inputmode="numeric">
-        </div>
-        <div class="form__field">
-          <label class="form__label" for="audit-from">Desde</label>
-          <input class="form__input" id="audit-from" name="from" type="date">
-        </div>
-        <div class="form__field">
-          <label class="form__label" for="audit-to">Hasta</label>
-          <input class="form__input" id="audit-to" name="to" type="date">
-        </div>
-        <button class="button button--outline" type="submit">Filtrar</button>
-      </form>
-      <p class="author-page__message" data-message="audit" role="status" tabindex="-1">Cargando la auditoría…</p>
-      <div class="chapter-table__scroll" role="region" aria-labelledby="audit-caption" tabindex="0" data-table="audit" hidden>
-        <table class="chapter-table">
-          <caption class="chapter-table__caption" id="audit-caption">Entradas de la auditoría</caption>
-          <thead><tr>
-            <th class="chapter-table__head" scope="col">Fecha</th>
-            <th class="chapter-table__head" scope="col">Actor</th>
-            <th class="chapter-table__head" scope="col">Acción</th>
-            <th class="chapter-table__head" scope="col">Entidad</th>
-            <th class="chapter-table__head" scope="col">Detalle</th>
-            <th class="chapter-table__head" scope="col">Referencia</th>
-          </tr></thead>
-          <tbody data-rows="audit"></tbody>
-        </table>
+        <nav class="admin-page__pager" aria-label="Páginas de la auditoría" data-pager="audit" hidden>
+          <button class="button button--outline" type="button" data-page="prev">Anterior</button>
+          <span class="author-page__muted" data-page="label"></span>
+          <button class="button button--outline" type="button" data-page="next">Siguiente</button>
+        </nav>
       </div>
-      <nav class="admin-page__pager" aria-label="Páginas de la auditoría" data-pager="audit" hidden>
-        <button class="button button--outline" type="button" data-page="prev">Anterior</button>
-        <span class="author-page__muted" data-page="label"></span>
-        <button class="button button--outline" type="button" data-page="next">Siguiente</button>
-      </nav>
     </section>
 
     <!-- Confirmación de las acciones (y motivo del rechazo, RN-05). method="dialog": no envía nada al servidor. -->

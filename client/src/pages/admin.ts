@@ -183,6 +183,7 @@ interface ListView {
   table: HTMLElement | null;
   rows: HTMLElement | null;
   pager: HTMLElement | null;
+  count: HTMLElement | null;
 }
 
 const listView = (name: string): ListView => ({
@@ -190,6 +191,7 @@ const listView = (name: string): ListView => ({
   table: document.querySelector<HTMLElement>(`[data-table="${name}"]`),
   rows: document.querySelector<HTMLElement>(`[data-rows="${name}"]`),
   pager: document.querySelector<HTMLElement>(`[data-pager="${name}"]`),
+  count: document.querySelector<HTMLElement>(`[data-count="${name}"]`),
 });
 
 // La tabla (región desplazable con tabindex="0") si se ve; si no, el mensaje de la sección (tabindex="-1").
@@ -198,10 +200,11 @@ function focusList(view: ListView): void {
   target?.focus();
 }
 
-function showRows(view: ListView, rows: HTMLTableRowElement[], empty: string): void {
+function showRows(view: ListView, rows: HTMLTableRowElement[], empty: string, total = rows.length): void {
   view.rows?.replaceChildren(...rows);
   if (view.table) view.table.hidden = rows.length === 0;
   if (view.message) view.message.textContent = rows.length === 0 ? empty : '';
+  if (view.count) view.count.textContent = `${total} ${total === 1 ? 'resultado' : 'resultados'}`;
 }
 
 function showError(view: ListView, error: ApiError): void {
@@ -209,6 +212,7 @@ function showError(view: ListView, error: ApiError): void {
   if (view.table) view.table.hidden = true;
   if (view.message) view.message.textContent = errorText(error);
   if (view.pager) view.pager.hidden = true;
+  if (view.count) view.count.textContent = '';
 }
 
 interface Paged {
@@ -259,6 +263,7 @@ function bindFilters(name: string, state: Paged, load: () => Promise<void>): voi
 const reviewView = listView('review');
 const pendingTotal = document.querySelector<HTMLElement>('[data-pending-total]');
 const pendingNote = document.querySelector<HTMLElement>('[data-pending-note]');
+const pendingBadge = document.querySelector<HTMLElement>('[data-pending-badge]');
 
 function reviewRow(item: ReviewItemDto): HTMLTableRowElement {
   const row = el('tr');
@@ -301,15 +306,21 @@ function reviewRow(item: ReviewItemDto): HTMLTableRowElement {
 }
 
 async function loadReview(): Promise<void> {
+  if (reviewView.count) reviewView.count.textContent = '';
+  if (pendingBadge) pendingBadge.textContent = '';
   const result = await getReviewQueue();
   if (!result.ok) {
+    if (pendingTotal) pendingTotal.textContent = '—';
+    if (pendingNote) pendingNote.textContent = '';
     showError(reviewView, result.error);
     return;
   }
   const { items, counts } = result.data;
-  if (pendingTotal) pendingTotal.textContent = String(counts.comics + counts.chapters);
+  const total = counts.comics + counts.chapters;
+  if (pendingTotal) pendingTotal.textContent = String(total);
   if (pendingNote) pendingNote.textContent = `${counts.chapters} capítulos · ${counts.comics} obras`;
-  showRows(reviewView, items.map(reviewRow), 'No hay nada pendiente de revisión.');
+  if (pendingBadge) pendingBadge.textContent = total > 0 ? `${total} ${total === 1 ? 'pendiente' : 'pendientes'}` : '';
+  showRows(reviewView, items.map(reviewRow), 'No hay nada pendiente de revisión.', total);
 }
 
 // --- Comentarios (CU-33) ---
@@ -357,12 +368,13 @@ function commentRow(comment: AdminCommentDto): HTMLTableRowElement {
 }
 
 async function loadComments(): Promise<void> {
+  if (commentsView.count) commentsView.count.textContent = '';
   const result = await listComments({ ...commentsState.filters, page: commentsState.page });
   if (!result.ok) {
     showError(commentsView, result.error);
     return;
   }
-  showRows(commentsView, result.data.comments.map(commentRow), 'No hay comentarios con estos filtros.');
+  showRows(commentsView, result.data.comments.map(commentRow), 'No hay comentarios con estos filtros.', result.data.total);
   updatePager(commentsView, commentsState, result.data, loadComments);
 }
 
@@ -417,12 +429,13 @@ function userRow(user: AdminUserDto): HTMLTableRowElement {
 }
 
 async function loadUsers(): Promise<void> {
+  if (usersView.count) usersView.count.textContent = '';
   const result = await listUsers({ ...usersState.filters, page: usersState.page });
   if (!result.ok) {
     showError(usersView, result.error);
     return;
   }
-  showRows(usersView, result.data.users.map(userRow), 'No hay usuarios con estos filtros.');
+  showRows(usersView, result.data.users.map(userRow), 'No hay usuarios con estos filtros.', result.data.total);
   updatePager(usersView, usersState, result.data, loadUsers);
 }
 
@@ -513,6 +526,7 @@ function auditRow(entry: AuditEntryDto): HTMLTableRowElement {
 }
 
 async function loadAudit(): Promise<void> {
+  if (auditView.count) auditView.count.textContent = '';
   const result = await searchAudit({ ...auditState.filters, page: auditState.page });
   if (!result.ok) {
     // Un filtro no válido (400) llega con sus fields: se muestran todos en el mensaje.
@@ -520,7 +534,7 @@ async function loadAudit(): Promise<void> {
     showError(auditView, fields.length > 0 ? { ...result.error, message: `${result.error.message}: ${fields.join(' ')}` } : result.error);
     return;
   }
-  showRows(auditView, result.data.entries.map(auditRow), 'No hay entradas con estos filtros.');
+  showRows(auditView, result.data.entries.map(auditRow), 'No hay entradas con estos filtros.', result.data.total);
   updatePager(auditView, auditState, result.data, loadAudit);
 }
 

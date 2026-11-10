@@ -683,6 +683,29 @@
   --admin-settings-width: 32rem;
   --admin-json-width: 28rem;
   --admin-dialog-width: 32rem;
-  --admin-feedback-offset: calc(var(--mobile-nav-height) + var(--space-3)); /* por encima de la navegación móvil */
-  --admin-feedback-offset-wide: var(--space-4);
+  /* /admin: tarjetas de tablas, notas y aviso flotante (maqueta admin/index.html). */
+  --admin-data-toolbar-gap: var(--space-3);
+  --admin-data-toolbar-padding: 0.9rem;
+  --admin-data-toolbar-padding-medium: 1rem;
+  --admin-data-message-padding: 1rem;
+  --admin-count-min-width: 75px;
+  --admin-count-font-size: 0.78rem;
+  --admin-count-margin: var(--space-3); /* maqueta .table-count: alineado con el pie de los campos */
+  --admin-notes-gap: var(--space-4);
+  --admin-notes-margin-top: var(--author-section-margin);
+  --admin-notes-title-font-size: 1.25rem;
+  --admin-notes-title-margin: 0.8rem;
+  --admin-notes-description-font-size: 0.87rem;
+  --admin-notes-description-margin: 0.87rem;
+  --admin-notes-item-gap: 0.75rem;
+  --admin-notes-item-padding: 0.9rem 0;
+  --admin-notes-item-font-size: 0.79rem;
+  --gradient-admin-notes: radial-gradient(ellipse at 90% 0%, #8b5cf62b, transparent 65%), var(--color-surface);
+  --admin-feedback-margin: 20px; /* 85px de la maqueta menos --mobile-nav-height (65px) */
+  --admin-feedback-offset: calc(var(--mobile-nav-height) + var(--admin-feedback-margin) + env(safe-area-inset-bottom));
+  --admin-feedback-offset-wide: 22px;
+  --admin-feedback-width: min(94vw, 510px);
+  --admin-feedback-padding: 0.9rem;
+  --admin-feedback-font-size: 0.85rem;
+  --admin-feedback-clearance: 6rem; /* hueco que deja el aviso con texto: hasta tres líneas con el código de referencia */
 }

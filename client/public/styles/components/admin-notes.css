@@ -1,0 +1,41 @@
+/* Parámetros y «Notas para el equipo» (maqueta: .panel-columns--admin e .info-card): dos .panel-card apiladas hasta
+   64rem y en dos columnas desde ahí. La tarjeta en sí es panel-card.css; aquí solo la rejilla y lo propio de las notas. */
+.admin-notes {
+  display: grid;
+  gap: var(--admin-notes-gap);
+  margin-top: var(--admin-notes-margin-top);
+}
+
+.admin-notes .admin-page__settings {
+  max-width: none;
+}
+
+.admin-notes__info {
+  background: var(--gradient-admin-notes);
+}
+
+.admin-notes__title {
+  margin: 0 0 var(--admin-notes-title-margin);
+  font-size: var(--admin-notes-title-font-size);
+}
+
+.admin-notes__description {
+  margin: 0 0 var(--admin-notes-description-margin);
+  color: var(--color-text-muted);
+  font-size: var(--admin-notes-description-font-size);
+}
+
+.admin-notes__item {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-notes-item-gap);
+  padding: var(--admin-notes-item-padding);
+  border-top: var(--border-width) solid var(--color-border);
+  font-size: var(--admin-notes-item-font-size);
+}
+
+@media (min-width: 64rem) {
+  .admin-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

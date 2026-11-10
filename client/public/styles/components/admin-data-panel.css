@@ -1,0 +1,74 @@
+/* Tarjetas de las cuatro listas de /admin: barra de filtros y contador sobre la tabla. */
+.admin-data-panel {
+  min-width: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.admin-data-panel__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--admin-data-toolbar-gap);
+  padding: var(--admin-data-toolbar-padding);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.admin-data-panel__toolbar .admin-page__filters {
+  flex: 1 1 100%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.admin-data-panel__count {
+  min-width: var(--admin-count-min-width);
+  margin: 0 0 var(--admin-count-margin);
+  color: var(--color-text-muted);
+  font-size: var(--admin-count-font-size);
+  white-space: nowrap;
+}
+
+.admin-data-panel__count:empty {
+  display: none;
+}
+
+/* La cola no tiene filtros: mientras carga o si falla, su barra (solo con el contador vacío) no deja una franja. */
+.admin-data-panel__toolbar:has(> .admin-data-panel__count:only-child:empty) {
+  display: none;
+}
+
+.admin-data-panel .admin-data-panel__message {
+  margin: 0;
+}
+
+.admin-data-panel .admin-data-panel__message:not(:empty) {
+  padding: var(--admin-data-message-padding);
+}
+
+/* Sin recortar la tarjeta (el contorno de foco se ve entero), la región no pinta fondo sobre sus esquinas redondeadas. */
+.admin-data-panel .chapter-table__scroll {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.admin-data-panel .admin-page__pager {
+  margin: 0;
+  padding: var(--admin-data-toolbar-padding);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+@media (min-width: 40rem) {
+  .admin-data-panel__toolbar {
+    padding: var(--admin-data-toolbar-padding-medium);
+  }
+
+  .admin-data-panel__toolbar .admin-page__filters {
+    flex-basis: auto;
+  }
+
+  .admin-data-panel .admin-page__pager {
+    padding: var(--admin-data-toolbar-padding-medium);
+  }
+}

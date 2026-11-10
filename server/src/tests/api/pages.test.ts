@@ -426,4 +426,13 @@ test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadore
   // Los mensajes de las cuatro listas se anuncian, y el aviso de las acciones es el último hijo de main.
   assert.equal((html.match(/data-message="(review|comments|users|audit)" role="status" tabindex="-1"/g) ?? []).length, 4);
   assert.match(html, /<p class="admin-page__feedback" role="status" aria-live="polite" data-live><\/p>\s*<\/main>/);
+  // Lo recuperado de la maqueta: distintivo (vacío hasta que admin.ts lo rellena; vacío = oculto), un contador por
+  // tabla y las notas estáticas, sin el «Cuando se conecte el backend» de la maqueta.
+  assert.ok(html.includes('<span class="status-badge status-badge--warning" data-pending-badge></span>'), 'distintivo vacío');
+  for (const name of ['review', 'comments', 'users', 'audit']) {
+    assert.ok(html.includes(`<p class="admin-data-panel__count" data-count="${name}"></p>`), `contador de ${name}`);
+  }
+  assert.ok(html.includes('<p class="eyebrow">Notas para el equipo</p>'));
+  assert.ok(html.includes('<h2 class="admin-notes__title" id="admin-notes-title">Moderación clara, sin sorpresas.</h2>'));
+  assert.ok(!html.includes('Cuando se conecte el backend'), 'las notas describen lo que ya hace el servidor');
 });

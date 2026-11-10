@@ -6,23 +6,38 @@
   min-width: var(--admin-metric-min-width);
 }
 
-/* Avisos de las acciones: siempre en el árbol (role="status"), último hijo de main y pegado al borde inferior de la
-   pantalla mientras se recorre el panel (por encima de la navegación móvil); solo ocupa sitio con texto. Posición
-   mínima funcional: el aviso flotante de la maqueta (demo-feedback) lo sustituye. */
+/* Avisos de las acciones: siempre en el árbol y último hijo de main. El desplazamiento móvil incluye la altura de
+   la navegación y el área segura; el diálogo modal pertenece al top layer del navegador. */
 .admin-page__feedback {
-  position: sticky;
+  position: fixed;
   bottom: var(--admin-feedback-offset);
+  left: 50%;
   z-index: var(--layer-admin-feedback);
+  width: var(--admin-feedback-width);
   margin: 0;
-  font-weight: var(--font-weight-semibold);
+  transform: translateX(-50%);
+  text-align: center;
+  font-weight: var(--font-weight-regular);
+  overflow-wrap: anywhere;
+}
+
+/* Con texto se queda hasta la siguiente acción (como en la maqueta), así que deja su hueco: el final de la página
+   (el pie) sube por encima de él y el foco de teclado no queda debajo al desplazarse. */
+html:has(.admin-page__feedback:not(:empty)) {
+  scroll-padding-bottom: calc(var(--admin-feedback-offset) + var(--admin-feedback-clearance));
+}
+
+body:has(.admin-page__feedback:not(:empty)) {
+  padding-bottom: var(--admin-feedback-clearance);
 }
 
 .admin-page__feedback:not(:empty) {
-  margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  padding: var(--admin-feedback-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-panel);
+  font-size: var(--admin-feedback-font-size);
 }
 
 .admin-page__filters {
@@ -143,5 +158,9 @@
 @media (min-width: 64rem) {
   .admin-page__feedback {
     bottom: var(--admin-feedback-offset-wide);
+  }
+
+  html:has(.admin-page__feedback:not(:empty)) {
+    scroll-padding-bottom: calc(var(--admin-feedback-offset-wide) + var(--admin-feedback-clearance));
   }
 }
