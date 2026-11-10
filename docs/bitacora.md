@@ -1184,7 +1184,7 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - ejecutar `npm run demo:data` en local si se quiere ver el panel con datos; ya hecho en esta sesión;
   - commit, despliegue y prueba online.
 
-## 2026-11-10 · Bloque 5 · Open Graph (CU-06, idea 1; D8, D9)
+### 2026-11-10 · Bloque 5 · Open Graph (CU-06, idea 1; D8, D9)
 
 - **Imagen:** `koma-og.png` del desarrollador era PNG de 324 × 315 (medido con `readImageInfo`), lejos de 1200 × 630. Por su indicación se adaptó a 1200 × 630: fondo `--color-bg`, mascota a la izquierda y logo a la derecha. La mascota conserva su fondo blanco; queda para corregir con una versión definitiva.
 - **Servidor:**
@@ -1197,7 +1197,7 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Comprobación (IA):** typecheck, 174 unitarios y 303 de API. Demo levantada en Docker para revisarla desde el móvil. Sin probar online.
 - **Pendiente (desarrollador):** vista previa al compartir, solo desplegado (Render): depurador de Open Graph, WhatsApp, Telegram y Discord; decidir la imagen definitiva; commit y despliegue.
 
-## 2026-11-10 · Bloque 5 · Enlace de Discord (idea 10; D12, D13)
+### 2026-11-10 · Bloque 5 · Enlace de Discord (idea 10; D12, D13)
 
 - **Servidor:**
   - `env.ts` valida `DISCORD_INVITE_URL` opcional: `https` y host `discord.gg` o `discord.com` (anclado: ni subdominios falsos ni `www.`), guardada como `URL.href` (codifica las llaves). Vacía = ausente; otro valor, la app no arranca.
