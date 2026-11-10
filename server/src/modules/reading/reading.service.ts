@@ -17,6 +17,7 @@ import {
   countReadForAd,
   createAdToken,
   parseGuestReads,
+  progressProblem,
   recalculateCredits,
   serializeGuestReads,
   toAdDto,
@@ -262,4 +263,13 @@ async function readAsUser(comic: ComicRow, chapter: chaptersRepository.ChapterRo
     balance,
   }, { preview: false, includeUnpublished: canPreview });
   return { reading, guestReadsCookie: null };
+}
+
+// RN-21: progreso de lectura (contrato del bloque 5). Solo capítulos públicos (404/410 como la lectura); la viñeta
+// debe existir (400 en fields.panel). Sin lectura registrada, 204 sin escribir nada (D6).
+export async function recordProgress(slug: string, number: number, user: User, panel: number): Promise<void> {
+  const { chapter } = await requirePublicChapter(slug, number);
+  const problem = progressProblem(panel, await chaptersRepository.countPanels(pool, chapter.id));
+  if (problem) throw new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { panel: problem } });
+  await readingRepository.recordLastPanel(pool, user.id, chapter.id, panel);
 }

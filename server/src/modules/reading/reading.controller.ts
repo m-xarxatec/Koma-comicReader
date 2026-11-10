@@ -4,7 +4,7 @@ import { GUEST_READS_COOKIE_DAYS } from '../../config/limits.js';
 import { sendPage } from '../../utils/page.js';
 import type { ComicParams } from '../comics/comics.schema.js';
 import { requireVisibleComic } from '../comics/comics.service.js';
-import type { ChapterParams, ReaderPageParams } from './reading.schema.js';
+import type { ChapterParams, ProgressInput, ReaderPageParams } from './reading.schema.js';
 import * as readingService from './reading.service.js';
 
 // Traduce HTTP ↔ servicio; sin lógica de negocio.
@@ -35,6 +35,14 @@ export async function readChapter(req: Request, res: Response): Promise<void> {
     });
   }
   res.set('Cache-Control', 'no-store').json({ reading }); // URLs firmadas nuevas en cada lectura
+}
+
+// RN-21: progreso de lectura (contrato del bloque 5). requireAuth va antes en la ruta: aquí siempre hay usuario.
+export async function recordProgress(_req: Request, res: Response): Promise<void> {
+  const { slug, number } = res.locals.validated.params as ChapterParams;
+  const { panel } = res.locals.validated.body as ProgressInput;
+  await readingService.recordProgress(slug, number, res.locals.user!, panel);
+  res.status(204).end();
 }
 
 // --- Páginas ---

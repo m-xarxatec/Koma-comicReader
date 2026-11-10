@@ -78,7 +78,17 @@ interface AuthorWorkReadsDto {
   title: string;
   status: ComicStatus;
   reads: ReadsDto;
-  chapters: { number: number; title: string; reads: ReadsDto }[];
+  chapters: { number: number; title: string; reads: ReadsDto; abandonment: AbandonmentDto }[];
+}
+
+// RN-21 (contrato del bloque 5): punto de abandono de cada capítulo.
+interface AbandonmentDto {
+  panels: number;
+  readersWithData: number;
+  reachedEnd: number;
+  reachedEndPct: number;
+  dropPanel: number | null;
+  dropReaders: number;
 }
 
 interface AuthorRecentCommentDto {
@@ -246,10 +256,22 @@ function chapterReadsList(work: AuthorWorkReadsDto): HTMLOListElement {
       pair.append(el('dt', 'reads-table__count-label', label), el('dd', 'reads-table__count-value', numberFormat.format(value)));
       counts.append(pair);
     }
-    item.append(counts);
+    item.append(counts, abandonmentText(chapter.abandonment));
     list.append(item);
   }
   return list;
+}
+
+// RN-21: lectores en número y en porcentaje, y la viñeta donde más se abandona.
+function abandonmentText(abandonment: AbandonmentDto): HTMLParagraphElement {
+  if (abandonment.readersWithData === 0) return el('p', 'reads-table__abandonment', 'Sin datos de abandono');
+  const parts = [
+    `${numberFormat.format(abandonment.reachedEnd)} de ${numberFormat.format(abandonment.readersWithData)} ${abandonment.reachedEnd === 1 ? 'llega' : 'llegan'} al final · ${abandonment.reachedEndPct} %`,
+  ];
+  if (abandonment.dropPanel !== null) {
+    parts.push(`Más abandono: viñeta ${abandonment.dropPanel} de ${abandonment.panels} (${plural(abandonment.dropReaders, 'lector', 'lectores')})`);
+  }
+  return el('p', 'reads-table__abandonment', parts.join(' · '));
 }
 
 function renderReads(dashboard: AuthorDashboardDto): void {

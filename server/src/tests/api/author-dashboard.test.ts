@@ -21,7 +21,7 @@ interface Dashboard {
   comics: { pending: number; approved: number; rejected: number };
   chapters: { draft: number; pending: number; approved: number; rejected: number };
   reads: Reads;
-  works: { slug: string; title: string; status: string; reads: Reads; chapters: { number: number; title: string; reads: Reads }[] }[];
+  works: { slug: string; title: string; status: string; reads: Reads; chapters: { number: number; title: string; reads: Reads; abandonment: unknown }[] }[];
   recentComments: {
     id: number;
     body: string;
@@ -111,7 +111,9 @@ test('RN-19: ventanas de 7 y 30 días con hoy incluido; invitados y registrados 
   const expected = { total: 40, last7: 5, last30: 14 };
   assert.deepEqual(data.reads, expected);
   assert.deepEqual(data.works[0]!.reads, expected);
-  assert.deepEqual(data.works[0]!.chapters, [{ number: 1, title: 'Capítulo 1', reads: expected }]);
+  // Bloque 5 (RN-21): cada capítulo trae también su abandono; sin progreso, ceros.
+  const noAbandonment = { panels: 2, readersWithData: 0, reachedEnd: 0, reachedEndPct: 0, dropPanel: null, dropReaders: 0 };
+  assert.deepEqual(data.works[0]!.chapters, [{ number: 1, title: 'Capítulo 1', reads: expected, abandonment: noAbandonment }]);
 });
 
 test('RN-19: la obra suma solo sus capítulos approved vivos; sin obras retiradas ni de otro autor; de la más reciente a la más antigua', async () => {

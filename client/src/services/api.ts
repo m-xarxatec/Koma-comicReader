@@ -15,6 +15,7 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 // Opciones por petición. Las llamadas que no las pasan no cambian.
 export interface RequestOptions {
   headers?: Readonly<Record<string, string>>; // p. ej. X-Ad-Token en la lectura del cap. 3 (RN-01)
+  keepalive?: boolean; // la petición sigue aunque se cierre la página (progreso de lectura, RN-21)
 }
 
 // Sin respuesta del servidor (red caída, servidor apagado): status 0 y un código propio del cliente.
@@ -41,6 +42,7 @@ async function request<T>(method: Method, path: string, body?: unknown, options:
       // boundary; cualquier otro cuerpo va como JSON.
       headers: { ...options.headers, Accept: 'application/json', ...(body !== undefined && !isForm && { 'Content-Type': 'application/json' }) },
       ...(body !== undefined && { body: isForm ? body : JSON.stringify(body) }),
+      ...(options.keepalive && { keepalive: true }),
     });
   } catch {
     return { ok: false, status: 0, error: NETWORK_ERROR };

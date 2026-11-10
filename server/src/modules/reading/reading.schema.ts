@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PG_MAX_INT } from '../../config/limits.js';
+import { MAX_PANELS_PER_CHAPTER, PG_MAX_INT } from '../../config/limits.js';
 import { comicParams } from '../comics/comics.schema.js';
 
 // Entrada de las rutas de lectura (contrato del bloque 2). Los parámetros que no pueden existir dan 404
@@ -26,3 +26,13 @@ export type ChapterParams = z.infer<typeof chapterParams>;
 // Página: /leer/:slug/:numero (las URLs de páginas van en español).
 export const readerPageParams = comicParams.extend({ numero: chapterNumber });
 export type ReaderPageParams = z.infer<typeof readerPageParams>;
+
+// Progreso de lectura (RN-21; contrato del bloque 5): la viñeta máxima alcanzada. El tope del capítulo concreto lo
+// comprueba el servicio (400 en fields.panel); aquí, la forma y el máximo de viñetas de RN-10.
+export const progressBody = z.object({
+  panel: z
+    .int({ error: 'Indica la viñeta con un número entero' })
+    .min(1, { error: 'La viñeta empieza en 1' })
+    .max(MAX_PANELS_PER_CHAPTER, { error: 'La viñeta no existe en este capítulo' }),
+});
+export type ProgressInput = z.infer<typeof progressBody>;

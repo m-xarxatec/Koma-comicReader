@@ -158,3 +158,10 @@ export function serializeGuestReads(key: Buffer, ids: readonly number[]): string
   const payload = ids.join('-');
   return `${payload}.${sign(key, payload)}`;
 }
+
+// --- RN-21: progreso de lectura ---
+
+// La viñeta enviada debe existir en el capítulo (1…panels). null = válida.
+export function progressProblem(panel: number, panels: number): string | null {
+  return panel >= 1 && panel <= panels ? null : 'La viñeta no existe en este capítulo';
+}

@@ -114,3 +114,13 @@ const COUNT_READ_SQL = {
 export async function countRead(db: Queryable, chapterId: number, reader: keyof typeof COUNT_READ_SQL): Promise<void> {
   await db.query(COUNT_READ_SQL[reader], [chapterId]);
 }
+
+// RN-21: progreso de lectura. Solo UPDATE de una lectura ya registrada (nunca INSERT: no marca nada como leído) y el
+// valor solo sube. Sin fila (nunca lo leyó), no escribe nada.
+export async function recordLastPanel(db: Queryable, userId: number, chapterId: number, panel: number): Promise<void> {
+  await db.query('UPDATE chapter_reads SET last_panel = GREATEST(COALESCE(last_panel, 0), $3) WHERE user_id = $1 AND chapter_id = $2', [
+    userId,
+    chapterId,
+    panel,
+  ]);
+}

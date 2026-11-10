@@ -23,6 +23,8 @@ export const UPLOAD_LIMIT = 100;
 export const UPLOAD_WINDOW_MS = 60 * MINUTE_MS;
 export const PASSWORD_LIMIT = 5;
 export const PASSWORD_WINDOW_MS = 15 * MINUTE_MS;
+export const PROGRESS_LIMIT = 60;
+export const PROGRESS_WINDOW_MS = MINUTE_MS;
 
 // ipKeyGenerator agrupa las IPv6 por subred (/56, el valor de serie de la librería): si no, un atacante
 // rotaría direcciones dentro de su propio bloque.
@@ -107,3 +109,8 @@ export async function resetPasswordAttempts(req: Request, res: Response): Promis
 // Subidas de imágenes: 100 / h por usuario, portada incluida (RN-13, D19). Va antes de multer y cuenta cada intento
 // que pasa la validación de la ruta (también un 400 sin archivo, un 413 o un 415), como el registro.
 export const uploadRateLimit = rateLimit({ ...common, windowMs: UPLOAD_WINDOW_MS, limit: UPLOAD_LIMIT, keyGenerator: userKey });
+
+// Progreso de lectura: 60 / min por usuario (RN-13, RN-21; contrato del bloque 5, D7). El lector solo envía al
+// ocultarse la página y al llegar a la última viñeta; el límite frena a quien lo llame en bucle. El cliente ignora
+// un 429 en silencio.
+export const progressRateLimit = rateLimit({ ...common, windowMs: PROGRESS_WINDOW_MS, limit: PROGRESS_LIMIT, keyGenerator: userKey });

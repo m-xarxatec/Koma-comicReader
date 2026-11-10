@@ -2,6 +2,7 @@ import { adCard, type AdDto } from '../components/ad.js';
 import { commentButtonLabel, createCommentPanel } from '../components/comment-panel.js';
 import { retryAtText, startCountdown } from '../components/timer.js';
 import { api, type ApiResult } from '../services/api.js';
+import { getMe } from '../services/auth.js';
 import { fullscreenButtonState, toggleFullscreen } from '../utils/fullscreen.js';
 
 // Lector (CU-03, CU-04, CU-12, CU-24). La ruta HTML ya comprobó obra y capítulo (404, 410) e inyectó el título
@@ -61,6 +62,8 @@ const store = {
   moveFocus: false, // tras pulsar un botón que desaparece, el foco pasa al título de lo nuevo
   comments: new Map<number, number>(), // posición → comentarios visibles (contrato del bloque 3, D3)
   preview: false, // D10: en la vista previa no se comenta (sin iconos ni panel)
+  progressMax: 0, // RN-21: viñeta máxima vista en esta página
+  progressSent: 0, // RN-21: la última que se envió (solo se envía si sube)
 };
 
 // --- Comentarios por viñeta (CU-05, CU-13) y su interruptor ---
@@ -451,6 +454,7 @@ function renderReading(reading: ReadingDto): void {
 
   // El contenido llega después de cargar la página: el navegador ya no salta solo al #v-n.
   if (/^#v-\d+$/.test(location.hash)) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  void observeProgress(reading);
 }
 
 // Sustituye las URLs de las imágenes que ya están en la página, sin volver a pintarla: la posición se conserva.
@@ -499,6 +503,63 @@ async function read(mode: 'show' | 'reload' = 'show'): Promise<void> {
   }
   handleReadError(result);
 }
+
+// --- Punto de abandono (RN-21; contrato del bloque 5) ---
+// Pasivo: guarda la viñeta máxima vista y la envía al ocultarse la página y al llegar a la última, solo si ha subido.
+// Solo con sesión (un invitado no envía nada) y nunca en la vista previa. Cualquier fallo (red, 401, 429, 5xx) se
+// ignora: la lectura sigue igual. Un enlace #v-n cuenta como alcanzada la viñeta a la que lleva (riesgo aceptado).
+
+const progressPath = `/api/comics/${slug}/chapters/${number}/progress`;
+let progressObservers: IntersectionObserver[] = [];
+let progressGeneration = 0; // cada renderReading invalida lo que siga esperando a /api/me
+let session: Promise<boolean> | null = null; // GET /api/me una sola vez, y solo si hace falta
+const hasSession = () => (session ??= getMe().then((result) => result.ok && result.data.user !== null));
+
+function sendProgress(): void {
+  if (store.progressMax <= store.progressSent) return;
+  store.progressSent = store.progressMax;
+  void api.post<void>(progressPath, { panel: store.progressMax }, { keepalive: true });
+}
+
+function reachPanel(position: number, panels: number): void {
+  if (position > store.progressMax) store.progressMax = position;
+  if (store.progressMax >= panels) sendProgress();
+}
+
+async function observeProgress(reading: ReadingDto): Promise<void> {
+  const generation = ++progressGeneration;
+  for (const observer of progressObservers) observer.disconnect();
+  progressObservers = [];
+  if (reading.preview || reading.panels.length === 0 || !('IntersectionObserver' in window) || !(await hasSession())) return;
+  if (generation !== progressGeneration) return; // otro renderReading llegó mientras se esperaba la sesión
+  const panels = reading.panels.length;
+  const figures = [...(stream?.querySelectorAll<HTMLElement>('[id^="v-"]') ?? [])];
+  const positionOf = (target: Element) => Number(target.id.slice(2)); // id="v-n" (RN-09)
+  // Una viñeta cuenta como vista cuando entra en la mitad superior de la pantalla…
+  const half = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) if (entry.isIntersecting) reachPanel(positionOf(entry.target), panels);
+    },
+    { rootMargin: '0px 0px -50% 0px' },
+  );
+  for (const figure of figures) half.observe(figure);
+  // …y la última, también cuando se ve entera: en pantalla completa no hay nada debajo y una viñeta baja nunca
+  // llegaría a la mitad superior.
+  const whole = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) if (entry.isIntersecting) reachPanel(positionOf(entry.target), panels);
+    },
+    { threshold: 1 },
+  );
+  const last = figures.at(-1);
+  if (last) whole.observe(last);
+  progressObservers = [half, whole];
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') sendProgress();
+});
+window.addEventListener('pagehide', sendProgress);
 
 // --- Pantalla completa (D24) ---
 

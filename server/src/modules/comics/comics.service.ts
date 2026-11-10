@@ -15,7 +15,7 @@ import { logger } from '../../utils/logger.js';
 import * as usersRepository from '../users/users.repository.js';
 import type { User } from '../users/users.repository.js';
 import * as comicsRepository from './comics.repository.js';
-import { groupWorkReads, LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type LicenseCode, type Reads } from './comics.rules.js';
+import { abandonmentOf, groupWorkReads, LICENSES, licenseCodeFromName, nextFreeSlug, slugify, type AbandonmentDto, type LicenseCode, type Reads } from './comics.rules.js';
 import type { CatalogQuery, CreateComicInput, UpdateComicInput } from './comics.schema.js';
 
 // "Cómo se consigue" de /crear (become-author) para quien no es autor. Un admin nunca es autor (permissions.ts): a él
@@ -246,7 +246,7 @@ export interface AuthorDashboardDto {
     title: string;
     status: 'pending' | 'approved' | 'rejected';
     reads: Reads;
-    chapters: { number: number; title: string; reads: Reads }[];
+    chapters: { number: number; title: string; reads: Reads; abandonment: AbandonmentDto }[]; // abandonment: RN-21 (bloque 5)
   }[];
   recentComments: {
     id: number;
@@ -261,12 +261,15 @@ export interface AuthorDashboardDto {
 
 // GET /api/author/dashboard: solo lo del usuario de la sesión (requireAuthor va antes en la ruta). Solo lectura.
 export async function getAuthorDashboard(user: User): Promise<AuthorDashboardDto> {
-  const [createdAt, counts, readRows, comments] = await Promise.all([
+  const [createdAt, counts, readRows, comments, abandonmentRows] = await Promise.all([
     usersRepository.findCreatedAt(pool, user.id),
     comicsRepository.countAuthorStatuses(pool, user.id),
     comicsRepository.listAuthorChapterReads(pool, user.id, { shortDays: READS_WINDOW_SHORT_DAYS, longDays: READS_WINDOW_LONG_DAYS }),
     commentsRepository.listRecentOnAuthorComics(pool, user.id, AUTHOR_RECENT_COMMENTS),
+    comicsRepository.listAuthorAbandonment(pool, user.id),
   ]);
+  // RN-21: el abandono de cada capítulo, por obra y número (las mismas filas que las lecturas: approved y vivos).
+  const abandonment = new Map(abandonmentRows.map((row) => [`${row.comicId}:${row.chapterNumber}`, abandonmentOf(row.panels, row.distribution)]));
   // El usuario se acaba de leer de la BD (auth): si ya no está, la sesión no vale.
   if (!createdAt) throw new AppError(401, 'UNAUTHENTICATED', 'Inicia sesión para continuar');
   const toReads = (r: comicsRepository.ReadCounts): Reads => ({ total: r.total, last7: r.lastShort, last30: r.lastLong });
@@ -283,7 +286,16 @@ export async function getAuthorDashboard(user: User): Promise<AuthorDashboardDto
     comics: counts.comics,
     chapters: counts.chapters,
     reads,
-    works: works.map((work) => ({ slug: work.comic.slug, title: work.comic.title, status: work.comic.status, reads: work.reads, chapters: work.chapters })),
+    works: works.map((work) => ({
+      slug: work.comic.slug,
+      title: work.comic.title,
+      status: work.comic.status,
+      reads: work.reads,
+      chapters: work.chapters.map((chapter) => ({
+        ...chapter,
+        abandonment: abandonment.get(`${work.comic.id}:${chapter.number}`) ?? abandonmentOf(0, []),
+      })),
+    })),
     recentComments: comments.map((comment) => ({
       id: comment.id,
       body: comment.body,

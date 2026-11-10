@@ -81,3 +81,44 @@ export function groupWorkReads<C extends { id: number }>(
   const list = [...works.values()];
   return { reads: list.reduce((sum, work) => addReads(sum, work.reads), ZERO), works: list };
 }
+
+// --- RN-21: punto de abandono (panel del autor, contrato del bloque 5) ---
+
+export interface AbandonmentDto {
+  panels: number; // viñetas del capítulo
+  readersWithData: number; // lectores con last_panel, sin el admin ni el autor dueño
+  reachedEnd: number; // last_panel = panels
+  reachedEndPct: number; // 0–100, entero redondeado; 0 si readersWithData = 0
+  dropPanel: number | null; // moda de last_panel entre quienes no llegan al final (empate: la menor); null si nadie abandona
+  dropReaders: number; // lectores que se quedaron en dropPanel (0 si dropPanel es null)
+}
+
+export interface LastPanelCount {
+  lastPanel: number;
+  readers: number;
+}
+
+// Una viñeta máxima mayor que las viñetas actuales cuenta como final (un capítulo aprobado no cambia de viñetas, pero
+// así el porcentaje nunca pasa de 100).
+export function abandonmentOf(panels: number, distribution: readonly LastPanelCount[]): AbandonmentDto {
+  let readersWithData = 0;
+  let reachedEnd = 0;
+  let drop: LastPanelCount | null = null;
+  for (const entry of distribution) {
+    if (entry.readers <= 0) continue;
+    readersWithData += entry.readers;
+    if (entry.lastPanel >= panels) {
+      reachedEnd += entry.readers;
+    } else if (!drop || entry.readers > drop.readers || (entry.readers === drop.readers && entry.lastPanel < drop.lastPanel)) {
+      drop = entry;
+    }
+  }
+  return {
+    panels,
+    readersWithData,
+    reachedEnd,
+    reachedEndPct: readersWithData === 0 ? 0 : Math.round((reachedEnd * 100) / readersWithData),
+    dropPanel: drop?.lastPanel ?? null,
+    dropReaders: drop?.readers ?? 0,
+  };
+}

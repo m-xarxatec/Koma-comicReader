@@ -493,6 +493,34 @@ export async function listAuthorChapterReads(db: Queryable, authorId: number, wi
   }));
 }
 
+// RN-21: punto de abandono por capítulo approved vivo de las obras vivas del autor (contrato del bloque 5). Cuántos
+// lectores se quedaron en cada viñeta máxima, sin filas sin progreso (NULL), sin el admin y sin el propio autor.
+export interface AuthorAbandonmentRow {
+  comicId: number;
+  chapterNumber: number;
+  panels: number;
+  distribution: { lastPanel: number; readers: number }[];
+}
+
+export async function listAuthorAbandonment(db: Queryable, authorId: number): Promise<AuthorAbandonmentRow[]> {
+  const { rows } = await db.query<{ comic_id: number; number: number; panels: number; distribution: { lastPanel: number; readers: number }[] }>(
+    `SELECT co.id AS comic_id, ch.number,
+            (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panels,
+            COALESCE((SELECT json_agg(json_build_object('lastPanel', d.last_panel, 'readers', d.readers) ORDER BY d.last_panel)
+                      FROM (SELECT cr.last_panel, count(*)::int AS readers
+                            FROM chapter_reads cr
+                            JOIN users u ON u.id = cr.user_id
+                            WHERE cr.chapter_id = ch.id AND cr.last_panel IS NOT NULL
+                              AND u.role <> 'admin' AND cr.user_id <> co.author_id
+                            GROUP BY cr.last_panel) d), '[]'::json) AS distribution
+     FROM comics co
+     JOIN chapters ch ON ch.comic_id = co.id AND ch.status = 'approved' AND ch.deleted_at IS NULL
+     WHERE co.author_id = $1 AND co.deleted_at IS NULL`,
+    [authorId],
+  );
+  return rows.map((row) => ({ comicId: row.comic_id, chapterNumber: row.number, panels: row.panels, distribution: row.distribution }));
+}
+
 // --- Bloque 4: aprobación de contenido (CU-32; RN-05, RN-17) ---
 
 export interface ReviewComicRow {

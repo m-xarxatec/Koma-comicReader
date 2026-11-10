@@ -16,7 +16,7 @@ import { flatImagePng, type Rgb } from './demo-png.js';
 // - Obras, portadas, capítulos, viñetas y envíos a revisión: por la API real, como la autora demo
 //   (author@demo.test), con `app` levantada en 127.0.0.1 en un puerto libre y el Origin propio (CSRF).
 // - Aprobar y rechazar (el panel del admin llega en el bloque 4): por SQL, con su auditoría (actor NULL = sistema).
-// - 6 lectores, sus lecturas de los últimos 14 días y ~30 comentarios: por SQL. El registro admite 3 altas por hora
+// - 6 lectores, sus lecturas de los últimos 14 días, su viñeta máxima (RN-21) y ~30 comentarios: por SQL. El registro admite 3 altas por hora
 //   (RN-13), la lectura solo registra el día de hoy y el limitador de comentarios no deja fechas pasadas.
 // Las imágenes se generan en un temporal del sistema que se borra al terminar: nunca en el repositorio.
 
@@ -157,7 +157,7 @@ export interface DemoSummary {
   approved: { comics: number; chapters: number };
   rejected: number;
   readers: { created: number; existing: number };
-  reads: { chapters: number; skipped: number; userReads: number; guestReads: number };
+  reads: { chapters: number; skipped: number; userReads: number; guestReads: number; progress: number };
   comments: { created: number; existing: number; skipped: number };
 }
 
@@ -406,6 +406,38 @@ async function addReads(client: PoolClient, comics: readonly AuthorComic[], read
   }
 }
 
+// RN-21 (bloque 5): viñeta máxima de cada lector demo en cada capítulo. Solo depende de quién lee (índice del lector),
+// del capítulo y de la obra: repetir el script da lo mismo. Unos 6 de cada 10 llegan al final; el resto se queda entre
+// 1 y 4 viñetas antes (nunca por debajo de la 1).
+export function demoLastPanel(reader: number, chapterNumber: number, comicIndex: number, panels: number): number {
+  const h = (reader * 7 + chapterNumber * 5 + comicIndex * 3) % 10;
+  return h < 6 ? panels : Math.max(1, panels - (h - 5));
+}
+
+// Rellena last_panel solo donde es NULL (nunca pisa un progreso real ni uno ya puesto), con demoLastPanel.
+async function addProgress(client: PoolClient, comics: readonly AuthorComic[], readers: readonly number[], summary: DemoSummary): Promise<void> {
+  const slugs = DEMO_COMICS.map((spec) => comics.find((comic) => comic.title === spec.title)?.slug).filter((slug): slug is string => slug !== undefined);
+  const { rows } = await client.query<{ user_id: number; chapter_id: number; number: number; comic_index: number; panels: number }>(
+    `SELECT cr.user_id, cr.chapter_id, ch.number, array_position($1::text[], co.slug) - 1 AS comic_index,
+            (SELECT count(*)::int FROM panels p WHERE p.chapter_id = ch.id) AS panels
+     FROM chapter_reads cr
+     JOIN chapters ch ON ch.id = cr.chapter_id
+     JOIN comics co ON co.id = ch.comic_id
+     WHERE co.slug = ANY($1::text[]) AND cr.user_id = ANY($2::int[]) AND cr.last_panel IS NULL`,
+    [slugs, readers],
+  );
+  for (const row of rows) {
+    if (row.panels === 0) continue;
+    const panel = demoLastPanel(readers.indexOf(row.user_id), row.number, row.comic_index, row.panels);
+    const { rowCount } = await client.query('UPDATE chapter_reads SET last_panel = $3 WHERE user_id = $1 AND chapter_id = $2 AND last_panel IS NULL', [
+      row.user_id,
+      row.chapter_id,
+      panel,
+    ]);
+    summary.reads.progress += rowCount ?? 0;
+  }
+}
+
 export interface CommentSlot {
   comicIndex: number; // en DEMO_COMICS
   chapterNumber: number;
@@ -508,7 +540,7 @@ async function main(): Promise<void> {
     approved: { comics: 0, chapters: 0 },
     rejected: 0,
     readers: { created: 0, existing: 0 },
-    reads: { chapters: 0, skipped: 0, userReads: 0, guestReads: 0 },
+    reads: { chapters: 0, skipped: 0, userReads: 0, guestReads: 0, progress: 0 },
     comments: { created: 0, existing: 0, skipped: 0 },
   };
   // Todo lo que deja algo abierto o en disco va dentro del try: el finally cierra el servidor, borra el temporal y
@@ -529,6 +561,7 @@ async function main(): Promise<void> {
       await moderate(client, audit, requestId, comics, summary);
       const readers = await createReaders(client, audit, requestId, passwordHash, summary);
       await addReads(client, comics, readers, summary);
+      await addProgress(client, comics, readers, summary);
       await addComments(client, comics, readers, summary);
     });
 
@@ -539,7 +572,7 @@ async function main(): Promise<void> {
         `Capítulos: ${summary.chapters.created} creados, ${summary.chapters.existing} ya existían · viñetas subidas: ${summary.panels} · enviados a revisión: ${summary.submitted}`,
         `Moderación (SQL): ${summary.approved.comics} obras y ${summary.approved.chapters} capítulos aprobados, ${summary.rejected} obras rechazadas`,
         `Lectores: ${summary.readers.created} creados, ${summary.readers.existing} ya existían (lector1…${DEMO_READERS}@demo.test, contraseña de SEED_READER_PASSWORD)`,
-        `Lecturas: ${summary.reads.chapters} capítulos con lecturas nuevas (${summary.reads.userReads} de registrados, ${summary.reads.guestReads} de invitados), ${summary.reads.skipped} omitidos porque ya tenían`,
+        `Lecturas: ${summary.reads.chapters} capítulos con lecturas nuevas (${summary.reads.userReads} de registrados, ${summary.reads.guestReads} de invitados), ${summary.reads.skipped} omitidos porque ya tenían · viñeta máxima puesta en ${summary.reads.progress} lecturas`,
         `Comentarios: ${summary.comments.created} creados, ${summary.comments.existing} ya existían, ${summary.comments.skipped} omitidos (sin la lectura de quien comenta)`,
       ].join('\n'),
     );
