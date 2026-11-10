@@ -1208,3 +1208,9 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
 - **Agente `auditor`:** APTO CON OBSERVACIONES: el marcador nuevo, para el desarrollador; el comentario de cabecera de `layout.ts`, corregido.
 - **Comprobación (IA):** typecheck, 180 unitarios y 306 de API. Sin probar en el navegador ni online.
 - **Pendiente (desarrollador):** `DISCORD_INVITE_URL` en `.env` y en Render; portada y pie a 360 px, escritorio y teclado, con y sin URL; commit y despliegue.
+
+### 2026-11-10 · Bloque 5 · Cierre del bloque
+- **Auditor del cierre** (c36c409..HEAD): APTO, 2 bajos de la bitácora (el marcador `<!-- @community -->` quedó aprobado y documentado en CLAUDE.md y plan_mvp.md:311, aunque la entrada del enlace de Discord lo dé como pendiente; esta entrada).
+- **Comprobación (IA):** typecheck, 180 unitarios y 306 de API; tokens de variables.css y layers.css: 642, todos en uso; demo en Docker por la LAN con DISCORD_INVITE_URL: salud, metas OG, 404 sin metas, obra pending en 404, /api/admin/stats 401 sin sesión, sin errores en los logs.
+- **Las cuatro funciones, hechas el 10-nov** (calendario previsto: 10–14).
+- **Pendiente (desarrollador):** despliegue y pruebas online de las cuatro funciones; revisión a 360 px y con teclado; imagen OG definitiva.
