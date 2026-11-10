@@ -1183,3 +1183,16 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - `/autor` a 360 px y con teclado;
   - ejecutar `npm run demo:data` en local si se quiere ver el panel con datos; ya hecho en esta sesión;
   - commit, despliegue y prueba online.
+
+## 2026-11-10 · Bloque 5 · Open Graph (CU-06, idea 1; D8, D9)
+
+- **Imagen:** `koma-og.png` del desarrollador era PNG de 324 × 315 (medido con `readImageInfo`), lejos de 1200 × 630. Por su indicación se adaptó a 1200 × 630: fondo `--color-bg`, mascota a la izquierda y logo a la derecha. La mascota conserva su fondo blanco; queda para corregir con una versión definitiva.
+- **Servidor:**
+  - `utils/open-graph.ts`, funciones puras que reciben `APP_URL`: URLs absolutas sin `?` ni `#`, sinopsis en una línea y cortada a 200 puntos de código con «…» (`OG_DESCRIPTION_MAX` en `limits.ts`).
+  - `/` (texto fijo, igual que su meta description), `/obra/:slug` (`getComicPage`) y `/leer/:slug/:numero` (`getReaderPage`), sin consultas nuevas: reutilizan `requireVisibleComic` y `requireReadableChapter`, así que una obra pending sin sesión sigue en 404.
+  - Las tres plantillas llevan el bloque del contrato; todo pasa por `fillTemplate`. Las de error, ninguna meta.
+- **Tests:** 7 unitarios (medidas reales del PNG frente a las plantillas, solo tres páginas, URLs, sinopsis con saltos y emojis, escapado hostil, texto de la portada) y 5 de API (portada e imagen servida, `/obra` y `/leer` hostiles, pending en 404 sin datos ni meta, errores sin meta).
+- **Agente `frontend`:** APTO, 3 bajos: test de igualdad del texto de la portada y orden de imports, corregidos; la estética de la imagen, para el desarrollador.
+- **Agente `auditor`:** APTO, 1 bajo corregido: `OG_DESCRIPTION_MAX` a `config/limits.ts`.
+- **Comprobación (IA):** typecheck, 174 unitarios y 303 de API. Demo levantada en Docker para revisarla desde el móvil. Sin probar online.
+- **Pendiente (desarrollador):** vista previa al compartir, solo desplegado (Render): depurador de Open Graph, WhatsApp, Telegram y Discord; decidir la imagen definitiva; commit y despliegue.
