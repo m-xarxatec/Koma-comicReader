@@ -399,7 +399,8 @@ export async function replaceComicTags(db: Queryable, comicId: number, tagSlugs:
 
 // --- Panel del autor (CU-31 recortado; RN-19) ---
 
-const MADRID_TODAY = "(now() AT TIME ZONE 'Europe/Madrid')::date";
+// Hoy en Europe/Madrid (RN-19). Las estadísticas globales (RN-20, admin.repository.ts) usan el mismo día.
+export const MADRID_TODAY = "(now() AT TIME ZONE 'Europe/Madrid')::date";
 
 export interface AuthorStatusCounts {
   today: string; // 'YYYY-MM-DD' en Europe/Madrid

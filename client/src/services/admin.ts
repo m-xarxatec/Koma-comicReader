@@ -60,6 +60,23 @@ export interface AuditEntryDto {
   requestId: string;
 }
 
+// Estadísticas globales (CU-39; RN-20; contrato del bloque 5). Duplicado de admin.rules.ts.
+export interface ReadsDto {
+  total: number;
+  last7: number;
+  last30: number;
+}
+
+export interface AdminStatsDto {
+  today: string; // 'YYYY-MM-DD' en Europe/Madrid
+  users: { total: number; readers: number; authors: number; admins: number; suspended: number; premium: number; activeLast30: number };
+  reads: ReadsDto & { guests: ReadsDto; users: ReadsDto };
+  catalog: { comics: number; chapters: number };
+  topComics: { slug: string; title: string; reads: ReadsDto }[];
+  comments: { last7: number; moderatedLast7: number };
+  auditLast24h: number;
+}
+
 export interface PageDto {
   page: number;
   pageSize: number;
@@ -77,6 +94,7 @@ const query = (params: Readonly<Record<string, string | number>>) => {
 const slugPath = (slug: string) => encodeURIComponent(slug);
 
 export const getReviewQueue = () => api.get<ReviewQueueDto>('/api/admin/review');
+export const getStats = () => api.get<{ stats: AdminStatsDto }>('/api/admin/stats');
 export const reviewComic = (slug: string, decision: 'approve' | 'reject', reason?: string) =>
   api.post<void>(`/api/admin/comics/${slugPath(slug)}/${decision}`, decision === 'reject' ? { reason } : undefined);
 export const reviewChapter = (slug: string, number: number, decision: 'approve' | 'reject', reason?: string) =>

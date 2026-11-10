@@ -1,5 +1,5 @@
-import { ADMIN_PAGE_SIZE, REVIEW_QUEUE_MAX } from '../../config/limits.js';
-import { pool, withTransaction } from '../../db/pool.js';
+import { ADMIN_PAGE_SIZE, ADMIN_TOP_COMICS, READS_WINDOW_LONG_DAYS, READS_WINDOW_SHORT_DAYS, REVIEW_QUEUE_MAX, STATS_RECENT_HOURS } from '../../config/limits.js';
+import { pool, withTransaction, type Queryable } from '../../db/pool.js';
 import { AppError } from '../../utils/app-error.js';
 import * as auditRepository from '../audit/audit.repository.js';
 import * as audit from '../audit/audit.service.js';
@@ -11,7 +11,8 @@ import type { ReadingSettings } from '../reading/reading.rules.js';
 import * as readingRepository from '../reading/reading.repository.js';
 import { loadReadingSettings } from '../reading/reading.service.js';
 import type { User } from '../users/users.repository.js';
-import { chapterReviewProblem, comicReviewProblem, settingsChange } from './admin.rules.js';
+import * as adminRepository from './admin.repository.js';
+import { buildAdminStats, chapterReviewProblem, comicReviewProblem, settingsChange, type AdminStatsDto } from './admin.rules.js';
 
 type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
@@ -221,4 +222,25 @@ export async function searchAudit(query: AuditQuery): Promise<AuditPageDto> {
     pageSize: ADMIN_PAGE_SIZE,
     total,
   };
+}
+
+// --- Estadísticas globales (CU-39; RN-20; contrato del bloque 5): solo lectura, sin auditoría ---
+
+export type { AdminStatsDto } from './admin.rules.js';
+
+const STATS_WINDOWS: adminRepository.StatsWindows = {
+  shortDays: READS_WINDOW_SHORT_DAYS,
+  longDays: READS_WINDOW_LONG_DAYS,
+  recentHours: STATS_RECENT_HOURS,
+  topComics: ADMIN_TOP_COMICS,
+};
+
+// `db` permite a los tests leerlas dentro de su transacción; la app usa el pool.
+export async function getPlatformStats(db: Queryable = pool): Promise<AdminStatsDto> {
+  const [counts, reads, topComics] = await Promise.all([
+    adminRepository.countPlatform(db, STATS_WINDOWS),
+    adminRepository.sumPlatformReads(db, STATS_WINDOWS),
+    adminRepository.listTopComics(db, STATS_WINDOWS),
+  ]);
+  return buildAdminStats({ counts, reads, topComics });
 }

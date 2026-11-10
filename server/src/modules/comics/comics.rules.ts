@@ -61,7 +61,7 @@ export interface WorkReads<C> {
 }
 
 const ZERO: Reads = { total: 0, last7: 0, last30: 0 };
-const addReads = (a: Reads, b: Reads): Reads => ({ total: a.total + b.total, last7: a.last7 + b.last7, last30: a.last30 + b.last30 });
+export const addReads = (a: Reads, b: Reads): Reads => ({ total: a.total + b.total, last7: a.last7 + b.last7, last30: a.last30 + b.last30 });
 
 // Agrupa las filas (una por obra y capítulo approved vivo; `chapter` null si la obra no tiene ninguno) en obras con
 // sus capítulos, en el orden en que llegan. La obra suma sus capítulos (así coincide siempre con ellos) y el total

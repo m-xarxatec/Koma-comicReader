@@ -405,7 +405,7 @@ test('Seguridad: sin sesión, /admin redirige al login; un lector o un autor rec
   }
 });
 
-test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadores, sus cinco secciones y el diálogo', async () => {
+test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadores, sus seis secciones y el diálogo', async () => {
   const res = await get('/admin', await pageUser('Admin Panel', 'admin'));
   const html = await res.text();
   assert.equal(res.status, 200);
@@ -413,14 +413,24 @@ test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadore
   assert.equal(title(html), 'Panel de administración · Koma');
   assert.deepEqual(h1s(html), ['Panel de administración']);
   assert.ok(!html.includes('{{'));
-  for (const id of ['aprobaciones', 'comentarios', 'usuarios', 'parametros', 'auditoria']) {
+  for (const id of ['estadisticas', 'aprobaciones', 'comentarios', 'usuarios', 'parametros', 'auditoria']) {
     assert.ok(html.includes(`<section id="${id}"`), id);
     assert.ok(html.includes(`href="#${id}"`), `enlace a #${id}`);
   }
   assert.ok(html.includes('<dialog class="admin-dialog" id="admin-dialog"'));
   assert.match(html, /<button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros<\/button>/);
   assert.ok(!html.includes('Ir al estudio del autor'), 'un admin nunca es autor');
-  assert.equal((html.match(/<caption/g) ?? []).length, 4, 'cuatro tablas con caption');
+  assert.equal((html.match(/<caption/g) ?? []).length, 8, 'ocho tablas con caption: cuatro de estadísticas y cuatro listas');
+  // Bloque 5 (CU-39, D1–D3, D5, D10): «Estadísticas», primera ancla; cuatro métricas con su periodo en la etiqueta; la
+  // vista de impresión con su cabecera de informe y el botón desactivado hasta que llegan los datos.
+  assert.ok(html.indexOf('href="#estadisticas"') < html.indexOf('href="#aprobaciones"'), 'Estadísticas, primera ancla');
+  for (const label of ['Revisión pendiente', 'Comentarios · 7 días', 'Usuarios activos · 30 días', 'Eventos recientes']) {
+    assert.ok(html.includes(`<span class="author-page__metric-label">${label}</span>`), label);
+  }
+  assert.ok(!html.includes('metric-label">Comentarios reportados'), 'sin la tarjeta de reportes (descartados)');
+  assert.ok(html.includes('<p class="admin-stats__report">Koma · Informe de la plataforma · <span data-stats-date></span></p>'));
+  assert.ok(html.includes('type="button" disabled aria-describedby="stats-message" data-print-stats>Imprimir o guardar como PDF</button>'));
+  assert.ok(html.includes('<link rel="stylesheet" href="/styles/components/admin-stats.css">'));
   assert.ok(html.includes('<strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba'));
   assert.ok(!html.includes('no modifican información real'), 'sin el aviso de la maqueta, que aquí sería falso');
   // Los mensajes de las cuatro listas se anuncian, y el aviso de las acciones es el último hijo de main.

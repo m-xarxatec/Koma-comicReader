@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { chapterReviewProblem, comicReviewProblem, settingsChange } from '../../modules/admin/admin.rules.js';
+import { buildAdminStats, chapterReviewProblem, comicReviewProblem, settingsChange } from '../../modules/admin/admin.rules.js';
 
 // Reglas puras de la aprobación (CU-32; RN-05, RN-17; contrato del bloque 4).
 
@@ -46,4 +46,60 @@ test('RN-16: settings.update lleva solo las claves que cambian; sin cambios, no 
   });
   // Un parámetro que falta en la BD se guarda y se audita desde null.
   assert.deepEqual(settingsChange({ waitMinutes: 1, maxBalance: 5 }, seed), { before: { refill: null }, after: { refill: 2 } });
+});
+
+// --- RN-20: estadísticas globales (contrato del bloque 5) ---
+
+const statsInput = {
+  counts: {
+    today: '2026-11-10',
+    readers: 7,
+    authors: 3,
+    admins: 2,
+    suspended: 1,
+    premium: 4,
+    activeLong: 5,
+    comics: 6,
+    chapters: 20,
+    commentsShort: 9,
+    moderatedShort: 2,
+    auditRecent: 31,
+  },
+  reads: { guests: { total: 100, lastShort: 10, lastLong: 40 }, users: { total: 50, lastShort: 5, lastLong: 20 } },
+  topComics: [{ slug: 'a', title: 'Obra A', reads: { total: 90, lastShort: 9, lastLong: 30 } }],
+};
+
+test('RN-20: el total de cuentas es la suma de las activas por rol y las suspendidas (cada cuenta, una vez)', () => {
+  const { users } = buildAdminStats(statsInput);
+  assert.deepEqual(users, { total: 13, readers: 7, authors: 3, admins: 2, suspended: 1, premium: 4, activeLast30: 5 });
+  assert.equal(users.readers + users.authors + users.admins + users.suspended, users.total);
+});
+
+test('RN-20: las lecturas son invitados + registrados campo a campo, con las ventanas de 7 y 30 días', () => {
+  const stats = buildAdminStats(statsInput);
+  assert.deepEqual(stats.reads, {
+    total: 150,
+    last7: 15,
+    last30: 60,
+    guests: { total: 100, last7: 10, last30: 40 },
+    users: { total: 50, last7: 5, last30: 20 },
+  });
+  assert.deepEqual(stats.topComics, [{ slug: 'a', title: 'Obra A', reads: { total: 90, last7: 9, last30: 30 } }]);
+});
+
+test('RN-20: catálogo, comentarios de 7 días, moderados y eventos de 24 h pasan tal cual; sin datos, ceros', () => {
+  const stats = buildAdminStats(statsInput);
+  assert.equal(stats.today, '2026-11-10');
+  assert.deepEqual(stats.catalog, { comics: 6, chapters: 20 });
+  assert.deepEqual(stats.comments, { last7: 9, moderatedLast7: 2 });
+  assert.equal(stats.auditLast24h, 31);
+  const zero = { total: 0, lastShort: 0, lastLong: 0 };
+  const empty = buildAdminStats({
+    counts: { ...statsInput.counts, readers: 0, authors: 0, admins: 0, suspended: 0, premium: 0, activeLong: 0, comics: 0, chapters: 0, commentsShort: 0, moderatedShort: 0, auditRecent: 0 },
+    reads: { guests: zero, users: zero },
+    topComics: [],
+  });
+  assert.equal(empty.users.total, 0);
+  assert.deepEqual(empty.reads, { total: 0, last7: 0, last30: 0, guests: { total: 0, last7: 0, last30: 0 }, users: { total: 0, last7: 0, last30: 0 } });
+  assert.deepEqual(empty.topComics, []);
 });

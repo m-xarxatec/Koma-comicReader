@@ -45,6 +45,10 @@ export const READS_WINDOW_SHORT_DAYS = 7;
 export const READS_WINDOW_LONG_DAYS = 30;
 export const AUTHOR_RECENT_COMMENTS = 10;
 
+// RN-20: estadísticas globales del admin (contrato del bloque 5). Las ventanas de días son las de RN-19.
+export const ADMIN_TOP_COMICS = 5;
+export const STATS_RECENT_HOURS = 24; // «Eventos recientes»: la única ventana móvil, en horas y no en días
+
 // RN-04: pago simulado (driver fake) y seed de la cuenta premium (contrato del bloque 4).
 export const FAKE_PREMIUM_DAYS = 30;
 

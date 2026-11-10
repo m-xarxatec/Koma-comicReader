@@ -1,10 +1,6 @@
 /* Página /admin (pages/admin.html; maqueta koma_home/admin). La maquetación de panel es la de author-page.css (la
-   maqueta la comparte, .workspace); aquí solo lo propio: métrica, filtros, paginación, celdas, detalle de la
-   auditoría y el diálogo de confirmación. Todo valor visual, en variables.css. */
-
-.admin-page__metric {
-  min-width: var(--admin-metric-min-width);
-}
+   maqueta la comparte, .workspace); aquí solo lo propio: filtros, paginación, celdas, detalle de la auditoría y el
+   diálogo de confirmación. Las métricas y las estadísticas, en admin-stats.css. Todo valor visual, en variables.css. */
 
 /* Avisos de las acciones: siempre en el árbol y último hijo de main. El desplazamiento móvil incluye la altura de
    la navegación y el área segura; el diálogo modal pertenece al top layer del navegador. */

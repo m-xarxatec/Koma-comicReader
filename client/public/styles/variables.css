@@ -678,7 +678,14 @@
   --font-size-header-premium: 0.78rem;
 
   /* Panel de administración (bloque 4; maqueta koma_home/admin) */
-  --admin-metric-min-width: 12rem;
+  --admin-metrics-gap-wide: var(--space-4); /* maqueta .workspace--admin .metric-grid desde 64rem */
+  --admin-stats-gap: var(--space-4);
+  --admin-stats-report-font-size: 1.1rem;
+  /* Vista de impresión de las estadísticas (CU-39, @media print): texto oscuro sobre blanco, solo en papel. */
+  --print-color-bg: #ffffff;
+  --print-color-text: #111111;
+  --print-color-muted: #444444;
+  --print-color-border: #999999;
   --admin-filter-min-width: 12rem;
   --admin-settings-width: 32rem;
   --admin-json-width: 28rem;

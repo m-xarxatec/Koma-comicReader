@@ -7,7 +7,7 @@ import { chapterParams } from '../reading/reading.schema.js';
 import * as controller from './admin.controller.js';
 import { adminCommentsQuery, adminUserBody, adminUsersQuery, auditQuery, readingSettingsBody, rejectBody, userParams } from './admin.schema.js';
 
-// Contrato de la API del bloque 4 (docs/plan_mvp.md). Se monta en /api/admin, después de `auth`. requireAdmin va en
+// Contratos de la API de los bloques 4 y 5 (docs/plan_mvp.md). Se monta en /api/admin, después de `auth`. requireAdmin va en
 // el router (D1): toda ruta de /api/admin/* exige sesión (401) y rol admin (403) antes de mirar nada más.
 export const adminRouter = Router();
 
@@ -42,6 +42,9 @@ adminRouter.put('/settings', validate({ body: readingSettingsBody }), controller
 
 // Auditoría (CU-40): solo lectura
 adminRouter.get('/audit', validate({ query: auditQuery }), controller.searchAudit);
+
+// Estadísticas globales (CU-39; RN-20): solo lectura
+adminRouter.get('/stats', controller.getStats);
 
 // Página del mapa de rutas HTML. Se monta en la raíz, después de `auth`.
 export const adminPagesRouter = Router();

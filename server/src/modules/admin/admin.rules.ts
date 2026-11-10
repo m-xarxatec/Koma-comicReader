@@ -1,4 +1,5 @@
 import { AppError } from '../../utils/app-error.js';
+import { addReads, type Reads } from '../comics/comics.rules.js';
 
 // Reglas puras de la aprobación de contenido (CU-32; RN-05, RN-17; contrato del bloque 4). Devuelven el error que
 // toca o null; el servicio las aplica con las filas bloqueadas. Sin BD ni `env`: las prueban los tests unitarios.
@@ -58,4 +59,67 @@ export function settingsChange(
     after[field] = input[field];
   }
   return Object.keys(after).length > 0 ? { before, after } : null;
+}
+
+// --- Estadísticas globales (CU-39; RN-20; contrato del bloque 5) ---
+
+export interface WindowCountsInput {
+  total: number;
+  lastShort: number; // READS_WINDOW_SHORT_DAYS
+  lastLong: number; // READS_WINDOW_LONG_DAYS
+}
+
+export interface AdminStatsInput {
+  counts: {
+    today: string;
+    readers: number;
+    authors: number;
+    admins: number;
+    suspended: number;
+    premium: number;
+    activeLong: number;
+    comics: number;
+    chapters: number;
+    commentsShort: number;
+    moderatedShort: number;
+    auditRecent: number;
+  };
+  reads: { guests: WindowCountsInput; users: WindowCountsInput };
+  topComics: { slug: string; title: string; reads: WindowCountsInput }[];
+}
+
+export interface AdminStatsDto {
+  today: string;
+  users: { total: number; readers: number; authors: number; admins: number; suspended: number; premium: number; activeLast30: number };
+  reads: Reads & { guests: Reads; users: Reads };
+  catalog: { comics: number; chapters: number };
+  topComics: { slug: string; title: string; reads: Reads }[];
+  comments: { last7: number; moderatedLast7: number };
+  auditLast24h: number;
+}
+
+const toReads = (counts: WindowCountsInput): Reads => ({ total: counts.total, last7: counts.lastShort, last30: counts.lastLong });
+
+// RN-20: cada cuenta cuenta una vez (las activas por su rol y las suspendidas aparte), así que el total es su suma;
+// las lecturas son invitados + registrados, campo a campo.
+export function buildAdminStats({ counts, reads, topComics }: AdminStatsInput): AdminStatsDto {
+  const guests = toReads(reads.guests);
+  const users = toReads(reads.users);
+  return {
+    today: counts.today,
+    users: {
+      total: counts.readers + counts.authors + counts.admins + counts.suspended,
+      readers: counts.readers,
+      authors: counts.authors,
+      admins: counts.admins,
+      suspended: counts.suspended,
+      premium: counts.premium,
+      activeLast30: counts.activeLong,
+    },
+    reads: { ...addReads(guests, users), guests, users },
+    catalog: { comics: counts.comics, chapters: counts.chapters },
+    topComics: topComics.map((comic) => ({ slug: comic.slug, title: comic.title, reads: toReads(comic.reads) })),
+    comments: { last7: counts.commentsShort, moderatedLast7: counts.moderatedShort },
+    auditLast24h: counts.auditRecent,
+  };
 }

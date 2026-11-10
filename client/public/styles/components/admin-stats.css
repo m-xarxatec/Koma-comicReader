@@ -1,0 +1,146 @@
+/* Bloque .admin-stats de /admin (CU-39; RN-20; contrato del bloque 5): la fila de métricas (__metrics, maqueta
+   .metric-grid), la sección «Estadísticas» y su vista de impresión (exportación, D10). Las tarjetas son las de
+   author-page.css (.author-page__metric) y las tablas, las de chapter-table.css. Para imprimir, este archivo anula
+   también estilos de body, .author-page y .chapter-table: solo en @media print. Todo valor visual, en variables.css. */
+
+.admin-stats__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--author-metrics-gap);
+}
+
+.admin-stats__grid {
+  display: grid;
+  gap: var(--admin-stats-gap);
+}
+
+.admin-stats__number {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.admin-stats__total {
+  font-weight: var(--font-weight-bold);
+}
+
+/* El título de una obra puede ser largo: en la tabla se parte en lugar de ensancharla. */
+.admin-stats__work {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Cabecera de informe: solo en papel. */
+.admin-stats__report {
+  display: none;
+}
+
+/* Maqueta (.metric-grid): cuatro columnas desde 40rem y, desde 64rem, más hueco. */
+@media (min-width: 40rem) {
+  .admin-stats__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .admin-stats__metrics {
+    gap: var(--admin-metrics-gap-wide);
+  }
+
+  .admin-stats__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* Vista de impresión (D10): solo las métricas y la sección «Estadísticas», texto oscuro sobre blanco y nada partido
+   entre páginas. El resto de la página (cabecera y pie del sitio, navegación, demás secciones, aviso y diálogo) no
+   sale. El tema de pantalla sigue siendo solo oscuro: el papel no es un tema. */
+@media print {
+  body {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    background: var(--print-color-bg);
+    color: var(--print-color-text);
+  }
+
+  body > :not(main),
+  .author-page > :not(.admin-stats__report, .admin-stats__metrics, .admin-stats),
+  .admin-stats__print,
+  .admin-stats:has([data-stats]:not([hidden])) [data-message] {
+    display: none;
+  }
+
+  .author-page {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .admin-stats__report,
+  .admin-stats__metrics,
+  .admin-stats,
+  .admin-stats__metrics *,
+  .admin-stats * {
+    color: var(--print-color-text);
+    background: none;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  .admin-stats__metrics .author-page__metric-label,
+  .admin-stats__metrics .author-page__muted,
+  .admin-stats .author-page__muted,
+  .admin-stats .eyebrow {
+    color: var(--print-color-muted);
+  }
+
+  .admin-stats__report {
+    display: block;
+    margin: 0 0 var(--space-4);
+    font-size: var(--admin-stats-report-font-size);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .admin-stats__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: var(--space-4) 0 0;
+  }
+
+  .admin-stats {
+    margin-top: var(--space-4);
+  }
+
+  .admin-stats__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .author-page__metric,
+  .chapter-table__scroll,
+  .chapter-table__cell,
+  .chapter-table__head {
+    border-color: var(--print-color-border);
+  }
+
+  .chapter-table__scroll {
+    overflow: visible;
+  }
+
+  .author-page__metric,
+  .chapter-table__scroll,
+  .chapter-table,
+  .chapter-table tr {
+    break-inside: avoid;
+  }
+
+  .chapter-table thead {
+    display: table-header-group;
+  }
+
+  .admin-stats a {
+    text-decoration: none;
+  }
+}

@@ -2,6 +2,7 @@ import {
   changeUser,
   deleteComment,
   getReviewQueue,
+  getStats,
   getSettings,
   hideComment,
   listComments,
@@ -11,6 +12,7 @@ import {
   saveSettings,
   searchAudit,
   type AdminCommentDto,
+  type AdminStatsDto,
   type AdminUserChange,
   type AdminUserDto,
   type AuditEntryDto,
@@ -21,7 +23,7 @@ import type { ApiError, ApiResult } from '../services/api.js';
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, reasonProblem, settingProblem } from '../utils/admin.js';
 import { bindForm, failureOutcome } from '../utils/validate.js';
 
-// /admin (contrato del bloque 4): cola de aprobación, comentarios, usuarios, parámetros y auditoría. Cada sección pide
+// /admin (contratos de los bloques 4 y 5): estadísticas (CU-39), cola de aprobación, comentarios, usuarios, parámetros y auditoría. Cada sección pide
 // su lista a /api/admin/*; los filtros van a la API. Todo dato se pinta con textContent. Lo que decide es el servidor:
 // aquí solo se ocultan o desactivan botones (p. ej. los de la propia cuenta).
 
@@ -538,10 +540,100 @@ async function loadAudit(): Promise<void> {
   updatePager(auditView, auditState, result.data, loadAudit);
 }
 
+// --- Estadísticas globales (CU-39; RN-20; contrato del bloque 5) ---
+
+const numberFormat = new Intl.NumberFormat('es-ES');
+// `today` es un día de Madrid (AAAA-MM-DD): se formatea en esa zona, a mediodía UTC para no cambiar de día.
+const madridDay = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeZone: 'Europe/Madrid' });
+const statsMessage = document.querySelector<HTMLElement>('[data-message="stats"]');
+const statsContent = document.querySelector<HTMLElement>('[data-stats]');
+const topComicsRows = document.querySelector<HTMLElement>('[data-rows="top-comics"]');
+const moderatedNote = document.querySelector<HTMLElement>('[data-moderated-note]');
+const printButton = document.querySelector<HTMLButtonElement>('[data-print-stats]');
+
+// Cada [data-stat] de la página (métricas y tablas) con su cifra. Lista cerrada: un data-stat sin entrada se queda en «—».
+function statValues(stats: AdminStatsDto): Readonly<Record<string, number>> {
+  return {
+    'users.total': stats.users.total,
+    'users.readers': stats.users.readers,
+    'users.authors': stats.users.authors,
+    'users.admins': stats.users.admins,
+    'users.suspended': stats.users.suspended,
+    'users.premium': stats.users.premium,
+    'users.activeLast30': stats.users.activeLast30,
+    'reads.total': stats.reads.total,
+    'reads.last7': stats.reads.last7,
+    'reads.last30': stats.reads.last30,
+    'reads.guests.total': stats.reads.guests.total,
+    'reads.guests.last7': stats.reads.guests.last7,
+    'reads.guests.last30': stats.reads.guests.last30,
+    'reads.users.total': stats.reads.users.total,
+    'reads.users.last7': stats.reads.users.last7,
+    'reads.users.last30': stats.reads.users.last30,
+    'catalog.comics': stats.catalog.comics,
+    'catalog.chapters': stats.catalog.chapters,
+    'comments.last7': stats.comments.last7,
+    'comments.moderatedLast7': stats.comments.moderatedLast7,
+    auditLast24h: stats.auditLast24h,
+  };
+}
+
+function topComicRow(comic: AdminStatsDto['topComics'][number]): HTMLTableRowElement {
+  const row = el('tr');
+  const title = el('th', 'chapter-table__cell');
+  title.scope = 'row';
+  const link = el('a', 'text-link admin-stats__work', comic.title);
+  link.href = `/obra/${encodeURIComponent(comic.slug)}`;
+  title.append(link);
+  const number = (value: number) => {
+    const td = cell(numberFormat.format(value));
+    td.classList.add('admin-stats__number');
+    return td;
+  };
+  row.append(title, number(comic.reads.last30), number(comic.reads.last7), number(comic.reads.total));
+  return row;
+}
+
+function emptyTopRow(): HTMLTableRowElement {
+  const row = el('tr');
+  const td = cell('Aún no hay lecturas.');
+  td.colSpan = 4;
+  row.append(td);
+  return row;
+}
+
+async function loadStats(): Promise<void> {
+  const result = await getStats();
+  if (!result.ok) {
+    // Las tarjetas se quedan en «—»; el error se dice en la sección y no bloquea el resto del panel.
+    if (statsMessage) statsMessage.textContent = errorText(result.error);
+    return;
+  }
+  const { stats } = result.data;
+  const values = statValues(stats);
+  for (const target of document.querySelectorAll<HTMLElement>('[data-stat]')) {
+    const value = values[target.dataset.stat ?? ''];
+    if (value !== undefined) target.textContent = numberFormat.format(value);
+  }
+  if (moderatedNote) {
+    const moderated = stats.comments.moderatedLast7;
+    moderatedNote.textContent = `${numberFormat.format(moderated)} ${moderated === 1 ? 'moderado' : 'moderados'}`;
+  }
+  const day = madridDay.format(new Date(`${stats.today}T12:00:00Z`));
+  for (const target of document.querySelectorAll<HTMLElement>('[data-stats-date]')) target.textContent = day;
+  topComicsRows?.replaceChildren(...(stats.topComics.length > 0 ? stats.topComics.map(topComicRow) : [emptyTopRow()]));
+  if (statsMessage) statsMessage.textContent = `Datos del ${day}.`;
+  if (statsContent) statsContent.hidden = false;
+  if (printButton) printButton.disabled = false;
+}
+
+// Exportación (D10): la vista de impresión de admin-stats.css; el navegador la guarda como PDF. Sin petición al servidor.
+printButton?.addEventListener('click', () => window.print());
+
 // --- Arranque: cada sección carga por su cuenta ---
 
 bindFilters('comments', commentsState, loadComments);
 bindFilters('users', usersState, loadUsers);
 bindFilters('audit', auditState, loadAudit);
 fillAuditFilters();
-void Promise.all([loadReview(), loadComments(), loadUsers(), setUpSettings(), loadAudit()]);
+void Promise.all([loadStats(), loadReview(), loadComments(), loadUsers(), setUpSettings(), loadAudit()]);

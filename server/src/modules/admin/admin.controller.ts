@@ -99,6 +99,12 @@ export async function searchAudit(_req: Request, res: Response): Promise<void> {
   res.json(await adminService.searchAudit(res.locals.validated.query as AuditQueryInput));
 }
 
+// --- Estadísticas globales (CU-39; RN-20) ---
+
+export async function getStats(_req: Request, res: Response): Promise<void> {
+  res.set('Cache-Control', 'no-store').json({ stats: await adminService.getPlatformStats() });
+}
+
 // /admin: requirePageAdmin va antes en la ruta (sin sesión, 302 a /entrar; sin rol admin, 403).
 export async function adminPage(_req: Request, res: Response): Promise<void> {
   await sendPage(res, 'admin');

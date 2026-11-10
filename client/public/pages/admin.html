@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="/styles/components/panel-card.css">
   <link rel="stylesheet" href="/styles/components/admin-data-panel.css">
   <link rel="stylesheet" href="/styles/components/admin-notes.css">
+  <link rel="stylesheet" href="/styles/components/admin-stats.css">
   <script type="module" src="/js/pages/admin.js"></script>
 </head>
 <body>
@@ -31,7 +32,8 @@
   <!-- /admin (CU-32, CU-33, CU-35, CU-36, CU-40; contrato del bloque 4). La maqueta comparte la maquetación de panel
        (.workspace) entre el estudio del autor y la administración: aquí se reutilizan las clases de author-page.css y
        admin-page.css añade solo lo propio. Cada sección pide su lista a /api/admin/*; todo dato se pinta con
-       textContent. Respecto a la maqueta (respuestas a los choques): una sola métrica, la cola solo con lo pendiente,
+       textContent. Respecto a la maqueta (respuestas a los choques): cuatro métricas (bloque 5: «Comentarios reportados»
+       pasa a «Comentarios · 7 días», D1), la sección «Estadísticas» (CU-39), la cola solo con lo pendiente,
        comentarios recientes sin reportes, solo los tres parámetros de RN-16 y la auditoría con los filtros de CU-40.
        El aviso de demostración cambia de texto (los pagos sí son de Stripe en modo prueba). -->
   <main id="contenido" class="author-page container">
@@ -47,11 +49,6 @@
         <h1 class="author-page__title">Panel de administración</h1>
         <p class="author-page__subtitle">Moderación, usuarios y actividad de la plataforma. Cada acción queda en la auditoría.</p>
       </div>
-      <div class="author-page__metric admin-page__metric">
-        <span class="author-page__metric-label">Revisión pendiente</span>
-        <strong class="author-page__metric-value" data-pending-total>—</strong>
-        <span class="author-page__muted" data-pending-note></span>
-      </div>
     </div>
 
     <p class="form__notice author-page__notice"><strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba</p>
@@ -61,12 +58,117 @@
     </noscript>
 
     <nav class="author-page__nav" aria-label="Secciones del panel">
+      <a class="author-page__nav-link" href="#estadisticas">Estadísticas</a>
       <a class="author-page__nav-link" href="#aprobaciones">Aprobaciones</a>
       <a class="author-page__nav-link" href="#comentarios">Comentarios</a>
       <a class="author-page__nav-link" href="#usuarios">Usuarios</a>
       <a class="author-page__nav-link" href="#parametros">Parámetros</a>
       <a class="author-page__nav-link" href="#auditoria">Auditoría</a>
     </nav>
+
+    <!-- Métricas de la maqueta (bloque 5, D1–D3): cada etiqueta lleva su periodo. Las tres últimas, de /api/admin/stats. -->
+    <p class="admin-stats__report">Koma · Informe de la plataforma · <span data-stats-date></span></p>
+    <section class="admin-stats__metrics" aria-label="Indicadores del panel">
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Revisión pendiente</span>
+        <strong class="author-page__metric-value" data-pending-total>—</strong>
+        <span class="author-page__muted" data-pending-note></span>
+      </div>
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Comentarios · 7 días</span>
+        <strong class="author-page__metric-value" data-stat="comments.last7">—</strong>
+        <span class="author-page__muted" data-moderated-note></span>
+      </div>
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Usuarios activos · 30 días</span>
+        <strong class="author-page__metric-value" data-stat="users.activeLast30">—</strong>
+        <span class="author-page__muted">Con alguna lectura</span>
+      </div>
+      <div class="author-page__metric">
+        <span class="author-page__metric-label">Eventos recientes</span>
+        <strong class="author-page__metric-value" data-stat="auditLast24h">—</strong>
+        <span class="author-page__muted">En las últimas 24 h</span>
+      </div>
+    </section>
+
+    <!-- CU-39 · RN-20. Solo agregados, sin datos personales. La vista de impresión (admin-stats.css, @media print) saca
+         solo esta sección y las métricas, con la cabecera de informe (D10). -->
+    <section id="estadisticas" class="author-page__section admin-stats" aria-labelledby="estadisticas-title">
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Plataforma</p>
+          <h2 class="author-page__heading-title" id="estadisticas-title">Estadísticas</h2>
+          <p class="author-page__muted">Cifras de toda la plataforma, sin datos personales. Los días son de la hora de Madrid, con hoy incluido.</p>
+        </div>
+        <button class="button button--outline admin-stats__print" type="button" disabled aria-describedby="stats-message" data-print-stats>Imprimir o guardar como PDF</button>
+      </div>
+      <p class="author-page__message" id="stats-message" data-message="stats" role="status" tabindex="-1">Cargando las estadísticas…</p>
+      <div class="admin-stats__grid" data-stats hidden>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-users-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-users-caption">Cuentas, a día de hoy</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Tipo</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Cuentas</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Lectores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.readers">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Autores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.authors">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Administradores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.admins">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Suspendidas</th><td class="chapter-table__cell admin-stats__number" data-stat="users.suspended">—</td></tr>
+              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="users.total">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-activity-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-activity-caption">Actividad y catálogo</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Indicador</th>
+              <th class="chapter-table__head" scope="col">Periodo</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Valor</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Premium activos</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="users.premium">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Usuarios activos</th><td class="chapter-table__cell">30 días</td><td class="chapter-table__cell admin-stats__number" data-stat="users.activeLast30">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Comentarios</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.last7">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Comentarios moderados</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.moderatedLast7">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Eventos de la auditoría</th><td class="chapter-table__cell">24 h</td><td class="chapter-table__cell admin-stats__number" data-stat="auditLast24h">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Obras publicadas</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.comics">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Capítulos publicados</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.chapters">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-reads-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-reads-caption">Lecturas</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Lectores</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Invitados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last30">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Registrados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last30">—</td></tr>
+              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last30">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-top-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-top-caption">Obras más leídas (por lecturas de 30 días)</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Obra</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
+            </tr></thead>
+            <tbody data-rows="top-comics"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
     <!-- CU-32 · RN-05, RN-17 -->
     <section id="aprobaciones" class="author-page__section" aria-labelledby="aprobaciones-title">
