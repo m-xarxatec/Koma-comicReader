@@ -1236,3 +1236,22 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   - `.claude/encargos/codex-premium.md` (E1): valores exactos con una tabla maqueta → token, la bienvenida como `welcome-card` con halo, destellos y giro, los iconos `icon-shield` e `icon-credit` de la maqueta, la mascota en WebP y el pago simulado. Sin tocar `client/src/` ni los tokens existentes.
 - **Comprobación (IA):** 180 unitarios, con el de las medidas de `koma-og.png`.
 - **Pendiente (desarrollador):** ver la vista previa al compartir, una vez desplegado.
+
+### 2026-11-10 · Pulido · Los seis bajos funcionales de /admin (D8)
+- **Pedido del desarrollador:** corregir, antes del encargo E2, los seis bajos funcionales que dejó el agente `frontend` en el bloque 4, sin tocar los archivos que E1 asigna a Codex (`pages.test.ts` y `variables.css`).
+- **Resultado:**
+  - **Paginador:** si la página pedida ya no existe (se vació la última tras una acción), la lista pasa a la última que existe y vuelve a pedirla antes de pintar. Ya no aparece «Página 3 de 2», y el foco de `run()` va a la página buena (`lastPage` y `pageOutOfRange`).
+  - **Límites del HTML:** se quedan en `admin.html`, porque la página se entiende sin JS. Un test los compara con el servidor: los rangos y las pistas de los parámetros, el `maxlength` de las búsquedas, del actor y del id, y la pista del motivo.
+  - **`noValidate`:** los formularios de filtros no muestran la burbuja del navegador. Un correo a medias en «Actor» llega al servidor, y su 400 sale en la sección con sus `fields`.
+  - **«Filtrar»:** los tres botones llegan `disabled data-needs-js` y `bindFilters` los activa.
+  - **Obras +18:** la cola no ofrece «Aprobar» en una obra +18 (`canApprove`); «Rechazar» se queda.
+  - **Auditoría:** la entidad sale con su nombre en español y su id («Obras #12», `auditEntityLabel`), sin aceptar claves heredadas.
+- **Tests:** 4 unitarios en `client-parity.test.ts`: la entidad, `lastPage`, `canApprove` (RN-17) y los límites de `admin.html` frente a `limits.ts`, con «Filtrar» esperando a JS.
+- **Agente `auditor`:** APTO CON OBSERVACIONES, con un hallazgo medio, corregido. `canApprove` quitaba «Aprobar» también en los capítulos de una obra +18, pero D8 habla de obras, y el servidor admite aprobar un capítulo con la obra en pending (D2 del bloque 4). Ahora solo se quita en la fila de la obra. Sin bucle en `pageOutOfRange`, con el foco correcto y sin `any`.
+- **Sin cambiar (para decidir):** el distintivo «+18: no se aprueba», que ya existía, sigue saliendo también en las filas de capítulo de una obra +18, junto a «Aprobar».
+- **Comprobación (IA):** typecheck, 184 unitarios y 306 de API (la BD local estaba parada; la IA levantó el contenedor `db`).
+- **Pendiente (desarrollador), en el navegador:**
+  - vaciar la última página de comentarios o usuarios: pasa a la anterior, con el foco en la tabla;
+  - un actor a medias en la auditoría: el 400 con su mensaje;
+  - sin JS, «Filtrar» desactivado;
+  - una obra +18 en la cola.

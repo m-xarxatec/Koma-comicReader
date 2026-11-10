@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
@@ -279,6 +280,9 @@ interface ClientAdmin {
   AUDIT_ENTITY_TYPES: Record<string, string>;
   reasonProblem: Problem;
   settingProblem: (field: 'waitMinutes' | 'maxBalance' | 'refill', raw: string) => string | null;
+  auditEntityLabel: (entityType: string, entityId: string | null) => string;
+  lastPage: (total: number, pageSize: number) => number;
+  canApprove: (comic: { isAdult: boolean }, chapter: object | null) => boolean;
 }
 const clientAdmin = await load<ClientAdmin>('utils/admin.js');
 
@@ -314,4 +318,54 @@ test('RN-16: los parámetros se aceptan y rechazan igual que en el servidor, con
     assert.equal(clientAdmin.settingProblem(field, '1.5'), 'Debe ser un número entero');
     assert.equal(readingSettingsBody.safeParse({ ...valid, [field]: 1.5 }).error?.issues[0]?.message, 'Debe ser un número entero');
   }
+});
+
+// --- Pulido: bajos funcionales de /admin (D8) ---
+
+test('Seguridad: (CU-40) la auditoría muestra la entidad con su nombre en español y su id, no la tabla en crudo', () => {
+  for (const entityType of AUDIT_ENTITY_TYPES) {
+    const label = clientAdmin.AUDIT_ENTITY_TYPES[entityType];
+    assert.ok(label && label !== entityType, entityType);
+    assert.equal(clientAdmin.auditEntityLabel(entityType, '12'), `${label} #12`);
+    assert.equal(clientAdmin.auditEntityLabel(entityType, null), label);
+  }
+  assert.equal(clientAdmin.auditEntityLabel('desconocida', '3'), 'desconocida #3');
+  assert.equal(clientAdmin.auditEntityLabel('toString', null), 'toString', 'solo claves propias, no las heredadas');
+});
+
+test('Seguridad: la paginación del admin nunca pide ni muestra una página que no existe («Página 3 de 2»)', () => {
+  assert.equal(clientAdmin.lastPage(0, 50), 1);
+  assert.equal(clientAdmin.lastPage(1, 50), 1);
+  assert.equal(clientAdmin.lastPage(50, 50), 1);
+  assert.equal(clientAdmin.lastPage(51, 50), 2);
+  assert.equal(clientAdmin.lastPage(100, 50), 2, 'al eliminar el único elemento de la página 3, se vuelve a la 2');
+});
+
+test('RN-17: el panel no ofrece «Aprobar» en una obra +18; en sus capítulos y en las demás obras, sí', () => {
+  const chapter = { number: 1, title: 'Uno', panelCount: 1 };
+  assert.equal(clientAdmin.canApprove({ isAdult: true }, null), false);
+  assert.equal(clientAdmin.canApprove({ isAdult: false }, null), true);
+  assert.equal(clientAdmin.canApprove({ isAdult: true }, chapter), true, 'el servidor lo admite con la obra en pending (D2)');
+  assert.equal(clientAdmin.canApprove({ isAdult: false }, chapter), true);
+});
+
+test('Seguridad: los límites escritos en admin.html coinciden con los del servidor, y «Filtrar» espera a JS', () => {
+  const html = readFileSync(path.join(paths.publicDir, 'pages', 'admin.html'), 'utf8');
+  const attr = (id: string, name: string) => {
+    const tag = html.match(new RegExp(`<(?:input|textarea)[^>]*\\bid="${id}"[^>]*>`))?.[0] ?? '';
+    return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+  };
+  const settings = { waitMinutes: 'setting-wait', maxBalance: 'setting-max', refill: 'setting-refill' } as const;
+  for (const [field, id] of Object.entries(settings) as [keyof typeof settings, string][]) {
+    const { min, max } = limits.READING_SETTINGS_RANGES[field];
+    assert.equal(attr(id, 'min'), String(min), `${id} min`);
+    assert.equal(attr(id, 'max'), String(max), `${id} max`);
+    assert.match(html, new RegExp(`id="${id}-hint">De ${min} a ${max}\\.`), `${id} pista`);
+  }
+  for (const id of ['comments-q', 'users-q']) assert.equal(attr(id, 'maxlength'), String(limits.ADMIN_QUERY_MAX_LENGTH), id);
+  assert.equal(attr('audit-actor', 'maxlength'), String(EMAIL_MAX_CHARS));
+  assert.equal(attr('audit-entity-id', 'maxlength'), String(limits.AUDIT_ENTITY_ID_MAX));
+  assert.match(html, new RegExp(`id="admin-reason-hint">De 1 a ${limits.REJECTION_REASON_MAX} caracteres\\.`));
+  assert.equal((html.match(/type="submit" disabled data-needs-js>Filtrar</g) ?? []).length, 3);
+  assert.ok(!html.includes('type="submit">Filtrar<'));
 });

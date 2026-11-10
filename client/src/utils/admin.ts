@@ -75,3 +75,21 @@ export const AUDIT_ENTITY_TYPES = {
   tags: 'Etiquetas',
   ads: 'Anuncios',
 } as const;
+type AuditEntityType = keyof typeof AUDIT_ENTITY_TYPES;
+
+const isAuditEntityType = (value: string): value is AuditEntityType => Object.hasOwn(AUDIT_ENTITY_TYPES, value);
+
+// CU-40: la entidad de una entrada con su texto en español y su id («Obras #12»). Una entidad desconocida se muestra
+// tal cual: el servidor solo audita las de la lista (AuditEntityType), pero el cliente no lo da por hecho.
+export function auditEntityLabel(entityType: string, entityId: string | null): string {
+  const label = isAuditEntityType(entityType) ? AUDIT_ENTITY_TYPES[entityType] : entityType;
+  return entityId ? `${label} #${entityId}` : label;
+}
+
+// Listas paginadas (comentarios, usuarios y auditoría): la última página que existe con ese total. Si la pedida ya
+// no existe (se vació la última tras una acción o cambió el total), la lista vuelve a pedir esta.
+export const lastPage = (total: number, pageSize: number): number => Math.max(1, Math.ceil(total / pageSize));
+
+// CU-32, RN-17: una obra +18 no se aprueba (el servidor responde 409); solo se rechaza con motivo. Un capítulo
+// suyo sí se puede aprobar con la obra en pending (D2 del bloque 4): la regla es de la obra.
+export const canApprove = (comic: { readonly isAdult: boolean }, chapter: object | null): boolean => chapter !== null || !comic.isAdult;

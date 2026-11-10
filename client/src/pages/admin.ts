@@ -20,7 +20,7 @@ import {
   type ReviewItemDto,
 } from '../services/admin.js';
 import type { ApiError, ApiResult } from '../services/api.js';
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, reasonProblem, settingProblem } from '../utils/admin.js';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, auditEntityLabel, canApprove, lastPage, reasonProblem, settingProblem } from '../utils/admin.js';
 import { bindForm, failureOutcome } from '../utils/validate.js';
 
 // /admin (contratos de los bloques 4 y 5): estadísticas (CU-39), cola de aprobación, comentarios, usuarios, parámetros y auditoría. Cada sección pide
@@ -222,10 +222,19 @@ interface Paged {
   filters: Record<string, string>;
 }
 
+// Si la página pedida ya no existe (se vació la última tras una acción o cambió el total), la lista pasa a la última
+// que existe y se vuelve a pedir: nunca «Página 3 de 2».
+function pageOutOfRange(state: Paged, page: PageDto): boolean {
+  const last = lastPage(page.total, page.pageSize);
+  if (state.page <= last) return false;
+  state.page = last;
+  return true;
+}
+
 function updatePager(view: ListView, state: Paged, page: PageDto, load: () => Promise<void>): void {
   const pager = view.pager;
   if (!pager) return;
-  const pages = Math.max(1, Math.ceil(page.total / page.pageSize));
+  const pages = lastPage(page.total, page.pageSize);
   pager.hidden = page.total <= page.pageSize;
   const label = pager.querySelector<HTMLElement>('[data-page="label"]');
   if (label) label.textContent = `Página ${page.page} de ${pages} · ${page.total} en total`;
@@ -247,10 +256,15 @@ function updatePager(view: ListView, state: Paged, page: PageDto, load: () => Pr
   }
 }
 
-// Filtros de una lista: al enviar, página 1 con los valores del formulario.
+// Filtros de una lista: al enviar, página 1 con los valores del formulario. Sin las burbujas del navegador (un
+// correo a medias en «Actor» no bloquea el envío): el servidor valida y su 400 se muestra con sus fields en la
+// sección. «Filtrar» llega desactivado (data-needs-js) y se activa aquí.
 function bindFilters(name: string, state: Paged, load: () => Promise<void>): void {
   const form = document.querySelector<HTMLFormElement>(`[data-filters="${name}"]`);
-  form?.addEventListener('submit', (event) => {
+  if (!form) return;
+  form.noValidate = true;
+  for (const button of form.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     const values: Record<string, string> = {};
     for (const [key, value] of new FormData(form)) if (typeof value === 'string') values[key] = value.trim();
@@ -301,7 +315,8 @@ function reviewRow(item: ReviewItemDto): HTMLTableRowElement {
     true,
   );
   const actions = el('div', 'chapter-table__actions');
-  actions.append(preview, approve, reject);
+  // RN-17: sin «Aprobar» en una obra +18 (el distintivo «+18: no se aprueba» lo explica).
+  actions.append(...(canApprove(comic, chapter) ? [preview, approve, reject] : [preview, reject]));
 
   row.append(cell(what, detail), cell(comic.publishedBy), cell(formatDateTime(item.submittedAt)), cell(badges), cell(actions));
   return row;
@@ -376,6 +391,7 @@ async function loadComments(): Promise<void> {
     showError(commentsView, result.error);
     return;
   }
+  if (pageOutOfRange(commentsState, result.data)) return loadComments();
   showRows(commentsView, result.data.comments.map(commentRow), 'No hay comentarios con estos filtros.', result.data.total);
   updatePager(commentsView, commentsState, result.data, loadComments);
 }
@@ -437,6 +453,7 @@ async function loadUsers(): Promise<void> {
     showError(usersView, result.error);
     return;
   }
+  if (pageOutOfRange(usersState, result.data)) return loadUsers();
   showRows(usersView, result.data.users.map(userRow), 'No hay usuarios con estos filtros.', result.data.total);
   updatePager(usersView, usersState, result.data, loadUsers);
 }
@@ -506,7 +523,7 @@ function auditRow(entry: AuditEntryDto): HTMLTableRowElement {
   const actor = entry.actor
     ? [el('span', 'admin-page__strong', entry.actor.displayName), el('span', 'admin-page__small', entry.actor.email)]
     : [el('span', 'admin-page__strong', 'Sistema')];
-  const entity = `${entry.entityType}${entry.entityId ? ` #${entry.entityId}` : ''}`;
+  const entity = auditEntityLabel(entry.entityType, entry.entityId);
   const detail: Node[] = [];
   if (entry.before !== null || entry.after !== null) {
     const details = el('details');
@@ -536,6 +553,7 @@ async function loadAudit(): Promise<void> {
     showError(auditView, fields.length > 0 ? { ...result.error, message: `${result.error.message}: ${fields.join(' ')}` } : result.error);
     return;
   }
+  if (pageOutOfRange(auditState, result.data)) return loadAudit();
   showRows(auditView, result.data.entries.map(auditRow), 'No hay entradas con estos filtros.', result.data.total);
   updatePager(auditView, auditState, result.data, loadAudit);
 }
