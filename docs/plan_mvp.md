@@ -40,6 +40,17 @@ El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 41 | Importar obras desde el directorio `content/` (consola) | Sin interfaz; solo script |
 | — | Anuncios falsos | Fijos desde seed; su gestión (CU-38) en fase 2 |
 
+### Fase 2 · bloque 5 (aprobada el 10-nov)
+
+Tras cerrar el MVP, entra una selección cerrada de la fase 2. El resto de la fase 2 y toda la fase 3 siguen fuera de la entrega.
+
+| CU / idea | Funcionalidad | Recorte |
+| --- | --- | --- |
+| 39 | Estadísticas globales del admin (RN-20) y su exportación | Solo lectura; sin gráficos; exportación = vista de impresión (`@media print`) para guardar como PDF, sin archivos generados en el servidor |
+| 31 (resto) | Punto de abandono en el panel del autor (RN-21) | Solo lectores registrados; sin puntos recibidos |
+| Idea 1 (CU-06) | Open Graph en `/`, `/obra/:slug` y `/leer/:slug/:numero` | Imagen propia de Koma (`/icons`), nunca la portada ni una viñeta |
+| Idea 10 | Enlace «Únete a nuestro Discord» | Sin webhook ni lógica de servidor; sin `DISCORD_INVITE_URL`, no se muestra |
+
 ### Fase 2 — si sobra tiempo antes de la entrega
 
 | CU / idea | Funcionalidad |
@@ -49,12 +60,11 @@ El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 14 | Seguir serie + bandeja de entrada |
 | 15 | Puntos y logros |
 | 11 | Onboarding por gustos |
-| 31 (resto), 39 | Punto de abandono y puntos recibidos del autor; estadísticas globales (las lecturas se registran desde el MVP) |
-| — | Punto de abandono: endpoint de progreso y observador de scroll (la columna `last_panel` ya existe) |
+| 31 (resto) | Puntos recibidos del autor |
 | 38 | Gestionar anuncios |
 | 23 | Avatar |
 | 40 | Restauración desde auditoría y apelaciones |
-| Ideas 1, 6, 10, 22 | Open Graph, PWA instalable, webhook de Discord, reportes |
+| Ideas 6, 10 | PWA instalable, webhook de Discord |
 | Idea 6 | `/manifest.json` y `/sw.js` con rutas propias en la raíz: un service worker solo controla las URLs bajo su ruta, así que en `/js/` no serviría |
 
 ### Fase 3 — ampliación posterior
@@ -68,7 +78,9 @@ El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 26 | Descarga sin conexión |
 | Ideas 13, 20, 21 | TOTP, recursos para creadores, eventos |
 
-**Regla para la IA:** no se crean carpetas, tablas, rutas ni dependencias de las fases 2 y 3.
+Descartada el 10-nov (no aplazada): idea 22, reportes.
+
+**Regla para la IA:** no se crean carpetas, tablas, rutas ni dependencias de las fases 2 y 3, salvo las de "Fase 2 · bloque 5".
 
 ## Qué haremos y qué no haremos
 
@@ -172,17 +184,19 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 - **RN-09 URLs y viñetas:** slug de obra generado al crearla (minúsculas, sin acentos, sufijo `-2` si existe) e inmutable. Capítulo identificado por número; el que reemplaza a uno retirado o rechazado hereda número y URL. Viñeta = cada imagen, en orden. Enlace profundo: `/leer/:slug/:numero#v-:n`.
 - **RN-10 Subidas:** JPEG, PNG o WebP comprobados por firma del archivo. Máximo 5 MB por imagen y 60 por capítulo, subidas de una en una (multer en disco temporal, nunca en memoria). Claves de almacenamiento generadas por el servidor: `UUID.ext`.
 - **RN-17 Contenido adulto:** toda obra declara `is_adult`. En el MVP una obra con `is_adult = true` no se puede aprobar ni importar; el admin rechaza con motivo una obra +18 no marcada (CU-32). La zona +18 llega en fase 3.
-- **RN-18 Importación de contenido:** el script `npm run content:import` lee `content/` (formato en "Contenido desde directorios"), valida con zod y con las reglas de RN-10, sube las imágenes con el driver de almacenamiento activo y registra obras, etiquetas, capítulos y viñetas en una transacción por obra. Es idempotente: una obra se identifica por el nombre de su carpeta (= slug) y un capítulo ya existente se omite. Las obras importadas tienen `author_id = NULL` y nacen `approved`. Cada obra importada genera una entrada `content.import` en la auditoría (actor `NULL` = sistema).
+- **RN-18 Importación de contenido:** el script `npm run content:import` lee `content/` (formato en "Contenido desde directorios"), valida con zod y con las reglas de RN-10, sube las imágenes con el driver de almacenamiento activo y registra obras, etiquetas, capítulos y viñetas en una transacción por obra. Es idempotente: una obra se identifica por el nombre de su carpeta (= slug) y un capítulo ya existente se omite. Las obras importadas tienen `author_id = NULL` y nacen `approved`. Cada obra importada genera una entrada `content.import` en la auditoría (actor `NULL` = sistema). Si `tags.json` crea o cambia etiquetas, otra entrada `content.import` con `entity_type` `tags` y sin `entity_id`: en `after`, las creadas y los campos cambiados de las actualizadas; en `before`, esos campos antes del cambio.
 
 ### Comunidad y cuentas
 
 - **RN-11 Comentarios:** 1–500 caracteres, texto plano escapado al mostrarse. Su autor puede borrarlo; el admin puede ocultarlo o eliminarlo. Un comentario oculto no lo ve nadie, tampoco su autor. Borrado siempre lógico; actuar sobre uno ya eliminado → 409.
 - **RN-12 Registro:** correo único sin distinguir mayúsculas; contraseña de 10 caracteres a 72 **bytes** (`Buffer.byteLength`, límite de bcrypt); nombre visible de 3 a 30 caracteres. `EMAIL_TAKEN` revela que el correo existe: riesgo aceptado (registro limitado a 3/h).
-- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario (portada incluida); comentarios 5 / min por usuario; cambio de contraseña 5 contraseñas actuales incorrectas / 15 min por usuario (acertar pone el contador a cero). Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = 3, los saltos de Render: `X-Forwarded-For` llega con tres entradas (cliente, Cloudflare y proxy interno). Verificado el 1-nov en el primer despliegue: `req.ip` es la del cliente y una `X-Forwarded-For` falsa se ignora. Nunca `true`.
+- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario (portada incluida); comentarios 5 / min por usuario; progreso de lectura 60 / min por usuario (RN-21); cambio de contraseña 5 contraseñas actuales incorrectas / 15 min por usuario (acertar pone el contador a cero). Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = 3, los saltos de Render: `X-Forwarded-For` llega con tres entradas (cliente, Cloudflare y proxy interno). Verificado el 1-nov en el primer despliegue: `req.ip` es la del cliente y una `X-Forwarded-For` falsa se ignora. Nunca `true`.
 - **RN-14 Administración:** un admin no puede suspenderse ni quitarse el rol; siempre debe quedar al menos un admin activo.
 - **RN-15 Sesión:** suspender, cambiar rol o cambiar contraseña incrementa `token_version`. Al cambiar la propia contraseña se emite un JWT nuevo en la misma respuesta; las demás sesiones se cierran. El contenido de un suspendido sigue visible.
 - **RN-16 Parámetros:** periodo de espera 1–1440 min (demo: 1), saldo máximo 1–20 (por defecto 5), recarga 1–10 (por defecto 2); fuera de rango → 400.
 - **RN-19 Estadísticas del autor:** lecturas = `guest_reads` + `user_reads` de `chapter_read_counts`; total, últimos 7 y últimos 30 días (hoy incluido, día de `Europe/Madrid`); sin obras ni capítulos retirados; solo las obras propias.
+- **RN-20 Estadísticas globales:** solo el admin; solo agregados, sin correos ni nombres de usuario. Lecturas como RN-19, para toda la plataforma. «N días» son días naturales de `Europe/Madrid` con hoy incluido; «24 h» es una ventana móvil. Cuentas: las activas, por su rol (lector, autor, admin) y las suspendidas aparte, de modo que la suma es el total. Premium = cuenta activa, no admin, con `premium_until` futuro (RN-04). Usuarios activos = cuentas activas, no admin, con alguna lectura en los últimos 30 días. Comentarios moderados = comentarios distintos ocultados o eliminados por el admin. Obras más leídas: por lecturas de 30 días, después total y después slug. La exportación es la misma sección en vista de impresión: los mismos números.
+- **RN-21 Punto de abandono:** por lector registrado y capítulo, la viñeta máxima alcanzada (`chapter_reads.last_panel`). Solo se actualiza una fila que ya existe (la crea la lectura, RN-02); el valor solo sube y se valida contra el número de viñetas del capítulo. No cuentan el admin ni el autor dueño. «Llega al final» = `last_panel` igual al número de viñetas; «viñeta donde más se abandona» = la moda de `last_panel` entre quienes no llegan al final (empate: la menor). Las filas con `last_panel` NULL no entran en el cálculo. Solo envía progreso un lector con sesión; un fallo del envío no afecta a la lectura.
 
 ## Registro de auditoría y reversión
 
@@ -401,8 +415,9 @@ Módulos añadidos a la lista de `ideas_base.md`: `reading` (RN-01 a RN-03, anun
 NODE_ENV=development
 PORT=3000
 HOST=127.0.0.1                # solo esta máquina; Compose usa 0.0.0.0
-APP_URL=http://localhost:3000 # URLs absolutas que salen de la app (retorno de Stripe)
+APP_URL=http://localhost:3000 # URLs absolutas que salen de la app (retorno de Stripe y Open Graph)
 ALLOWED_ORIGINS=http://localhost:3000 # CSRF: orígenes aceptados, separados por comas (por defecto, el de APP_URL)
+DISCORD_INVITE_URL=           # opcional: invitación de Discord (https://discord.gg/…); vacía = sin enlace
 DATABASE_URL=postgres://koma:koma@localhost:5432/koma  # en Compose: host "db"; Neon: conexión directa + ?sslmode=verify-full
 JWT_SECRET=cambia-esto
 COOKIE_SECRET=cambia-esto     # cookies firmadas (invitado, anuncio)
@@ -553,6 +568,8 @@ Cada ruta sirve un HTML estático de `client/public/`; Express comprueba antes l
 | `/files/:key` | — (imagen) | Solo con `STORAGE_DRIVER=local`; firma y caducidad válidas | 200, 403, 404 |
 | Cualquier ruta con `/` final | — | — | 301 a la ruta sin `/` |
 | Ruta inexistente | `errors/404` | — | 404 |
+
+Open Graph (bloque 5): `/`, `/obra/:slug` y `/leer/:slug/:numero` llevan meta `og:*` y `twitter:card`, rellenadas por el servidor y escapadas. Las páginas de error no llevan.
 
 ## Contrato de la API del bloque 1
 
@@ -1151,6 +1168,147 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 - **Cabecera:** enlace "Premium" (maqueta) para todos menos el admin, y "Admin" para el admin (D19).
 - **Test Clocks** (D21): recortado el 9-nov (contingencia nivel 1). La demo muestra alta, portal, cancelación y renovación; `STRIPE_TEST_CLOCK_ID` sigue siendo opcional.
 
+## Contrato de la API del bloque 5
+
+Aprobado el 10-nov. (Dn) remite a la decisión aprobada de la propuesta del bloque 5 (bitácora del 10-nov).
+
+Fase 2 seleccionada (CU-39 con su exportación, CU-31 resto, CU-06 Open Graph e idea 10; RN-20 y RN-21). Sin migraciones, sin dependencias, sin códigos de error nuevos y sin archivos generados en el servidor. Variable nueva: `DISCORD_INVITE_URL` (opcional). Orden: CU-39 → punto de abandono → Open Graph; el enlace de Discord y la vista de impresión, solo con los tres anteriores desplegados y auditados.
+
+**Comunes a todo el bloque:**
+
+- Solo lectura salvo el progreso (RN-21). Ningún GET modifica datos.
+- **Ventanas (RN-20):** «N días» son días naturales de `Europe/Madrid` con hoy incluido, como RN-19: lecturas por `chapter_read_counts.day`, y fechas (`created_at`, `last_read_at`) convertidas con `AT TIME ZONE 'Europe/Madrid'` a su día. La única ventana móvil es «24 h» (`created_at > now() - interval '24 hours'`), y se llama así para distinguirla.
+- Lecturas: la definición de RN-19, sin obras ni capítulos retirados. `ReadsDto` es el del bloque 3 (`total`, `last7`, `last30`).
+- Sin datos personales en las estadísticas ni en la vista de impresión.
+
+### Estadísticas globales (CU-39; RN-20)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/stats` | `requireAdmin` (router del admin, D1 del bloque 4) | — | 200 `{ stats: AdminStatsDto }`, `Cache-Control: no-store` | 401, 403 | — (solo lectura, sin limitador) |
+
+```ts
+interface AdminStatsDto {
+  today: string; // 'YYYY-MM-DD' en Europe/Madrid: el día de referencia de las ventanas
+  users: {
+    total: number;        // todas las cuentas = readers + authors + admins + suspended
+    readers: number;      // activas, role 'user' sin is_author
+    authors: number;      // activas, role 'user' con is_author
+    admins: number;       // activas, role 'admin'
+    suspended: number;    // suspendidas, de cualquier rol
+    premium: number;      // activas, no admin, premium_until > now() (RN-04)
+    activeLast30: number; // activas, no admin, con alguna lectura (chapter_reads.last_read_at) en los últimos 30 días (D2)
+  };
+  reads: ReadsDto & { guests: ReadsDto; users: ReadsDto }; // reads = guests + users, campo a campo
+  catalog: { comics: number; chapters: number };           // obras approved sin retirar; capítulos approved sin retirar de esas obras
+  topComics: { slug: string; title: string; reads: ReadsDto }[]; // hasta 5 (D4)
+  comments: { last7: number; moderatedLast7: number };     // D1
+  auditLast24h: number;                                    // entradas de audit_log en las últimas 24 h (D3)
+}
+```
+
+- **Usuarios:** cada cuenta cuenta una sola vez: las activas, por su rol; las suspendidas, aparte. Por eso `readers + authors + admins + suspended = total`.
+- **Lecturas:** suma de `guest_reads` y `user_reads` de `chapter_read_counts`, sin obras ni capítulos retirados (RN-19, para toda la plataforma). Ya excluyen al admin y al autor dueño, que no se cuentan al escribir.
+- **`topComics`:** obras approved sin retirar con alguna lectura, ordenadas por `reads.last30` descendente, después `reads.total` descendente y por último `slug` ascendente (desempate determinista). Como mucho 5 (`ADMIN_TOP_COMICS`).
+- **`comments.last7`:** comentarios creados en los últimos 7 días, en cualquier estado: mide actividad, también la que después se moderó.
+- **`comments.moderatedLast7`:** comentarios distintos (`count(DISTINCT entity_id)`) con alguna entrada `comment.hide` o `comment.delete` en la auditoría en los últimos 7 días. Uno ocultado y después eliminado cuenta una vez. No cuenta `comment.delete_own`.
+- **«Revisión pendiente»** sigue saliendo de `GET /api/admin/review` (`counts`): no se repite.
+- **Página `/admin`:** la fila de métricas pasa a cuatro tarjetas, como la maqueta: «Revisión pendiente» (`counts`), «Comentarios · 7 días» con la nota «N moderados» (D1), «Usuarios activos · 30 días» (D2) y «Eventos recientes» con la nota «En las últimas 24 h» (D3). Debajo, la sección nueva «Estadísticas» (`#estadisticas`, primera ancla de la navegación de secciones, D5) con cuatro tablas con `<caption>` y `<th scope>`: cuentas, actividad y catálogo (indicador, periodo y valor: premium, usuarios activos, comentarios, moderados, eventos de 24 h, obras y capítulos publicados), lecturas (total, 7 días y 30 días; invitados, registrados y total) y obras más leídas. El botón «Imprimir o guardar como PDF» se activa al llegar los datos y se describe con el mensaje de la sección. Se pide al cargar la página, como las demás secciones; un error se muestra en la sección y no bloquea el resto.
+
+### Exportación: vista de impresión (CU-39; RN-20)
+
+Sin API ni archivos generados en el servidor. Solo el admin (D11: no en el panel del autor).
+
+- Botón «Imprimir o guardar como PDF» en la sección «Estadísticas», que llama a `window.print()`. Sin auditoría: no llega ninguna petición al servidor.
+- `@media print` (solo la sección «Estadísticas» y las cuatro tarjetas de métricas, D10):
+  - cabecera de informe «Koma · Informe de la plataforma» y la fecha (`today`); el logo, solo si se lee bien sobre blanco;
+  - el periodo, visible junto a cada cifra («Total», «7 días», «30 días», «24 h»);
+  - se ocultan la cabecera y el pie del sitio, la navegación móvil y la de secciones, el aviso flotante, los botones y el resto de secciones;
+  - texto oscuro sobre blanco, con colores de impresión como tokens en `variables.css` (sin `prefers-color-scheme`: el test de tema oscuro sigue igual);
+  - tablas y tarjetas con `break-inside: avoid`: no se parten entre páginas.
+
+### Punto de abandono (CU-31 resto; RN-21)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `POST /api/comics/:slug/chapters/:number/progress` | `requireAuth`; limitador de progreso (D7) | `{ panel }`: entero ≥ 1 | 204 | 400 (`panel` mayor que el número de viñetas, en `fields.panel`), 401, 404, 410, 429 | — (como las lecturas) |
+
+- Capítulo por `requirePublicChapter` (aprobado y sin retirar, RN-06).
+- Repositorio: solo `UPDATE chapter_reads SET last_panel = GREATEST(COALESCE(last_panel, 0), $3) WHERE user_id = $1 AND chapter_id = $2`; nunca `INSERT`. Sin fila (nunca lo leyó), 204 sin escribir nada (D6): el endpoint no marca nada como leído.
+- Limitador: 60 / min por usuario, después de `validate` (D7, RN-13).
+- `GET /api/author/dashboard`: cada capítulo de `works[].chapters` gana `abandonment: AbandonmentDto`:
+
+```ts
+interface AbandonmentDto {
+  panels: number;            // viñetas del capítulo
+  readersWithData: number;   // lectores con last_panel, sin el admin ni el autor dueño
+  reachedEnd: number;        // last_panel = panels
+  reachedEndPct: number;     // 0–100, entero redondeado; 0 si readersWithData = 0
+  dropPanel: number | null;  // moda de last_panel entre quienes no llegan al final (empate: la menor); null si nadie abandona
+  dropReaders: number;       // lectores que se quedaron en dropPanel (0 si dropPanel es null)
+}
+```
+
+- El panel muestra lectores en número y en porcentaje («12 de 20 llegan al final · 60 %»); sin datos, «Sin datos de abandono».
+- **Cliente (`reader.ts`):** el observador solo se activa con sesión iniciada (`GET /api/me`); un invitado no envía nada. Tampoco en la vista previa. Un `IntersectionObserver` sobre las viñetas tras `renderReading` guarda en el `store` la máxima vista; si `renderReading` se repite, se desconecta y se crea otro. Envía con `keepalive` al ocultarse la página (`visibilitychange` → `hidden` y `pagehide`) y al ver la última viñeta, solo si ha subido desde el último envío. Cualquier fallo (red, 401, 429, 5xx) se ignora en silencio: nunca muestra errores ni bloquea la lectura. `api.ts` gana la opción `keepalive`.
+- **Riesgo aceptado:** un enlace `#v-n` lleva a la viñeta n y cuenta como alcanzada.
+- **`demo:data`:** rellena `last_panel` solo donde es NULL, con un valor determinista (función del usuario y del capítulo), para que repetirlo no cambie nada.
+
+### Open Graph (CU-06; idea 1) (D8, D9)
+
+Sin API. `home.html`, `comic.html` y `reader.html` llevan en `<head>`:
+
+```html
+<meta property="og:site_name" content="Koma">
+<meta property="og:locale" content="es_ES">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ogTitle}}">
+<meta property="og:description" content="{{ogDescription}}">
+<meta property="og:url" content="{{ogUrl}}">
+<meta property="og:image" content="{{ogImage}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Koma, plataforma de cómics">
+<meta name="twitter:card" content="summary_large_image">
+```
+
+| Página | `ogTitle` | `ogDescription` | `ogUrl` |
+| --- | --- | --- | --- |
+| `/` | `Koma` | Texto fijo de la portada | `APP_URL` + `/` |
+| `/obra/:slug` | Título de la obra | Sinopsis con los saltos de línea convertidos en espacios, cortada a 200 puntos de código (regla común de textos) con «…» | `APP_URL` + `/obra/:slug` |
+| `/leer/:slug/:numero` | `<obra> · Capítulo N` | `Lee el capítulo N de <obra> en Koma.` | `APP_URL` + `/leer/:slug/:numero` |
+
+- `ogImage` = `APP_URL` + `/icons/koma-og.png`, PNG propio de 1200 × 630 (D8; si mide otra cosa, cambian `og:image:width` y `og:image:height`). URLs con `new URL(ruta, APP_URL)`, sin `?` ni `#`.
+- Todo pasa por `fillTemplate` (escapado). Sin consultas nuevas: las páginas ya leen la obra y el capítulo para su comprobación.
+- Test: un título y una sinopsis con `"`, `'`, `<`, `>` y `&` salen escapados en los atributos `og:*`.
+
+### Enlace de Discord (idea 10) (D12, D13)
+
+Sin API. `env.ts` valida `DISCORD_INVITE_URL` opcional: `https:` y host `discord.gg` o `discord.com` (D12); vacía = ausente; otro valor, la app no arranca.
+
+- `layout.ts` no importa `env` (los tests unitarios no cargan `.env` y `env.ts` termina el proceso si falta una variable): la URL le llega como parámetro de `renderTemplate`, desde `page.ts` y `error-handler.ts`, que ya cargan `env`.
+- Con URL, el pie de todas las páginas muestra `<a href="…" target="_blank" rel="noopener noreferrer">Únete a nuestro Discord<span class="visually-hidden"> (se abre en otra pestaña)</span></a>`, y el acceso rápido «Comunidad» de la portada enlaza a la invitación con los mismos atributos. Sin URL, el pie no muestra el enlace y «Comunidad» sigue en «Próximamente» (D13).
+- La URL se escapa al inyectarse. Sin internet, el enlace no abre nada y la plataforma funciona igual.
+
+### Decisiones aprobadas (10-nov)
+
+| # | Decisión |
+| --- | --- |
+| D1 | «Comentarios · 7 días» con la nota «N moderados» en lugar de «Comentarios reportados» (los reportes están descartados) |
+| D2 | «Usuarios activos · 30 días»: cuentas activas, no admin, con alguna lectura en los últimos 30 días |
+| D3 | «Eventos recientes»: entradas de la auditoría de las últimas 24 h |
+| D4 | Sección «Estadísticas» con las métricas que la maqueta no trae; obras más leídas: 5 |
+| D5 | «Estadísticas», primera ancla de la navegación de secciones de `/admin` |
+| D6 | Progreso sin fila en `chapter_reads`: 204 sin escribir nada |
+| D7 | Limitador del progreso: 60 / min por usuario |
+| D8 | Imagen OG: PNG propio en `/icons/koma-og.png` |
+| D9 | Open Graph también en `/` |
+| D10 | La vista de impresión solo saca la sección «Estadísticas» y las métricas |
+| D11 | La vista de impresión es solo del admin |
+| D12 | `DISCORD_INVITE_URL`: solo `https:` y host `discord.gg` o `discord.com` |
+| D13 | Enlace de Discord en el pie y en «Comunidad» de la portada; sin URL, nada de eso cambia |
+
+
 ## Convenciones, tests y definición de terminado
 
 ### Convenciones
@@ -1162,7 +1320,7 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 - Ningún GET modifica datos. Todo dato de usuario se escapa al inyectarse en HTML (servidor) y se pinta con `textContent` (cliente).
 - En búsquedas `ILIKE` se escapan `%` y `_`; el orden dinámico usa una lista blanca de columnas.
 - Antes de redirigir al login, el cliente guarda el fragmento `#v-n` para volver a la viñeta.
-- Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app (retorno de Stripe).
+- Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app: retorno de Stripe y meta Open Graph (`og:url`, `og:image`).
 
 ### Tests
 
@@ -1270,7 +1428,9 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | Control | 12 nov | Si el bloque 2 no estaba cerrado el 11, se activa la contingencia |
 | 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
-| 5 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
+| 5 · Fase 2 seleccionada | 10 – 15 nov | 10: cierre del bloque 4, demo en contenedores y CU-39. 12: punto de abandono. 13: Open Graph. Con los tres desplegados y auditados: 14, enlace de Discord y vista de impresión |
+| Pulido | 15 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real, demo en Docker con la red apagada, prueba completa de roles |
+| 6 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
 
 Cada bloque se da por cerrado solo cuando funciona desplegado, no solo en local.
 
@@ -1281,6 +1441,10 @@ Se activa por niveles, en orden, hasta recuperar el retraso:
 1. Sin Test Clocks: la demo muestra alta, portal y cancelación.
 2. Sin edición de obra (CU-30 queda en retirar) y sin anuncio intersticial.
 3. App sin contenedor, en el host y en el puerto 3000: `HOST=0.0.0.0 APP_URL=http://koma.local:3000 ALLOWED_ORIGINS=http://koma.local:3000 node --env-file=.env server/dist/server.js` (`npm start` no carga `.env`; las variables de la línea de comandos tienen prioridad sobre `.env`). La demo en la LAN pasa a `http://koma.local:3000`. Cortafuegos, solo la red local: `sudo ufw allow from 192.168.1.0/24 to any port 3000 proto tcp`.
+
+### Contingencia del 14 de noviembre
+
+Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: vista de impresión, enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí.
 
 ## Decisiones
 
@@ -1316,11 +1480,11 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Entorno técnico | ESM, Node 24 LTS, Express 5, jsonwebtoken, `node:test` sobre JS compilado, un solo `package.json` |
 | Cuentas demo | Contraseñas por variables de entorno, anotadas en `docs/credenciales.local.md` (ignorado por git) |
 | Idioma | Código y API en inglés; interfaz, URLs de páginas y mensajes en español |
-| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas |
+| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas; en el punto de abandono (RN-21), un enlace `#v-n` cuenta como viñeta alcanzada |
 | Estado en el navegador | Lo que es preferencia o comodidad (advertencias aceptadas, ocultar iconos) vive en `localStorage`; permisos, saldo y límites, siempre en el servidor |
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |
-| Fase 2 | Avatar, Open Graph, PWA, punto de abandono |
+| Fase 2 | Bloque 5 (10-nov): CU-39 con vista de impresión, punto de abandono, Open Graph con imagen propia y enlace de Discord. Siguen en fase 2, fuera de la entrega: avatar, PWA y webhook de Discord. Descartados: los reportes (idea 22) |
 
 ## Guía para CLAUDE.md
 

@@ -4,7 +4,7 @@
 
 **Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
 
-- Bloque actual: **4 · Admin y Stripe (15 – 19 nov; empezado el 8-nov)**. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **5 · Fase 2 seleccionada (10 – 15 nov)**: CU-39 con vista de impresión, punto de abandono, Open Graph y enlace de Discord. Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 
 ## Comandos
@@ -72,7 +72,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - Pagos reales (online, Stripe solo en modo prueba) ni guardar datos de tarjeta; el driver `fake` nunca en producción (`env.ts` lo rechaza); anuncios reales (solo marcas inventadas).
 - Imágenes con URL pública permanente; alojar vídeos; borrado físico desde la interfaz (salvo viñetas de un borrador); internacionalización.
 - Verificación de identidad real ni contenido +18 real; obras con licencia NC; APK o apps nativas antes de la entrega.
-- **Nada de las fases 2 y 3:** ni carpetas, ni tablas, ni rutas, ni dependencias (listas en `docs/plan_mvp.md`).
+- **Nada de las fases 2 y 3**, salvo lo aprobado para el bloque 5 (lista cerrada en `docs/plan_mvp.md`, "Fase 2 · bloque 5"): ni carpetas, ni tablas, ni rutas, ni dependencias.
 - Dependencias: solo las del stack de `docs/ideas_base.md` (`express`, `zod`, `bcrypt`, `jsonwebtoken`, `cookie-parser`, `multer`, `helmet`, `express-rate-limit`, `pg`, `stripe`, `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`; en desarrollo `typescript` y tipos). Ninguna otra sin aprobación; sin dotenv (`--env-file` nativo).
 
 ## Convenciones
@@ -87,7 +87,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - HTML semántico que se entiende sin JS: `<title>` `Koma` o `<página> · Koma`, un solo `<h1>`, `header`/`nav`/`main`/`footer`, enlace "Saltar al contenido", `lang="es"`, `loading="lazy"` salvo en las imágenes de la primera pantalla, `<link rel="icon" href="/icons/favicon.svg">`.
 - CSS mobile-first (`min-width: 40rem` y `64rem`), BEM, un archivo por componente, todo valor visual en `variables.css` (el diseño lo sustituye sin tocar HTML, TS ni componentes; única excepción: el `<meta name="theme-color">` de `layout.ts`, que repite `--color-bg` y un test lo compara) y `z-index` en `layers.css`, solo tema oscuro (`color-scheme: dark`, sin tema claro: es una plataforma de lectura), fuentes del sistema, `:focus-visible` y áreas táctiles de 44 px.
 - `ILIKE` escapa `%` y `_`; el orden dinámico usa lista blanca de columnas. Antes de redirigir al login, el cliente guarda el fragmento `#v-n`.
-- Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app (retorno de Stripe).
+- Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app: retorno de Stripe y meta Open Graph (`og:url`, `og:image`).
 
 ## Trampas conocidas
 

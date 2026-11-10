@@ -230,7 +230,7 @@ CREATE TABLE chapter_reads (
   chapter_id    INTEGER NOT NULL REFERENCES chapters(id),
   first_read_at TIMESTAMPTZ NOT NULL DEFAULT now(),     -- hace de created_at
   last_read_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_panel    INTEGER,                                -- fase 2: punto de abandono
+  last_panel    INTEGER,                                -- RN-21: viñeta máxima alcanzada (bloque 5); NULL = sin progreso
   PRIMARY KEY (user_id, chapter_id)
 );
 CREATE INDEX chapter_reads_chapter_idx ON chapter_reads (chapter_id);
@@ -273,7 +273,16 @@ ON CONFLICT (chapter_id, day) DO UPDATE
   SET guest_reads = chapter_read_counts.guest_reads + 1;
 ```
 
-Crece como capítulos × días con lecturas, sin una fila por visita. El panel del autor (bloque 3, RN-19) lee estas filas; las demás vistas de estadísticas son de fase 2.
+Crece como capítulos × días con lecturas, sin una fila por visita. El panel del autor (bloque 3, RN-19) lee estas filas, y las estadísticas globales (bloque 5, RN-20) también.
+
+**Punto de abandono (RN-21, bloque 5):** el progreso solo hace `UPDATE` de una fila existente, nunca `INSERT`:
+
+```sql
+UPDATE chapter_reads SET last_panel = GREATEST(COALESCE(last_panel, 0), $3)
+WHERE user_id = $1 AND chapter_id = $2;
+```
+
+Sin migración ni índice nuevo: el panel del autor agrupa por `chapter_id` (`chapter_reads_chapter_idx`). `npm run demo:data` rellena `last_panel` solo donde es NULL, con un valor determinista, para que repetirlo no cambie nada.
 
 ### 008_ads
 
@@ -374,6 +383,7 @@ Las contraseñas salen de `SEED_*_PASSWORD`. Si falta alguna, el script termina 
 - Los borradores descartados, los capítulos rechazados y las obras cuya importación falla dentro de la transacción (RN-18) dejan sus imágenes en el almacenamiento. En fase 2 se puede añadir un script de limpieza de claves sin referencia.
 - Un invitado que borra sus cookies vuelve a sumar en `guest_reads`.
 - Releer un capítulo que reemplazó a otro (nuevo `chapter_id`) vuelve a consumir saldo.
+- Punto de abandono (RN-21): un enlace `#v-n` lleva a la viñeta n y la cuenta como alcanzada; el capítulo de reemplazo empieza sin datos.
 - Logout sin revocación: cerrar sesión borra la cookie, pero el JWT no se revoca en el servidor (no hay tabla de sesiones). Un token robado sigue valiendo hasta que caduca (7 días) o hasta que cambia `token_version` (contraseña, rol o estado, RN-15).
 
 ## Estado que vive en el navegador (sin tablas)

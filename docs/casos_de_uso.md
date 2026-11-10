@@ -38,7 +38,7 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - La viñeta no tiene comentarios.
 
 ### CU-06 Compartir viñeta
-**Actor:** Invitado · **Fase:** MVP (Open Graph en fase 2)
+**Actor:** Invitado · **Fase:** MVP (Open Graph en el bloque 5)
 **Objetivo:** Compartir un enlace que abre la viñeta exacta (RN-09).
 **Excepciones:**
 - El dispositivo no soporta el menú nativo de compartir (se ofrece copiar enlace).
@@ -217,10 +217,11 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - La obra no le pertenece.
 
 ### CU-31 Ver estadísticas propias
-**Actor:** Autor · **Fase:** MVP (recortado: sin punto de abandono ni puntos recibidos)
+**Actor:** Autor · **Fase:** MVP (punto de abandono en el bloque 5, RN-21; sin puntos recibidos)
 **Objetivo:** Consultar lecturas por capítulo, punto de abandono y puntos recibidos.
 **Excepciones:**
 - La obra aún no tiene lecturas.
+- Ningún lector registrado ha enviado progreso: se muestra «Sin datos de abandono».
 
 ## Admin
 
@@ -271,10 +272,10 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - Formato de imagen no válido.
 
 ### CU-39 Ver estadísticas globales
-**Actor:** Admin · **Fase:** 2
-**Objetivo:** Consultar métricas de toda la plataforma.
+**Actor:** Admin · **Fase:** 2 (bloque 5)
+**Objetivo:** Consultar métricas agregadas de toda la plataforma (usuarios, premium, lecturas, obras más leídas, comentarios y actividad) y guardarlas como PDF desde la vista de impresión (RN-20).
 **Excepciones:**
-- Ninguna.
+- La plataforma aún no tiene lecturas: se muestran ceros.
 
 ### CU-40 Consultar auditoría
 **Actor:** Admin · **Fase:** MVP
