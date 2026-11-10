@@ -187,6 +187,15 @@ export async function findLiveChapter(db: Queryable, comicId: number, number: nu
   return row ? { id: row.id, number: row.number, title: row.title, status: row.status, publishedAt: row.published_at } : null;
 }
 
+// Si ese número tuvo un capítulo rechazado (sin retirar): el admin que lo revisa otra vez recibe 409, no 404.
+export async function hasRejectedChapter(db: Queryable, comicId: number, number: number): Promise<boolean> {
+  const { rows } = await db.query(
+    `SELECT 1 FROM chapters WHERE comic_id = $1 AND number = $2 AND deleted_at IS NULL AND status = 'rejected' LIMIT 1`,
+    [comicId, number],
+  );
+  return rows.length > 0;
+}
+
 // CU-29: nace en `draft`. Un número ocupado por un capítulo vivo lanza 23505 en chapters_comic_number_uq.
 export async function insertDraftChapter(db: Queryable, comicId: number, number: number, title: string): Promise<number> {
   const { rows } = await db.query<{ id: number }>(

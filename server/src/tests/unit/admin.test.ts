@@ -30,9 +30,10 @@ test('RN-05: un capítulo pending se revisa también con la obra en pending; no 
   assert.equal(chapterReviewProblem({ ...pending, status: 'approved' }, { status: 'pending' }), null);
   assert.equal(codeOf(chapterReviewProblem({ ...pending, status: 'rejected' }, { status: 'pending' })), '409 CONFLICT');
   assert.equal(codeOf(chapterReviewProblem({ ...pending, deletedAt: new Date() }, { status: 'pending' })), '410 GONE');
-  for (const status of ['draft', 'approved'] as const) {
+  for (const status of ['draft', 'approved', 'rejected'] as const) {
     assert.equal(codeOf(chapterReviewProblem({ ...pending, status: 'approved' }, { status })), '409 CONFLICT', status);
   }
+  assert.equal(codeOf(chapterReviewProblem({ ...pending, deletedAt: new Date() }, { status: 'rejected' })), '410 GONE', 'la obra va primero');
 });
 
 test('RN-16: settings.update lleva solo las claves que cambian; sin cambios, no hay nada que guardar', () => {

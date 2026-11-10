@@ -1149,7 +1149,7 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 - **`/perfil`:** la tarjeta de premium gana "Hacerse premium" o "Gestionar suscripción" (portal o pago simulado) y "Se cancela el …" (D18).
 - **`/admin`:** una sola página con las cinco secciones y anclas de la maqueta (Aprobaciones, Comentarios, Usuarios, Parámetros, Auditoría). Cada sección pide su lista al cargar; los filtros van a la API, no filtran en el cliente. Tablas con `<caption>` y `<th scope>`. Rechazar pide el motivo en un `<dialog>`; eliminar, suspender y quitar un rol piden confirmación. Los cambios se anuncian en una región `aria-live`. Respecto a la maqueta: la única métrica es «Revisión pendiente» (`counts`); la cola muestra solo lo `pending` (el historial está en la auditoría); «Comentarios recientes» con Ocultar y Eliminar, sin reportes; Usuarios con botones de rol, autor y estado en cada fila; Parámetros, solo los tres de RN-16; Auditoría con la columna «Actor» («Sistema» si es `NULL`) y los filtros de CU-40, con «Desde» y «Hasta»; sin «Ir al estudio del autor».
 - **Cabecera:** enlace "Premium" (maqueta) para todos menos el admin, y "Admin" para el admin (D19).
-- **Test Clocks** (`npm run stripe:demo-reset`, contingencia nivel 1): al final del bloque y solo si sobra tiempo (D21).
+- **Test Clocks** (D21): recortado el 9-nov (contingencia nivel 1). La demo muestra alta, portal, cancelación y renovación; `STRIPE_TEST_CLOCK_ID` sigue siendo opcional.
 
 ## Convenciones, tests y definición de terminado
 

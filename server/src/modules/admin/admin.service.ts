@@ -110,7 +110,12 @@ export async function reviewChapter(
     const comic = await comicsRepository.findComicForReview(client, slug);
     if (!comic) throw comicNotFound();
     const chapter = await chaptersRepository.findLiveChapter(client, comic.id, number, true);
-    if (!chapter) throw new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
+    if (!chapter) {
+      // Uno ya rechazado libera su número (RN-09) y deja de ser el vivo, pero sigue siendo "no está pending": 409, no
+      // 404 (contrato del bloque 4: de dos admins que rechazan a la vez, el segundo recibe 409).
+      const rejected = await chaptersRepository.hasRejectedChapter(client, comic.id, number);
+      throw (rejected && chapterReviewProblem(comic, { status: 'rejected' })) || new AppError(404, 'NOT_FOUND', 'El capítulo no existe');
+    }
     const problem = chapterReviewProblem(comic, chapter);
     if (problem) throw problem;
     const base = { actorId: admin.id, entityType: 'chapters' as const, entityId: String(chapter.id), ...ctx };

@@ -57,7 +57,7 @@ test('Seguridad: la auditoría solo la consulta el admin, y consultarla no escri
   assert.equal(rows.length, 0);
 });
 
-test('CU-40: filtra por entidad e id, por acción y por actor (correo sin distinguir mayúsculas); el sistema sale con actor null', async () => {
+test('Seguridad: (CU-40) filtra por entidad e id, por acción y por actor (correo sin distinguir mayúsculas); el sistema sale con actor null', async () => {
   const admin = await createUser('admin');
   const author = await createUser('author');
   const entityId = `audit-${RUN}-${randomUUID().slice(0, 8)}`;
@@ -84,7 +84,7 @@ test('CU-40: filtra por entidad e id, por acción y por actor (correo sin distin
   assert.equal(byEntity.pageSize, 50);
 });
 
-test('CU-40: filtra por las suscripciones (actor «Sistema», el del webhook) y acepta cada entidad de AUDIT_ENTITY_TYPES', async () => {
+test('Seguridad: (CU-40) filtra por las suscripciones (actor «Sistema», el del webhook) y acepta cada entidad de AUDIT_ENTITY_TYPES', async () => {
   const admin = await createUser('admin');
   const entityId = `sub-${RUN}-${randomUUID().slice(0, 8)}`;
   const { pool } = await import('../../db/pool.js');
@@ -115,7 +115,7 @@ test('CU-40: filtra por las suscripciones (actor «Sistema», el del webhook) y 
   }
 });
 
-test('CU-40: «desde» y «hasta» son días de Europe/Madrid con los dos extremos incluidos', async () => {
+test('Seguridad: (CU-40) «desde» y «hasta» son días de Europe/Madrid con los dos extremos incluidos', async () => {
   const admin = await createUser('admin');
   const entityId = `fechas-${RUN}-${randomUUID().slice(0, 8)}`;
   // 2026-03-01 00:30 en Madrid es 2026-02-28 23:30 UTC; 2026-03-02 23:30 en Madrid es 22:30 UTC.

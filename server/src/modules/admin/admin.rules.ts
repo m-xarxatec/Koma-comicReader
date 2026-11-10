@@ -12,7 +12,7 @@ export interface ComicReviewInput {
 }
 
 export interface ChapterReviewInput {
-  status: 'draft' | 'pending' | 'approved';
+  status: 'draft' | 'pending' | 'approved' | 'rejected'; // 'rejected': ya no es el vivo, pero se responde 409, no 404
 }
 
 const comicGone = () => new AppError(410, 'GONE', 'La obra se ha retirado');

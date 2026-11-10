@@ -151,6 +151,30 @@ test('RN-05: errores de capítulo: borrador o ya aprobado (409), obra rechazada 
   assert.equal(await codeOf(await api(srv, 'POST', `/api/admin/comics/${comic.slug}/approve`, { cookie: admin.cookie })), '410 GONE');
 });
 
+test('RN-05: rechazar dos veces un capítulo da 409 (no 404) y aprobar el ya rechazado, también; una sola entrada de auditoría', async () => {
+  const admin = await createUser('admin');
+  const { comic } = await authorWork({ comicStatus: 'approved', chapters: [{ number: 1, status: 'pending' }] });
+  const path = (action: string) => `/api/admin/comics/${comic.slug}/chapters/1/${action}`;
+  const body = { reason: 'Faltan viñetas' };
+  assert.equal((await api(srv, 'POST', path('reject'), { cookie: admin.cookie, body })).status, 204);
+  assert.equal(await codeOf(await api(srv, 'POST', path('reject'), { cookie: admin.cookie, body })), '409 CONFLICT');
+  assert.equal(await codeOf(await api(srv, 'POST', path('approve'), { cookie: admin.cookie })), '409 CONFLICT');
+  const { rows } = await (await db()).query(
+    `SELECT count(*)::int AS n FROM audit_log a JOIN chapters c ON c.id::text = a.entity_id WHERE a.action = 'chapter.reject' AND c.comic_id = $1`,
+    [comic.id],
+  );
+  assert.equal(rows[0]!.n, 1);
+});
+
+test('Seguridad: dos admins rechazan a la vez el mismo capítulo: uno 204 y otro 409', async () => {
+  const [one, two] = [await createUser('admin'), await createUser('admin')];
+  const { comic } = await authorWork({ comicStatus: 'approved', chapters: [{ number: 1, status: 'pending' }] });
+  const results = await Promise.all(
+    [one, two].map((admin) => api(srv, 'POST', `/api/admin/comics/${comic.slug}/chapters/1/reject`, { cookie: admin.cookie, body: { reason: 'No' } })),
+  );
+  assert.deepEqual(results.map((r) => r.status).sort(), [204, 409]);
+});
+
 test('Seguridad: dos admins aprueban a la vez la misma obra: uno 204 y otro 409, con una sola entrada de auditoría', async () => {
   const [one, two] = [await createUser('admin'), await createUser('admin')];
   const { comic } = await authorWork();

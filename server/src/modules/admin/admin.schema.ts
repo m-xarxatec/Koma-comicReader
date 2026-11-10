@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ADMIN_QUERY_MAX_LENGTH, AUDIT_ENTITY_ID_MAX, READING_SETTINGS_RANGES, REJECTION_REASON_MAX } from '../../config/limits.js';
 import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '../audit/audit.service.js';
+import { EMAIL_MAX_CHARS } from '../auth/auth.schema.js';
 import { textField } from '../../utils/text.js';
 import { routeInteger } from '../reading/reading.schema.js';
 
@@ -94,7 +95,7 @@ const isoDay = z.iso.date({ error: 'Fecha no válida (AAAA-MM-DD)' }).optional()
 export const auditQuery = z
   .object({
     // Correo exacto del actor, sin distinguir mayúsculas (D9).
-    actor: z.email({ error: 'Correo no válido' }).trim().toLowerCase().max(254).optional(),
+    actor: z.email({ error: 'Correo no válido' }).trim().toLowerCase().max(EMAIL_MAX_CHARS).optional(),
     action: z.enum(AUDIT_ACTIONS, { error: 'Acción no válida' }).optional(),
     entityType: z.enum(AUDIT_ENTITY_TYPES, { error: 'Entidad no válida' }).optional(),
     entityId: z
