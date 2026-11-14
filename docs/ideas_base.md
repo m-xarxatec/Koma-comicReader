@@ -163,6 +163,14 @@ Orden de construcción:
 - Actividad simulada antes de la demo (idea 24): excepción a la regla de que los datos de demostración solo viven en local.
 - Test Clocks de Stripe: recortado el 9 de noviembre (contingencia nivel 1).
 
+## Pulido (desde el 10 de noviembre)
+El bloque 5 se cerró el 10 de noviembre. Sin funciones nuevas, salvo la actividad simulada (idea 24). Detalle, reparto y decisiones en `plan_mvp.md`, sección «Pulido».
+
+- **Diseño:** lo escribe Codex en encargos sucesivos (E1 premium, gracias y pago simulado; E2 `/admin`; E3 estudio del autor; E4 el conjunto), y Claude Code lo integra y lo audita. El estudio del autor se pule sobre su diseño actual, sin volver a la maqueta, y pasa al aviso flotante y al `<dialog>` de `/admin`.
+- **Maqueta:** vuelve «Descubrir Premium» en la ficha y «Premium» en el pie. Desvíos anotados: «En publicación» (no hay dato), y Comunidad, Tutoriales y «Ayuda» en la navegación y el pie (no tienen página).
+- **Imágenes:** banner del hero temporal en `icons/koma-hero.webp` (la definitiva sustituye el archivo con el mismo nombre); mascota en WebP y nueva imagen de Open Graph a partir de la mascota con fondo transparente.
+- **Segunda obra:** los capítulos 2 a 4 siguen siendo provisionales; se reemplazarán al final con `--replace` (idea 23).
+
 ## Aprobadas
 Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 5" = se construye antes de la entrega (ver "Decisiones tras el MVP").
 
@@ -286,8 +294,14 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 ### 23. Importación de obras desde directorios
 - El desarrollador copia cada obra en `content/<slug>/` con `comic.json`, portada y una carpeta por capítulo.
 - `npm run content:import` valida, sube las imágenes y publica las obras ya aprobadas; es idempotente.
+- Solo cuenta como existente un capítulo vivo (ni retirado ni rechazado).
+- (Pulido) `--replace <slug>:<números>` retira esos capítulos y los vuelve a crear desde `content/` en la misma transacción; el reemplazo hereda número y URL. Si un número no es un capítulo vivo o no tiene carpeta, se omite la obra entera sin retirar nada.
 
 ### 24. Actividad simulada para la demo (antes de la presentación)
-- Un par de bots que actúan como usuarios reales, para que la plataforma muestre actividad: lecturas, comentarios y datos en las estadísticas y en el punto de abandono.
+- Cuentas que actúan como usuarios reales, para que la plataforma muestre actividad: lecturas, progreso, comentarios y datos en las estadísticas.
 - Es una excepción aprobada a la regla de que los datos de demostración solo viven en local: Koma se trata como producto real, pero es una demo de clase.
-- Forma por definir (cuentas, qué acciones hacen y en qué entorno) después del bloque 5.
+- **Cuentas:** seis, `actividad1…6@demo.test`, con nombres visibles naturales y la contraseña de `SEED_READER_PASSWORD`. Se dan de alta por la API real, como mucho tres por pasada, para respetar el límite de registro (RN-13).
+- **Acciones:** siempre por la API real y respetando sus límites: leer, enviar progreso y comentar. Unas pocas lecturas de invitado por pasada, solo en los capítulos libres y en el del anuncio.
+- **Entorno:** `npm run demo:activity` (local) y `npm run demo:activity:online`, con una guarda que impide ejecutarlos fuera de su destino. Una pasada al día en los días previos a la demo, lanzada por el desarrollador.
+- **Punto de abandono:** se enseña solo en local; online no se crean obras desde el script.
+- **Rastro y retirada:** solo queda lo que la API ya audita. Tras la demo, las cuentas se suspenden y sus comentarios se eliminan desde `/admin`; sus lecturas se quedan en los totales.
