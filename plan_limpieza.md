@@ -437,11 +437,34 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
 ### Paso B · Skills, agentes, CI y orden (antes del 20-nov)
 
-- [ ] **B1 · Skills** (H8) · **IA**. Crear `cerrar-bloque`, `bitacora`, `encargo-codex` y `entregar-commit` en `.claude/skills/<nombre>/SKILL.md`. Cada una enlaza a la sección de `CLAUDE.md` o de `docs/` que aplica, en lugar de copiar reglas. `cerrar-bloque` incluye `/simplify` y `/code-review` (H9).
+- [x] **B1 · Skills** (H8) · **IA**. Crear `cerrar-bloque`, `bitacora`, `encargo-codex` y `entregar-commit` en `.claude/skills/<nombre>/SKILL.md`. Cada una enlaza a la sección de `CLAUDE.md` o de `docs/` que aplica, en lugar de copiar reglas. `cerrar-bloque` incluye `/simplify` y `/code-review` (H9).
   - No se crea `nueva-funcionalidad` (DL10): ese flujo es el «Modo tarea» de `constructor`, que se mejora en B4.
   - `encargo-codex` parte de los tres encargos reales de `.claude/encargos/` (la misma estructura de seis apartados) y añade cuatro cosas: la regla de los tests y la de los secretos; que todo cambio en un test existente se entrega con la comprobación antes y después, para que el desarrollador lo autorice; que `.claude/` ya está en git (los encargos antiguos dicen lo contrario); y que el worktree no se borra hasta que su diff esté en `main` (bitácora, 2026-11-09: hubo que recuperar el trabajo de la sesión de Codex).
   - `bitacora`: la plantilla del principio de `docs/bitacora.md` (cinco campos, unas 10 líneas) no es la que usan las entradas reales (Pedido, Resultado, Tests, Comprobación y Limitaciones, y bastante más largas). Preguntar al desarrollador cuál de las dos sigue la skill.
   - **Hecho cuando:** tras reiniciar, cada skill aparece, y una ejecución de prueba de `bitacora` y de `entregar-commit` da el formato correcto.
+  - 2026-11-14 · Cuatro skills en `.claude/skills/`, con la sintaxis de code.claude.com/docs/en/skills. Enlazan a secciones de `CLAUDE.md` y `docs/`, sin copiar reglas.
+    - **Quién las lanza:** `cerrar-bloque` y `encargo-codex`, solo el usuario (`disable-model-invocation`, como `constructor`). `bitacora` y `entregar-commit` también las puede usar Claude al cerrar una tarea.
+    - **`cerrar-bloque`:**
+      1. alcance;
+      2. typecheck, unitarios y API;
+      3. `/code-review` (`high`) y `/simplify`, cuyos hallazgos se proponen antes de aplicarse;
+      4. `frontend` y después `auditor`;
+      5. tabla de la definición de terminado (✓, ✗ o manual);
+      6. «Bloque actual» con el formato que lee `inicio-sesion`, árbol, comandos y bitácora;
+      7. commits.
+    - **`encargo-codex`:** los apartados 0–6 de los encargos reales, más cuatro reglas:
+      - la de los tests y la de los secretos;
+      - todo cambio en un test existente se entrega con la aserción antes y después, para el permiso;
+      - `.claude/` ya está en git;
+      - el worktree no se borra hasta que su trabajo esté en un commit de la rama de trabajo (bitácora, 2026-11-09).
+
+      Dice también que la maqueta la copia el usuario al worktree, porque git la ignora.
+    - **`bitacora`:** formato de las entradas reales (decisión del desarrollador, tras contar los campos de 90 entradas: Pedido 71, Resultado 70, Comprobación 68, Tests 37, Pendiente 30…). Por eso se reescribió el bloque «Plantilla» de `docs/bitacora.md`; el desarrollador autorizó salirse de «solo entradas nuevas». Con el argumento `prueba`, solo muestra la entrada.
+    - **`entregar-commit`:** rutas explícitas, sin secretos ni tests existentes; el diff revisado con la lista de `CLAUDE.md`; `tipo(módulo): … (RN-xx | tarea X)`, sin firma.
+    - **`CLAUDE.md`:** en «Quién hace qué», la fila de skills nombra las cinco (siguen siendo 158 líneas).
+    - **Sin reiniciar:** según la documentación, una skill nueva en una carpeta de skills que ya existía se carga en la misma sesión. `bitacora` y `entregar-commit` aparecieron al momento. Las dos prueban el formato aquí: `bitacora prueba` mostró la entrada y `entregar-commit` dio los comandos de B1.
+    - **Pendiente (desarrollador):** ver `/cerrar-bloque` y `/encargo-codex` en el menú `/` (Claude no las ve porque son solo del usuario).
+    - **Comprobación:** 188 tests unitarios en verde.
 - [ ] **B2 · Skills opcionales** (H8) · **IA + D**. `actividad-simulada` y `reemplazar-capitulos`, con los pasos de «Pulido» de `plan_mvp.md`. Solo describen los pasos: no ejecutan nada `:online`.
 - [ ] **B3 · `auditor` ampliado** (H2, H4) · **IA**. Ampliar el apartado «F · Tests» que ya tiene `.claude/agents/auditor.md`. En el rango auditado, lista:
   - cada `assert` eliminado o cambiado en tests existentes;

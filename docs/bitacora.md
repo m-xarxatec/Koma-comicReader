@@ -1,15 +1,20 @@
 # Bitácora de vibecoding · Koma — plataforma de cómics
 
-Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
+Una entrada por bloque, tarea relevante o sesión. Los campos van en este orden; los marcados «si hubo» o «si hay» solo aparecen cuando tienen contenido. Frases cortas, y listas cuando son varias cosas. La skill `bitacora` la escribe con esta plantilla.
 
 ## Plantilla
 
-### AAAA-MM-DD · Bloque N · Tarea
-- **Pedido a la IA:** qué se pidió y con qué contexto (RN, CU, sección del plan).
-- **Resultado:** qué generó.
-- **Fallos:** qué estaba mal (permisos, SQL, versión antigua de una librería…).
-- **Corrección:** qué se cambió a mano o qué instrucción se añadió a CLAUDE.md.
-- **Aprendizaje:** regla nueva para la próxima sesión.
+### AAAA-MM-DD · Bloque N (o Pulido) · Tarea
+- **Pedido a la IA:** qué se pidió y con qué contexto (RN, CU, sección del plan o del encargo).
+- **Resultado:** qué generó; una lista si son varias cosas.
+- **Tests:** los nuevos, con su RN o `Seguridad:`, y las excepciones aprobadas sobre tests existentes (si hubo).
+- **Revisión (agente `auditor` o `frontend`):** veredicto y hallazgos, corregidos o no (si hubo).
+- **Decisiones del desarrollador:** lo que decidió durante la tarea (si hubo).
+- **Fallos:** qué estaba mal (permisos, SQL, versión antigua de una librería…) (si hubo).
+- **Corrección:** qué se cambió a mano o qué instrucción se añadió a CLAUDE.md (si hubo).
+- **Aprendizaje:** regla nueva para la próxima sesión (si hay).
+- **Comprobación (IA):** los comandos ejecutados en la sesión y sus cifras (typecheck, unitarios, API).
+- **Pendiente (desarrollador):** lo que la IA no puede comprobar: navegador, móvil, online, Windows… (si hay).
 
 ## Entradas
 
