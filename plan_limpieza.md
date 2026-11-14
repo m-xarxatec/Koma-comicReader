@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-11-13. **Base revisada:** commit `d62ba1d` (copia del repositorio en el segundo ordenador).
 - **Estado:** versión definitiva, aprobada por el desarrollador el 2026-11-13 para ejecutarse. Lo aplicado está marcado en la sección 10; las condiciones de la ejecución, en la sección 12.
-- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1 y DL10–DL13 resueltas; DL2–DL9 siguen abiertas (sección 9).
+- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1, DL7 y DL10–DL13 resueltas; DL2–DL6, DL8 y DL9 siguen abiertas (sección 9).
 - **Objetivo:** que el harness de Claude Code (CLAUDE.md, agentes, skills, hooks, permisos) sea más eficiente, deje el código limpio, impida modificar los tests existentes, exija tests nuevos en cada funcionalidad y se pueda enseñar en la entrega del curso.
 - **Si eres un agente:** antes de actuar, lee la sección 11 («Instrucciones para el agente») entera. Las tareas están en la sección 10. La sección 12 corrige con datos reales lo que las secciones 1–9 suponían: si chocan, manda la 12.
 
@@ -283,7 +283,7 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 | DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí |
 | DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo |
 | DL6 | ¿Se activan los avisos de TypeScript de H9? Si aparecen errores, arreglarlos es tocar código de la app | Activarlos y decidir con la lista de errores delante |
-| DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención |
+| DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención. **Resuelta el 14-nov:** `Seguridad:` (B10) |
 | DL8 | ¿Se declaran en `.claude/settings.json` los plugins que espera el proyecto? | Sí, si se usan en los dos ordenadores |
 | DL9 | Calendario: ¿se dejan el 20-nov y el 25-nov en `plan_mvp.md`, o se anota también la fecha oficial nueva? | Dejarlas como objetivo y anotar la fecha nueva como margen. Mientras no haya respuesta, valen el 20-nov y el 25-nov |
 
@@ -473,9 +473,21 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - entregar la lista de reglas antes y después, que demuestre que no se pierde ninguna;
   - avisar de los 9 comentarios del código que citan secciones de `CLAUDE.md` (cambiarlos es código de la app: preguntar);
   - proponer el cambio de «Guía para CLAUDE.md» en `plan_mvp.md`.
-- [ ] **B10 · Test del árbol de `CLAUDE.md`** (H6) · **IA + DL7**. Archivo **nuevo** en `server/src/tests/unit/` que comprueba que cada ruta del árbol de `CLAUDE.md` existe.
+- [x] **B10 · Test del árbol de `CLAUDE.md`** (H6) · **IA + DL7**. Archivo **nuevo** en `server/src/tests/unit/` que comprueba que cada ruta del árbol de `CLAUDE.md` existe.
   - **Hecho cuando:** falla si se nombra un archivo inexistente y pasa con el árbol corregido de B8.
   - **Cuidado:** `CLAUDE.md` documenta por adelantado lo ya aprobado (hoy, la actividad simulada). El test tiene que convivir con eso: o el árbol solo nombra lo que existe, o el test admite una lista corta y explícita de «pendientes». Preguntar cuál.
+  - 2026-11-14 · `server/src/tests/unit/claude-tree.test.ts`, con cuatro tests `Seguridad:`.
+    - **Decisiones del desarrollador:** DL7 = `Seguridad:`, como ya hacen `no-any` y los de `theme-color` y tema oscuro. El árbol solo nombra lo que existe: lo aprobado y aún sin construir entra con sus archivos, sin lista de pendientes.
+    - **Analizador,** sin dependencias y dentro del propio test. Lee el bloque de «## Estructura» y comprueba:
+      - carpetas y archivos con extensión;
+      - lo listado entre paréntesis tras una carpeta;
+      - las listas de nombres (`auth, users…`), que valen como carpeta o como archivo con cualquier extensión.
+
+      No comprueba los marcadores (`<página>.html`), lo que sigue a `→` ni lo que ignora `.gitignore` (`content/` y `storage/`).
+    - **Qué cubre:** del árbol real saca 120 rutas, todas versionadas, así que también pasará en un clon limpio (B7). Comprueba que lo nombrado existe, no que esté todo nombrado.
+    - **Visto fallar:** con el `CLAUDE.md` de antes de B8 (`0b05786`, puesto un momento y devuelto sin diff) falla y nombra `seeds/`, `demo-activity.ts` y `demo-activity-guard.ts`. Los otros tres tests cubren la muestra del analizador, la detección en una carpeta temporal y el fallo si no hay árbol.
+    - **Comprobación:** typecheck y 188 tests unitarios en verde.
+    - **Aviso para B9:** el test busca el árbol en `CLAUDE.md`, bajo «## Estructura». Si B9 lo mueve o lo parte entre `client/` y `server/`, hay que cambiar un test que ya será existente, con el procedimiento de excepción.
 - [ ] **B11 · Avisos de TypeScript** (H9) · **IA + DL6**. Añadir los cuatro avisos de H9 a `server/tsconfig.json` y `client/tsconfig.json`. El proyecto usa TypeScript 7.0.2: comprobar en su documentación que las cuatro opciones siguen llamándose así. Si aparecen errores, **no arreglarlos**: entregar la lista (archivo, línea, aviso), **quitar de nuevo los avisos** para no dejar el typecheck ni la CI en rojo, y esperar la decisión.
 - [ ] **B12 · Índices** (H10) · **IA**. Un índice al principio de `docs/plan_mvp.md` y de `docs/bitacora.md`, sin cambiar el resto del contenido.
 - [ ] **B13 · Contratos archivados** (H10) · **IA + DL5**. Mover los contratos de los bloques 1 a 4 a `docs/contratos_cerrados.md` y actualizar las referencias de `CLAUDE.md`. Antes de mover nada, buscar las referencias a esas secciones en `server/src`, `client/src`, `.claude/` y `docs/` y entregar la lista: las que estén en código de la app se preguntan.
