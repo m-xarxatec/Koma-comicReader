@@ -336,7 +336,8 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
 ### Paso A · Candados y reglas (una sesión, sin tocar el código de la app)
 
-- [ ] **A1 · `docs/ideas_base.md` y `docs/modelo_datos.md`** (H11, DL1) · **IA + D**. La línea del `.gitignore` ya se quitó en 0.5. Comprobar con `git ls-files docs/` que los dos están versionados; si falta alguno, entregar el `git add`.
+- [x] **A1 · `docs/ideas_base.md` y `docs/modelo_datos.md`** (H11, DL1) · **IA + D**. La línea del `.gitignore` ya se quitó en 0.5. Comprobar con `git ls-files docs/` que los dos están versionados; si falta alguno, entregar el `git add`.
+  - 2026-11-14 · `git ls-files docs/` en `develop`: los dos versionados y sin la línea en el `.gitignore`. No hace falta ningún `git add`.
 - [ ] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs`, `.github` y `plan_limpieza.md` (decisión del 14-nov, sección 12), y no se quita ninguna.
   - **Hecho cuando:** el desarrollador comprueba que `docker compose build` funciona y la app arranca en el contenedor.
 - [ ] **A3 · Sección «Tests» en `CLAUDE.md`** (H2, H4) · **IA**. Debe recoger:
