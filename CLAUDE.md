@@ -2,7 +2,7 @@
 
 ## Proyecto
 
-**Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`.
+**Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`. Funciones congeladas el 20-nov; entrega el 25-nov (`docs/plan_mvp.md`, «Calendario»).
 
 - Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño (encargos E1–E4 de Codex), contenido real y pruebas; sin funciones nuevas, salvo `--replace` de la importación y la actividad simulada (idea 24). Todo en `docs/plan_mvp.md`, «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
@@ -16,12 +16,12 @@
 | `npm run build` / `npm run typecheck` | `tsc -b` (raíz con referencias a `server/` y `client/`); compilar es comprobar tipos |
 | `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
 | `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`; `-- --replace <slug>:<n>,…` retira y reimporta capítulos). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
-| `npm run demo:data` · `npm run demo:activity` (y `:online`) | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es · actividad simulada (idea 24), solo por la API; online exige `--confirm <host>` y lo lanza el usuario |
+| `npm run demo:data` | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es |
 | `npm test` | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras) |
 | `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
-- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test` (y `actividad1…6@demo.test`, de la API, idea 24); contraseñas en `docs/credenciales.local.md` (ignorado por git).
+- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test`; contraseñas en `docs/credenciales.local.md` (ignorado por git).
 
 ## Tests
 
@@ -33,15 +33,15 @@
 ## Estructura
 
 ```
-├── package.json · tsconfig.json (referencias) · docker-compose.yml (db, app) · Dockerfile · .dockerignore · docker/initdb/ · .env.example · .env.test · README.md · .claude/ (auditor, frontend, constructor)
+├── package.json · tsconfig.json (referencias) · docker-compose.yml (db, app) · Dockerfile · .dockerignore · docker/initdb/ · .env.example · .env.test · README.md · .claude/ (agentes, skills, hooks y settings.json: ver «Quién hace qué»)
 ├── server/src/
 │   ├── app.ts · server.ts      # server.ts → server/dist/server.js
 │   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, payments, audit, admin
 │   │   └── auth/permissions.ts # ÚNICO archivo con las reglas de permisos
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
-│   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing), seeds/
-│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local), demo-activity.ts y demo-activity-guard.ts (idea 24)
+│   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing)
+│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
@@ -50,10 +50,10 @@
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
-│       ├── services/           # api.ts (todas las peticiones), auth.ts
-│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts
+│       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
-└── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md
+└── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md
 ```
 
 Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, `comics.schema.ts`… `comics.repository.ts`):
@@ -69,6 +69,15 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
 - Local y online son el mismo código; solo cambian `STORAGE_DRIVER` y `PAYMENTS_DRIVER`. `env.ts` rechaza `PAYMENTS_DRIVER=fake` con `NODE_ENV=production`.
 - Toda novedad de premium pasa por `syncSubscription(subscriptionId)` (RN-04); el driver `fake` llama al mismo servicio.
+
+## Quién hace qué
+
+| Pieza (`.claude/`) | Qué hace |
+| --- | --- |
+| Agentes `auditor` y `frontend` | Revisan sin modificar archivos: `auditor`, el código frente a este archivo y `docs/`; `frontend`, cada página frente a la maqueta (`.claude/maqueta/`) |
+| Skill `/constructor` | Construye una tarea o un bloque con este archivo y `docs/`; solo la lanza el usuario |
+| Hooks (`hooks/`) | `proteger-tests` y `proteger-secretos` bloquean antes de editar o ejecutar · `verificar-al-terminar` no deja cerrar con tests protegidos cambiados ni con `npm test` en rojo · `inicio-sesion` muestra el bloque y `git status` |
+| Permisos (`settings.json`) | deny: secretos, git que escribe y borrar la BD local · ask: `:online`, `psql` y scripts que escriben en la BD · allow: tests, build y lectura de git |
 
 ## No haremos
 
