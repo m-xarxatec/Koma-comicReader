@@ -382,13 +382,20 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - `docker compose config`, `docker inspect` y `docker compose exec … env`, porque `docker-compose.yml` carga `env_file: .env`.
 
     `node --env-file` con un secreto solo ejecuta scripts de `server/dist/`, sin `-e`, `-p` ni `-i` y sin leer de stdin; con `.env.online`, además, pregunta. Arnés de 148 casos fuera del repositorio (94 bloquean, 2 preguntan y 52 pasan; el más lento, 30 ms), en verde antes de activarlo. Una sonda en vivo (`cat --help .env`) se bloqueó. `npm run test:api` 310/310, typecheck y 184 tests unitarios en verde. No ve los scripts guardados en archivo ni `cat $(echo .env)`. Pendiente para A9: casos 4, 10 y 11, y en Windows.
-- [ ] **A7 · Hook `verificar-al-terminar`** (H4) · **IA**. En *Stop*:
+- [x] **A7 · Hook `verificar-al-terminar`** (H4) · **IA**. En *Stop*:
   - **primero, los tests protegidos:** si `git status --porcelain -- server/src/tests/` muestra un archivo modificado, borrado o renombrado (no los nuevos, `??`) que no está en `.claude/permiso-tests.txt`, impide cerrar y dice qué archivo es. Esto también salta si el desarrollador edita un test a mano sin listarlo: es intencionado;
   - si `git status --porcelain` muestra cambios en `server/` o `client/`, ejecuta `npm test`;
   - con fallos, impide cerrar y devuelve el resumen del error;
   - **antes de activarlo,** comprobar que `npm test` está en verde y medir cuánto tarda. Si pasa de unos 20 segundos, el hook guarda una huella de los cambios (hash de `git status --porcelain` y `git diff`) en la carpeta temporal del sistema, fuera del proyecto, y no repite los tests si nada ha cambiado desde la última vez en verde;
   - respeta `stop_hook_active`, para no entrar en bucle;
   - no ejecuta `test:api`, porque necesita Postgres.
+  - 2026-11-14 · `.claude/hooks/verificar-al-terminar.mjs` y `hooks.Stop` en `.claude/settings.json` (sin matcher, `timeout: 300`). No usa `shell.mjs`.
+    - **Tests protegidos:** se comprueban con `git diff --name-status --no-renames HEAD -- server/src/tests/` en lugar de `git status --porcelain`, por la decisión de A5 («existente» = en HEAD). Así los tests nuevos ya añadidos al índice (`A`) no cuentan, y un renombrado aparece como borrado del original.
+    - **Respuesta:** JSON con `decision: "block"` y `reason` para Claude, más `systemMessage` para el desarrollador. Con `stop_hook_active` no vuelve a bloquear: repite las comprobaciones y, si algo sigue mal, solo avisa con `systemMessage` (además, Claude Code corta solo tras 8 continuaciones).
+    - **Si el hook falla:** en *Stop*, `onFailure` no tiene efecto, así que lo avisa con `systemMessage`.
+    - **Sin caché de huellas:** `npm test` tarda unos 0,9 s (medido con `npm test` en verde, 184 tests).
+    - **Pruebas:** arnés de 25 comprobaciones fuera del repositorio, con salidas de git simuladas, una muestra real de fallo de `node --test`, errores de `tsc` y el caso sin repositorio. Antes de activarlo, prueba real con un test nuevo temporal que fallaba: bloqueó con el resumen y, con `stop_hook_active`, solo avisó; después se borraron el test y sus compilados. Typecheck y 184 tests en verde.
+    - **Pendiente para A9:** casos 7 y 8 en una sesión nueva, y en Windows.
 - [ ] **A8 · Hook `inicio-sesion`** (H6) · **IA**. En *SessionStart*: muestra la línea «Bloque actual» de `CLAUDE.md`, `git status --short` y una línea con la regla de los tests. Si `.claude/permiso-tests.txt` existe y tiene entradas, avisa de que hay una excepción abierta (solo lee el archivo, no lo toca).
 - [ ] **A8b · Hook de compilación tras editar** (sección 5, opcional) · **IA + D**. En *PostToolUse*, `npm run typecheck` tras editar un `.ts`. Se aplica solo si no ralentiza demasiado.
 - [ ] **A9 · Prueba de los candados** (H2, H3) · **IA + D**. El desarrollador reinicia la sesión y la IA intenta:
@@ -398,7 +405,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   4. leer `.env` → bloqueado;
   5. `git commit` → bloqueado;
   6. `npm run seed:online` → pregunta;
-  7. terminar con un test unitario roto a propósito en un archivo nuevo de prueba → no deja cerrar (después se borra ese archivo);
+  7. terminar con un test unitario roto a propósito en un archivo nuevo de prueba → no deja cerrar (después se borra ese archivo y sus compilados `.js` y `.d.ts` de `server/dist/tests/unit/`: `tsc -b` no los borra y `npm test` los seguiría ejecutando);
   8. el desarrollador cambia a mano una línea de un test existente, sin listarlo → al terminar, no deja cerrar (después lo restaura él);
   9. `git stash` y `git restore` → bloqueados;
   10. el agente `auditor`, con Bash, intenta `sed -i` sobre un test existente y `cat .env` → bloqueados;

@@ -68,6 +68,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/verificar-al-terminar.mjs"],
+            "timeout": 300
+          }
+        ]
+      }
     ]
   }
 }
