@@ -476,6 +476,11 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Sin salirse de los límites del agente:** solo `git diff` y `git log`. La tercera lista es un juicio por lectura (no puede crear archivos ni cambiar de commit), solo para tests de `feat`/`fix`; los de un commit `test` fijan lo que ya existe.
     - **Comprobación:** los comandos, sobre `488a5c4..d62ba1d`, sacan el caso de H2 (tres `assert` cambiados en `import-content.test.ts` por `chaptersReplaced`) y el `feat` con sus archivos. Typecheck y 188 tests unitarios en verde.
     - **Pendiente (desarrollador):** en la sesión siguiente, lanzar `auditor` con un rango corto para ver la línea «Tests (F)» (un agente cambiado se carga al reiniciar).
+    - **Hecho, 2026-11-14 (lo lanzó la IA a petición del desarrollador):** el `auditor`, sobre `488a5c4..8396178`, en la misma sesión, ya usó la versión nueva: un agente **cambiado** se carga sin reiniciar. Veredicto: APTO CON OBSERVACIONES, con un hallazgo alto.
+      - **El hallazgo:** los tres `assert` de `import-content.test.ts` cambiados en `d62ba1d` (10-nov). La bitácora dice qué cambia y por qué, pero no el permiso; el commit es anterior a la regla (`330cd19`, 14-nov). Lo decide el desarrollador (B16).
+      - **Las listas:** `feat`/`fix` sin test, ninguno; tests que pasarían con el código anterior, ninguno, juzgado por lectura.
+      - **Lo que no pudo comprobar:** `test:api`, porque Postgres estaba parado.
+      - **Falsos positivos:** el escaneo de secretos marca las cuatro `SEED_*_PASSWORD` inventadas de `.github/workflows/tests.yml`. Además, `proteger-secretos` le bloqueó un comando que nombraba `.env.test`; `cat .env.test` solo pasa, así que el bloqueo vino de otra parte de ese comando. Queda como dato para C1.
 - [x] **B4 · Agentes y skill `constructor` revisados** (secciones 5 y 12) · **IA**. Hay que mostrar el diff de cada archivo antes y después.
   - `auditor` y `frontend` conservan `tools: Read, Grep, Glob, Bash` (ver sección 5).
   - Poner al día lo desfasado con el bloque 5: `frontend` (punto 6) trata Open Graph como fase 2–3 y `auditor` (punto A) cita Discord, y los dos entraron en «Fase 2 · bloque 5» de `plan_mvp.md` (de Discord, solo el enlace). Los reportes están descartados, no aplazados.
@@ -491,6 +496,9 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Candados:** los ocho comandos escritos en los agentes pasan `proteger-tests` y `proteger-secretos` (probado con su entrada JSON; la sonda de control `cat .env` y `sed -i` sobre un test sí se bloquea).
     - **Comprobación:** typecheck y 188 tests unitarios en verde; sin rutas locales ni datos sensibles.
     - **Pendiente (desarrollador):** copiar `.claude/maqueta/` en el otro ordenador (0.5) y, en la sesión siguiente, ver `/constructor` con su nueva descripción en el menú `/`.
+    - **Hecho, 2026-11-14:**
+      - **Maqueta:** el desarrollador la da por hecha. Se lleva una copia de `.claude/maqueta/` (1,9 MB) con un `cp -a` hacia la carpeta de su terminal: le sirve de respaldo y de origen para el `.claude/maqueta/` del otro ordenador.
+      - **`/constructor`:** la cabecera YAML de la skill y de los dos agentes se lee bien (PyYAML). El menú `/` no lo ve la IA, porque la skill es solo del usuario.
 - [ ] **B5 · Encargos de Codex** (sección 5) · **IA + DL3**. Pasar los de `.git/codex-t13/` a `.claude/encargos/`, si se decide versionarlos. Mover también `.claude/t13-stripe-online.md` a `.claude/encargos/` (DL13), para que la raíz de `.claude/` solo tenga configuración.
 - [ ] **B6 · Plugins declarados** (sección 5) · **IA + DL8**. Declarar en `.claude/settings.json` los plugins que espera el proyecto.
 - [x] **B7 · CI en GitHub Actions** (H5) · **IA + DL2**. `.github/workflows/tests.yml`:
