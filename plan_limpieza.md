@@ -403,7 +403,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Pruebas:** arnés de 10 comprobaciones fuera del repositorio. El aviso de la excepción se prueba con texto de ejemplo, sin crear ningún `permiso-tests.txt`. El hook tarda unos 26 ms. Se verá de verdad al reiniciar la sesión (A9).
 - [x] **A8b · Hook de compilación tras editar** (sección 5, opcional) · **IA + D**. En *PostToolUse*, `npm run typecheck` tras editar un `.ts`. Se aplica solo si no ralentiza demasiado.
   - 2026-11-14 · Descartada por el desarrollador: el hook *Stop* de A7 ya ejecuta `npm test`, que empieza con `tsc -b`, así que un error de tipos ya impide cerrar sin añadir ~1 s a cada edición.
-- [ ] **A9 · Prueba de los candados** (H2, H3) · **IA + D**. El desarrollador reinicia la sesión y la IA intenta:
+- [x] **A9 · Prueba de los candados** (H2, H3) · **IA + D**. El desarrollador reinicia la sesión y la IA intenta:
   1. editar un test existente → bloqueado;
   2. crear un test nuevo → permitido;
   3. con el archivo listado por el desarrollador en `permiso-tests.txt` → permitido;
@@ -416,6 +416,22 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   10. el agente `auditor`, con Bash, intenta `sed -i` sobre un test existente y `cat .env` → bloqueados;
   11. `node --env-file=.env.online server/dist/scripts/seed.js` escrito directamente, sin `npm run` → pregunta, y el desarrollador responde que no (A6).
   - **Hecho cuando:** los 11 casos dan lo esperado y quedan anotados en la bitácora.
+  - 2026-11-14 · En Linux, los 11 casos dan lo esperado, en una sesión nueva (el resumen de `inicio-sesion` salió al arrancar) y en modo normal:
+    - **Bloqueados:**
+      - el 1, por `proteger-tests`;
+      - el 4, por el permiso en Read y por `proteger-secretos` en `cat`;
+      - el 5 y el 9, por los permisos;
+      - el 10: los dos hooks paran también al `auditor`.
+    - **Permitidos:** el 2 y el 3. En el 3, el *Stop* no cuenta el archivo listado.
+    - **Preguntan:**
+      - el 6, por la regla ask;
+      - el 11: el hook devuelve `ask`, comprobado también pasándole la misma entrada.
+    - **No dejan cerrar:** el 7, con el resumen del fallo, y el 8, que nombra el archivo.
+    - **Pendiente de A4, cerrado:** `npm test` y `git status` pasan sin preguntar.
+    - **Incidencias:**
+      - en el caso 6 se respondió primero que sí, por error: el seed corrió contra Neon sin cambiar nada (es idempotente y marca `created` a cero);
+      - en modo auto, el clasificador denegó lanzar el `auditor` del caso 10, así que se repitió en modo normal.
+    - **Pendiente para el final:** Windows, cuando `develop` llegue al portátil (nada se sube antes).
 - [ ] **A10 · Entrada de bitácora del paso A** (H1–H4) · **IA**. Con la plantilla de `docs/bitacora.md`, el resultado de A9 y los comandos git.
 
 ### Paso B · Skills, agentes, CI y orden (antes del 20-nov)
