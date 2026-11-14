@@ -6,3 +6,8 @@ node_modules
 storage
 content
 docs/credenciales.local.md
+.claude
+CLAUDE.md
+docs
+.github
+plan_limpieza.md
