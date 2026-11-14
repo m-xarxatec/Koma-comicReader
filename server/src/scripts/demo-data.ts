@@ -145,7 +145,6 @@ export const comicsResponse = z.object({ comics: z.array(authorComicSchema) });
 export const comicResponse = z.object({ comic: authorComicSchema });
 export const chapterResponse = z.object({ chapter: authorChapterSchema });
 
-type AuthorChapter = z.infer<typeof authorChapterSchema>;
 type AuthorComic = z.infer<typeof authorComicSchema>;
 
 export interface DemoSummary {
