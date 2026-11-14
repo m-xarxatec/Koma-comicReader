@@ -368,11 +368,20 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   El mensaje de bloqueo explica la regla y el procedimiento de excepción. El filtro de comandos de shell es una ayuda, no una garantía: la garantía es la comprobación de resultado de A7.
   - **Hecho cuando:** pasan las pruebas de A9.
   - 2026-11-14 · `.claude/hooks/proteger-tests.mjs` y `hooks.PreToolUse` en `.claude/settings.json`, con la sintaxis de code.claude.com/docs/en/hooks: matcher `Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell` (con `Bash` también vigila Monitor), forma exec `node` + `${CLAUDE_PROJECT_DIR}` (vale en Windows), `exit 2` para bloquear y `onFailure: "block"` (Claude Code 2.1.325), así que un fallo interno, de arranque o de tiempo también bloquea. «Existente» = versionado en HEAD (decisión del desarrollador): los tests nuevos sin commit se crean, se editan y se borran; A7 debe tratar igual los nuevos ya añadidos al índice (`A`). Arnés de 120 casos fuera del repositorio (72 bloquean, 48 pasan; el más lento, 31 ms), en verde antes de activarlo; activo sin reiniciar (una sonda inofensiva, `rm --help`, se bloqueó). Typecheck y 184 tests en verde. No ve scripts en archivo, `git apply`/`patch` sin rutas, `while read` ni `git reset --hard`/`git stash` sin rutas (los dos últimos los para A4): eso queda para A7. Pendiente para A9: casos 1–3 y 10 en una sesión nueva, y en Windows (PowerShell solo se ha probado en Linux).
-- [ ] **A6 · Hook `proteger-secretos`** (H3) · **IA**. En *PreToolUse*:
+- [x] **A6 · Hook `proteger-secretos`** (H3) · **IA**. En *PreToolUse*:
   - bloquea Read/Edit/Write sobre `.env`, `.env.online` y `docs/credenciales.local.md`;
   - bloquea los comandos de shell que muestren su contenido (`cat`, `type`, `head`, `grep`, `Get-Content`, `printenv`…);
-  - **deja pasar** `--env-file=.env`, `--env-file-if-exists=.env`, `--env-file=.env.test` y `--env-file=.env.online` como argumento de `node`, porque los scripts de npm los usan (los `:online` siguen pasando por «preguntar» de A4).
+  - **deja pasar** `--env-file=.env`, `--env-file-if-exists=.env` y `--env-file=.env.test` como argumento de `node`, porque los scripts de npm los usan. `--env-file=.env.online` usado directamente con `node` devuelve «ask» (decisión del desarrollador, 14-nov: cierra el hueco que dejó A4); `npm run …:online` sigue pasando por el «preguntar» de A4.
   - **Hecho cuando:** pasan las pruebas de A9 y `npm run test:api` sigue funcionando.
+  - 2026-11-14 · En dos commits (decisión del desarrollador). **1)** El analizador de comandos pasa de `proteger-tests.mjs` a `.claude/hooks/shell.mjs`, sin cambios de comportamiento: la salida (código, stdout y stderr) es idéntica en los 120 casos de A5. Los dos hooks lo cargan con `import()` dinámico; si falta o no carga, bloquean con un mensaje claro (dos casos más por hook). **2)** `.claude/hooks/proteger-secretos.mjs`, en un segundo grupo `PreToolUse` (matcher `Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash|PowerShell`, `onFailure: "block"`). Cubre los secretos por su nombre en cualquier carpeta (`.env`, `.env.online` y `credenciales.local.md`) y `/proc/*/environ`. Bloquea:
+    - Read, Edit y Write sobre ellos;
+    - Grep, por ruta o por un glob que los incluya (el glob se salta `.gitignore`);
+    - en shell, cualquier mención salvo en `ls`, `stat`, `test`, `echo` y parecidos;
+    - `grep -r`, `rg -u`, `diff -r` y `find -exec` o `| xargs` sobre carpetas que los contienen (respeta `--include` y `--exclude`);
+    - `printenv`, `env`, `export -p`, `set`, `gci env:` y `$VARIABLE` con nombre de secreto;
+    - `docker compose config`, `docker inspect` y `docker compose exec … env`, porque `docker-compose.yml` carga `env_file: .env`.
+
+    `node --env-file` con un secreto solo ejecuta scripts de `server/dist/`, sin `-e`, `-p` ni `-i` y sin leer de stdin; con `.env.online`, además, pregunta. Arnés de 148 casos fuera del repositorio (94 bloquean, 2 preguntan y 52 pasan; el más lento, 30 ms), en verde antes de activarlo. Una sonda en vivo (`cat --help .env`) se bloqueó. `npm run test:api` 310/310, typecheck y 184 tests unitarios en verde. No ve los scripts guardados en archivo ni `cat $(echo .env)`. Pendiente para A9: casos 4, 10 y 11, y en Windows.
 - [ ] **A7 · Hook `verificar-al-terminar`** (H4) · **IA**. En *Stop*:
   - **primero, los tests protegidos:** si `git status --porcelain -- server/src/tests/` muestra un archivo modificado, borrado o renombrado (no los nuevos, `??`) que no está en `.claude/permiso-tests.txt`, impide cerrar y dice qué archivo es. Esto también salta si el desarrollador edita un test a mano sin listarlo: es intencionado;
   - si `git status --porcelain` muestra cambios en `server/` o `client/`, ejecuta `npm test`;
@@ -392,8 +401,9 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   7. terminar con un test unitario roto a propósito en un archivo nuevo de prueba → no deja cerrar (después se borra ese archivo);
   8. el desarrollador cambia a mano una línea de un test existente, sin listarlo → al terminar, no deja cerrar (después lo restaura él);
   9. `git stash` y `git restore` → bloqueados;
-  10. el agente `auditor`, con Bash, intenta `sed -i` sobre un test existente y `cat .env` → bloqueados.
-  - **Hecho cuando:** los 10 casos dan lo esperado y quedan anotados en la bitácora.
+  10. el agente `auditor`, con Bash, intenta `sed -i` sobre un test existente y `cat .env` → bloqueados;
+  11. `node --env-file=.env.online server/dist/scripts/seed.js` escrito directamente, sin `npm run` → pregunta, y el desarrollador responde que no (A6).
+  - **Hecho cuando:** los 11 casos dan lo esperado y quedan anotados en la bitácora.
 - [ ] **A10 · Entrada de bitácora del paso A** (H1–H4) · **IA**. Con la plantilla de `docs/bitacora.md`, el resultado de A9 y los comandos git.
 
 ### Paso B · Skills, agentes, CI y orden (antes del 20-nov)
