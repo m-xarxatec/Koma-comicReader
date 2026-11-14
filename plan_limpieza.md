@@ -359,7 +359,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   Comprobar la sintaxis vigente en la documentación oficial de Claude Code; no inventarla.
   - **Hecho cuando:** tras reiniciar la sesión, un comando prohibido se bloquea y uno permitido pasa sin preguntar.
   - 2026-11-14 · 19 deny, 9 ask y 7 allow, con la sintaxis de code.claude.com/docs/en/permissions (`Read(/ruta)` anclado a la raíz; `Bash(cmd *)` cubre también el comando sin argumentos). Añadidas `docker compose * down` y `* rm` para la forma con `-f` de `docs/comandos.md`. Activo sin reiniciar: `git stash list` bloqueado; `npm test` (184) y `npm run test:api` (310) en verde. La regla solo ve el texto del comando (`git -C . push`, `sh -c`, `node --env-file=.env.online …` directo o `grep -r` no la activan): eso es de A5 y A6. Pendiente para A9, ya reiniciado y en modo normal (esta sesión estaba en modo auto): comprobar que lo permitido pasa sin preguntar.
-- [ ] **A5 · Hook `proteger-tests`** (H2) · **IA**. En *PreToolUse*:
+- [x] **A5 · Hook `proteger-tests`** (H2) · **IA**. En *PreToolUse*:
   - bloquea Edit/Write/MultiEdit sobre cualquier archivo **existente** de `server/src/tests/`;
   - bloquea los comandos de shell que escriban, muevan o borren ahí (`sed -i`, `>`, `mv`, `rm`, `git checkout --`…);
   - permite crear archivos nuevos;
@@ -367,6 +367,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
   El mensaje de bloqueo explica la regla y el procedimiento de excepción. El filtro de comandos de shell es una ayuda, no una garantía: la garantía es la comprobación de resultado de A7.
   - **Hecho cuando:** pasan las pruebas de A9.
+  - 2026-11-14 · `.claude/hooks/proteger-tests.mjs` y `hooks.PreToolUse` en `.claude/settings.json`, con la sintaxis de code.claude.com/docs/en/hooks: matcher `Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell` (con `Bash` también vigila Monitor), forma exec `node` + `${CLAUDE_PROJECT_DIR}` (vale en Windows), `exit 2` para bloquear y `onFailure: "block"` (Claude Code 2.1.325), así que un fallo interno, de arranque o de tiempo también bloquea. «Existente» = versionado en HEAD (decisión del desarrollador): los tests nuevos sin commit se crean, se editan y se borran; A7 debe tratar igual los nuevos ya añadidos al índice (`A`). Arnés de 120 casos fuera del repositorio (72 bloquean, 48 pasan; el más lento, 31 ms), en verde antes de activarlo; activo sin reiniciar (una sonda inofensiva, `rm --help`, se bloqueó). Typecheck y 184 tests en verde. No ve scripts en archivo, `git apply`/`patch` sin rutas, `while read` ni `git reset --hard`/`git stash` sin rutas (los dos últimos los para A4): eso queda para A7. Pendiente para A9: casos 1–3 y 10 en una sesión nueva, y en Windows (PowerShell solo se ha probado en Linux).
 - [ ] **A6 · Hook `proteger-secretos`** (H3) · **IA**. En *PreToolUse*:
   - bloquea Read/Edit/Write sobre `.env`, `.env.online` y `docs/credenciales.local.md`;
   - bloquea los comandos de shell que muestren su contenido (`cat`, `type`, `head`, `grep`, `Get-Content`, `printenv`…);
