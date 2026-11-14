@@ -338,8 +338,9 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
 - [x] **A1 · `docs/ideas_base.md` y `docs/modelo_datos.md`** (H11, DL1) · **IA + D**. La línea del `.gitignore` ya se quitó en 0.5. Comprobar con `git ls-files docs/` que los dos están versionados; si falta alguno, entregar el `git add`.
   - 2026-11-14 · `git ls-files docs/` en `develop`: los dos versionados y sin la línea en el `.gitignore`. No hace falta ningún `git add`.
-- [ ] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs`, `.github` y `plan_limpieza.md` (decisión del 14-nov, sección 12), y no se quita ninguna.
+- [x] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs`, `.github` y `plan_limpieza.md` (decisión del 14-nov, sección 12), y no se quita ninguna.
   - **Hecho cuando:** el desarrollador comprueba que `docker compose build` funciona y la app arranca en el contenedor.
+  - 2026-11-14 · Cinco líneas añadidas al final, ninguna quitada; en `server/src` y `client/src` esas rutas solo salen en comentarios. Typecheck y 184 tests en verde; el desarrollador comprobó el build y el arranque en el contenedor.
 - [ ] **A3 · Sección «Tests» en `CLAUDE.md`** (H2, H4) · **IA**. Debe recoger:
   - los tests existentes no se modifican ni se borran (tampoco `helpers.ts` ni `reading-fixtures.ts`);
   - la excepción solo con permiso del desarrollador, la aserción y el motivo explicados, y una entrada en la bitácora;
