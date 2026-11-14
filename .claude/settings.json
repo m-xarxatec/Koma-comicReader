@@ -80,6 +80,18 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/inicio-sesion.mjs"],
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }

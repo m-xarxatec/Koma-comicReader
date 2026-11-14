@@ -396,7 +396,11 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Sin caché de huellas:** `npm test` tarda unos 0,9 s (medido con `npm test` en verde, 184 tests).
     - **Pruebas:** arnés de 25 comprobaciones fuera del repositorio, con salidas de git simuladas, una muestra real de fallo de `node --test`, errores de `tsc` y el caso sin repositorio. Antes de activarlo, prueba real con un test nuevo temporal que fallaba: bloqueó con el resumen y, con `stop_hook_active`, solo avisó; después se borraron el test y sus compilados. Typecheck y 184 tests en verde.
     - **Pendiente para A9:** casos 7 y 8 en una sesión nueva, y en Windows.
-- [ ] **A8 · Hook `inicio-sesion`** (H6) · **IA**. En *SessionStart*: muestra la línea «Bloque actual» de `CLAUDE.md`, `git status --short` y una línea con la regla de los tests. Si `.claude/permiso-tests.txt` existe y tiene entradas, avisa de que hay una excepción abierta (solo lee el archivo, no lo toca).
+- [x] **A8 · Hook `inicio-sesion`** (H6) · **IA**. En *SessionStart*: muestra la línea «Bloque actual» de `CLAUDE.md`, `git status --short` y una línea con la regla de los tests. Si `.claude/permiso-tests.txt` existe y tiene entradas, avisa de que hay una excepción abierta (solo lee el archivo, no lo toca).
+  - 2026-11-14 · `.claude/hooks/inicio-sesion.mjs` y `hooks.SessionStart` en `.claude/settings.json`: sin matcher, así que actúa al arrancar, al reanudar, con `/clear`, al compactar y al bifurcar; `timeout: 15`.
+    - **Qué muestra:** el mismo texto va al desarrollador (`systemMessage`) y al contexto de Claude (`additionalContext`). La línea «Bloque actual» sale sin la instrucción final de actualizarla. `git status` va con `--branch`, para ver que la rama es `develop` (condición de la sección 12), y como mucho 25 líneas.
+    - **Si algo falla:** *SessionStart* no puede bloquear, así que lo dice en el propio mensaje (sin git o sin `CLAUDE.md`).
+    - **Pruebas:** arnés de 10 comprobaciones fuera del repositorio. El aviso de la excepción se prueba con texto de ejemplo, sin crear ningún `permiso-tests.txt`. El hook tarda unos 26 ms. Se verá de verdad al reiniciar la sesión (A9).
 - [ ] **A8b · Hook de compilación tras editar** (sección 5, opcional) · **IA + D**. En *PostToolUse*, `npm run typecheck` tras editar un `.ts`. Se aplica solo si no ralentiza demasiado.
 - [ ] **A9 · Prueba de los candados** (H2, H3) · **IA + D**. El desarrollador reinicia la sesión y la IA intenta:
   1. editar un test existente → bloqueado;
