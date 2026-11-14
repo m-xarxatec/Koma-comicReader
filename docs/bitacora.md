@@ -1284,3 +1284,50 @@ Una entrada por bloque (o por sesión relevante). Máximo ~10 líneas.
   Sin test: la rama «el capítulo cambió durante la importación», revisada por el auditor pero sin ejecutar.
 - **Comprobación (IA):** typecheck, 184 unitarios y 310 de API. Por la línea de comandos, `--reemplazar` y `--replace Mal:0` cancelan con código 1 sin conectarse. No se ha ejecutado `--replace` sobre ninguna obra.
 - **Pendiente (desarrollador):** cuando lleguen las páginas, el procedimiento de `plan_mvp.md` («Pulido» → «Reemplazo de capítulos importados»), en local y después online.
+
+### 2026-11-14 · Pulido · Limpieza del harness, paso A: candados y reglas (`plan_limpieza.md`)
+- **Pedido a la IA:** el paso A del plan de limpieza (A1–A10), sin tocar el código de la app. En la rama `develop`; git solo lo maneja el desarrollador, nada se sube hasta el final y las DL pendientes se preguntan. Antes, en el paso 0: el harness, versionado como línea base (`ccb5387`), y sus carpetas, aprobadas en «Decisiones» de `plan_mvp.md` (`ceec829`).
+- **Resultado:**
+  - `.dockerignore`: la imagen ya no lleva `.claude`, `CLAUDE.md`, `docs`, `.github` ni `plan_limpieza.md`.
+  - `CLAUDE.md`, sección «Tests»:
+    - los tests existentes no se tocan; para una excepción, la IA para, explica qué aserción cambia, espera el permiso y lo anota aquí;
+    - cada funcionalidad o corrección trae su test nuevo en el mismo commit;
+    - el test se escribe y se ve fallar antes de programar.
+    
+    Sigue en 149 líneas: sale el bloque del agente `frontend`, que ya estaba en su archivo.
+  - `.claude/settings.json`, con permisos:
+    - 19 deny: los secretos, los comandos de git que escriben o descartan trabajo, `docker compose down`/`rm` y `docker volume rm`;
+    - 9 ask: `…:online`, `psql`, `migrate`, `seed`, `content:import` y `demo:data`;
+    - 7 allow: tests, compilación y lectura de git.
+  - Cuatro hooks en `.claude/hooks/`, en Node y sin dependencias:
+    - `proteger-tests` y `proteger-secretos`, en *PreToolUse*, con el analizador de comandos de `shell.mjs`; si fallan por dentro, también bloquean;
+    - `verificar-al-terminar`, en *Stop*: tests protegidos y `npm test`;
+    - `inicio-sesion`, en *SessionStart*.
+  - A8b (typecheck tras cada edición) queda descartada: el *Stop* ya compila.
+- **A9 (prueba de los candados, en Linux):** los 11 casos dan lo esperado.
+  - Bloqueados: editar un test existente, leer `.env`, `git commit`, `git stash` y `git restore`. El subagente `auditor` también queda bloqueado con `sed -i` y `cat .env`.
+  - Permitidos: crear un test nuevo y editar uno listado en `permiso-tests.txt`.
+  - Preguntan: `npm run seed:online` y `node --env-file=.env.online …`.
+  - No dejan cerrar: un test nuevo roto y un test cambiado a mano sin listar.
+  - Lo permitido (`npm test` y `git status`) pasa sin preguntar.
+- **Fallos:**
+  - Las reglas de permisos solo ven el texto del comando: `git -C . push`, `sh -c` o `node --env-file=.env.online` escrito directamente pasaban.
+  - En el caso 6 se respondió primero que sí, por error, y el seed corrió contra Neon.
+  - En modo auto no se distingue lo que pregunta de lo que pasa sin preguntar, y el clasificador denegó lanzar el `auditor` del caso 10.
+- **Corrección:**
+  - Los hooks analizan el comando y, como garantía, el *Stop* mira el resultado (`git diff --name-status HEAD -- server/src/tests/`) y no el comando. `node --env-file=.env.online` directo pregunta.
+  - En Neon no hubo nada que corregir: el seed es idempotente y marcó `created` a cero en todo.
+  - A9 se repitió en modo normal.
+- **Aprendizaje:**
+  - Un candado se prueba por su resultado y en el modo en que se trabaja.
+  - En modo normal, todo lo que no está en allow pregunta, así que el `ask` de un hook se confirma pasándole la entrada a mano.
+  - Una pregunta sobre producción se responde leyendo el comando, no por inercia.
+- **Comprobación (IA):** typecheck y 184 unitarios en verde; 310 de API (A6). Arneses fuera del repositorio, en verde antes de activar cada hook:
+  - `proteger-tests`: 122 casos;
+  - `proteger-secretos`: 148;
+  - *Stop*: 25;
+  - `inicio-sesion`: 10.
+- **Pendiente (desarrollador):**
+  - A9 en Windows (PowerShell solo está probado en Linux), cuando `develop` llegue al portátil;
+  - la línea base en GitHub;
+  - la maqueta en `.claude/maqueta/` del otro ordenador.

@@ -432,7 +432,8 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
       - en el caso 6 se respondió primero que sí, por error: el seed corrió contra Neon sin cambiar nada (es idempotente y marca `created` a cero);
       - en modo auto, el clasificador denegó lanzar el `auditor` del caso 10, así que se repitió en modo normal.
     - **Pendiente para el final:** Windows, cuando `develop` llegue al portátil (nada se sube antes).
-- [ ] **A10 · Entrada de bitácora del paso A** (H1–H4) · **IA**. Con la plantilla de `docs/bitacora.md`, el resultado de A9 y los comandos git.
+- [x] **A10 · Entrada de bitácora del paso A** (H1–H4) · **IA**. Con la plantilla de `docs/bitacora.md`, el resultado de A9 y los comandos git.
+  - 2026-11-14 · Entrada «Limpieza del harness, paso A», al final de `docs/bitacora.md`: los cinco campos de la plantilla, más «Comprobación» y «Pendiente», como las entradas recientes (qué plantilla sigue la skill se decide en B1). Recoge el incidente del caso 6 y lo pendiente de Windows.
 
 ### Paso B · Skills, agentes, CI y orden (antes del 20-nov)
 
