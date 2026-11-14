@@ -68,6 +68,10 @@ El que indique la invocación ("andamiaje", "bloque N", "diff"). Por defecto, `g
 ### F · Tests
 - Cada RN con cálculo del alcance tiene tests cuyo nombre empieza por `'RN-xx:'`, con casos límite (saldo lleno, recarga parcial, cambio de parámetros…).
 - Las pruebas de API usan `koma_test`, importan `app` sin `listen` y cierran el servidor en `after()`.
+- Regla de «Tests» en `CLAUDE.md`, sobre el rango: `<base>` es el commit de partida que dé la invocación (con «bloque N», el cierre del bloque anterior); sin él, `HEAD`. `git diff <base>` llega hasta el árbol de trabajo, así que cubre también lo que no está en un commit. Anota el rango con los dos hashes, nunca con `HEAD` (bitácora, 2026-11-02). Tres listas, que van al informe aunque estén vacías:
+  1. **Tests existentes cambiados** (alta, sin la excepción anotada en `docs/bitacora.md`: qué aserción cambia, por qué y el permiso del usuario). Los archivos de `server/src/tests/` que ya existían en `<base>` y salen en `git diff --no-renames --name-status --diff-filter=MD <base> -- server/src/tests/` (un renombrado sale como borrado). En cada uno, cada `assert` eliminado o cambiado (`git diff --no-renames -U0 <base> -- <archivo>`), con la línea de antes y la de después; en `helpers.ts` y `reading-fixtures.ts`, cualquier línea.
+  2. **`feat`/`fix` sin test nuevo** (media). Cada commit del rango cuyo asunto empieza por `feat` o `fix` (`git log --no-renames --name-status --format='%h %s' <base>..HEAD`) que no añade ningún test: ni un archivo nuevo (`A`) en `server/src/tests/` ni un `test(` nuevo en uno existente (`git log -p`, en commits anteriores a la regla). Los cambios sin commit en `server/src` o `client/src` cuentan como uno más. Cita los archivos que toca, para que se vea si solo es CSS.
+  3. **Tests que pasarían con el código anterior** (media). Cada test nuevo de esos `feat`/`fix` (o de los cambios sin commit): lee qué afirma y si el código de `<base>` ya lo cumplía (`git diff <base> -- <archivos que ejercita>`). Si lo cumplía, fija el contrato pero no demuestra la corrección (bitácora, 2026-11-02). Es un juicio por lectura, no por ejecución (no puedes crear archivos ni cambiar de commit): dilo, y cita la entrada de la bitácora si dice que se vio fallar. Los tests de un commit `test` fijan lo que ya existe y no entran.
 
 ### G · Frontend
 - Un solo `<h1>`, `lang="es"`, `header`/`nav`/`main`/`footer`, enlace "Saltar al contenido", `<link rel="icon">` y `loading="lazy"` salvo en las imágenes de la primera pantalla.
@@ -88,6 +92,7 @@ Marca cada punto de la lista de `CLAUDE.md` como ✓ (verificado aquí), ✗ (in
 | # | Severidad | Archivo:línea | Regla | Problema | Corrección |
 |---|---|---|---|---|---|
 
+**Tests (F)** · `<base>..<hash>`: tests existentes cambiados <archivo:línea, antes → después | ninguno> · `feat`/`fix` sin test <hash | ninguno> · tests que pasarían con el código anterior <archivo:línea, por lectura | ninguno>
 **Definición de terminado:** <punto: ✓/✗/manual>
 **Pendiente de verificación manual:** <lista>
 ```

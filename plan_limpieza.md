@@ -466,10 +466,16 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Pendiente (desarrollador):** ver `/cerrar-bloque` y `/encargo-codex` en el menú `/` (Claude no las ve porque son solo del usuario).
     - **Comprobación:** 188 tests unitarios en verde.
 - [ ] **B2 · Skills opcionales** (H8) · **IA + D**. `actividad-simulada` y `reemplazar-capitulos`, con los pasos de «Pulido» de `plan_mvp.md`. Solo describen los pasos: no ejecutan nada `:online`.
-- [ ] **B3 · `auditor` ampliado** (H2, H4) · **IA**. Ampliar el apartado «F · Tests» que ya tiene `.claude/agents/auditor.md`. En el rango auditado, lista:
+- [x] **B3 · `auditor` ampliado** (H2, H4) · **IA**. Ampliar el apartado «F · Tests» que ya tiene `.claude/agents/auditor.md`. En el rango auditado, lista:
   - cada `assert` eliminado o cambiado en tests existentes;
   - cada `feat`/`fix` sin test nuevo;
   - cada test nuevo que pasaría también con el código anterior.
+  - 2026-11-14 · Un punto nuevo en «F · Tests» (los dos que había no cambian) y una línea «Tests (F)» en el informe; cinco líneas más, nada quitado.
+    - **Rango:** `<base>` es el commit de partida de la invocación (con «bloque N», el cierre del anterior) o `HEAD`; `git diff <base>` llega al árbol de trabajo. Se anota con los dos hashes (bitácora, 2026-11-02).
+    - **Severidad (decisión del desarrollador):** test existente cambiado sin la excepción anotada en la bitácora, alta; `feat`/`fix` sin test nuevo, media; test que pasaría con el código anterior, media.
+    - **Sin salirse de los límites del agente:** solo `git diff` y `git log`. La tercera lista es un juicio por lectura (no puede crear archivos ni cambiar de commit), solo para tests de `feat`/`fix`; los de un commit `test` fijan lo que ya existe.
+    - **Comprobación:** los comandos, sobre `488a5c4..d62ba1d`, sacan el caso de H2 (tres `assert` cambiados en `import-content.test.ts` por `chaptersReplaced`) y el `feat` con sus archivos. Typecheck y 188 tests unitarios en verde.
+    - **Pendiente (desarrollador):** en la sesión siguiente, lanzar `auditor` con un rango corto para ver la línea «Tests (F)» (un agente cambiado se carga al reiniciar).
 - [ ] **B4 · Agentes y skill `constructor` revisados** (secciones 5 y 12) · **IA**. Hay que mostrar el diff de cada archivo antes y después.
   - `auditor` y `frontend` conservan `tools: Read, Grep, Glob, Bash` (ver sección 5).
   - Poner al día lo desfasado con el bloque 5: `frontend` (punto 6) trata Open Graph como fase 2–3 y `auditor` (punto A) cita Discord, y los dos entraron en «Fase 2 · bloque 5» de `plan_mvp.md` (de Discord, solo el enlace). Los reportes están descartados, no aplazados.
