@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-11-13. **Base revisada:** commit `d62ba1d` (copia del repositorio en el segundo ordenador).
 - **Estado:** versión definitiva, aprobada por el desarrollador el 2026-11-13 para ejecutarse. Lo aplicado está marcado en la sección 10; las condiciones de la ejecución, en la sección 12.
-- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1, DL6, DL7 y DL10–DL13 resueltas; DL2–DL5, DL8 y DL9 siguen abiertas (sección 9).
+- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1, DL2, DL6, DL7 y DL10–DL13 resueltas; DL3–DL5, DL8 y DL9 siguen abiertas (sección 9).
 - **Objetivo:** que el harness de Claude Code (CLAUDE.md, agentes, skills, hooks, permisos) sea más eficiente, deje el código limpio, impida modificar los tests existentes, exija tests nuevos en cada funcionalidad y se pueda enseñar en la entrega del curso.
 - **Si eres un agente:** antes de actuar, lee la sección 11 («Instrucciones para el agente») entera. Las tareas están en la sección 10. La sección 12 corrige con datos reales lo que las secciones 1–9 suponían: si chocan, manda la 12.
 
@@ -278,7 +278,7 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 
 | # | Decisión | Recomendación |
 | --- | --- | --- |
-| DL2 | ¿CI con GitHub Actions (carpeta nueva `.github/`)? | Sí |
+| DL2 | ¿CI con GitHub Actions (carpeta nueva `.github/`)? | Sí. **Resuelta el 14-nov:** sí (B7) |
 | DL3 | ¿Se pasan a `.claude/encargos/` el encargo y los registros de `.git/codex-t13/`? | Sí, si no tienen datos privados |
 | DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí |
 | DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo |
@@ -455,12 +455,24 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - Sin reglas copiadas de `CLAUDE.md`, sin restos y sin datos sensibles.
 - [ ] **B5 · Encargos de Codex** (sección 5) · **IA + DL3**. Pasar los de `.git/codex-t13/` a `.claude/encargos/`, si se decide versionarlos. Mover también `.claude/t13-stripe-online.md` a `.claude/encargos/` (DL13), para que la raíz de `.claude/` solo tenga configuración.
 - [ ] **B6 · Plugins declarados** (sección 5) · **IA + DL8**. Declarar en `.claude/settings.json` los plugins que espera el proyecto.
-- [ ] **B7 · CI en GitHub Actions** (H5) · **IA + DL2**. `.github/workflows/tests.yml`:
+- [x] **B7 · CI en GitHub Actions** (H5) · **IA + DL2**. `.github/workflows/tests.yml`:
   - Node 24 (24.2 o posterior, por `engines`) y servicio `postgres:18` (la versión que da `plan_mvp.md`; confirmarla en `docker-compose.yml`) con usuario `koma`, contraseña `koma` y BD `koma_test`;
   - `npm ci --include=dev`, `npm run typecheck`, `npm test` y `npm run test:api`;
   - crea un `.env` de CI con valores de prueba que no sean secretos (secretos de más de 32 caracteres inventados, `PAYMENTS_DRIVER=fake`, `STORAGE_DRIVER=local`…), sin tocar los scripts de `package.json`. Se parte de `.env.example`: `env.ts` exige todas sus variables no opcionales, y el seed de `reset-test-db` necesita las cuatro `SEED_*_PASSWORD` con 10 caracteres o más (RN-12).
   - Antes del primer push, `npm run typecheck` tiene que estar en verde en local (ver B11).
   - **Hecho cuando:** el primer push da verde en GitHub.
+  - 2026-11-14 · DL2 = sí (decisión del desarrollador). `.github/workflows/tests.yml`:
+    - **Cuándo y qué:** en cada push a cualquier rama y en cada pull request a `main`, con `permissions: contents: read` y 15 minutos como máximo. `actions/checkout@v7` (sin guardar credenciales) y `actions/setup-node@v7` (Node 24, caché de npm). Las versiones salen de las etiquetas de sus repositorios y las entradas, de su `action.yml`; las dos corren sobre `node24`.
+    - **Postgres:** servicio `postgres:18` con `koma`/`koma` y `POSTGRES_DB: koma_test`, porque en el runner no hay `docker/initdb/`.
+    - **Pasos:** `npm ci --include=dev`, crear el `.env` de CI, `npm run typecheck`, `npm test` y `npm run test:api`. El `.env` sale de un heredoc con las claves de `.env.example`: secretos inventados de más de 32 caracteres, `PAYMENTS_DRIVER=fake`, `STORAGE_DRIVER=local`, `DATABASE_URL` hacia `koma_test` y las cuatro `SEED_*_PASSWORD` de 10 caracteres o más. Los tests que necesitan otro valor (Stripe, CSRF o BD caída) lo ponen en su `process.env`. `package.json` no cambia.
+    - **Ensayo en un clon limpio de `develop`** (`318f57a`, en el scratchpad, sin `.env`, `content/` ni `storage/`):
+      - `npm ci --include=dev`, typecheck y 188 tests unitarios, en verde;
+      - YAML válido;
+      - `env.ts` acepta las 21 variables del heredoc;
+      - `test:api`, 310/310. Las variables se pasaron por entorno con un lanzador fuera del repositorio, sin crear ningún `.env`.
+    - **npm 11.19** no ejecuta los scripts de instalación sin aprobación (`allowScripts`). No afecta: `bcrypt` 6 carga sus binarios precompilados, comprobado en el clon.
+    - **Falso positivo de `proteger-secretos`:** bloqueó un `python3` en línea que leía el workflow solo porque su texto decía «.env». No se rodeó. Queda como dato para C1.
+    - **Pendiente para el final:** el verde en GitHub con el primer push. La CI no frena el despliegue de Render, salvo que se active en Render la opción de esperar a los checks (lo decide el desarrollador). El árbol de `CLAUDE.md` aún no nombra `.github/`: se puede añadir en B9.
 - [x] **B8 · `CLAUDE.md` al día** (H6) · **IA**. Corregir el árbol (los archivos que faltan y los que sobran, según el estado real tras 0.1), añadir la fecha de congelación y `docs/comandos.md`, y poner una tabla de «quién hace qué» con agentes, skills y hooks. Sin perder reglas. `constructor` figura como skill, no como agente. Los archivos de la actividad simulada (`demo-activity*.ts` y `npm run demo:activity`) se quedan solo si ya existen: hoy `package.json` no tiene esos scripts, y el `auditor` exige que coincidan con la tabla de comandos (ver B10).
   - 2026-11-14 · Cambios:
     - **Salen** (no existen): `seeds/`, `demo-activity.ts`, `demo-activity-guard.ts`, `demo:activity` (y `:online`) y las cuentas `actividad1…6@demo.test`. Todo sigue en `plan_mvp.md` (líneas 374–375, 1371 y 1382), y «Bloque actual» sigue nombrando la actividad simulada.

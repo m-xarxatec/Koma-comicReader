@@ -1,0 +1,73 @@
+# CI de Koma (plan de limpieza, H5 y tarea B7): typecheck, tests unitarios y tests de API con Postgres, en cada push
+# y en cada pull request a main. Solo comprueba: no despliega ni frena el despliegue de Render.
+name: Tests
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18 # la de docker-compose.yml
+        env:
+          POSTGRES_USER: koma
+          POSTGRES_PASSWORD: koma
+          POSTGRES_DB: koma_test # en local la crea docker/initdb/01-test-db.sql
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U koma -d koma_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24' # engines: >=24.2 <25
+          cache: npm
+
+      - run: npm ci --include=dev
+
+      # Los scripts usan --env-file=.env y env.ts exige sus variables. Valores de prueba inventados, ninguno secreto:
+      # pago simulado, imágenes en disco y la BD de pruebas (reset-test-db aborta si no termina en _test).
+      - name: Crear el .env de CI
+        run: |
+          cat > .env <<'EOF'
+          NODE_ENV=development
+          PORT=3000
+          HOST=127.0.0.1
+          APP_URL=http://localhost:3000
+          ALLOWED_ORIGINS=http://localhost:3000
+          DATABASE_URL=postgres://koma:koma@localhost:5432/koma_test
+          JWT_SECRET=ci-jwt-de-prueba-inventado-no-es-secreto-0001
+          COOKIE_SECRET=ci-cookie-de-prueba-inventada-no-es-secreto-0001
+          COOKIE_SECURE=false
+          TRUST_PROXY=0
+          AD_MIN_SECONDS=5
+          SIGNED_URL_TTL_SECONDS=7200
+          LOG_LEVEL=info
+          CONTENT_DIR=./content
+          STORAGE_DRIVER=local
+          STORAGE_LOCAL_DIR=./storage
+          PAYMENTS_DRIVER=fake
+          SEED_ADMIN_PASSWORD=ci-admin-prueba-0001
+          SEED_AUTHOR_PASSWORD=ci-author-prueba-0001
+          SEED_PREMIUM_PASSWORD=ci-premium-prueba-0001
+          SEED_READER_PASSWORD=ci-reader-prueba-0001
+          EOF
+
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:api
