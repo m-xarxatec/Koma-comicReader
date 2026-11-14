@@ -341,7 +341,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 - [x] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs`, `.github` y `plan_limpieza.md` (decisión del 14-nov, sección 12), y no se quita ninguna.
   - **Hecho cuando:** el desarrollador comprueba que `docker compose build` funciona y la app arranca en el contenedor.
   - 2026-11-14 · Cinco líneas añadidas al final, ninguna quitada; en `server/src` y `client/src` esas rutas solo salen en comentarios. Typecheck y 184 tests en verde; el desarrollador comprobó el build y el arranque en el contenedor.
-- [ ] **A3 · Sección «Tests» en `CLAUDE.md`** (H2, H4) · **IA**. Debe recoger:
+- [x] **A3 · Sección «Tests» en `CLAUDE.md`** (H2, H4) · **IA**. Debe recoger:
   - los tests existentes no se modifican ni se borran (tampoco `helpers.ts` ni `reading-fixtures.ts`);
   - la excepción solo con permiso del desarrollador, la aserción y el motivo explicados, y una entrada en la bitácora;
   - toda funcionalidad o corrección trae su test nuevo en el mismo commit;
@@ -349,6 +349,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - se mantiene el nombre por RN o `Seguridad:`.
 
   `CLAUDE.md` sigue en 150 líneas como máximo y sin perder ninguna regla. Si no cabe, se propone qué mover y se pregunta (ver B9).
+  - 2026-11-14 · «## Tests» tras «Comandos», con las dos líneas de tests que ya estaban allí y dos reglas nuevas. Sale el bloque del agente `frontend` (4 líneas), que ya está en `.claude/agents/frontend.md` (descripción, «Límites», «Alcance» e «Informe»). Se queda en 149 líneas: no hizo falta la excepción de pasar de 150 que autorizó el desarrollador. «Guía para CLAUDE.md» de `plan_mvp.md` no tiene esta sección (B9).
 - [ ] **A4 · Permisos del proyecto** (H3) · **IA**. En `.claude/settings.json`:
   - **deny:** leer `.env`, `.env.online` y `docs/credenciales.local.md`; `git add`, `git commit`, `git push`, `git reset`, `git rm`, `git restore`, `git clean`, `git stash` y `git checkout`;
   - **deny, BD local:** `docker compose down` (con o sin `-v`), `docker volume rm` y `docker compose rm`;

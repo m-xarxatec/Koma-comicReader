@@ -21,9 +21,14 @@
 | `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
+- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test` (y `actividad1…6@demo.test`, de la API, idea 24); contraseñas en `docs/credenciales.local.md` (ignorado por git).
+
+## Tests
+
 - Tests en `server/src/tests/unit/` y `server/src/tests/api/`, archivos `<tema>.test.ts`; el nombre de cada test empieza por su RN (`'RN-02: recarga 2 por periodo'`) o, si no tiene, por `'Seguridad:'`. Un solo test: `npm run build && node --test server/dist/tests/unit/<tema>.test.js`, o filtrar con `--test-name-pattern="RN-02"`.
 - Pruebas de API: BD `koma_test` (`.env.test` solo sobrescribe `DATABASE_URL`); `reset-test-db.ts` hace `DROP SCHEMA` + migraciones + seed y aborta si la BD no termina en `_test`. Usan `startTestServer()` de `tests/api/helpers.ts`: importa `app` de `app.ts`, `listen(0)` en `before()` y cierra servidor y pool en `after()`.
-- Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test` (y `actividad1…6@demo.test`, de la API, idea 24); contraseñas en `docs/credenciales.local.md` (ignorado por git).
+- Los tests existentes no se modifican ni se borran (tampoco `helpers.ts` ni `reading-fixtures.ts`). Única excepción, si un cambio de contrato aprobado lo exige: parar, explicar qué aserción cambia y por qué, esperar el permiso del usuario y anotarlo en `docs/bitacora.md`.
+- Toda funcionalidad o corrección trae su test nuevo en el mismo commit. Test primero: se escribe y se ve fallar antes de programar.
 
 ## Estructura
 
@@ -142,8 +147,3 @@ Un bloque está cerrado solo cuando:
 - [ ] Sus acciones sensibles aparecen en la auditoría.
 - [ ] Variables nuevas en `.env.example` y en el README.
 - [ ] Entrada del bloque en `docs/bitacora.md`.
-
-Agente `frontend` (`.claude/agents/frontend.md`): revisa el cliente frente a CLAUDE.md, `docs/` y la maqueta `koma_home`.
-- Alcance: `client/public`, `client/src`, `layout.ts`, `page.ts` y las plantillas de error; la seguridad del servidor y las RN siguen siendo del `auditor`.
-- Solo lectura: no modifica archivos; informa de hallazgos (archivo, línea, gravedad, corrección propuesta) y de lo que hay que mirar a mano en el navegador.
-- Se ejecuta al terminar cada página o conjunto de páginas integradas, y antes del `auditor` del cierre del bloque.
