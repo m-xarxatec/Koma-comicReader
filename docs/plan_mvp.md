@@ -1591,6 +1591,7 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |
 | Fase 2 | Bloque 5 (10-nov): CU-39 con vista de impresión, punto de abandono, Open Graph con imagen propia y enlace de Discord. Siguen en fase 2, fuera de la entrega: avatar, PWA y webhook de Discord. Descartados: los reportes (idea 22) |
+| Harness | Plan de limpieza (`plan_limpieza.md`, 13-nov): se aprueban las carpetas `.claude/skills/`, `.claude/hooks/` y `.github/` (CI); `.claude/` pasa a git salvo `settings.local.json`, `permiso-tests.txt`, `maqueta/` y `parches/` |
 
 ## Guía para CLAUDE.md
 

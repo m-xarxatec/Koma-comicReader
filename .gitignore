@@ -5,5 +5,8 @@ dist/
 /storage/
 content/
 docs/credenciales.local.md
-docs/modelo_datos.md
-.claude
+.claude/settings.local.json
+.claude/permiso-tests.txt
+.claude/maqueta/
+.claude/parches/
+CLAUDE.local.md
