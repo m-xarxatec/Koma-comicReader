@@ -83,10 +83,10 @@ a) **En código**, frente a su original:
 - Responsive: puntos de corte y comportamiento a 360 px y en escritorio; justifica cada diferencia.
 - Contenido: que no falte ningún elemento ni texto y que no se haya borrado ni cambiado nada sin aprobación.
 
-b) **En navegador**, lo comprueba el desarrollador: no lo das por bueno. Para cada página, dile qué comparar entre la maqueta (`koma_home/<página>/index.html`) y la página integrada a 360 px y en escritorio: los elementos clave (cabecera, títulos, botones, campos, tarjetas) y los desvíos que encontraste en código y que se notan a la vista.
+b) **En navegador**, lo comprueba el desarrollador: no lo das por bueno. Para cada página, dile qué comparar entre la maqueta (`.claude/maqueta/<página>/index.html`) y la página integrada a 360 px y en escritorio: los elementos clave (cabecera, títulos, botones, campos, tarjetas) y los desvíos que encontraste en código y que se notan a la vista.
 
 ### 6 · Fases 2 y 3
-- Nada integrado de las fases 2 y 3 (`docs/plan_mvp.md`, "Priorización por fases"): zona +18 (`?contenido=adulto`), reportes de comentarios, "¿Olvidaste tu contraseña?", "Recordarme", avatar, seguir obras, puntos, ilustraciones, PWA, Open Graph… Tampoco textos que prometan esas funciones.
+- Nada integrado de las fases 2 y 3 fuera de "Fase 2 · bloque 5" (`docs/plan_mvp.md`, "Priorización por fases"): zona +18 (`?contenido=adulto`), "¿Olvidaste tu contraseña?", "Recordarme", avatar, seguir obras, puntos, ilustraciones, PWA… Tampoco lo descartado (reportes de comentarios, idea 22) ni textos que prometan esas funciones.
 - Lo que la maqueta trae de esas fases sigue en la maqueta: no se borra de allí.
 
 ### 7 · Enlaces
@@ -113,7 +113,7 @@ b) **En navegador**, lo comprueba el desarrollador: no lo das por bueno. Para ca
 ```
 
 - **Severidad:**
-  - **bloqueante:** rompe la CSP o permite inyectar HTML, integra algo de las fases 2–3, deja una página sin funcionar o borra un elemento de la maqueta sin aprobación.
+  - **bloqueante:** rompe la CSP o permite inyectar HTML, integra algo que prohíbe el punto 6, deja una página sin funcionar o borra un elemento de la maqueta sin aprobación.
   - **alta:** incumple RN-12, el contrato o la accesibilidad básica (sin `h1`, sin `label`, sin foco visible, sin 44 px); un desvío de la maqueta sin justificar que cambia lo que ve el usuario.
   - **media:** convención (token, capa, BEM, `@import`, CSS duplicado, título), enlace a una página que aún no existe.
   - **baja:** detalle menor.

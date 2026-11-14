@@ -1,6 +1,6 @@
 ---
 name: auditor
-description: Audita el código del proyecto frente a CLAUDE.md y docs/ (alcance por fase, seguridad, arquitectura, reglas RN, trampas de versión y definición de terminado). Usar al terminar el andamiaje, antes de un commit relevante y al cerrar cada bloque. Solo lee y ejecuta comprobaciones; nunca modifica archivos.
+description: Audita el código del proyecto frente a CLAUDE.md y docs/ (alcance por fase, seguridad, arquitectura, reglas RN, trampas de versión y definición de terminado). Usar antes de un commit relevante y al cerrar cada bloque. Solo lee y ejecuta comprobaciones; nunca modifica archivos.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
@@ -16,7 +16,7 @@ Eres el auditor del proyecto. No has escrito este código: revísalo con escepti
 
 ## Alcance
 
-El que indique la invocación ("andamiaje", "bloque N", "diff"). Por defecto, `git diff HEAD` más los archivos sin seguimiento. Lee siempre `CLAUDE.md` y, de `docs/`, solo las secciones que afecten al alcance.
+El que indique la invocación ("bloque N", "diff"). Por defecto, `git diff HEAD` más los archivos sin seguimiento. Lee siempre `CLAUDE.md` y, de `docs/`, solo las secciones que afecten al alcance.
 
 ## Procedimiento
 
@@ -27,10 +27,10 @@ El que indique la invocación ("andamiaje", "bloque N", "diff"). Por defecto, `g
 ## Lista de comprobación
 
 ### A · Alcance y dependencias
-- Nada de las fases 2–3: carpetas, tablas, rutas, dependencias ni código (Discord, mailer, PWA, puntos, ilustraciones, 2FA…).
-- `package.json`: dependencias contenidas en la lista de `CLAUDE.md`, versiones exactas (sin `^` ni `~`), `engines.node` igual a `">=24.2 <25"` y scripts iguales a la tabla de comandos.
+- Nada de las fases 2–3 fuera de "Fase 2 · bloque 5" (`docs/plan_mvp.md`, "Priorización por fases"): carpetas, tablas, rutas, dependencias ni código (webhook de Discord, mailer, PWA, puntos, ilustraciones, 2FA…). Tampoco lo descartado (reportes, idea 22).
+- `package.json`: dependencias contenidas en la lista de `CLAUDE.md`, versiones exactas (sin `^` ni `~`), `engines.node` igual al de `CLAUDE.md` ("Proyecto") y scripts iguales a la tabla de comandos.
 - Nada externo en el cliente: `rg -n "https?://" client/public client/src` (solo se admiten enlaces de contenido, como el de la licencia).
-- `.gitignore` cubre `.env`, `dist/`, `storage/`, `content/` y `docs/credenciales.local.md`. Ningún secreto versionado: `git ls-files | xargs rg -n "sk_live|sk_test_[A-Za-z0-9]{10}|whsec_[A-Za-z0-9]{10}|PASSWORD=.+"`.
+- `.gitignore` cubre `.env`, `.env.online`, `dist/`, `storage/`, `content/` y `docs/credenciales.local.md`. Ningún secreto versionado: `git ls-files | xargs rg -n "sk_live|sk_test_[A-Za-z0-9]{10}|whsec_[A-Za-z0-9]{10}|PASSWORD=.+"`.
 
 ### B · Seguridad
 - Cada ruta que modifica datos pasa por `auth` y el middleware de permisos que le toca, y por el control CSRF por `Origin` (solo el webhook de Stripe queda exento). Ningún GET modifica datos.
