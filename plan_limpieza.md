@@ -401,7 +401,8 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Qué muestra:** el mismo texto va al desarrollador (`systemMessage`) y al contexto de Claude (`additionalContext`). La línea «Bloque actual» sale sin la instrucción final de actualizarla. `git status` va con `--branch`, para ver que la rama es `develop` (condición de la sección 12), y como mucho 25 líneas.
     - **Si algo falla:** *SessionStart* no puede bloquear, así que lo dice en el propio mensaje (sin git o sin `CLAUDE.md`).
     - **Pruebas:** arnés de 10 comprobaciones fuera del repositorio. El aviso de la excepción se prueba con texto de ejemplo, sin crear ningún `permiso-tests.txt`. El hook tarda unos 26 ms. Se verá de verdad al reiniciar la sesión (A9).
-- [ ] **A8b · Hook de compilación tras editar** (sección 5, opcional) · **IA + D**. En *PostToolUse*, `npm run typecheck` tras editar un `.ts`. Se aplica solo si no ralentiza demasiado.
+- [x] **A8b · Hook de compilación tras editar** (sección 5, opcional) · **IA + D**. En *PostToolUse*, `npm run typecheck` tras editar un `.ts`. Se aplica solo si no ralentiza demasiado.
+  - 2026-11-14 · Descartada por el desarrollador: el hook *Stop* de A7 ya ejecuta `npm test`, que empieza con `tsc -b`, así que un error de tipos ya impide cerrar sin añadir ~1 s a cada edición.
 - [ ] **A9 · Prueba de los candados** (H2, H3) · **IA + D**. El desarrollador reinicia la sesión y la IA intenta:
   1. editar un test existente → bloqueado;
   2. crear un test nuevo → permitido;
