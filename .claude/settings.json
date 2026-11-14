@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(/.env)",
+      "Read(/.env.online)",
+      "Read(/docs/credenciales.local.md)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git reset *)",
+      "Bash(git rm *)",
+      "Bash(git restore *)",
+      "Bash(git clean *)",
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(docker compose down *)",
+      "Bash(docker compose * down)",
+      "Bash(docker compose * down *)",
+      "Bash(docker compose rm *)",
+      "Bash(docker compose * rm)",
+      "Bash(docker compose * rm *)",
+      "Bash(docker volume rm *)"
+    ],
+    "ask": [
+      "Bash(npm run seed:online *)",
+      "Bash(npm run content:import:online *)",
+      "Bash(npm run *:online)",
+      "Bash(npm run *:online *)",
+      "Bash(psql *)",
+      "Bash(npm run migrate *)",
+      "Bash(npm run seed *)",
+      "Bash(npm run content:import *)",
+      "Bash(npm run demo:data *)"
+    ],
+    "allow": [
+      "Bash(npm test *)",
+      "Bash(npm run test:api *)",
+      "Bash(npm run build *)",
+      "Bash(npm run typecheck *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ]
+  }
+}

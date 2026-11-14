@@ -350,7 +350,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
   `CLAUDE.md` sigue en 150 líneas como máximo y sin perder ninguna regla. Si no cabe, se propone qué mover y se pregunta (ver B9).
   - 2026-11-14 · «## Tests» tras «Comandos», con las dos líneas de tests que ya estaban allí y dos reglas nuevas. Sale el bloque del agente `frontend` (4 líneas), que ya está en `.claude/agents/frontend.md` (descripción, «Límites», «Alcance» e «Informe»). Se queda en 149 líneas: no hizo falta la excepción de pasar de 150 que autorizó el desarrollador. «Guía para CLAUDE.md» de `plan_mvp.md` no tiene esta sección (B9).
-- [ ] **A4 · Permisos del proyecto** (H3) · **IA**. En `.claude/settings.json`:
+- [x] **A4 · Permisos del proyecto** (H3) · **IA**. En `.claude/settings.json`:
   - **deny:** leer `.env`, `.env.online` y `docs/credenciales.local.md`; `git add`, `git commit`, `git push`, `git reset`, `git rm`, `git restore`, `git clean`, `git stash` y `git checkout`;
   - **deny, BD local:** `docker compose down` (con o sin `-v`), `docker volume rm` y `docker compose rm`;
   - **ask:** `npm run seed:online`, `npm run content:import:online`, cualquier `…:online` futuro, `psql`, `npm run migrate`, `npm run seed`, `npm run content:import` y `npm run demo:data`;
@@ -358,6 +358,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
   Comprobar la sintaxis vigente en la documentación oficial de Claude Code; no inventarla.
   - **Hecho cuando:** tras reiniciar la sesión, un comando prohibido se bloquea y uno permitido pasa sin preguntar.
+  - 2026-11-14 · 19 deny, 9 ask y 7 allow, con la sintaxis de code.claude.com/docs/en/permissions (`Read(/ruta)` anclado a la raíz; `Bash(cmd *)` cubre también el comando sin argumentos). Añadidas `docker compose * down` y `* rm` para la forma con `-f` de `docs/comandos.md`. Activo sin reiniciar: `git stash list` bloqueado; `npm test` (184) y `npm run test:api` (310) en verde. La regla solo ve el texto del comando (`git -C . push`, `sh -c`, `node --env-file=.env.online …` directo o `grep -r` no la activan): eso es de A5 y A6. Pendiente para A9, ya reiniciado y en modo normal (esta sesión estaba en modo auto): comprobar que lo permitido pasa sin preguntar.
 - [ ] **A5 · Hook `proteger-tests`** (H2) · **IA**. En *PreToolUse*:
   - bloquea Edit/Write/MultiEdit sobre cualquier archivo **existente** de `server/src/tests/`;
   - bloquea los comandos de shell que escriban, muevan o borren ahí (`sed -i`, `>`, `mv`, `rm`, `git checkout --`…);
