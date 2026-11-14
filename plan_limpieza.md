@@ -307,7 +307,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 - [x] **0.4 · Segunda parte de la auditoría** (sección 1) · **IA**. Queda lo que solo se ve con el repositorio delante: `git ls-files docs/ .claude/`, `git status`, `docker-compose.yml` (versión de Postgres), `Dockerfile`, `.env.example` y los `tsconfig.json`.
   - **Hecho cuando:** la sección 12 está actualizada con lo encontrado y las diferencias se han avisado.
   - 2026-11-14 · Sección 12, «Con el repositorio delante»: se confirman las cifras y H6, H9 y H11; seis diferencias avisadas (la primera, que `develop` no existe).
-- [ ] **0.5 · Línea base del harness** (H1) · **D + IA**, en este orden:
+- [x] **0.5 · Línea base del harness** (H1) · **D + IA**, en este orden:
   1. **D:** copiar el contenido de la maqueta (`koma_home`) a `.claude/maqueta/` en el repositorio principal, en los dos ordenadores (DL11, DL12).
   2. **IA:** dejar el `.gitignore` así. Se quitan `docs/modelo_datos.md` y `.claude`, y se añaden las cinco últimas líneas:
 
@@ -329,13 +329,15 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   4. **IA:** entregar la lista de lo que entraría (`git status --short --untracked-files=all -- .claude docs`) y los comandos git. De `.claude/` deben entrar ocho archivos: los dos agentes, la skill `constructor`, los cuatro de `encargos/` y `t13-stripe-online.md`. Si aparece otro, parar y avisar.
   5. **D:** hacer el commit.
   - **Hecho cuando:** `.claude/` está en GitHub y cualquier cambio posterior se ve como diff.
-- [ ] **0.6 · Aprobación escrita de las carpetas nuevas** (sección 12) · **D**. `CLAUDE.md` y el `auditor` tratan como incumplimiento cualquier carpeta fuera del plan, y `.github/`, `.claude/skills/` y `.claude/hooks/` no están en la estructura de `docs/ideas_base.md`. El desarrollador anota la aprobación de este plan en «Decisiones» de `plan_mvp.md` o en `ideas_base.md`.
+  - 2026-11-14 · Maqueta copiada por el desarrollador en este ordenador (falta el otro); `.gitignore` y `frontend.md` (línea 26) cambiados; entran los ocho archivos previstos. Vale el commit local en `develop`; la comprobación en GitHub queda pendiente para el final.
+- [x] **0.6 · Aprobación escrita de las carpetas nuevas** (sección 12) · **D**. `CLAUDE.md` y el `auditor` tratan como incumplimiento cualquier carpeta fuera del plan, y `.github/`, `.claude/skills/` y `.claude/hooks/` no están en la estructura de `docs/ideas_base.md`. El desarrollador anota la aprobación de este plan en «Decisiones» de `plan_mvp.md` o en `ideas_base.md`.
   - **Hecho cuando:** el `auditor` ya no puede marcar esas carpetas como fuera del plan.
+  - 2026-11-14 · Hecha por el desarrollador: fila «Harness» en «Decisiones» de `docs/plan_mvp.md` (`ceec829`).
 
 ### Paso A · Candados y reglas (una sesión, sin tocar el código de la app)
 
 - [ ] **A1 · `docs/ideas_base.md` y `docs/modelo_datos.md`** (H11, DL1) · **IA + D**. La línea del `.gitignore` ya se quitó en 0.5. Comprobar con `git ls-files docs/` que los dos están versionados; si falta alguno, entregar el `git add`.
-- [ ] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs` y `.github`, y no se quita ninguna.
+- [ ] **A2 · `.dockerignore`** (H11) · **IA**. Hoy tiene ocho líneas (`.git`, `node_modules`, `**/dist`, `.env`, `.env.online`, `storage`, `content` y `docs/credenciales.local.md`). Se añaden `.claude`, `CLAUDE.md`, `docs`, `.github` y `plan_limpieza.md` (decisión del 14-nov, sección 12), y no se quita ninguna.
   - **Hecho cuando:** el desarrollador comprueba que `docker compose build` funciona y la app arranca en el contenedor.
 - [ ] **A3 · Sección «Tests» en `CLAUDE.md`** (H2, H4) · **IA**. Debe recoger:
   - los tests existentes no se modifican ni se borran (tampoco `helpers.ts` ni `reading-fixtures.ts`);
@@ -622,10 +624,10 @@ Mandan sobre la sección 10 donde difieran:
 
 | # | Diferencia | Efecto |
 | --- | --- | --- |
-| 1 | La rama actual es `main`; `develop` no existe ni en local ni en `origin` | El desarrollador la crea antes del primer commit del plan |
-| 2 | `docs/ideas_base.md` tiene cambios sin commit (sección «Pulido» e ideas 23 y 24); no incluye la aprobación de 0.6 | 0.1 se da por hecha por indicación del desarrollador. Ese cambio no entra en los commits del plan salvo que él lo diga |
-| 3 | El plan está en la raíz (`plan_limpieza.md`), no en `docs/` | Donde diga `docs/plan_limpieza.md`, vale la raíz. A2 excluye `docs`, pero no este archivo: la imagen se lo llevaría (inofensivo; se decide en A2) |
-| 4 | Worktree de Codex `../koma-premium` (`feat/premium-diseno`, `25d7070`), limpio y ya integrado en `main` | Ninguno para este plan; borrarlo lo decide el desarrollador |
+| 1 | La rama actual es `main`; `develop` no existe ni en local ni en `origin` | Resuelto: el desarrollador creó `develop` (commit de 0.4, `d520493`) |
+| 2 | `docs/ideas_base.md` tiene cambios sin commit (sección «Pulido» e ideas 23 y 24); no incluye la aprobación de 0.6 | Resuelto: commit aparte del desarrollador (`3c11850`, en `develop`) |
+| 3 | El plan está en la raíz (`plan_limpieza.md`), no en `docs/` | Donde diga `docs/plan_limpieza.md`, vale la raíz. Decidido: A2 añade también `plan_limpieza.md` al `.dockerignore` |
+| 4 | Worktree de Codex `../koma-premium` (`feat/premium-diseno`, `25d7070`), limpio y ya integrado en `main` | Lo retira el desarrollador; la IA no lo toca |
 | 5 | En `frontend.md`, la única ruta absoluta es la línea 26. Las líneas 3, 28 y 86 nombran `koma_home`, y las rutas de su tabla son relativas a la raíz de la maqueta | 0.5, paso 3: basta con la línea 26 si la copia deja las carpetas de la maqueta directamente en `.claude/maqueta/` |
 | 6 | `codex-estudio.md` (línea 11) dice que git ignora `ideas_base.md` y `modelo_datos.md`, pero los dos están versionados | Histórico, no se edita (DL12). Los encargos nuevos no deben repetirlo (B1) |
 
