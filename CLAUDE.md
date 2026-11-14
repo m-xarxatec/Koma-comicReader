@@ -75,7 +75,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 | Pieza (`.claude/`) | Qué hace |
 | --- | --- |
 | Agentes `auditor` y `frontend` | Revisan sin modificar archivos: `auditor`, el código frente a este archivo y `docs/`; `frontend`, cada página frente a la maqueta (`.claude/maqueta/`) |
-| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con este archivo y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo. También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
+| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con este archivo y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo; `/reemplazar-capitulos` y `/actividad-simulada` guían esas operaciones del pulido sin ejecutarlas. También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
 | Hooks (`hooks/`) | `proteger-tests` y `proteger-secretos` bloquean antes de editar o ejecutar · `verificar-al-terminar` no deja cerrar con tests protegidos cambiados ni con `npm test` en rojo · `inicio-sesion` muestra el bloque y `git status` |
 | Permisos (`settings.json`) | deny: secretos, git que escribe y borrar la BD local · ask: `:online`, `psql` y scripts que escriben en la BD · allow: tests, build y lectura de git |
 
