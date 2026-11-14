@@ -279,12 +279,12 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 | # | Decisión | Recomendación |
 | --- | --- | --- |
 | DL2 | ¿CI con GitHub Actions (carpeta nueva `.github/`)? | Sí. **Resuelta el 14-nov:** sí (B7) |
-| DL3 | ¿Se pasan a `.claude/encargos/` el encargo y los registros de `.git/codex-t13/`? | Sí, si no tienen datos privados |
+| DL3 | ¿Se pasan a `.claude/encargos/` el encargo y los registros de `.git/codex-t13/`? | Sí, si no tienen datos privados. **Resuelta el 14-nov:** sí, solo el encargo; los registros no (B5) |
 | DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí |
 | DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo |
 | DL6 | ¿Se activan los avisos de TypeScript de H9? Si aparecen errores, arreglarlos es tocar código de la app | Activarlos y decidir con la lista de errores delante. **Resuelta el 14-nov:** los cuatro activados; se borra el único error, un tipo sin usar (B11) |
 | DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención. **Resuelta el 14-nov:** `Seguridad:` (B10) |
-| DL8 | ¿Se declaran en `.claude/settings.json` los plugins que espera el proyecto? | Sí, si se usan en los dos ordenadores |
+| DL8 | ¿Se declaran en `.claude/settings.json` los plugins que espera el proyecto? | Sí, si se usan en los dos ordenadores. **Resuelta el 14-nov:** no se declara ninguno; se anota para C1 (B6) |
 | DL9 | Calendario: ¿se dejan el 20-nov y el 25-nov en `plan_mvp.md`, o se anota también la fecha oficial nueva? | Dejarlas como objetivo y anotar la fecha nueva como margen. Mientras no haya respuesta, valen el 20-nov y el 25-nov |
 
 ## 10. Checklist de tareas
@@ -465,7 +465,19 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Sin reiniciar:** según la documentación, una skill nueva en una carpeta de skills que ya existía se carga en la misma sesión. `bitacora` y `entregar-commit` aparecieron al momento. Las dos prueban el formato aquí: `bitacora prueba` mostró la entrada y `entregar-commit` dio los comandos de B1.
     - **Pendiente (desarrollador):** ver `/cerrar-bloque` y `/encargo-codex` en el menú `/` (Claude no las ve porque son solo del usuario).
     - **Comprobación:** 188 tests unitarios en verde.
-- [ ] **B2 · Skills opcionales** (H8) · **IA + D**. `actividad-simulada` y `reemplazar-capitulos`, con los pasos de «Pulido» de `plan_mvp.md`. Solo describen los pasos: no ejecutan nada `:online`.
+- [x] **B2 · Skills opcionales** (H8) · **IA + D**. `actividad-simulada` y `reemplazar-capitulos`, con los pasos de «Pulido» de `plan_mvp.md`. Solo describen los pasos: no ejecutan nada `:online`.
+  - 2026-11-14 · Aprobada por el desarrollador. `.claude/skills/reemplazar-capitulos/SKILL.md` y `.claude/skills/actividad-simulada/SKILL.md`, de 40 líneas cada una.
+    - **Cómo son:** solo las lanza el usuario (`disable-model-invocation`, como `cerrar-bloque`). Enlazan a «Pulido» (y la de reemplazo, al README) sin copiar los pasos. Claude solo lee y comprueba; lo que escribe en una base de datos, local u online, y `psql` los ejecuta el usuario.
+    - **`reemplazar-capitulos`:**
+      1. alcance, con lo que deja de verse;
+      2. comprobaciones de `content/<slug>/` (`ffprobe`), `comic.json`, typecheck y tests;
+      3. local;
+      4. online, con la consulta previa del plan y la primera línea Neon/`r2`;
+      5. bitácora.
+    - **`actividad-simulada`:** el paso 0 comprueba que existe, porque **aún no está construida** (ni `demo-activity*.ts` ni los scripts). Si falta, remite a `/constructor` con los tests de la guarda primero. Después: comprobaciones de la guarda y de las altas (RN-13), pasada local u online (`--confirm <host>` lo escribe el usuario), comprobación en `/admin` y retirada (D21). Termina recordando que en la presentación se declara simulada (C3).
+    - **`CLAUDE.md`:** la fila «Skills» de «Quién hace qué» nombra las dos (sigue en 158 líneas).
+    - **Comprobación:** typecheck y 188 tests unitarios en verde. Cabecera YAML revisada a mano: la validación con `python3 -c` la bloqueó `proteger-secretos` por un error interno (ver «Fallos del analizador», tras B6).
+    - **Pendiente (desarrollador):** ver `/reemplazar-capitulos` y `/actividad-simulada` en el menú `/`.
 - [x] **B3 · `auditor` ampliado** (H2, H4) · **IA**. Ampliar el apartado «F · Tests» que ya tiene `.claude/agents/auditor.md`. En el rango auditado, lista:
   - cada `assert` eliminado o cambiado en tests existentes;
   - cada `feat`/`fix` sin test nuevo;
@@ -499,8 +511,22 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Hecho, 2026-11-14:**
       - **Maqueta:** el desarrollador la da por hecha. Se lleva una copia de `.claude/maqueta/` (1,9 MB) con un `cp -a` hacia la carpeta de su terminal: le sirve de respaldo y de origen para el `.claude/maqueta/` del otro ordenador.
       - **`/constructor`:** la cabecera YAML de la skill y de los dos agentes se lee bien (PyYAML). El menú `/` no lo ve la IA, porque la skill es solo del usuario.
-- [ ] **B5 · Encargos de Codex** (sección 5) · **IA + DL3**. Pasar los de `.git/codex-t13/` a `.claude/encargos/`, si se decide versionarlos. Mover también `.claude/t13-stripe-online.md` a `.claude/encargos/` (DL13), para que la raíz de `.claude/` solo tenga configuración.
-- [ ] **B6 · Plugins declarados** (sección 5) · **IA + DL8**. Declarar en `.claude/settings.json` los plugins que espera el proyecto.
+- [x] **B5 · Encargos de Codex** (sección 5) · **IA + DL3**. Pasar los de `.git/codex-t13/` a `.claude/encargos/`, si se decide versionarlos. Mover también `.claude/t13-stripe-online.md` a `.claude/encargos/` (DL13), para que la raíz de `.claude/` solo tenga configuración.
+  - 2026-11-14 · DL3 = sí, solo el encargo, no los registros (decisión del desarrollador).
+    - **Qué hay en `.git/codex-t13/`:** nueve archivos, no siete (corrige la sección 12):
+      - dos encargos: `encargo.md`, 115 líneas, y `encargo-3.md`, 47, la tercera vuelta, que remite al primero;
+      - dos registros: `dev.log` y `run-2.log`, de 418 KB;
+      - `archivos.txt`, `maqueta-antes.sha`, `portafolio-antes.txt`, `sprite.patch` y `ultimo-2.txt`.
+    - **Datos privados:** los dos encargos, leídos enteros, no tienen claves, contraseñas, correos ni URLs de bases de datos. Sí tienen rutas locales absolutas con el nombre de usuario (el worktree `koma-t13`, la maqueta en `Descargas` y `.git/codex-t13/`), igual que `codex-estudio.md`, y se aceptan como históricas con el criterio de DL12. Los registros no se han revisado porque no se suben.
+    - **Copiados sin cambios** (`cmp` idéntico): `.claude/encargos/codex-home.md` y `.claude/encargos/codex-home-vuelta-3.md`, con el patrón `codex-<página>.md` de los otros. Es el T13 del bloque 2, la home. Los originales y el resto se quedan en `.git/codex-t13/`, que nunca se sube; borrarlo es decisión del desarrollador.
+    - **Movido:** `.claude/t13-stripe-online.md` → `.claude/encargos/`. Es otro T13, el del bloque 4 (comprobaciones de Stripe online). Ningún archivo vivo lo citaba; solo la bitácora, que es histórica. La raíz de `.claude/` queda con `agents/`, `encargos/`, `hooks/`, `skills/`, `settings.json` y lo ignorado (`settings.local.json`, `maqueta/`, `parches/`).
+- [x] **B6 · Plugins declarados** (sección 5) · **IA + DL8**. Declarar en `.claude/settings.json` los plugins que espera el proyecto.
+  - 2026-11-14 · DL8 = no (decisión del desarrollador): no se declara ningún plugin y `.claude/settings.json` no cambia. Se anota para C1.
+
+**Fallos del analizador de los hooks** (14-nov, encontrados al revisar el informe del `auditor`; pendientes de decisión del desarrollador). No se han rodeado ni arreglado.
+1. **Comodines dentro de comillas.** `proteger-secretos` (`mentions()`, líneas 164–182, con `resolveWord` y `expandGlob`) trata cada palabra como una ruta, y en las de forma `--opcion=ruta` toma además lo que sigue al último `=`. Pero no sabe qué iba entre comillas, porque `walkCommand` las quita. Por eso `sed 's/=.*//'` (de ahí sale `.*//`) y `grep '.*'` expanden `.*` contra el disco, casan con `.env` y `.env.online` y se bloquean. Bash no expande comodines entre comillas. Es el comando que se le bloqueó al `auditor`: `rg … .env.example | sed 's/=.*//' ; …; cat .env.test | sed …`. No lo disparó `.env.test`, que pasa solo, sino el primer `sed`.
+2. **Error interno con rangos al revés.** `globToRegExp` (`shell.mjs`, 74–108) construye una clase `[…]` sin validarla. Un texto entre comillas como `["disable-model-invocation"]` (tiene `l-i`) lanza «Range out of order», y el hook bloquea por precaución. Le pasó a un `python3 -c` que validaba YAML y a una sonda con `'[l-i]'`.
+- **Pruebas:** los arneses de A5 y A6 (120 y 148 casos) estaban en carpetas temporales de sesiones anteriores que ya no existen, así que no hay pruebas a las que añadir los casos.
 - [x] **B7 · CI en GitHub Actions** (H5) · **IA + DL2**. `.github/workflows/tests.yml`:
   - Node 24 (24.2 o posterior, por `engines`) y servicio `postgres:18` (la versión que da `plan_mvp.md`; confirmarla en `docker-compose.yml`) con usuario `koma`, contraseña `koma` y BD `koma_test`;
   - `npm ci --include=dev`, `npm run typecheck`, `npm test` y `npm run test:api`;
@@ -558,6 +584,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - **Hecho cuando:** se obtiene el porcentaje.
 - [ ] **B15 · Recordatorio de la actividad simulada** (sección 7) · **D**. Cuando se construya (fuera de este plan), usar `/constructor`: primero los tests `Seguridad:` de la guarda.
 - [ ] **B16 · Entrada de bitácora del paso B** · **IA**.
+  - **Debe recoger (decisión del desarrollador, 14-nov):** el desarrollador aprueba el cambio de los tres `assert` de `server/src/tests/api/import-content.test.ts` en `d62ba1d` (10-nov) como cambio de contrato anterior a la regla de «Tests» (`330cd19`, 14-nov). El test no se toca. Es el hallazgo alto del `auditor` de B3.
 
 ### Paso C · Para la entrega (bloque 6, 20 – 25 nov)
 
@@ -566,6 +593,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - qué hace cada agente, skill, hook y permiso, y por qué;
   - cómo desactivar un hook en una emergencia;
   - ejemplos reales de la bitácora. Por ejemplo, el auditor detectó que `/files/%E0%A4%A` y `?q=%00` daban 500.
+  - plugins: el proyecto no declara ninguno (DL8). Si un ordenador tiene plugins de usuario (el segundo tiene `superpowers`), Claude puede comportarse distinto en cada uno.
 - [ ] **C2 · Cifras para la presentación** (sección 2) · **IA**. Número de tests (unitarios y de API), cobertura (B14), auditorías pasadas y hallazgos corregidos (contados en la bitácora), commits y bloques cerrados.
 - [ ] **C3 · Actividad simulada declarada** (sección 7) · **IA + D**. Una frase en el README y en el guion de la demo diciendo que la actividad de las cuentas `@demo.test` es simulada.
 - [ ] **C4 · Entrada de bitácora del paso C** · **IA**.
@@ -759,5 +787,5 @@ Mandan sobre la sección 10 donde difieran:
 ### Sin ver
 
 - El código de `server/` y `client/` (solo se buscaron las referencias a `docs/` y `CLAUDE.md`, y las claves de `env.ts`).
-- El contenido de `.git/codex-t13/` (DL3, B5): siete archivos, entre ellos dos registros (`dev.log` y `run-2.log`, de 418 KB) que hay que revisar por si tienen datos privados antes de decidir DL3.
+- El contenido de `.git/codex-t13/` (DL3, B5): siete archivos, entre ellos dos registros (`dev.log` y `run-2.log`, de 418 KB) que hay que revisar por si tienen datos privados antes de decidir DL3. Corregido en B5 (14-nov): son nueve; solo se suben los dos encargos.
 - Los encargos E2–E4, si ya están escritos fuera de `.claude/encargos/`.
