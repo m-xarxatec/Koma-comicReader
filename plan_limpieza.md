@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-11-13. **Base revisada:** commit `d62ba1d` (copia del repositorio en el segundo ordenador).
 - **Estado:** versión definitiva, aprobada por el desarrollador el 2026-11-13 para ejecutarse. Lo aplicado está marcado en la sección 10; las condiciones de la ejecución, en la sección 12.
-- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1, DL2, DL6, DL7 y DL10–DL13 resueltas; DL3–DL5, DL8 y DL9 siguen abiertas (sección 9).
+- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1–DL8 y DL10–DL13 resueltas; DL9 sigue abierta (sección 9).
 - **Objetivo:** que el harness de Claude Code (CLAUDE.md, agentes, skills, hooks, permisos) sea más eficiente, deje el código limpio, impida modificar los tests existentes, exija tests nuevos en cada funcionalidad y se pueda enseñar en la entrega del curso.
 - **Si eres un agente:** antes de actuar, lee la sección 11 («Instrucciones para el agente») entera. Las tareas están en la sección 10. La sección 12 corrige con datos reales lo que las secciones 1–9 suponían: si chocan, manda la 12.
 
@@ -281,7 +281,7 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 | DL2 | ¿CI con GitHub Actions (carpeta nueva `.github/`)? | Sí. **Resuelta el 14-nov:** sí (B7) |
 | DL3 | ¿Se pasan a `.claude/encargos/` el encargo y los registros de `.git/codex-t13/`? | Sí, si no tienen datos privados. **Resuelta el 14-nov:** sí, solo el encargo; los registros no (B5) |
 | DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí. **Resuelta el 15-nov:** sí, con condiciones: la raíz se queda con lo común, lo dudoso y el árbol entero, en 150 líneas como máximo; la «Guía» y la definición de terminado de `plan_mvp.md` (manda la de `CLAUDE.md`) se cambian con permiso aparte (B9) |
-| DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo |
+| DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo. **Resuelta el 15-nov:** después de la congelación (B13 aplazada) |
 | DL6 | ¿Se activan los avisos de TypeScript de H9? Si aparecen errores, arreglarlos es tocar código de la app | Activarlos y decidir con la lista de errores delante. **Resuelta el 14-nov:** los cuatro activados; se borra el único error, un tipo sin usar (B11) |
 | DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención. **Resuelta el 14-nov:** `Seguridad:` (B10) |
 | DL8 | ¿Se declaran en `.claude/settings.json` los plugins que espera el proyecto? | Sí, si se usan en los dos ordenadores. **Resuelta el 14-nov:** no se declara ninguno; se anota para C1 (B6) |
@@ -633,6 +633,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Comprobación:** typecheck y 193 tests unitarios en verde.
     - **Pendiente para el final:** abrir los enlaces en GitHub tras el primer push.
 - [ ] **B13 · Contratos archivados** (H10) · **IA + DL5**. Mover los contratos de los bloques 1 a 4 a `docs/contratos_cerrados.md` y actualizar las referencias de `CLAUDE.md`. Antes de mover nada, buscar las referencias a esas secciones en `server/src`, `client/src`, `.claude/` y `docs/` y entregar la lista: las que estén en código de la app se preguntan.
+  - 2026-11-15 · DL5 = después de la congelación (decisión del desarrollador). Aplazada: sigue sin marcar y la entrada de B16 la deja como pendiente.
 - [x] **B14 · Cobertura** (H11) · **IA**. Script `test:coverage` en `package.json` (solo en `scripts`) con la medición de cobertura de `node --test`, sin dependencias. Comprobar en la documentación de Node 24 el nombre exacto de la opción. Los tests unitarios solos darán un porcentaje bajo, porque casi todo el código lo cubren los de API: para C2, medir también `test:api` (con Postgres) y decir qué cifra es cuál. Si escribe a disco, añadir `coverage/` al `.gitignore`.
   - El `auditor` comprueba que los scripts de `package.json` son los de la tabla de comandos de `CLAUDE.md`: el script nuevo se añade a esa tabla dentro de una fila existente (no quedan líneas libres) y al README.
   - **Hecho cuando:** se obtiene el porcentaje.
@@ -651,8 +652,11 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
       La última columna cuenta como 0 % los archivos que no se cargan. Se calculó una vez, con un script temporal fuera del proyecto, y en los unitarios se comprobó con el informe lcov (1.779 de 2.509 líneas). La API no carga seis archivos: `server.js`, `migrate.js` y `reset-test-db.js` (corren fuera de los tests) y los tres `demo-*.js` (los cargan los unitarios). Las dos filas no se suman, porque cubren en parte las mismas líneas. Para C2, la cifra útil es la de la API.
     - **Comprobación:** typecheck, `npm test` (193) y `npm run test:api` (310) en verde, con los dos scripts nuevos.
 - [ ] **B15 · Recordatorio de la actividad simulada** (sección 7) · **D**. Cuando se construya (fuera de este plan), usar `/constructor`: primero los tests `Seguridad:` de la guarda.
-- [ ] **B16 · Entrada de bitácora del paso B** · **IA**.
+- [x] **B16 · Entrada de bitácora del paso B** · **IA**.
   - **Debe recoger (decisión del desarrollador, 14-nov):** el desarrollador aprueba el cambio de los tres `assert` de `server/src/tests/api/import-content.test.ts` en `d62ba1d` (10-nov) como cambio de contrato anterior a la regla de «Tests» (`330cd19`, 14-nov). El test no se toca. Es el hallazgo alto del `auditor` de B3.
+  - 2026-11-16 · Entrada «Limpieza del harness, paso B», al final de `docs/bitacora.md`, con la skill `bitacora`. Recoge esa aprobación en «Tests» (los tres `assert.deepEqual` añadieron `chaptersReplaced: 0`, el campo nuevo de `--replace`), las DL del paso, el arreglo de `proteger-secretos` y, como pendientes, B13 (DL5) y B15. El índice de la bitácora no cambia: la entrada cae en la fila «Pulido».
+    - **Comprobación:** sobre `8733ef4`, typecheck, 193 unitarios y 310 de API en verde; `test:api:coverage` da el mismo 96,76 % de B14.
+    - **Corregido:** la línea 5 de este plan daba DL3–DL5 y DL8 como abiertas; ahora solo queda DL9.
 
 ### Paso C · Para la entrega (bloque 6, 20 – 25 nov)
 

@@ -1350,3 +1350,52 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - A9 en Windows (PowerShell solo está probado en Linux), cuando `develop` llegue al portátil;
   - la línea base en GitHub;
   - la maqueta en `.claude/maqueta/` del otro ordenador.
+
+### 2026-11-16 · Pulido · Limpieza del harness, paso B: skills, agentes, CI y orden (`plan_limpieza.md`)
+- **Pedido a la IA:** el paso B del plan de limpieza (B1–B16), del 14 al 16-nov, con las condiciones del paso A: rama `develop`, git solo del desarrollador, nada se sube hasta el final y las DL se preguntan. Orden recomendado: B8 → B10 → B11 → B7 → B1 → B3 → B4 → el resto, con B9 en una sesión propia. Tramo: `0b05786..8733ef4`, 18 commits.
+- **Resultado:**
+  - `CLAUDE.md` (B8 y B9, DL4):
+    - el árbol solo nombra lo que existe (salen `seeds/` y la actividad simulada sin construir; entran `docs/comandos.md` y tres archivos del cliente), con la congelación (20-nov), la entrega (25-nov) y la tabla «Quién hace qué»;
+    - repartido en la raíz (de 158 a 135 líneas), `client/CLAUDE.md` (14) y `server/CLAUDE.md` (36), sin perder ninguna de sus 110 reglas;
+    - la definición de terminado, en una sola fuente, y «Guía para CLAUDE.md» de `plan_mvp.md`, al día.
+  - Avisos de TypeScript (B11, DL6): los cuatro de H9 en los dos `tsconfig.json`. El único error, un tipo sin usar en `demo-data.ts`, se borra.
+  - CI (B7, DL2): `.github/workflows/tests.yml`, con Node 24 y `postgres:18`: typecheck, unitarios y API, con un `.env` de CI sin secretos. Ensayada en un clon limpio.
+  - Seis skills (B1 y B2): `cerrar-bloque`, `bitacora`, `encargo-codex`, `entregar-commit`, `reemplazar-capitulos` y `actividad-simulada`. La plantilla de esta bitácora pasa al formato de las entradas reales.
+  - Agentes y `constructor` (B3 y B4):
+    - el `auditor` lista los `assert` cambiados, los `feat`/`fix` sin test y los tests que pasarían con el código anterior;
+    - los dos agentes, al día con el bloque 5;
+    - `constructor`, con «Test primero» y sin «Modo andamiaje» (de 118 a 40 líneas).
+  - Encargos (B5, DL3): los dos de la home, copiados de `.git/codex-t13/` sin sus registros; `t13-stripe-online.md`, a `.claude/encargos/`.
+  - Índices al principio de `plan_mvp.md` y de esta bitácora (B12); `/cerrar-bloque` completa la fila de cada bloque.
+  - Cobertura (B14): `test:coverage` y `test:api:coverage`.
+- **Tests:**
+  - `claude-tree.test.ts` (B10, DL7): 4 tests `Seguridad:`; cada ruta del árbol de `CLAUDE.md` existe. Visto fallar con el `CLAUDE.md` de antes de B8.
+  - `hooks.test.ts`: 5 tests `Seguridad:` que lanzan `proteger-secretos.mjs` contra secretos falsos. Con el hook de antes, 3 de 5.
+  - En el tramo no cambia ningún test existente: solo entran esos dos archivos nuevos (`git diff --name-status 0b05786..8733ef4 -- server/src/tests`).
+  - Excepción aprobada, anterior a la regla: en `d62ba1d` (10-nov, `--replace` de la importación, RN-18), tres `assert.deepEqual` de `server/src/tests/api/import-content.test.ts` añadieron `chaptersReplaced: 0` al resumen esperado, el campo nuevo de `--replace`; los demás valores no cambian. El desarrollador lo aprobó el 14-nov como cambio de contrato anterior a la regla «Tests» (`330cd19`). El test no se toca.
+- **Revisión (agente `auditor`):** sobre `488a5c4..8396178` (B3), APTO CON OBSERVACIONES.
+  - Su único hallazgo alto son esos tres `assert`, resuelto con la aprobación de arriba.
+  - Ningún `feat`/`fix` sin test.
+  - No pudo pasar `test:api`, porque Postgres estaba parado.
+- **Decisiones del desarrollador:**
+  - DL2, CI sí; DL3, solo los encargos; DL4, partir `CLAUDE.md`, con condiciones; DL6, activar los avisos y borrar el tipo; DL7, `Seguridad:`; DL8, ningún plugin declarado (se anota para C1);
+  - DL5 (15-nov): los contratos de los bloques 1–4 se archivan después de la congelación, así que B13 queda aplazada;
+  - además: se borra el «Modo andamiaje»; la bitácora sigue el formato de las entradas reales; los 9 comentarios del código que citan secciones de `CLAUDE.md` se quedan como están; la cobertura, con dos scripts y dos cifras.
+- **Fallos:**
+  - `proteger-secretos` expandía contra el disco los comodines entre comillas (`sed 's/=.*//'` casaba con `.env`) y fallaba por dentro con rangos al revés (`'[l-i]'`). Bloqueó un comando del `auditor` y un `python3 -c` que validaba YAML.
+  - Los arneses de A5 y A6 vivían en carpetas temporales que ya no existían: no había pruebas a las que añadir casos.
+- **Corrección:**
+  - `shell.mjs` anota las palabras con comodines entre comillas y trata como texto una clase `[…]` inválida. `proteger-secretos` no expande esas palabras en bash, salvo con `$`, en PowerShell o con programas que expanden por su cuenta. Enfoque y diff, aprobados antes.
+  - Antes de aplicarlo, 62 comandos × 2 hooks: cambian 11, todos falsos positivos que dejan de bloquear.
+  - Las pruebas de los hooks pasan al repositorio (`hooks.test.ts`), y con ellas a `npm test` y a la CI.
+- **Aprendizaje:**
+  - Las pruebas de un candado van en el repositorio, no en una carpeta temporal.
+  - Sin reiniciar se cargan los permisos y los hooks (A4–A6), una skill nueva en una carpeta de skills que ya existía (B1), un agente cambiado (B3) y el `CLAUDE.md` de una carpeta al leer uno de sus archivos (B9). Un agente nuevo no se ha probado.
+- **Comprobación (IA):** el 16-nov, sobre `8733ef4`: typecheck en verde, 193 unitarios y 310 de API (`koma_test`). `test:api:coverage`, 96,76 % de líneas, la misma cifra de B14.
+- **Pendiente (desarrollador):**
+  - B13, después de la congelación (DL5), y B15, cuando se construya la actividad simulada;
+  - con el primer push: el verde de la CI y los enlaces de los índices en GitHub, y decidir si Render espera a la CI;
+  - en Windows, los hooks arreglados (en PowerShell, `Select-String -Pattern '.*'` sigue bloqueando, como debe);
+  - ver en el menú `/` las skills que solo lanza el usuario;
+  - de B9, por decidir: la línea 47 de `plan_mvp.md` y la fila «CLAUDE.md» (≤ 150 líneas) de «Decisiones»;
+  - para C1: el falso positivo de un `python3` que solo nombraba `.env` en su texto (B7) y la carga de los `CLAUDE.md` de carpeta en los subagentes, sin probar.
