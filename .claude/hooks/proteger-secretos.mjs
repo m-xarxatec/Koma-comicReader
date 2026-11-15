@@ -57,6 +57,8 @@ const NODE_VALUE_FLAGS = new Set([
   '--watch-path', '--input-type', '--title', '--inspect-port', '--conditions', '-C', '--disable-warning',
 ]);
 const DOCKERS = new Set(['docker', 'docker-compose', 'podman']);
+// Expanden comodines por su cuenta, aunque lleguen entre comillas (find va aparte, con -name y -path).
+const OWN_GLOBS = new Set(['git', 'zip', '7z', '7za', '7zr', 'rsync', 'tar', 'scp']);
 const GLOB_LIMIT = 10000;
 
 const RULE =
@@ -72,6 +74,7 @@ let inlineCode, codePathCandidates, xargsCommand, parseFind, findSelects, walkCo
 
 let projectRoot = '';
 let dotglob = false; // PowerShell: * también encaja con los archivos que empiezan por punto
+let posixQuotes = false; // bash (y Monitor): los comodines entre comillas no se expanden; en PowerShell, sí
 let askOnline = false;
 const violations = [];
 
@@ -139,11 +142,12 @@ function expandGlob(absPattern) {
 }
 
 // Secretos a los que llega una palabra: el archivo, un glob y, si recursive, una carpeta.
-function secretTargets(word, ctx, recursive = false, selects = () => true) {
+// literal: sus comodines no se expanden (iban entre comillas en bash).
+function secretTargets(word, ctx, recursive = false, selects = () => true, literal = false) {
   const found = [];
   for (const { abs, glob } of resolveWord(word, ctx)) {
     let paths = [abs];
-    if (glob) {
+    if (glob && !literal) {
       const { paths: matched, complete } = expandGlob(abs);
       paths = matched;
       if (!complete && SECRET_NAMES.some((n) => globToRegExp(basename(abs)).test(n))) found.push(abs);
@@ -160,8 +164,9 @@ function addFiles(paths, how) {
   for (const p of paths) violations.push({ kind: 'file', label: label(p), how });
 }
 
-// Cualquier palabra que nombre un secreto (también --opcion=ruta y @ruta).
-function mentions(words, ctx, how, isNode) {
+// Cualquier palabra que nombre un secreto (también --opcion=ruta y @ruta). literal[k]: la palabra k solo tiene
+// comodines entre comillas (lex); si además lleva $, se expande igual, porque el valor de una variable sí se expande.
+function mentions(words, ctx, how, isNode, literal = []) {
   for (let k = 0; k < words.length; k++) {
     const w = words[k];
     if (isNode && /^--env-file(-if-exists)?=/.test(w)) continue;
@@ -178,7 +183,8 @@ function mentions(words, ctx, how, isNode) {
     const eq = w.lastIndexOf('=');
     if (eq > 0) candidates.push(w.slice(eq + 1));
     if (w.startsWith('@')) candidates.push(w.slice(1));
-    for (const c of candidates) addFiles(secretTargets(c, ctx), how);
+    const asText = literal[k] === true && !w.includes('$');
+    for (const c of candidates) addFiles(secretTargets(c, ctx, false, undefined, asText), how);
   }
 }
 
@@ -247,7 +253,8 @@ const rules = {
       }
       return;
     }
-    mentions(rest.slice(1), ctx, p, p === 'node');
+    const literal = posixQuotes && !OWN_GLOBS.has(p) ? seg.literal.slice(seg.words.length - rest.length + 1) : [];
+    mentions(rest.slice(1), ctx, p, p === 'node', literal);
   },
   redirect(r, ctx) {
     if (r.op !== '<<<') addFiles(secretTargets(r.target, ctx), `redirección ${r.op}`);
@@ -498,6 +505,7 @@ async function main() {
   const cwd = absolute(process.cwd(), typeof input.cwd === 'string' && input.cwd ? input.cwd : process.cwd());
   projectRoot = absolute(cwd, process.env.CLAUDE_PROJECT_DIR || path.resolve(import.meta.dirname, '..', '..'));
   dotglob = tool === 'PowerShell';
+  posixQuotes = tool !== 'PowerShell';
 
   if (FILE_TOOLS.has(tool)) {
     const filePath = toolInput.file_path ?? toolInput.notebook_path;

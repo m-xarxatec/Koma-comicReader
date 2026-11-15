@@ -92,11 +92,11 @@ export function globToRegExp(pattern, slashAware = true) {
       re += slashAware ? '[^/]' : '.';
     } else if (c === '[') {
       const end = pattern.indexOf(']', i + 2);
-      if (end === -1) {
-        re += '\\[';
+      let cls = end === -1 ? '' : pattern.slice(i + 1, end).replaceAll('\\', '\\\\');
+      if (cls.startsWith('!')) cls = `^${cls.slice(1)}`;
+      if (end === -1 || !validClass(cls)) {
+        re += '\\['; // sin cierre, o una clase que no vale (un rango al revés, como l-i): el corchete es texto
       } else {
-        let cls = pattern.slice(i + 1, end).replaceAll('\\', '\\\\');
-        if (cls.startsWith('!')) cls = `^${cls.slice(1)}`;
         re += `[${cls}]`;
         i = end;
       }
@@ -105,6 +105,15 @@ export function globToRegExp(pattern, slashAware = true) {
     }
   }
   return new RegExp(`^${re}$`, IS_WINDOWS ? 'i' : '');
+}
+
+function validClass(cls) {
+  try {
+    new RegExp(`[${cls}]`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // abs y sus carpetas antepasadas, sin llegar a stop.
@@ -315,6 +324,7 @@ function matchingParen(src, open) {
   return src.length;
 }
 
+// seg.literal[k]: la palabra k tiene comodines, pero todos entre comillas o escapados (bash no los expande).
 export function lex(src) {
   const segments = [];
   const substitutions = [];
@@ -322,9 +332,11 @@ export function lex(src) {
   let pipeline = 0;
   let word = '';
   let inWord = false;
+  let quotedGlob = false;
+  let bareGlob = false;
   let pendingRedirect = null;
   let pendingHeredoc = null;
-  const newSegment = () => ({ words: [], redirects: [], heredocs: [], pipeline });
+  const newSegment = () => ({ words: [], literal: [], redirects: [], heredocs: [], pipeline });
   let seg = newSegment();
 
   const endWord = () => {
@@ -337,9 +349,12 @@ export function lex(src) {
       pendingHeredoc = null;
     } else {
       seg.words.push(word);
+      seg.literal.push(quotedGlob && !bareGlob);
     }
     word = '';
     inWord = false;
+    quotedGlob = false;
+    bareGlob = false;
   };
   const endSegment = (samePipeline) => {
     endWord();
@@ -391,6 +406,7 @@ export function lex(src) {
       const e = src.indexOf("'", i + 1);
       const end = e === -1 ? src.length : e;
       word += src.slice(i + 1, end);
+      if (/[*?[]/.test(src.slice(i + 1, end))) quotedGlob = true;
       inWord = true;
       i = end;
     } else if (c === '"') {
@@ -411,6 +427,7 @@ export function lex(src) {
           j = end;
         } else {
           word += d;
+          if ('*?['.includes(d)) quotedGlob = true;
         }
       }
       i = j;
@@ -419,6 +436,7 @@ export function lex(src) {
         i++;
       } else if (n !== undefined && ' \t\'"\\$`;&|<>()#*?[]{}~!'.includes(n)) {
         word += n;
+        if ('*?['.includes(n)) quotedGlob = true;
         inWord = true;
         i++;
       } else {
@@ -507,6 +525,7 @@ export function lex(src) {
       endSegment(false);
     } else {
       word += c;
+      if ('*?['.includes(c)) bareGlob = true;
       inWord = true;
     }
   }
