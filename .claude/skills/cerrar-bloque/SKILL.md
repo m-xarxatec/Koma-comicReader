@@ -46,6 +46,7 @@ Una tabla con cada punto de «Un bloque está cerrado solo cuando»:
 
 - **`CLAUDE.md`:** la línea «Bloque actual» pasa al bloque siguiente de «Calendario», con el mismo formato (empieza por `- Bloque actual:`, que lee el hook `inicio-sesion`). Revisa también el árbol (lo vigila `claude-tree.test.ts`), la tabla de comandos frente a `package.json` y «Quién hace qué».
 - **Bitácora:** la entrada «Cierre del bloque», con la skill `bitacora`, la tabla del paso 5 y lo manual pendiente.
+- **Índice de la bitácora** (la tabla de «## Índice», al principio de `docs/bitacora.md`): en la fila del bloque, las fechas cerradas y el enlace a su primera entrada (si falta) y a la de cierre; después, una fila para el bloque siguiente, con «desde el <fecha>» y «—», que completará su propio cierre. El ancla es el título de la entrada en minúsculas, sin puntuación (`·`, `:`, paréntesis, comillas…) y con cada espacio cambiado por `-`, como en las filas que ya hay. Ningún otro cambio en la bitácora.
 
 ## 7. Entrega
 
