@@ -559,10 +559,52 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Sin pérdidas:** no se quita ninguna regla. La tabla de comandos coincide con los scripts de `package.json`.
     - **Líneas:** 158. Por decisión del desarrollador se pasa de 150 hasta B9, que deja la raíz en 150 o menos; si DL4 sale que no, se recorta entonces. «Guía para CLAUDE.md» no tiene «Quién hace qué» ni «Tests» (B9).
     - **Comprobación:** typecheck y 184 tests en verde; `inicio-sesion` sigue leyendo «Bloque actual».
-- [ ] **B9 · `CLAUDE.md` reorganizado** (H7) · **IA + DL4**. Raíz con lo común y 150 líneas como máximo; `client/CLAUDE.md` con las reglas del cliente; `server/CLAUDE.md` con las del servidor y las trampas. La «Definición de terminado» queda en una sola fuente. Además:
+- [x] **B9 · `CLAUDE.md` reorganizado** (H7) · **IA + DL4**. Raíz con lo común y 150 líneas como máximo; `client/CLAUDE.md` con las reglas del cliente; `server/CLAUDE.md` con las del servidor y las trampas. La «Definición de terminado» queda en una sola fuente. Además:
   - entregar la lista de reglas antes y después, que demuestre que no se pierde ninguna;
   - avisar de los 9 comentarios del código que citan secciones de `CLAUDE.md` (cambiarlos es código de la app: preguntar);
   - proponer el cambio de «Guía para CLAUDE.md» en `plan_mvp.md`.
+  - 2026-11-15 · DL4 = sí, con condiciones (decisión del desarrollador, sección 9). La raíz pasa de 158 a 135 líneas; `client/CLAUDE.md` tiene 14 y `server/CLAUDE.md`, 36.
+    - **Raíz:**
+      - «Proyecto», con una línea nueva que dice qué hay en los `CLAUDE.md` de las carpetas;
+      - «Comandos», «Tests», «Quién hace qué», «No haremos», «Seguridad obligatoria», «Cuándo leer `docs/`» y «Definición de terminado»;
+      - «Estructura»: el árbol entero, con una línea nueva para los tres `CLAUDE.md`, y tres reglas de arquitectura comunes;
+      - «Convenciones» comunes: idiomas, valores numéricos con zod como fuente de verdad, y git y commits;
+      - «Trampas conocidas» comunes: ESM.
+    - **`server/CLAUDE.md`:**
+      - «Recorrido de una petición», con los drivers y `syncSubscription`;
+      - «Convenciones» del servidor: BD, auditoría, errores, `requestId`, `ILIKE` y redirecciones;
+      - «Trampas conocidas»: Express 5, zod 4, Stripe, R2, `trust proxy`, bcrypt, Neon y Render.
+    - **`client/CLAUDE.md`:**
+      - «Convenciones» del cliente: peticiones, `bindForm`, `store`, sesión, `localStorage`, HTML semántico, CSS y `#v-n`;
+      - «Trampas conocidas»: sin bundler.
+    - **Desvíos aprobados** (ante la duda, a la raíz):
+      - «Convenciones» comunes en la raíz;
+      - ESM en la raíz y «sin bundler» en el cliente;
+      - tres reglas de arquitectura en «Estructura».
+    - **Retoques aprobados:** «este archivo» pasa a «los `CLAUDE.md`» (líneas 77 y 78) y a «un `CLAUDE.md`» (línea 138).
+    - **Sin pérdidas:** la tabla de 110 reglas se aprobó antes de editar. Sobre los archivos reales:
+      - 118 líneas están idénticas en un solo archivo;
+      - las 7 cambiadas (59, 77, 78, 95, 100, 103 y 138) tienen sus 17 fragmentos en su destino;
+      - ninguna está duplicada: el separador `| --- | --- |` de las dos tablas de la raíz ya estaba dos veces.
+    - **Referencias:**
+      - Los hooks y `settings.json` solo citan «Tests» y «Bloque actual», que siguen en la raíz: no se tocan.
+      - `auditor`, `frontend`, `constructor` y `encargo-codex` leen los tres `CLAUDE.md` (10 líneas, diff aprobado).
+      - Los 9 comentarios del código se quedan como están (decisión del desarrollador): 6 citan secciones de la raíz y 3, la sección del mismo nombre en el `CLAUDE.md` de su carpeta. `layout.test.ts:136` es un test existente.
+    - **`.dockerignore`:** se añade `**/CLAUDE.md` y no se quita ninguna línea.
+    - **`plan_mvp.md`** (diff aprobado aparte):
+      - «Guía para CLAUDE.md», con los tres archivos y el orden real de la raíz;
+      - la definición de terminado, en una sola fuente, `CLAUDE.md`. La copia del plan difería en tres puntos y ninguno faltaba en `CLAUDE.md`. Se mantienen los dos títulos, que cita el índice;
+      - las antiguas líneas 1362 (los encargos dejan fuera los tres `CLAUDE.md`) y 1542 (adónde van las trampas).
+    - **Prueba de carga:** hecha en esta sesión, por decisión del desarrollador, y no en una nueva. Al leer `client/src/components/ad.ts` se cargó `client/CLAUDE.md`; al leer `server/src/config/limits.ts`, `server/CLAUDE.md`.
+    - **Comprobación:**
+      - typecheck y 193 tests unitarios en verde;
+      - `claude-tree.test.ts`, en verde: ahora comprueba también los dos archivos nuevos;
+      - `inicio-sesion` sigue leyendo «Bloque actual».
+    - **Queda por decidir:**
+      - En `plan_mvp.md`, la línea 47 («la fuente del CLAUDE.md») ya no es exacta para la definición de terminado.
+      - En `plan_mvp.md`, la fila «CLAUDE.md» de «Decisiones» (≤ 150 líneas) es histórica y no se ha tocado.
+      - La línea 5 de este plan da DL3 y DL8 como abiertas, pero se resolvieron el 14-nov.
+      - La carga en subagentes no se ha probado: `auditor` y `frontend` leen los tres `CLAUDE.md` porque se lo dice su archivo.
 - [x] **B10 · Test del árbol de `CLAUDE.md`** (H6) · **IA + DL7**. Archivo **nuevo** en `server/src/tests/unit/` que comprueba que cada ruta del árbol de `CLAUDE.md` existe.
   - **Hecho cuando:** falla si se nombra un archivo inexistente y pasa con el árbol corregido de B8.
   - **Cuidado:** `CLAUDE.md` documenta por adelantado lo ya aprobado (hoy, la actividad simulada). El test tiene que convivir con eso: o el árbol solo nombra lo que existe, o el test admite una lista corta y explícita de «pendientes». Preguntar cuál.

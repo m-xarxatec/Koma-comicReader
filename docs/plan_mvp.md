@@ -1359,7 +1359,7 @@ El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude
 | E4 | Conjunto: cabecera, pie, «Comunidad», portada (banner del hero, D6), ficha («Descubrir Premium», D4), lector, perfil, auth y errores, con el repaso de los valores de la maqueta frente a los tokens |
 
 - **Orden:** E1 → E2 → E3 → E4. E4 va el último porque es el único que puede cambiar tokens compartidos, con una lista cerrada; E1–E3 solo añaden tokens con el prefijo de su página.
-- **Fuera de todos los encargos:** `server/` (salvo `server/src/tests/api/pages.test.ts`, justificado), `client/src/services/`, `client/src/utils/`, `docs/`, `CLAUDE.md` y `package.json`. `layout.ts`, solo en E4. En el TS, solo clases y presentación, nunca el flujo; el HTML semántico que comprueban los tests (ids, `data-*`, `role="status"`, un solo `h1`) se mantiene.
+- **Fuera de todos los encargos:** `server/` (salvo `server/src/tests/api/pages.test.ts`, justificado), `client/src/services/`, `client/src/utils/`, `docs/`, los tres `CLAUDE.md` (raíz, `client/` y `server/`) y `package.json`. `layout.ts`, solo en E4. En el TS, solo clases y presentación, nunca el flujo; el HTML semántico que comprueban los tests (ids, `data-*`, `role="status"`, un solo `h1`) se mantiene.
 - **Antes de E2**, la IA de este repositorio corrige los seis bajos funcionales de `/admin` anotados en el bloque 4 (D8): el paginador («Página 3 de 2» al vaciarse la última página), los límites escritos a mano en el HTML, `type="email"` sin `noValidate`, «Filtrar» sin `data-needs-js`, «Aprobar» en obras +18 y la entidad en crudo en la auditoría.
 - **Antes de E3**, la IA de este repositorio pasa el estudio del autor al aviso flotante y al `<dialog>` de confirmación de `/admin`, en lugar de los mensajes por sección y de `confirm()` (D2), con el agente `frontend`.
 - **Mascota (D9):** la versión con fondo transparente pasa a WebP (`client/public/icons/koma-mascota-premium.webp`) para premium, y con ella se rehace `koma-og.png` con las mismas medidas, 1200 × 630 (el test de medidas sigue igual).
@@ -1469,25 +1469,11 @@ D10 y D11 no se usaron.
 
 ### Revisión del código generado
 
-Antes de cada commit se revisa el diff con esta lista:
-
-- [ ] Cada ruta nueva tiene el middleware de permisos que le corresponde.
-- [ ] SQL parametrizado; nada concatenado.
-- [ ] Datos de usuario escapados (servidor) o con `textContent` (cliente).
-- [ ] Las acciones sensibles escriben en `audit_log` en la misma transacción.
-- [ ] Sin dependencias, carpetas ni tablas fuera del plan.
+Antes de cada commit se revisa el diff con la lista «Antes de cada commit» de `CLAUDE.md`, «Definición de terminado». Es la única copia: no se repite aquí.
 
 ### Definición de terminado (por bloque)
 
-- [ ] `npm run typecheck` sin errores.
-- [ ] Funciona en local y online.
-- [ ] Tests de sus RN y pruebas de API en verde.
-- [ ] Diff revisado con la lista anterior.
-- [ ] Revisado en móvil (360 px) y escritorio, con teclado.
-- [ ] Sin errores en la consola del navegador ni en los logs.
-- [ ] Sus acciones sensibles aparecen en la auditoría.
-- [ ] Variables nuevas añadidas a `.env.example` y al README.
-- [ ] Entrada del bloque en `docs/bitacora.md`.
+La lista «Un bloque está cerrado solo cuando» de `CLAUDE.md`, «Definición de terminado». Es la única copia: no se repite aquí.
 
 ## Errores: códigos, páginas y depuración
 
@@ -1539,7 +1525,7 @@ Todo error tiene un código HTTP correcto, un `code` estable para el cliente y u
 
 ## Trampas conocidas (versiones actuales)
 
-La IA tiende a escribir patrones antiguos. Estas reglas se copian a CLAUDE.md:
+La IA tiende a escribir patrones antiguos. Estas reglas se copian a `server/CLAUDE.md`, «Trampas conocidas»; la de ESM, que vale también para el cliente, a la del `CLAUDE.md` de la raíz:
 
 - **Express 5:** comodines con nombre (`/*splat`, no `*`); `req.query` es de solo lectura (lo validado va a `res.locals`); los errores `async` se propagan solos.
 - **zod 4:** usar la API de la v4 (`z.email()`, `error` en lugar de `message`, `z.flattenError()`); no copiar ejemplos de zod 3.
@@ -1627,16 +1613,25 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 
 Instrucciones para `/init` y para revisar el resultado. Los documentos viven en `docs/`: `plan_mvp.md` (este), `ideas_base.md` y `casos_de_uso.md`.
 
-**Objetivo:** un CLAUDE.md de 150 líneas como máximo, en español, con reglas y no con justificaciones. Lo que ya está en `docs/` se enlaza, no se copia.
+**Objetivo:** reglas en español, sin justificaciones; lo que ya está en `docs/` se enlaza, no se copia. Tres archivos, y cada regla en uno solo:
 
-**Secciones, en este orden:**
+- `CLAUDE.md` (raíz): lo común, 150 líneas como máximo. Una regla que vale para las dos carpetas, o de la que se duda, va aquí.
+- `client/CLAUDE.md` y `server/CLAUDE.md`: lo que solo hace falta al tocar esa carpeta. Claude Code los carga al leer archivos de ella.
 
-1. **Proyecto:** una frase del objetivo del MVP, fecha de congelación (20-nov) y bloque actual.
-2. **Comandos:** la tabla de "Proyecto y comandos".
-3. **Estructura:** árbol de carpetas del MVP (sin las de fases 2–3) y el flujo routes → schema → controller → service → repository.
-4. **No haremos:** la columna "No haremos" completa, más "no crear nada de fases 2 y 3".
-5. **Convenciones:** las de este plan, incluidos idiomas, commits con RN y escape de datos.
-6. **Trampas conocidas:** la sección completa.
-7. **Seguridad obligatoria:** permisos desde la BD en cada petición, SQL parametrizado, auditoría en la misma transacción, CSRF por `Origin`, sin datos sensibles en la auditoría.
-8. **Cuándo leer `docs/`:** antes de tocar una regla, leer su RN en `plan_mvp.md`; antes de una tabla, el modelo de datos; antes de una ruta, el mapa de rutas y el contrato del bloque; antes de un CU, `casos_de_uso.md`. Si algo no está especificado, preguntar antes de implementarlo.
-9. **Definición de terminado:** las listas de revisión del diff y de terminado.
+**Raíz, en este orden:**
+
+1. **Proyecto:** una frase del objetivo del MVP, fecha de congelación (20-nov), bloque actual (la línea `- Bloque actual:`, que lee el hook `inicio-sesion`), el stack y qué hay en los `CLAUDE.md` de las carpetas.
+2. **Comandos:** la tabla de "Proyecto y comandos", con los mismos scripts que `package.json`.
+3. **Tests:** dónde van y cómo se nombran, la BD de pruebas, que los tests existentes no se tocan (y su excepción) y test primero.
+4. **Estructura:** árbol de carpetas del MVP (sin las de fases 2–3; lo vigila `claude-tree.test.ts`) y las reglas de arquitectura comunes: un solo servidor y el mapa de rutas, página = HTML + TS y el permiso de lectura en la API.
+5. **Quién hace qué:** agentes, skills, hooks y permisos de `.claude/`.
+6. **No haremos:** la columna "No haremos" completa, más "no crear nada de fases 2 y 3".
+7. **Convenciones:** las comunes: idiomas, valores numéricos (zod como fuente de verdad), git y commits con RN.
+8. **Trampas conocidas:** las que valen para cliente y servidor (ESM).
+9. **Seguridad obligatoria:** permisos desde la BD en cada petición, SQL parametrizado, auditoría en la misma transacción, CSRF por `Origin`, escape de datos de usuario, sin datos sensibles en la auditoría.
+10. **Cuándo leer `docs/`:** antes de tocar una regla, leer su RN en `plan_mvp.md`; antes de una tabla, el modelo de datos; antes de una ruta, el mapa de rutas y el contrato del bloque; antes de un CU, `casos_de_uso.md`. Si algo no está especificado, preguntar antes de implementarlo.
+11. **Definición de terminado:** las listas de revisión del diff y de terminado. Es la única copia: este plan no las repite.
+
+**`server/CLAUDE.md`:** el recorrido routes → schema → controller → service → repository → error-handler, con los drivers y `syncSubscription`; las convenciones del servidor (BD, auditoría, errores, `requestId`, `ILIKE`, redirecciones) y el resto de las trampas conocidas.
+
+**`client/CLAUDE.md`:** las convenciones del cliente (peticiones por `api.ts`, formularios, `store`, sesión, `localStorage`, HTML semántico, CSS y el fragmento `#v-n`) y sus trampas (sin bundler).
