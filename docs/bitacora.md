@@ -2,6 +2,20 @@
 
 Una entrada por bloque, tarea relevante o sesión. Los campos van en este orden; los marcados «si hubo» o «si hay» solo aparecen cuando tienen contenido. Frases cortas, y listas cuando son varias cosas. La skill `bitacora` la escribe con esta plantilla.
 
+## Índice
+
+Las entradas van en orden y agrupadas por bloque. Para verlas todas con su línea: `grep -n '^### ' docs/bitacora.md`. Al empezar un bloque nuevo, se añade su fila.
+
+| Bloque | Fechas | Entradas |
+| --- | --- | --- |
+| Bloque 0 | 30-oct | [Planificación](#2026-10-30--bloque-0--planificación) |
+| Bloque 1 | 1 – 2 nov | [primera](#2026-11-01--bloque-1--demo-local-en-la-lan-de-confianza-andamiaje-fase-b) · [cierre](#2026-11-02--bloque-1--cierre-del-bloque) |
+| Bloque 2 | 2 – 4 nov | [primera](#2026-11-02--bloque-2--base-visual-de-la-maqueta-tokens-cabecera-pie-errores-y-auth) · [cierre (T18)](#2026-11-04--bloque-2--t18-cierre-del-bloque) |
+| Bloque 3 | 4 – 8 nov | [primera](#2026-11-04--bloque-3--contrato-de-la-api-borrador) · [cierre (T12)](#2026-11-08--bloque-3--t12-cierre-del-bloque) |
+| Bloque 4 | 8 – 10 nov | [primera](#2026-11-08--bloque-4--contrato-de-la-api-borrador) · [cierre (T15)](#2026-11-09--bloque-4--t13-online-t14-recortada-y-t15-cierre-del-bloque) |
+| Bloque 5 | 10-nov | [primera](#2026-11-10--bloque-5--documentación-aprobada-y-cu-39-estadísticas-globales-rn-20) · [cierre](#2026-11-10--bloque-5--cierre-del-bloque) |
+| Pulido | desde el 10-nov | [primera](#2026-11-10--pulido--informe-aprobado-y-documentación) |
+
 ## Plantilla
 
 ### AAAA-MM-DD · Bloque N (o Pulido) · Tarea

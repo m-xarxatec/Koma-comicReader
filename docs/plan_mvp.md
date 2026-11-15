@@ -2,6 +2,36 @@
 
 Oct 30, 2026 · @M3 · Revisado tras `informe_auditoria2.md` (decisiones aprobadas el 30-oct).
 
+## Índice
+
+Cada sección (`##`) con su enlace y, tras los dos puntos, sus subsecciones (`###`). Para leer solo un tramo: `grep -n '^##' docs/plan_mvp.md` da la línea de cada título.
+
+1. [Objetivo del MVP](#objetivo-del-mvp)
+2. [Priorización por fases](#priorización-por-fases): Fase 1 — MVP; Fase 2 · bloque 5; Fase 2 — si sobra tiempo antes de la entrega; Fase 3 — ampliación posterior
+3. [Qué haremos y qué no haremos](#qué-haremos-y-qué-no-haremos)
+4. [Limitaciones tecnológicas](#limitaciones-tecnológicas)
+5. [Modelo de permisos](#modelo-de-permisos)
+6. [Reglas de negocio](#reglas-de-negocio): Lectura; Contenido; Comunidad y cuentas
+7. [Registro de auditoría y reversión](#registro-de-auditoría-y-reversión)
+8. [Contenido desde directorios](#contenido-desde-directorios)
+9. [Frontend: HTML, CSS y TypeScript](#frontend-html-css-y-typescript): HTML semántico por caso de uso; CSS responsivo sin framework; TypeScript en el cliente
+10. [Backend y despliegue](#backend-y-despliegue): Proyecto y comandos; Recorrido de una petición; Decisiones del servidor; Variables de entorno
+11. [Entornos de despliegue](#entornos-de-despliegue)
+12. [Modelo de datos del MVP](#modelo-de-datos-del-mvp)
+13. [Mapa de rutas HTML](#mapa-de-rutas-html)
+14. [Contrato de la API del bloque 1](#contrato-de-la-api-del-bloque-1)
+15. [Contrato de la API del bloque 2](#contrato-de-la-api-del-bloque-2)
+16. [Contrato de la API del bloque 3](#contrato-de-la-api-del-bloque-3): Comentarios por viñeta; Compartir viñeta e iconos; Perfil; Obras del autor; Capítulos y viñetas; Vista previa del dueño y del admin; Panel del autor; Páginas; Errores de las subidas
+17. [Contrato de la API del bloque 4](#contrato-de-la-api-del-bloque-4): Aprobación de contenido; Moderación de comentarios; Usuarios; Parámetros de lectura; Auditoría; Premium: Checkout, portal y pago simulado; Webhook de Stripe y `syncSubscription`; Seed del bloque 4; Páginas
+18. [Contrato de la API del bloque 5](#contrato-de-la-api-del-bloque-5): Estadísticas globales; Exportación: vista de impresión; Punto de abandono; Open Graph; Enlace de Discord; Decisiones aprobadas
+19. [Pulido (11 – 19 nov)](#pulido-11--19-nov): Pasada de diseño; Reemplazo de capítulos importados; Actividad simulada para la demo; Decisiones aprobadas del pulido
+20. [Convenciones, tests y definición de terminado](#convenciones-tests-y-definición-de-terminado): Convenciones; Tests; Revisión del código generado; Definición de terminado
+21. [Errores: códigos, páginas y depuración](#errores-códigos-páginas-y-depuración): Códigos de estado; Páginas de error; Depuración
+22. [Trampas conocidas (versiones actuales)](#trampas-conocidas-versiones-actuales)
+23. [Calendario hasta el 25 de noviembre](#calendario-hasta-el-25-de-noviembre): Contingencia del 12 de noviembre; Contingencia del 14 de noviembre
+24. [Decisiones](#decisiones)
+25. [Guía para CLAUDE.md](#guía-para-claudemd)
+
 ## Objetivo del MVP
 
 El MVP es un lector de cómics desplegado y usable de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Quedan 26 días (30 oct → 25 nov), así que todo lo que no sostenga ese recorrido pasa a fase 2.
