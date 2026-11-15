@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Encargo: $ARGUMENTS
 
-Fuentes: `CLAUDE.md`; en `docs/plan_mvp.md`, «Pulido» → «Pasada de diseño» (alcance de E1–E4, orden y lo que queda fuera de todos) o el contrato del bloque; como modelo, los encargos de `.claude/encargos/` (`codex-premium.md` es el más reciente). Los encargos antiguos son históricos: no se editan.
+Fuentes: los tres `CLAUDE.md` (raíz, `client/` y `server/`); en `docs/plan_mvp.md`, «Pulido» → «Pasada de diseño» (alcance de E1–E4, orden y lo que queda fuera de todos) o el contrato del bloque; como modelo, los encargos de `.claude/encargos/` (`codex-premium.md` es el más reciente). Los encargos antiguos son históricos: no se editan.
 
 ## Antes de redactar
 
@@ -25,11 +25,11 @@ Lee los archivos que tocará Codex y los tests que los comprueban, para escribir
 
 `.claude/encargos/codex-<tema>.md`, como los reales:
 
-- **Título** `# Encargo para Codex · <id>: <tema> (Koma, <bloque>)` y **contexto**: el worktree y la rama, qué construir en una frase, que no lee nada fuera del worktree y lo que tiene dentro (`CLAUDE.md`, `docs/`, la maqueta y sus archivos de referencia).
+- **Título** `# Encargo para Codex · <id>: <tema> (Koma, <bloque>)` y **contexto**: el worktree y la rama, qué construir en una frase, que no lee nada fuera del worktree y lo que tiene dentro (los `CLAUDE.md`, `docs/`, la maqueta y sus archivos de referencia).
 - **0. Antes de escribir código:** qué leer, en orden y con la sección exacta; la propuesta que entrega antes de programar, y que espera el OK; si algo choca con `CLAUDE.md` o con el contrato, pregunta.
 - **1. Qué construir:** numerado, con los textos aprobados que no cambian y lo funcional que se mantiene (ganchos `data-*`, roles ARIA, formularios y enlaces sin JS).
 - **2. Alcance de archivos:** «Puedes tocar» y «No toques», archivo por archivo, y la parte de git.
-- **3. Reglas que no se negocian (de `CLAUDE.md`):** solo las que afectan al encargo.
+- **3. Reglas que no se negocian (de los `CLAUDE.md`):** solo las que afectan al encargo.
 - **4. Lo que comprueban los tests:** las aserciones que tiene que mantener, test por test.
 - **5. Comprobación:** su sandbox no tiene red (ni Postgres ni `test:api`); `npm run typecheck`, `npm test` y las búsquedas con `rg` del encargo; lo que comprueba el usuario en el navegador.
 - **6. Entrega:** qué hizo, los archivos, las tablas o listas del encargo, lo que hay que mirar en el navegador, los comandos git y una entrada de bitácora propuesta como texto, sin editar `docs/bitacora.md`.

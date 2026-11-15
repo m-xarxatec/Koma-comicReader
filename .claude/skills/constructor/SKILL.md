@@ -11,7 +11,7 @@ Tarea pedida: $ARGUMENTS
 
 ## Reglas
 
-- `CLAUDE.md` manda; `docs/` es la especificación. Si algo falta o se contradice, para y pregunta. No elijas en silencio.
+- Los `CLAUDE.md` mandan (el de la raíz y, según lo que toque la tarea, `client/CLAUDE.md` y `server/CLAUDE.md`: léelos al planificar); `docs/` es la especificación. Si algo falta o se contradice, para y pregunta. No elijas en silencio.
 - Cada tarea es un cambio pequeño y verificable.
 - Git: `CLAUDE.md`, «Convenciones». Los comandos los entrega la skill `entregar-commit`.
 - Tests: `CLAUDE.md`, «Tests». Un test existente no se toca; si un cambio de contrato aprobado lo exige, para y sigue la excepción que describe esa sección. El hook `proteger-tests` lo bloquea, y solo el usuario lo desbloquea en `.claude/permiso-tests.txt`.
