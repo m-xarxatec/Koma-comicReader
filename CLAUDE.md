@@ -6,6 +6,7 @@
 
 - Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño (encargos E1–E4 de Codex), contenido real y pruebas; sin funciones nuevas, salvo `--replace` de la importación y la actividad simulada (idea 24). Todo en `docs/plan_mvp.md`, «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
+- Reglas por carpeta: `client/CLAUDE.md` (HTML, CSS y TS del cliente) y `server/CLAUDE.md` (recorrido de una petición, convenciones y trampas del servidor). Claude Code los carga al leer archivos de su carpeta; antes de tocar una carpeta, lee su `CLAUDE.md`.
 
 ## Comandos
 
@@ -34,6 +35,7 @@
 
 ```
 ├── package.json · tsconfig.json (referencias) · docker-compose.yml (db, app) · Dockerfile · .dockerignore · docker/initdb/ · .env.example · .env.test · README.md · .claude/ (agentes, skills, hooks y settings.json: ver «Quién hace qué»)
+├── CLAUDE.md · client/CLAUDE.md · server/CLAUDE.md   # reglas comunes · del cliente · del servidor (se cargan al leer archivos de su carpeta)
 ├── server/src/
 │   ├── app.ts · server.ts      # server.ts → server/dist/server.js
 │   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, payments, audit, admin
@@ -56,26 +58,16 @@
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md
 ```
 
-Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, `comics.schema.ts`… `comics.repository.ts`):
-1. `routes`: método, ruta y middlewares (`auth`, `requireAuth`/`requireAdmin`/`requireAuthor`, `rateLimit`, `upload`).
-2. `schema`: zod valida `body`, `params` y `query` → 400; lo validado va a `res.locals`.
-3. `controller`: traduce HTTP ↔ servicio; sin lógica.
-4. `service`: reglas RN y propiedad; lanza solo `AppError`. Si hay auditoría, `withTransaction(async (client) => …)` (`BEGIN`/`COMMIT`; `ROLLBACK` y relanza si falla; `release()` en `finally`) y el mismo `client` para el cambio y para `audit`.
-5. `repository`: único lugar con SQL (parametrizado); recibe como primer parámetro un `Queryable` (`Pool | PoolClient`: `pool` o el `client` de la transacción); convierte snake_case ↔ camelCase.
-6. `error-handler`: decide código y formato de cualquier error.
-
 - Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, y `<!-- @community -->` solo en `home.html`, e inyección de `requestId`), nunca por `express.static`.
 - Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`. Una página solo informativa (`become-author`) no lleva `.ts`.
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
-- Local y online son el mismo código; solo cambian `STORAGE_DRIVER` y `PAYMENTS_DRIVER`. `env.ts` rechaza `PAYMENTS_DRIVER=fake` con `NODE_ENV=production`.
-- Toda novedad de premium pasa por `syncSubscription(subscriptionId)` (RN-04); el driver `fake` llama al mismo servicio.
 
 ## Quién hace qué
 
 | Pieza (`.claude/`) | Qué hace |
 | --- | --- |
-| Agentes `auditor` y `frontend` | Revisan sin modificar archivos: `auditor`, el código frente a este archivo y `docs/`; `frontend`, cada página frente a la maqueta (`.claude/maqueta/`) |
-| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con este archivo y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo; `/reemplazar-capitulos` y `/actividad-simulada` guían esas operaciones del pulido sin ejecutarlas. También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
+| Agentes `auditor` y `frontend` | Revisan sin modificar archivos: `auditor`, el código frente a los `CLAUDE.md` y `docs/`; `frontend`, cada página frente a la maqueta (`.claude/maqueta/`) |
+| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con los `CLAUDE.md` y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo; `/reemplazar-capitulos` y `/actividad-simulada` guían esas operaciones del pulido sin ejecutarlas. También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
 | Hooks (`hooks/`) | `proteger-tests` y `proteger-secretos` bloquean antes de editar o ejecutar · `verificar-al-terminar` no deja cerrar con tests protegidos cambiados ni con `npm test` en rojo · `inicio-sesion` muestra el bloque y `git status` |
 | Permisos (`settings.json`) | deny: secretos, git que escribe y borrar la BD local · ask: `:online`, `psql` y scripts que escriben en la BD · allow: tests, build y lectura de git |
 
@@ -92,29 +84,14 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 ## Convenciones
 
 - Código, tablas, nombres de archivo y rutas de la API en inglés; textos de interfaz, URLs de páginas (`/obra/:slug`, `/leer/:slug/:numero`) y mensajes de error en español.
-- BD en snake_case, JSON en camelCase. Claves `INTEGER GENERATED ALWAYS AS IDENTITY` (`audit_log`: `BIGINT`). Borrado siempre lógico (`deleted_at`, `hidden_at`), salvo viñetas de un capítulo en `draft`. Valores numéricos en constantes o en la tabla `settings`, nunca dispersos.
+- Valores numéricos en constantes o en la tabla `settings`, nunca dispersos. zod en el servidor es la fuente de verdad; el cliente duplica sus constantes de forma explícita.
 - Git y GitHub los maneja solo el usuario. Nunca ejecutes `git add`, `commit`, `push` ni nada que modifique el repositorio; al cerrar cada tarea, entrega los comandos `git add` y `git commit` listos para copiar. Puedes usar `git status` y `git diff` para leer. "Haz un commit" significa "dame los comandos". Commits en español con prefijo y regla: `feat(reading): saldo global (RN-02)`.
-- Acciones de auditoría `entidad.verbo`, solo con los nombres exactos de la tabla de auditoría del plan.
-- Errores: los servicios lanzan solo `new AppError(404, 'NOT_FOUND', 'La obra no existe')`, con los `code` de la tabla del plan. `/api/*` responde JSON `{ code, message, fields?, retryAt?, requestId }`; las páginas responden HTML con el mismo código, nunca 200 con un error.
-- `requestId` (`crypto.randomUUID()`) va en `X-Request-Id`, en cada log, en la auditoría y en la respuesta de error; los scripts generan el suyo.
-- Cliente: peticiones solo por `services/api.ts` (`ApiResult<T>`, nunca lanza por errores HTTP); formularios con `bindForm(form, rules, onSubmit)`; un `store` mínimo por página; sesión desde `GET /api/me`; preferencias de interfaz (advertencias aceptadas, ocultar iconos) en `localStorage` con `try/catch`, nunca permisos ni límites. zod en el servidor es la fuente de verdad; el cliente duplica sus constantes de forma explícita.
-- HTML semántico que se entiende sin JS: `<title>` `Koma` o `<página> · Koma`, un solo `<h1>`, `header`/`nav`/`main`/`footer`, enlace "Saltar al contenido", `lang="es"`, `loading="lazy"` salvo en las imágenes de la primera pantalla, `<link rel="icon" href="/icons/favicon.svg">`.
-- CSS mobile-first (`min-width: 40rem` y `64rem`), BEM, un archivo por componente, todo valor visual en `variables.css` (el diseño lo sustituye sin tocar HTML, TS ni componentes; única excepción: el `<meta name="theme-color">` de `layout.ts`, que repite `--color-bg` y un test lo compara) y `z-index` en `layers.css`, solo tema oscuro (`color-scheme: dark`, sin tema claro: es una plataforma de lectura), fuentes del sistema, `:focus-visible` y áreas táctiles de 44 px.
-- `ILIKE` escapa `%` y `_`; el orden dinámico usa lista blanca de columnas. Antes de redirigir al login, el cliente guarda el fragmento `#v-n`.
-- Las redirecciones internas son relativas (`Location: /ruta`); `APP_URL` solo se usa para URLs absolutas que salen de la app: retorno de Stripe y meta Open Graph (`og:url`, `og:image`).
+- Las del cliente, en `client/CLAUDE.md`; las del servidor, en `server/CLAUDE.md`.
 
 ## Trampas conocidas
 
-- **Express 5:** comodines con nombre (`/*splat`, no `*`); `req.query` es de solo lectura (lo validado va a `res.locals`); los errores `async` se propagan solos.
-- **zod 4:** API de la v4 (`z.email()`, `error` en lugar de `message`, `z.flattenError()`); no copiar ejemplos de zod 3.
 - **ESM:** sin `__dirname` ni `require`; `import.meta.dirname` e imports con extensión `.js`, también en el cliente.
-- **Sin bundler:** nada de `node_modules` (zod incluido) llega al cliente; `tsc` no copia CSS ni HTML (viven ya en `client/public/`).
-- **Stripe:** `apiVersion` fijada en el constructor; `current_period_end` está en `subscription.items.data[0]`, no en la suscripción; el webhook usa `express.raw()` registrado antes de `express.json()`.
-- **R2 con AWS SDK v3:** `region: 'auto'`, endpoint `https://<account>.r2.cloudflarestorage.com`, `requestChecksumCalculation: 'WHEN_REQUIRED'` y `responseChecksumValidation: 'WHEN_REQUIRED'`.
-- **`trust proxy`:** número de saltos (`TRUST_PROXY`), nunca `true` (RN-13).
-- **bcrypt:** límite de 72 bytes (`Buffer.byteLength`), no caracteres (RN-12).
-- **Neon:** SSL obligatorio con `sslmode=verify-full` (con `require`, `pg` 8 avisa de que cambiará en la v9); migrar por la conexión directa, no la agrupada (`-pooler`).
-- **Render:** build con `npm ci --include=dev` o falta `typescript`; disco efímero (imágenes en R2); sin *pre-deploy*: las migraciones corren al arrancar.
+- Las del cliente, en `client/CLAUDE.md`; las del servidor (Express 5, zod 4, Stripe, R2, `trust proxy`, bcrypt, Neon y Render), en `server/CLAUDE.md`.
 
 ## Seguridad obligatoria
 
@@ -135,7 +112,7 @@ Recorrido de una petición (archivos `<módulo>.<capa>.ts`: `comics.routes.ts`, 
 - Antes de añadir una dependencia, carpeta o módulo → stack y estructura en `docs/ideas_base.md`; cada idea aprobada lleva su fase.
 - Errores, auditoría, importación de `content/` y variables de entorno → su sección en `docs/plan_mvp.md`.
 - **Si algo no está especificado, preguntar antes de implementarlo.**
-- Si este archivo y `docs/` se contradicen, avisar y preguntar; no elegir en silencio.
+- Si un `CLAUDE.md` y `docs/` se contradicen, avisar y preguntar; no elegir en silencio.
 
 ## Definición de terminado
 

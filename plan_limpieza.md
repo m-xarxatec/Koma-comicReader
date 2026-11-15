@@ -280,7 +280,7 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 | --- | --- | --- |
 | DL2 | ¿CI con GitHub Actions (carpeta nueva `.github/`)? | Sí. **Resuelta el 14-nov:** sí (B7) |
 | DL3 | ¿Se pasan a `.claude/encargos/` el encargo y los registros de `.git/codex-t13/`? | Sí, si no tienen datos privados. **Resuelta el 14-nov:** sí, solo el encargo; los registros no (B5) |
-| DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí |
+| DL4 | ¿Se parte `CLAUDE.md` en raíz + `client/` + `server/`, y se actualiza «Guía para CLAUDE.md» de `plan_mvp.md`? | Sí. **Resuelta el 15-nov:** sí, con condiciones: la raíz se queda con lo común, lo dudoso y el árbol entero, en 150 líneas como máximo; la «Guía» y la definición de terminado de `plan_mvp.md` (manda la de `CLAUDE.md`) se cambian con permiso aparte (B9) |
 | DL5 | ¿Se archivan los contratos de los bloques 1 a 4 en `docs/contratos_cerrados.md`? | Sí, después de la congelación o si sobra tiempo |
 | DL6 | ¿Se activan los avisos de TypeScript de H9? Si aparecen errores, arreglarlos es tocar código de la app | Activarlos y decidir con la lista de errores delante. **Resuelta el 14-nov:** los cuatro activados; se borra el único error, un tipo sin usar (B11) |
 | DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención. **Resuelta el 14-nov:** `Seguridad:` (B10) |
