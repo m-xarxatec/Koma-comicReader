@@ -19,7 +19,9 @@
     "seed:online": "node --env-file=.env.online server/dist/scripts/seed.js",
     "content:import:online": "node --env-file=.env.online server/dist/scripts/import-content.js",
     "test": "tsc -b && node --test \"server/dist/tests/unit/**/*.test.js\"",
-    "test:api": "tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test \"server/dist/tests/api/**/*.test.js\""
+    "test:api": "tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test \"server/dist/tests/api/**/*.test.js\"",
+    "test:coverage": "tsc -b && node --test --experimental-test-coverage --test-coverage-include=\"server/dist/**\" --test-coverage-exclude=\"server/dist/tests/**\" \"server/dist/tests/unit/**/*.test.js\"",
+    "test:api:coverage": "tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test --experimental-test-coverage --test-coverage-include=\"server/dist/**\" --test-coverage-exclude=\"server/dist/tests/**\" \"server/dist/tests/api/**/*.test.js\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1160.0",

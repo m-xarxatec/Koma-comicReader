@@ -17,8 +17,8 @@
 | `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
 | `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`; `-- --replace <slug>:<n>,…` retira y reimporta capítulos). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm run demo:data` | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es |
-| `npm test` | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras) |
-| `npm run test:api` | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`) |
+| `npm test` (y `test:coverage`) | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras). `test:coverage` añade `--experimental-test-coverage` sobre `server/dist` (sin `tests/`) e imprime la tabla; solo cuenta los archivos que carga algún test |
+| `npm run test:api` (y `test:api:coverage`) | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`). `test:api:coverage`, lo mismo con la cobertura de `test:coverage` |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
 
 - Cuentas demo: `admin@`, `author@`, `premium@`, `reader@demo.test`; contraseñas en `docs/credenciales.local.md` (ignorado por git).

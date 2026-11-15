@@ -250,6 +250,7 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | `npm run typecheck` | Comprobar los tipos |
 | `npm test` | Tests unitarios |
 | `npm run test:api` | Tests de la API (vacía y vuelve a llenar la base `koma_test`) |
+| `npm run test:coverage` · `npm run test:api:coverage` | Lo mismo que `npm test` y `npm run test:api`, con la tabla de cobertura del servidor al final. Solo cuenta los archivos que carga algún test |
 | `npm run migrate` · `npm run seed` | Tablas y datos demo en local |
 | `npm run seed:online` · `npm run content:import:online` (desde el bloque 2) | Lo mismo, hacia la versión online |
 | `npm run content:import -- --replace <obra>:<n>,…` (y `:online`) | Sustituye capítulos ya cargados por los de `content/` (ver «Sustituir capítulos ya cargados») |
