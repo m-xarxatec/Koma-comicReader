@@ -3,11 +3,13 @@ import { requireAdmin, requirePageAdmin } from '../../middlewares/roles.js';
 import { validate } from '../../middlewares/validate.js';
 import { comicParams } from '../comics/comics.schema.js';
 import { commentParams } from '../comments/comments.schema.js';
+import * as illustrations from '../illustrations/illustrations.controller.js';
+import { adminIllustrationsQuery, illustrationParams } from '../illustrations/illustrations.schema.js';
 import { chapterParams } from '../reading/reading.schema.js';
 import * as controller from './admin.controller.js';
 import { adminCommentsQuery, adminUserBody, adminUsersQuery, auditQuery, readingSettingsBody, rejectBody, userParams } from './admin.schema.js';
 
-// Contratos de la API de los bloques 4 y 5 (docs/plan_mvp.md). Se monta en /api/admin, después de `auth`. requireAdmin va en
+// Contratos de la API de los bloques 4, 5 y 6 (docs/plan_mvp.md). Se monta en /api/admin, después de `auth`. requireAdmin va en
 // el router (D1): toda ruta de /api/admin/* exige sesión (401) y rol admin (403) antes de mirar nada más.
 export const adminRouter = Router();
 
@@ -26,6 +28,11 @@ adminRouter.post(
   validate({ body: rejectBody }),
   controller.rejectChapter,
 );
+
+// Ilustraciones de la comunidad (CU-32; RN-22; contrato del bloque 6, D9). La cola de obras no cambia.
+adminRouter.get('/illustrations', validate({ query: adminIllustrationsQuery }), illustrations.listForAdmin);
+adminRouter.post('/illustrations/:id/approve', validate({ params: illustrationParams }, notFound), illustrations.approve);
+adminRouter.post('/illustrations/:id/reject', validate({ params: illustrationParams }, notFound), validate({ body: rejectBody }), illustrations.reject);
 
 // Moderación de comentarios (CU-33; RN-11)
 adminRouter.get('/comments', validate({ query: adminCommentsQuery }), controller.listComments);

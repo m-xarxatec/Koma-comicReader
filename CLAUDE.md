@@ -38,11 +38,11 @@
 ├── CLAUDE.md · client/CLAUDE.md · server/CLAUDE.md   # reglas comunes · del cliente · del servidor (se cargan al leer archivos de su carpeta)
 ├── server/src/
 │   ├── app.ts · server.ts      # server.ts → server/dist/server.js
-│   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, payments, audit, admin
+│   ├── modules/                # auth, users, comics, chapters, reading (RN-01–03, anuncios), comments, illustrations (RN-22), payments, audit, admin
 │   │   └── auth/permissions.ts # ÚNICO archivo con las reglas de permisos
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
-│   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 009_billing)
+│   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 010_illustrations)
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph)

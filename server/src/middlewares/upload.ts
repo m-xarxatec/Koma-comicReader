@@ -1,4 +1,6 @@
+import { rm } from 'node:fs/promises';
 import os from 'node:os';
+import type { ErrorRequestHandler } from 'express';
 import multer from 'multer';
 import { MAX_IMAGE_BYTES } from '../config/limits.js';
 
@@ -15,3 +17,22 @@ export const uploadImage = multer({
   storage: multer.diskStorage({ destination: (_req, _file, cb) => cb(null, os.tmpdir()) }),
   limits: { fileSize: MAX_IMAGE_BYTES, files: 1, fields: 0, parts: 1 },
 }).single('image');
+
+// Ilustraciones de la comunidad (RN-22; contrato del bloque 6): la misma imagen y, a diferencia de las viñetas, hasta
+// tres campos de texto (`title`, `description` y `tags`), que zod valida después. `fieldSize` acota cada texto: la
+// descripción (500 caracteres) y las etiquetas caben de sobra.
+const ILLUSTRATION_TEXT_FIELDS = 3;
+const ILLUSTRATION_FIELD_BYTES = 4 * 1024;
+
+export const uploadIllustration = multer({
+  storage: multer.diskStorage({ destination: (_req, _file, cb) => cb(null, os.tmpdir()) }),
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 1, fields: ILLUSTRATION_TEXT_FIELDS, fieldSize: ILLUSTRATION_FIELD_BYTES, parts: ILLUSTRATION_TEXT_FIELDS + 1 },
+}).single('image');
+
+// Va detrás de lo que sigue a multer en la ruta: si la validación del texto (o cualquier otro paso) falla, el temporal
+// que dejó multer se borra antes de que el error llegue a error-handler.
+export const discardUpload: ErrorRequestHandler = async (err, req, _res, next) => {
+  // Si multer corta la subida (dos archivos, demasiados campos…), ya borró el parcial y `path` puede faltar.
+  if (req.file?.path) await rm(req.file.path, { force: true });
+  next(err);
+};

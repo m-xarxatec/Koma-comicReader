@@ -29,6 +29,10 @@ export const AUDIT_ACTIONS = [
   'comment.delete_own',
   'comment.hide',
   'comment.delete',
+  'illustration.create', // bloque 6 (RN-22)
+  'illustration.approve',
+  'illustration.reject',
+  'illustration.withdraw',
   'subscription.start',
   'subscription.renew',
   'subscription.cancel',
@@ -42,7 +46,7 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 // Tablas que aparecen como entity_type. Es también la lista del filtro de la consulta del admin (CU-40): AuditEntry
 // solo acepta estos valores, así que tsc rechaza auditar una entidad que el filtro no ofrecería.
-export const AUDIT_ENTITY_TYPES = ['users', 'comics', 'chapters', 'comments', 'subscriptions', 'settings', 'tags', 'ads'] as const;
+export const AUDIT_ENTITY_TYPES = ['users', 'comics', 'chapters', 'comments', 'subscriptions', 'settings', 'tags', 'ads', 'illustrations'] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 export interface AuditEntry {

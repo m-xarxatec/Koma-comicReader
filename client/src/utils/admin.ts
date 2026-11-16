@@ -55,6 +55,10 @@ export const AUDIT_ACTIONS = [
   'comment.delete_own',
   'comment.hide',
   'comment.delete',
+  'illustration.create',
+  'illustration.approve',
+  'illustration.reject',
+  'illustration.withdraw',
   'subscription.start',
   'subscription.renew',
   'subscription.cancel',
@@ -74,6 +78,7 @@ export const AUDIT_ENTITY_TYPES = {
   settings: 'Parámetros',
   tags: 'Etiquetas',
   ads: 'Anuncios',
+  illustrations: 'Ilustraciones',
 } as const;
 type AuditEntityType = keyof typeof AUDIT_ENTITY_TYPES;
 

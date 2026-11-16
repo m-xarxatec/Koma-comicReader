@@ -68,3 +68,13 @@ export const READING_SETTINGS_RANGES = {
 
 // Open Graph (contrato del bloque 5): sinopsis de og:description en /obra/:slug, en puntos de código y «…» incluido.
 export const OG_DESCRIPTION_MAX = 200;
+
+// RN-22: ilustraciones de la comunidad (contrato del bloque 6). La imagen sigue RN-10 (MAX_IMAGE_BYTES).
+export const ILLUSTRATION_TITLE_MAX = 100;
+export const ILLUSTRATION_DESCRIPTION_MAX = 500;
+export const ILLUSTRATION_TAGS_MAX = 5; // de 0 a 5
+export const ILLUSTRATION_TAG_MIN = 2; // caracteres de cada etiqueta, ya normalizada
+export const ILLUSTRATION_TAG_MAX = 30;
+export const ILLUSTRATION_PENDING_MAX = 5; // pendientes de revisión por usuario
+export const ILLUSTRATIONS_PAGE_SIZE = 24;
+export const ILLUSTRATION_TOP_TAGS = 30; // etiquetas más usadas que acompañan al tablero

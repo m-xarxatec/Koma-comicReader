@@ -7,15 +7,19 @@ import { SLUG_MAX_LENGTH } from '../../config/limits.js';
 // no sea [a-z0-9] pasa a un guion, sin guiones en los extremos y con SLUG_MAX_LENGTH caracteres como mucho. Si
 // queda vacío (un título solo con signos o en otro alfabeto), `obra`. Cumple el CHECK de comics.slug.
 export function slugify(title: string): string {
-  const base = title
+  const base = toSlug(title).slice(0, SLUG_MAX_LENGTH).replace(/-+$/, '');
+  return base === '' ? 'obra' : base;
+}
+
+// La normalización de RN-09 sin recorte ni valor de respaldo: puede quedar vacía. La reutilizan las etiquetas de las
+// ilustraciones (RN-22).
+export function toSlug(text: string): string {
+  return text
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, SLUG_MAX_LENGTH)
-    .replace(/-+$/, '');
-  return base === '' ? 'obra' : base;
+    .replace(/^-+|-+$/g, '');
 }
 
 // RN-09: si el slug ya existe (también el de una obra retirada, que conserva su URL con 410), `-2`, `-3`…

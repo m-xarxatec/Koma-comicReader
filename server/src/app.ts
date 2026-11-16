@@ -17,6 +17,7 @@ import { authPagesRouter, authRouter } from './modules/auth/auth.routes.js';
 import { chaptersRouter } from './modules/chapters/chapters.routes.js';
 import { comicsPagesRouter, comicsRouter } from './modules/comics/comics.routes.js';
 import { commentsRouter } from './modules/comments/comments.routes.js';
+import { illustrationsRouter } from './modules/illustrations/illustrations.routes.js';
 import { paymentsPagesRouter, paymentsRouter, paymentsWebhookRouter } from './modules/payments/payments.routes.js';
 import { readingPagesRouter, readingRouter } from './modules/reading/reading.routes.js';
 import { usersPagesRouter, usersRouter } from './modules/users/users.routes.js';
@@ -102,6 +103,7 @@ app.use('/api', comicsRouter);
 app.use('/api', chaptersRouter);
 app.use('/api', readingRouter);
 app.use('/api', commentsRouter);
+app.use('/api', illustrationsRouter);
 app.use('/api', paymentsRouter);
 app.use('/api/admin', adminRouter);
 

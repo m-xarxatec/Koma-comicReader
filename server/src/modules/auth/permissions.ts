@@ -124,3 +124,21 @@ export function adminUserChangeProblem(
   if (losesAdmin && isActiveAdmin && activeAdminIds.length <= 1) return 'last_admin';
   return null;
 }
+
+// --- Bloque 6: ilustraciones de la comunidad (RN-22) ---
+
+// Lo que hace falta de una ilustración para decidir sobre ella: de quién es.
+export interface IllustrationOwnership {
+  userId: number;
+}
+
+// RN-22 (D4): publica cualquier cuenta registrada activa (la sesión ya exige cuenta activa), también autores y
+// premium; el admin no publica: modera.
+export function canPublishIllustration(user: PermissionSubject): boolean {
+  return !isAdmin(user);
+}
+
+// RN-22: la retira su dueño o, la de cualquiera, el admin.
+export function canWithdrawIllustration(user: PermissionSubject, illustration: IllustrationOwnership): boolean {
+  return isAdmin(user) || illustration.userId === user.id;
+}

@@ -15,6 +15,7 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 | Bloque 4 | 8 – 10 nov | [primera](#2026-11-08--bloque-4--contrato-de-la-api-borrador) · [cierre (T15)](#2026-11-09--bloque-4--t13-online-t14-recortada-y-t15-cierre-del-bloque) |
 | Bloque 5 | 10-nov | [primera](#2026-11-10--bloque-5--documentación-aprobada-y-cu-39-estadísticas-globales-rn-20) · [cierre](#2026-11-10--bloque-5--cierre-del-bloque) |
 | Pulido | desde el 10-nov | [primera](#2026-11-10--pulido--informe-aprobado-y-documentación) |
+| Bloque 6 | desde el 16-nov | [primera](#2026-11-16--bloque-6--api-de-ilustraciones-rn-22) |
 
 ## Plantilla
 
@@ -1442,3 +1443,13 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - con el primer push, los anclajes del índice de `harness.md` en GitHub;
   - en Windows: los hooks y, en una emergencia, las comillas de `--settings` en PowerShell (también acepta la ruta de un archivo JSON);
   - la estructura de `docs/ideas_base.md` (línea 84) no nombra `harness.md`; el plan no deja tocarla.
+
+### 2026-11-16 · Bloque 6 · API de ilustraciones (RN-22)
+- **Pedido a la IA:** construir el bloque 6 tras aprobar su documentación; primera tarea, la API de «Comunidad» y su revisión por el admin (CU-18 sin reto, CU-32; RN-22; «Contrato de la API del bloque 6»). Antes, `docs/ideas_base.md` (ideas 3 y 25) y la línea «Bloque actual», con permiso expreso.
+- **Resultado:** migración `010_illustrations`; módulo `illustrations` (tablero, publicar, «Mis ilustraciones», retirar) y tres rutas en `/api/admin/illustrations`; `uploadIllustration` y `discardUpload` en `upload.ts`; permisos, límites y las cuatro acciones `illustration.*` (también en `client/src/utils/admin.ts`); `toSlug` sale de `slugify` para las etiquetas.
+- **Tests:** 5 unitarios (`unit/illustrations.test.ts`) y 22 de API (`illustrations`, `admin-illustrations` y `schema-illustrations`), de RN-22, RN-10, RN-15 y `Seguridad:`. Vistos fallar antes: `relation "illustrations" does not exist` y `404 !== 201`. Ningún test existente cambió.
+- **Decisiones del desarrollador:** «todo aprobado, ejecuta»; los 4 tests de D10 se tocarán solo si es estrictamente necesario, con su justificación.
+- **Fallos:** con dos imágenes, `discardUpload` daba 500: multer deja `req.file` sin `path` al cortar la subida. `reset-test-db.js` a mano está denegado por permisos.
+- **Corrección:** `req.file?.path` antes de borrar; los tests de API se lanzan siempre con `npm run test:api`.
+- **Comprobación (IA):** `npm test` (198) y `npm run test:api` (332), en verde; compilan con `tsc -b`.
+- **Pendiente (desarrollador):** confirmar tres elecciones que el contrato no fija: `status` por defecto `pending` en la lista del admin; una pendiente retirada no cuenta para el tope de 5; un campo de texto de más da 400 en `fields.image`. Sin prueba manual (`curl`, navegador) ni migración aplicada en la BD local u online.
