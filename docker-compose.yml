@@ -36,10 +36,12 @@ services:
       PAYMENTS_DRIVER: fake
       STORAGE_DRIVER: local
       STORAGE_LOCAL_DIR: /app/storage
+      TUTORIAL_VIDEOS_DIR: /app/videos # respaldo local de Tutoriales (bloque 6, D13): los <id>.mp4 de ./videos
     ports:
       - "80:3000" # todas las interfaces: accesible desde la LAN
     volumes:
       - ./storage:/app/storage
+      - ./videos:/app/videos:ro
 
 volumes:
   pgdata:

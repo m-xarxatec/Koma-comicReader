@@ -39,6 +39,7 @@ const schema = z
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']),
     CONTENT_DIR: z.string(),
     DISCORD_INVITE_URL: discordInvite.optional(), // sin ella, el pie no muestra el enlace y «Comunidad» sigue en «Próximamente» (D13)
+    TUTORIAL_VIDEOS_DIR: z.string().optional(), // solo local (bloque 6, D13): carpeta con los <id>.mp4 de Tutoriales
 
     STORAGE_DRIVER: z.enum(['local', 'r2']),
     STORAGE_LOCAL_DIR: z.string(),
@@ -67,6 +68,10 @@ const schema = z
     };
     if (env.PAYMENTS_DRIVER === 'fake' && env.NODE_ENV === 'production') {
       ctx.addIssue({ code: 'custom', path: ['PAYMENTS_DRIVER'], message: 'El pago simulado está prohibido en producción' });
+    }
+    // Excepción a «no alojar vídeos» solo para la demo local sin internet: online (https) no se admite.
+    if (env.TUTORIAL_VIDEOS_DIR !== undefined && new URL(env.APP_URL).protocol === 'https:') {
+      ctx.addIssue({ code: 'custom', path: ['TUTORIAL_VIDEOS_DIR'], message: 'El respaldo local de vídeos solo vale en local: no se admite con APP_URL en https' });
     }
     if (env.PAYMENTS_DRIVER === 'stripe') {
       requireVars(['STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'STRIPE_WEBHOOK_SECRET'], 'con PAYMENTS_DRIVER=stripe');

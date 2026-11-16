@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
 import { env, JSON_BODY_LIMIT } from './config/env.js';
+import { TUTORIALS } from './config/tutorials.js';
 import { paths } from './config/paths.js';
 import { pingDatabase } from './db/pool.js';
 import { filesHandler } from './integrations/storage/index.js';
@@ -24,6 +25,7 @@ import { usersPagesRouter, usersRouter } from './modules/users/users.routes.js';
 import { AppError } from './utils/app-error.js';
 import { homeOpenGraph } from './utils/open-graph.js';
 import { sendPage } from './utils/page.js';
+import { createVideosHandler, listTutorials } from './utils/tutorials.js';
 
 // URLs prefirmadas de R2: bucket como subdominio o en la ruta (los mismos orígenes que firma r2.ts).
 const r2Hosts = env.STORAGE_DRIVER === 'r2' ? r2ImageHosts(env.R2_ACCOUNT_ID!, env.R2_BUCKET!) : [];
@@ -33,6 +35,8 @@ const isHttps = new URL(env.APP_URL).protocol === 'https:';
 // /api/auth/*: correo (254), contraseña (72 bytes) y nombre (30) caben de sobra, incluso escritos con
 // escapes \uXXXX. Un cuerpo pequeño acota lo que una petición puede hacer gastar antes de validar.
 const AUTH_BODY_LIMIT = '4kb';
+// Respaldo local de Tutoriales (D13): relativa a la raíz del repositorio, como STORAGE_LOCAL_DIR; null = sin respaldo.
+const tutorialVideosDir = env.TUTORIAL_VIDEOS_DIR ? path.resolve(paths.root, env.TUTORIAL_VIDEOS_DIR) : null;
 
 // Sin `listen` ni migraciones: los tests de API importan `app` y lo levantan con listen(0).
 export const app = express();
@@ -51,6 +55,8 @@ app.use(
         styleSrc: ["'self'"],
         imgSrc: ["'self'", ...r2Hosts],
         connectSrc: ["'self'"],
+        // Tutoriales (D12): los vídeos de YouTube se incrustan solo desde su dominio sin cookies.
+        frameSrc: ['https://www.youtube-nocookie.com'],
         // El navegador aplica form-action también a las redirecciones hacia Stripe.
         formAction: ["'self'", 'https://checkout.stripe.com', 'https://billing.stripe.com'],
         frameAncestors: ["'none'"],
@@ -84,6 +90,8 @@ const serveJs = express.static(paths.clientDistDir, staticOptions);
 app.use('/js', (req, res, next) => (req.path.endsWith('.js') ? serveJs(req, res, next) : next()));
 // Imágenes con URL firmada del driver local (contrato del bloque 2); con r2 no existe y da 404.
 if (filesHandler) app.get('/files/:key', filesHandler);
+// Vídeos locales de Tutoriales (D13): la ruta existe solo con TUTORIAL_VIDEOS_DIR; sin ella, 404.
+if (tutorialVideosDir) app.get('/videos/:file', createVideosHandler(tutorialVideosDir));
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -92,6 +100,11 @@ app.get('/api/health', async (_req, res) => {
     throw new AppError(503, 'SERVICE_UNAVAILABLE', 'La base de datos no responde', { cause: err });
   }
   res.json({ status: 'ok', db: 'ok' });
+});
+
+// Tutoriales (CU-42): lista pública y fija (config/tutorials.ts), con `local` según el respaldo (D13).
+app.get('/api/tutorials', async (_req, res) => {
+  res.json({ tutorials: await listTutorials(TUTORIALS, tutorialVideosDir) });
 });
 
 // Sesión: a partir de aquí, res.locals.user es el usuario de la BD (o null). Va después de los

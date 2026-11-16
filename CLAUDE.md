@@ -44,8 +44,8 @@
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 010_illustrations)
 │   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local)
-│   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan)
-│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph)
+│   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan), tutorials.ts (lista de vídeos, CU-42)
+│   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph), tutorials.ts (lista con respaldo local y `/videos`)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
@@ -67,7 +67,7 @@
 | Pieza (`.claude/`) | Qué hace |
 | --- | --- |
 | Agentes `auditor` y `frontend` | Revisan sin modificar archivos: `auditor`, el código frente a los `CLAUDE.md` y `docs/`; `frontend`, cada página frente a la maqueta (`.claude/maqueta/`) |
-| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con los `CLAUDE.md` y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo; `/reemplazar-capitulos` y `/actividad-simulada` guían esas operaciones del pulido sin ejecutarlas. También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
+| Skills (`skills/`) | Solo las lanza el usuario: `/constructor` construye una tarea o un bloque con los `CLAUDE.md` y `docs/`; `/cerrar-bloque` recorre la definición de terminado; `/encargo-codex` redacta un encargo; `/reemplazar-capitulos` y `/actividad-simulada` guían esas operaciones del pulido sin ejecutarlas. `/anadir-video <enlace>` añade un vídeo a Tutoriales (título y descripción de YouTube). También las usa Claude al cerrar cada tarea: `bitacora` escribe la entrada y `entregar-commit` da los comandos git |
 | Hooks (`hooks/`) | `proteger-tests` y `proteger-secretos` bloquean antes de editar o ejecutar · `verificar-al-terminar` no deja cerrar con tests protegidos cambiados ni con `npm test` en rojo · `inicio-sesion` muestra el bloque y `git status` |
 | Permisos (`settings.json`) | deny: secretos, git que escribe y borrar la BD local · ask: `:online`, `psql` y scripts que escriben en la BD · allow: tests, build y lectura de git |
 

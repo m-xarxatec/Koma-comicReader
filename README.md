@@ -276,6 +276,7 @@ Todas están en `.env.example`, con una nota cada una. Estas son las que cambian
 | `STORAGE_DRIVER` | `local` | `local` | `r2` |
 | `PAYMENTS_DRIVER` | `fake` | `fake` | `stripe` |
 | `DISCORD_INVITE_URL` (opcional) | vacía: sin enlace | vacía o la invitación (sin internet no abre) | la invitación (`https://discord.gg/…`) |
+| `TUTORIAL_VIDEOS_DIR` (opcional) | vacía, o la carpeta con los `<id>.mp4` de Tutoriales | la carpeta con los `<id>.mp4` (respaldo sin internet) | vacía: con HTTPS la app no arranca |
 
 - `JWT_SECRET` y `COOKIE_SECRET`: al menos 32 caracteres aleatorios, distintos en cada entorno.
 - `SEED_*_PASSWORD`: contraseñas de las cuentas demo, de 10 caracteres a 72 bytes. Las locales están en `docs/credenciales.local.md`.

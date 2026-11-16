@@ -1453,3 +1453,19 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** `req.file?.path` antes de borrar; los tests de API se lanzan siempre con `npm run test:api`.
 - **Comprobación (IA):** `npm test` (198) y `npm run test:api` (332), en verde; compilan con `tsc -b`.
 - **Pendiente (desarrollador):** confirmar tres elecciones que el contrato no fija: `status` por defecto `pending` en la lista del admin; una pendiente retirada no cuenta para el tope de 5; un campo de texto de más da 400 en `fields.image`. Sin prueba manual (`curl`, navegador) ni migración aplicada en la BD local u online.
+
+### 2026-11-16 · Bloque 6 · Tutoriales: lista, respaldo local y CSP (CU-42)
+- **Pedido a la IA:** segunda tarea del bloque 6, la parte de servidor de Tutoriales (CU-42; D11–D13 del «Contrato de la API del bloque 6»), tras aprobar las tres elecciones de la tarea anterior.
+- **Resultado:** `config/tutorials.ts` (lista versionada, aún vacía, y los patrones de id y de archivo); `utils/tutorials.ts` (`tutorialsProblem`, `listTutorials` y `createVideosHandler`); en `app.ts`, `GET /api/tutorials`, `GET /videos/:file` solo con `TUTORIAL_VIDEOS_DIR` y `frame-src https://www.youtube-nocookie.com` en la CSP; la variable en `env.ts` (rechazada con `APP_URL` en https), `.env.example` y el README; las dos piezas en «Estructura» de `CLAUDE.md`.
+- **Tests:** 5 unitarios (`unit/tutorials.test.ts`) y 5 de API (`tutorials` y `tutorials-off`), todos `Seguridad:`. Vistos fallar antes: 4 unitarios con las firmas provisionales y los 5 de API con `404 !== 200`. Ningún test existente cambió.
+- **Decisiones del desarrollador:** aprobadas las tres elecciones de la tarea 1 (`status` por defecto `pending`, la pendiente retirada no cuenta y el 400 en `fields.image`).
+- **Comprobación (IA):** `npm test` (203) y `npm run test:api` (337), en verde.
+- **Pendiente (desarrollador):** el título y el enlace de cada vídeo (D11): la lista está vacía. Decidir si la demo en Docker lleva el respaldo (`docker-compose.yml` no monta la carpeta). Sin prueba manual con un `.mp4` real.
+
+### 2026-11-16 · Bloque 6 · Skill `/anadir-video` y los tres primeros tutoriales (CU-42)
+- **Pedido a la IA:** una guía y un comando para añadir vídeos a Tutoriales a partir del enlace (título y descripción automáticos), usarlo con tres enlaces y comprobarlo; y montar la carpeta de respaldo en Docker.
+- **Resultado:** skill `.claude/skills/anadir-video/` (`SKILL.md` con la guía y `anadir-video.mjs`, sin dependencias: oEmbed para el título y el primer párrafo de la descripción, 200 caracteres como mucho); tres vídeos en `config/tutorials.ts`; `TUTORIAL_VIDEOS_DIR: /app/videos` y el volumen `./videos` (solo lectura) en `docker-compose.yml`; `videos` en `.dockerignore`; la skill en «Quién hace qué» de `CLAUDE.md`.
+- **Fallos:** `proteger-secretos` paró un comando que terminaba en `docker compose config -q` (mostraría variables); se repitió sin esa comprobación.
+- **Comprobación (IA):** el script en seco y de verdad: añade a la lista vacía y a una con entradas, omite un vídeo repetido y rechaza un texto que no es enlace y un id inexistente (salida 1). `npm test` (203) y `npm run test:api` (337), en verde.
+- **Pendiente (desarrollador):** bajar los `<id>.mp4` a `./videos`; añadir `/videos/` a `.gitignore`; `docker compose up` con el volumen nuevo, sin probar; `docs/harness.md` no nombra la skill.
+

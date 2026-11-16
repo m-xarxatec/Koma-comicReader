@@ -5,6 +5,7 @@ node_modules
 .env.online
 storage
 content
+videos
 docs/credenciales.local.md
 .claude
 CLAUDE.md
