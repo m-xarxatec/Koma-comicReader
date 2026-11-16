@@ -687,7 +687,9 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Comprobado antes de escribir:** la actividad simulada de la idea 24 no existe (ni `demo-activity*.ts` ni `demo:activity` en `package.json`; solo la skill y su apartado de `plan_mvp.md`). Tampoco hay guion de la demo: el calendario de `plan_mvp.md` lo pone en el bloque 6, y el apartado 9 de `docs/comandos.md` es una lista técnica del día de la presentación.
     - **README:** una frase general tras la línea de `docs/harness.md`. Dice que las cuentas `@demo.test` son de demostración y que sus lecturas, comentarios y estadísticas los generan scripts. Hoy cubre `demo:data`, solo en local, y valdrá para `demo:activity` cuando exista. No dice «por la API» porque `demo:data` escribe por SQL los lectores, sus lecturas y sus comentarios (la API no admite fechas pasadas).
     - **Pendiente (desarrollador):** la frase en el guion de la demo, cuando se escriba en el bloque 6. Al terminarlo, se marca esta tarea.
-- [ ] **C4 · Entrada de bitácora del paso C** · **IA**.
+- [x] **C4 · Entrada de bitácora del paso C** · **IA**.
+  - 2026-11-16 · Entrada «Limpieza del harness, paso C», al final de `docs/bitacora.md`, con la skill `bitacora`. Tramo `4f37c58..7b28895`, más C3 y C4. Recoge C1, C2 y C3 a medias, las decisiones del desarrollador, los dos bloqueos de `proteger-secretos` a la IA (no se rodearon) y la corrección sobre `/hooks`. Como pendientes: la frase del guion (C3), C5, B13, B15, Windows y los anclajes en GitHub. El índice de la bitácora no cambia: la entrada cae en la fila «Pulido».
+    - **Comprobación:** typecheck y 193 tests unitarios en verde.
 - [ ] **C5 · Después de la entrega** (H9) · **D decide**. Partir `author.ts`, `admin.ts` y `reader.ts` con tests delante. No antes del 20-nov salvo aprobación expresa.
 
 ---

@@ -1399,3 +1399,46 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - ver en el menú `/` las skills que solo lanza el usuario;
   - de B9, por decidir: la línea 47 de `plan_mvp.md` y la fila «CLAUDE.md» (≤ 150 líneas) de «Decisiones»;
   - para C1: el falso positivo de un `python3` que solo nombraba `.env` en su texto (B7) y la carga de los `CLAUDE.md` de carpeta en los subagentes, sin probar.
+
+### 2026-11-16 · Pulido · Limpieza del harness, paso C: documentación y cifras (`plan_limpieza.md`)
+- **Pedido a la IA:** el paso C del plan de limpieza (C1–C4; C5 es del desarrollador y va después de la entrega). Se adelanta al 16-nov porque el plan va por delante del calendario. Mismas condiciones que los pasos A y B: rama `develop`, git solo del desarrollador, nada se sube hasta el final y las DL se preguntan. En C2, todas las cifras se cuentan de nuevo; en C3, se comprueba lo que existe antes de escribir. Tramo: `4f37c58..7b28895`, más C3 y C4 sin commit.
+- **Resultado:**
+  - Antes de C1, el cambio pendiente de B16 (punto 5 de la sección 11 del plan), en su propio commit (`6248dc4`), metido en el índice con un parche (`git apply --cached`) para no mezclarlo con C1.
+  - C1: `docs/harness.md`, «Cómo trabajamos con IA»:
+    - el flujo (plan → contrato → `/constructor` con test primero → `frontend` y `auditor` → bitácora → commit del desarrollador → CI) y Codex con sus encargos;
+    - qué hace cada pieza y por qué: los tres `CLAUDE.md`, agentes, skills, hooks, permisos (19 deny, 9 ask y 7 allow, contados en `settings.json`), los tests que vigilan el código y la CI;
+    - cómo desactivar un hook en una emergencia;
+    - 7 ejemplos reales de la bitácora, los límites conocidos y los plugins (DL8).
+    
+    Enlazado desde la línea `docs/` del árbol de `CLAUDE.md` (sigue en 135 líneas) y desde una línea del README.
+  - C2: sección «7. Cifras» de `docs/harness.md`, contada sobre `4ce0396`:
+    - tests: 193 unitarios en 30 archivos y 310 de API en 39; por nombre, 243 `RN-xx` y 260 `Seguridad:`, y las 21 RN tienen al menos un test;
+    - cobertura: API 96,76 % de líneas en los 81 archivos que carga, 86,31 % sobre todo el servidor; unitarios 70,90 % y 26,35 %. Son las mismas de B14, porque el código de la app no ha cambiado;
+    - revisiones: 39 con veredicto en esta bitácora (17 del `auditor` y 22 del `frontend`): 11 APTO, 24 APTO CON OBSERVACIONES y 4 NO APTO, con 218 hallazgos anotados;
+    - 178 commits del 1 al 16-nov; bloques 1 a 5 cerrados, más el 0 de planificación; 91 entradas en la bitácora.
+  - C3, a medias: una frase en el README dice que las cuentas `@demo.test` son de demostración y que su actividad la generan scripts. La actividad simulada de la idea 24 no existe todavía y tampoco hay guion de la demo. La frase sirve hoy para `demo:data` y servirá para `demo:activity`.
+- **Decisiones del desarrollador:**
+  - C1 va en `docs/harness.md` y no en el README. Se enlaza desde `CLAUDE.md` y el README, lo que amplía lo que la sección 11 del plan deja tocar en el README.
+  - «Bloque actual» sigue en «Pulido»: se adelanta el paso C, no el bloque.
+  - Las cifras, en `harness.md`.
+  - C3: la frase general del README, ahora; la del guion, cuando se escriba en el bloque 6. C3 sigue sin marcar.
+- **Fallos:**
+  - `proteger-secretos` paró dos comandos de la IA, un `wc -l docs/*.md` y un `grep -r` desde la raíz, porque los dos tocaban `docs/credenciales.local.md`.
+  - La sección 11 del plan daba `/hooks` como forma de desactivar un hook, pero la documentación oficial dice que es solo de lectura.
+  - El plan pedía «hallazgos corregidos», y la bitácora no siempre separa lo corregido de lo aceptado o aplazado.
+- **Corrección:**
+  - Sin rodear el candado: los dos comandos se repitieron sin el secreto, el primero nombrando los archivos y el segundo con `git grep`, que solo busca en lo versionado.
+  - `harness.md` explica la emergencia con la documentación (consultada el 16-nov): `claude --settings '{"disableAllHooks": true}'` para una sesión, `"disableAllHooks": true` en `.claude/settings.local.json` para el ordenador, o borrar la entrada de un hook. Los permisos siguen activos.
+  - C2 da los hallazgos «anotados» y lo explica. La lista de las 39 revisiones, con su línea, se le pasó al desarrollador para que la compruebe.
+  - Antes de escribir la frase de C3 se leyó `demo-data.ts`: las obras van por la API, pero los lectores, sus lecturas y sus comentarios se escriben por SQL. Por eso la frase no dice «por la API».
+- **Aprendizaje:**
+  - Un comodín o una búsqueda recursiva desde la raíz llegan a `docs/credenciales.local.md`: se nombran los archivos o se busca con `git grep`.
+  - Una cifra para la presentación dice cómo se contó. Si la fuente no permite contarla, se da la que sí se puede contar y se dice.
+  - Lo que el documento afirma sobre el código se comprueba en el código antes de escribirlo.
+- **Comprobación (IA):** typecheck y 193 unitarios en verde tras cada tarea. Con Postgres levantado por el desarrollador, `npm run test:coverage` (193) y `npm run test:api:coverage` (310), en verde. La cifra sobre todo el servidor se calculó con un script fuera del proyecto, que comprobó que el porcentaje de cada archivo cuadra con su número de líneas. Los 11 enlaces relativos de `harness.md` existen, y `claude-tree.test.ts` comprueba la ruta nueva del árbol.
+- **Pendiente (desarrollador):**
+  - C3: la frase en el guion de la demo cuando se escriba (bloque 6), y entonces marcar la tarea;
+  - C5, después de la entrega; B13 y B15, como quedaron en el paso B;
+  - con el primer push, los anclajes del índice de `harness.md` en GitHub;
+  - en Windows: los hooks y, en una emergencia, las comillas de `--settings` en PowerShell (también acepta la ruta de un archivo JSON);
+  - la estructura de `docs/ideas_base.md` (línea 84) no nombra `harness.md`; el plan no deja tocarla.
