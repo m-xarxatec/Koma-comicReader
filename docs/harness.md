@@ -10,6 +10,7 @@ Koma se ha construido con Claude Code como asistente principal y con Codex para 
 4. [Ejemplos reales de la bitácora](#4-ejemplos-reales-de-la-bitácora)
 5. [Límites conocidos](#5-límites-conocidos)
 6. [Plugins](#6-plugins)
+7. [Cifras](#7-cifras)
 
 ## 1. El flujo de una tarea
 
@@ -157,3 +158,23 @@ Además:
 ## 6. Plugins
 
 El proyecto no declara plugins en `.claude/settings.json` (decisión del desarrollador del 14-nov). Los plugins instalados para el usuario sí cambian el comportamiento de Claude: el segundo ordenador tiene `superpowers`, y si el otro no lo tiene, la misma petición puede seguir pasos distintos en cada uno. Antes de trabajar o de presentar, `/plugin` muestra qué hay instalado.
+
+## 7. Cifras
+
+Contadas el 16-nov sobre `4ce0396`, en la rama `develop`. Se repiten con el comando o el método de cada fila.
+
+| Qué | Cifra | Cómo se cuenta |
+| --- | --- | --- |
+| Tests unitarios | 193 en verde, en 30 archivos | `npm test` |
+| Tests de API | 310 en verde, en 39 archivos, contra Postgres (`koma_test`) | `npm run test:api` |
+| Nombre de los tests | 243 llevan su regla (`RN-xx`) y 260, `Seguridad:`. Las 21 RN del plan tienen al menos un test | Las líneas `✔` de la salida de los dos comandos |
+| Cobertura con los tests de API | 96,76 % de líneas, 91,79 % de ramas y 95,93 % de funciones, en los 81 archivos que cargan | `npm run test:api:coverage` |
+| La misma, sobre todo el servidor | 86,31 % de líneas (5.827 de 6.751) | Cuenta como 0 % los 6 archivos que ningún test de API carga: `server.js`, `migrate.js`, `reset-test-db.js` y los tres `demo-*.js` |
+| Cobertura con los tests unitarios | 70,90 % de líneas en los 36 archivos que cargan; 26,35 % sobre todo el servidor | `npm run test:coverage` |
+| Revisiones de los agentes | 39 con veredicto anotado: 17 del `auditor` y 22 del `frontend`. De ellas, 11 APTO, 24 APTO CON OBSERVACIONES y 4 NO APTO | Cada veredicto de la bitácora. Las tres vueltas de Codex en la home se revisaron sin veredicto anotado y no cuentan |
+| Hallazgos de esas revisiones | 218 anotados: 47 del `auditor` y 171 del `frontend` | La cifra que da cada revisión, o sus hallazgos numerados. Una del `auditor` no da cifra. No todos se corrigieron: algunos se aceptaron o quedaron para la decisión del desarrollador |
+| Commits | 178, del 1 al 16-nov: 77 `docs`, 43 `feat`, 25 `fix`, 24 `chore`, 4 `test` y 5 de otros tipos | `git rev-list --count HEAD` y el prefijo de cada mensaje |
+| Bloques | 5 bloques de construcción cerrados (1 a 5), más el bloque 0 de planificación; el pulido sigue en curso | El índice de la bitácora y sus entradas de cierre |
+| Entradas de la bitácora | 91 | `grep -c '^### ' docs/bitacora.md`, sin contar la plantilla |
+
+La cobertura es la del servidor: el código del cliente no se mide.
