@@ -2,7 +2,7 @@
 
 ## Proyecto
 
-**Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`. Funciones congeladas el 20-nov; entrega el 25-nov (`docs/plan_mvp.md`, «Calendario»).
+**Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`. Funciones congeladas el 25-nov; entrega el 30-nov (`docs/plan_mvp.md`, «Calendario»).
 
 - Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño (encargos E1–E4 de Codex), contenido real y pruebas; sin funciones nuevas, salvo `--replace` de la importación y la actividad simulada (idea 24). Todo en `docs/plan_mvp.md`, «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
@@ -76,9 +76,9 @@
 - Frameworks de frontend (React, Vue…), bundler, frameworks CSS (Bootstrap, Tailwind), ORM (Prisma, Sequelize…), microservicios ni WebSockets.
 - Depender de internet el día de la presentación (ni fuentes, scripts o estilos desde CDN o servicios externos); redes públicas o desconocidas ni HTTPS en local (la demo local es en la LAN de confianza, `http://koma.local`).
 - Pagos reales (online, Stripe solo en modo prueba) ni guardar datos de tarjeta; el driver `fake` nunca en producción (`env.ts` lo rechaza); anuncios reales (solo marcas inventadas).
-- Imágenes con URL pública permanente; alojar vídeos; borrado físico desde la interfaz (salvo viñetas de un borrador); internacionalización.
+- Imágenes con URL pública permanente; alojar vídeos (salvo el respaldo local de Tutoriales, solo en la demo local: bloque 6); borrado físico desde la interfaz (salvo viñetas de un borrador); internacionalización.
 - Verificación de identidad real ni contenido +18 real; obras con licencia NC; APK o apps nativas antes de la entrega.
-- **Nada de las fases 2 y 3**, salvo lo aprobado para el bloque 5 (lista cerrada en `docs/plan_mvp.md`, "Fase 2 · bloque 5"): ni carpetas, ni tablas, ni rutas, ni dependencias.
+- **Nada de las fases 2 y 3**, salvo lo aprobado para los bloques 5 y 6 (listas cerradas en `docs/plan_mvp.md`, "Fase 2 · bloque 5" y "Bloque 6 · Comunidad y Tutoriales"): ni carpetas, ni tablas, ni rutas, ni dependencias.
 - Dependencias: solo las del stack de `docs/ideas_base.md` (`express`, `zod`, `bcrypt`, `jsonwebtoken`, `cookie-parser`, `multer`, `helmet`, `express-rate-limit`, `pg`, `stripe`, `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`; en desarrollo `typescript` y tipos). Ninguna otra sin aprobación; sin dotenv (`--env-file` nativo).
 
 ## Convenciones

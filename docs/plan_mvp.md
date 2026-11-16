@@ -7,7 +7,7 @@ Oct 30, 2026 · @M3 · Revisado tras `informe_auditoria2.md` (decisiones aprobad
 Cada sección (`##`) con su enlace y, tras los dos puntos, sus subsecciones (`###`). Para leer solo un tramo: `grep -n '^##' docs/plan_mvp.md` da la línea de cada título.
 
 1. [Objetivo del MVP](#objetivo-del-mvp)
-2. [Priorización por fases](#priorización-por-fases): Fase 1 — MVP; Fase 2 · bloque 5; Fase 2 — si sobra tiempo antes de la entrega; Fase 3 — ampliación posterior
+2. [Priorización por fases](#priorización-por-fases): Fase 1 — MVP; Fase 2 · bloque 5; Bloque 6 · Comunidad y Tutoriales; Fase 2 — si sobra tiempo antes de la entrega; Fase 3 — ampliación posterior
 3. [Qué haremos y qué no haremos](#qué-haremos-y-qué-no-haremos)
 4. [Limitaciones tecnológicas](#limitaciones-tecnológicas)
 5. [Modelo de permisos](#modelo-de-permisos)
@@ -24,13 +24,14 @@ Cada sección (`##`) con su enlace y, tras los dos puntos, sus subsecciones (`##
 16. [Contrato de la API del bloque 3](#contrato-de-la-api-del-bloque-3): Comentarios por viñeta; Compartir viñeta e iconos; Perfil; Obras del autor; Capítulos y viñetas; Vista previa del dueño y del admin; Panel del autor; Páginas; Errores de las subidas
 17. [Contrato de la API del bloque 4](#contrato-de-la-api-del-bloque-4): Aprobación de contenido; Moderación de comentarios; Usuarios; Parámetros de lectura; Auditoría; Premium: Checkout, portal y pago simulado; Webhook de Stripe y `syncSubscription`; Seed del bloque 4; Páginas
 18. [Contrato de la API del bloque 5](#contrato-de-la-api-del-bloque-5): Estadísticas globales; Exportación: vista de impresión; Punto de abandono; Open Graph; Enlace de Discord; Decisiones aprobadas
-19. [Pulido (11 – 19 nov)](#pulido-11--19-nov): Pasada de diseño; Reemplazo de capítulos importados; Actividad simulada para la demo; Decisiones aprobadas del pulido
-20. [Convenciones, tests y definición de terminado](#convenciones-tests-y-definición-de-terminado): Convenciones; Tests; Revisión del código generado; Definición de terminado
-21. [Errores: códigos, páginas y depuración](#errores-códigos-páginas-y-depuración): Códigos de estado; Páginas de error; Depuración
-22. [Trampas conocidas (versiones actuales)](#trampas-conocidas-versiones-actuales)
-23. [Calendario hasta el 25 de noviembre](#calendario-hasta-el-25-de-noviembre): Contingencia del 12 de noviembre; Contingencia del 14 de noviembre
-24. [Decisiones](#decisiones)
-25. [Guía para CLAUDE.md](#guía-para-claudemd)
+19. [Contrato de la API del bloque 6](#contrato-de-la-api-del-bloque-6): Comunidad; Admin: ilustraciones; Tutoriales; Páginas; Tests existentes que cambian; Decisiones aprobadas
+20. [Pulido (11 – 24 nov)](#pulido-11--24-nov): Pasada de diseño; Reemplazo de capítulos importados; Actividad simulada para la demo; Decisiones aprobadas del pulido
+21. [Convenciones, tests y definición de terminado](#convenciones-tests-y-definición-de-terminado): Convenciones; Tests; Revisión del código generado; Definición de terminado
+22. [Errores: códigos, páginas y depuración](#errores-códigos-páginas-y-depuración): Códigos de estado; Páginas de error; Depuración
+23. [Trampas conocidas (versiones actuales)](#trampas-conocidas-versiones-actuales)
+24. [Calendario hasta el 30 de noviembre](#calendario-hasta-el-30-de-noviembre): Contingencia del 12 de noviembre; Contingencia del 14 de noviembre; Contingencia del 20 de noviembre
+25. [Decisiones](#decisiones)
+26. [Guía para CLAUDE.md](#guía-para-claudemd)
 
 ## Objetivo del MVP
 
@@ -48,7 +49,7 @@ El MVP es un lector de cómics desplegado y usable de punta a punta: un visitant
 
 ## Priorización por fases
 
-El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2 se aborda solo si el MVP está desplegado y probado; fase 3 queda documentada como ampliación.
+El MVP cubre 24 de los 41 casos de uso iniciales (el bloque 6 añade el CU-42), varios con un recorte explícito. Fase 2 se aborda solo si el MVP está desplegado y probado; fase 3 queda documentada como ampliación.
 
 ### Fase 1 — MVP (entrega)
 
@@ -64,7 +65,7 @@ El MVP cubre 24 de los 41 casos de uso, varios con un recorte explícito. Fase 2
 | 23 | Editar perfil | Nombre y contraseña; avatar en fase 2 |
 | 28, 29, 30 | Autor: crear obra, subir capítulo (borrador → revisión), editar o retirar | El rol autor lo activa el admin |
 | 31 | Panel del autor: resumen, lecturas por obra y capítulo (total, 7 y 30 días) y comentarios recientes | Sin puntos recibidos (fase 2; el punto de abandono entra en el bloque 5); donaciones solo como «Próximamente» |
-| 32, 33 | Admin: aprobar contenido y moderar comentarios (ocultar y eliminar) | Ilustraciones en fase 3 |
+| 32, 33 | Admin: aprobar contenido y moderar comentarios (ocultar y eliminar) | Ilustraciones en el bloque 6 |
 | 35, 36 | Admin: gestionar usuarios y parámetros de lectura | — |
 | 40 | Consultar auditoría con filtros | Sin restauración ni apelaciones |
 | 41 | Importar obras desde el directorio `content/` (consola) | Sin interfaz; solo script |
@@ -80,6 +81,15 @@ Tras cerrar el MVP, entra una selección cerrada de la fase 2. El resto de la fa
 | 31 (resto) | Punto de abandono en el panel del autor (RN-21) | Solo lectores registrados; sin puntos recibidos |
 | Idea 1 (CU-06) | Open Graph en `/`, `/obra/:slug` y `/leer/:slug/:numero` | Imagen propia de Koma (`/icons`), nunca la portada ni una viñeta |
 | Idea 10 | Enlace «Únete a nuestro Discord» | Sin webhook; el servidor solo valida la URL y pinta el enlace (pie y «Comunidad»); sin `DISCORD_INVITE_URL`, no se muestra y «Comunidad» sigue en «Próximamente» |
+
+### Bloque 6 · Comunidad y Tutoriales (aprobado el 16-nov)
+
+Entra antes de la pasada de diseño, con el plazo nuevo (entrega el 30-nov y congelación el 25-nov). Contrato y decisiones (D1–D16) en «Contrato de la API del bloque 6»; propuesta completa en `.claude/encargos/bloque6-propuesta.md`.
+
+| CU / idea | Funcionalidad | Recorte |
+| --- | --- | --- |
+| 18 (sin reto) | Comunidad: tablero público de ilustraciones de usuarios registrados, con etiquetas propias, aprobación del admin (RN-22) y el enlace de Discord dentro de la página | Sin retos semanales (CU-37), «me gusta», comentarios, perfiles públicos ni +18 |
+| 42 | Tutoriales: vídeos de YouTube incrustados, con respaldo local para la demo sin internet | Lista fija en el código; sin gestión desde `/admin` ni subida de vídeos |
 
 ### Fase 2 — si sobra tiempo antes de la entrega
 
@@ -102,7 +112,7 @@ Tras cerrar el MVP, entra una selección cerrada de la fase 2. El resto de la fa
 | CU / idea | Funcionalidad |
 | --- | --- |
 | 16, 17, 25 | Apoyo al autor y pase anticipado |
-| 18, 37 | Ilustraciones y retos semanales |
+| 37 | Retos semanales de ilustración (publicar ilustraciones, CU-18, entra en el bloque 6) |
 | 19, 20, 34 | Zona +18 y verificación de edad |
 | 22 | Referidos |
 | 26 | Descarga sin conexión |
@@ -110,7 +120,7 @@ Tras cerrar el MVP, entra una selección cerrada de la fase 2. El resto de la fa
 
 Descartada el 10-nov (no aplazada): idea 22, reportes.
 
-**Regla para la IA:** no se crean carpetas, tablas, rutas ni dependencias de las fases 2 y 3, salvo las de "Fase 2 · bloque 5".
+**Regla para la IA:** no se crean carpetas, tablas, rutas ni dependencias de las fases 2 y 3, salvo las de "Fase 2 · bloque 5" y "Bloque 6 · Comunidad y Tutoriales".
 
 ## Qué haremos y qué no haremos
 
@@ -125,7 +135,7 @@ Descartada el 10-nov (no aplazada): idea 22, reportes.
 | Stripe en modo prueba con suscripción; la tarjeta solo la ve Stripe | Pagos reales o guardar datos de tarjeta |
 | Pago simulado mínimo para la demo sin internet | Pago simulado en producción |
 | Anuncios falsos de marcas inventadas | Redes publicitarias reales o marcas reales |
-| Todas las imágenes con URLs firmadas que caducan | Imágenes con URL pública permanente; alojar vídeos |
+| Todas las imágenes con URLs firmadas que caducan | Imágenes con URL pública permanente; alojar vídeos (salvo el respaldo local de Tutoriales, solo en la demo local: bloque 6, D13) |
 | Borrado lógico (`deleted_at`, `hidden_at`) | Borrado físico desde la interfaz (salvo viñetas de un capítulo en borrador) |
 | Código y API en inglés; interfaz, URLs de páginas y mensajes en español | Internacionalización |
 | Campo `is_adult` en obras (zona +18 en fase 3) | Verificación de identidad real ni contenido +18 real |
@@ -170,7 +180,7 @@ Los permisos se calculan en el servidor en cada petición a partir del usuario l
 
 | Acción | Invitado | Registrado | Premium | Autor | Admin |
 | --- | --- | --- | --- | --- | --- |
-| Explorar, ver ficha, leer comentarios | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Explorar, ver ficha, leer comentarios, ver Comunidad y Tutoriales | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Leer caps. 1–2 | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Leer cap. 3 | Tras anuncio | Con límite | ✓ | Según su cuenta | ✓ |
 | Leer cap. 4 en adelante | — | Con límite | ✓ | Según su cuenta | ✓ |
@@ -179,7 +189,8 @@ Los permisos se calculan en el servidor en cada petición a partir del usuario l
 | Crear obra, subir capítulo | — | — | — | Propias | — |
 | Ver obras y capítulos `draft`/`pending` | — | — | — | Propios | ✓ |
 | Editar o retirar obra | — | — | — | Propias | Retirar cualquiera |
-| Aprobar contenido, moderar | — | — | — | — | ✓ |
+| Publicar ilustración, retirar las propias (RN-22) | — | ✓ | ✓ | ✓ | — |
+| Aprobar contenido (también ilustraciones), moderar | — | — | — | — | ✓ |
 | Gestionar usuarios | — | — | — | — | ✓ (no a sí mismo) |
 | Gestionar parámetros | — | — | — | — | ✓ |
 | Consultar auditoría | — | — | — | — | ✓ |
@@ -220,13 +231,14 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 
 - **RN-11 Comentarios:** 1–500 caracteres, texto plano escapado al mostrarse. Su autor puede borrarlo; el admin puede ocultarlo o eliminarlo. Un comentario oculto no lo ve nadie, tampoco su autor. Borrado siempre lógico; actuar sobre uno ya eliminado → 409.
 - **RN-12 Registro:** correo único sin distinguir mayúsculas; contraseña de 10 caracteres a 72 **bytes** (`Buffer.byteLength`, límite de bcrypt); nombre visible de 3 a 30 caracteres. `EMAIL_TAKEN` revela que el correo existe: riesgo aceptado (registro limitado a 3/h).
-- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario (portada incluida); comentarios 5 / min por usuario; progreso de lectura 60 / min por usuario (RN-21); cambio de contraseña 5 contraseñas actuales incorrectas / 15 min por usuario (acertar pone el contador a cero). Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = 3, los saltos de Render: `X-Forwarded-For` llega con tres entradas (cliente, Cloudflare y proxy interno). Verificado el 1-nov en el primer despliegue: `req.ip` es la del cliente y una `X-Forwarded-For` falsa se ignora. Nunca `true`.
+- **RN-13 Límites de peticiones:** login 5 fallos / 15 min por IP y correo (un login correcto pone el contador a cero); registro 3 / h por IP, contando todo intento válido, también los 409 y los que el cliente corta antes de la respuesta (la cuenta se crea igualmente); subidas 100 imágenes / h por usuario (portada e ilustraciones incluidas, RN-22); comentarios 5 / min por usuario; progreso de lectura 60 / min por usuario (RN-21); cambio de contraseña 5 contraseñas actuales incorrectas / 15 min por usuario (acertar pone el contador a cero). Cada limitador va después de la validación con zod: un 400 no cuenta ni crea una clave en memoria, y la clave del login usa el correo ya validado (sin espacios, en minúsculas, 254 caracteres como mucho). Las IPv6 se agrupan por /56. El cuerpo de `/api/auth/*` admite como mucho 4 kB. Online, `trust proxy` = 3, los saltos de Render: `X-Forwarded-For` llega con tres entradas (cliente, Cloudflare y proxy interno). Verificado el 1-nov en el primer despliegue: `req.ip` es la del cliente y una `X-Forwarded-For` falsa se ignora. Nunca `true`.
 - **RN-14 Administración:** un admin no puede suspenderse ni quitarse el rol; siempre debe quedar al menos un admin activo.
 - **RN-15 Sesión:** suspender, cambiar rol o cambiar contraseña incrementa `token_version`. Al cambiar la propia contraseña se emite un JWT nuevo en la misma respuesta; las demás sesiones se cierran. El contenido de un suspendido sigue visible.
 - **RN-16 Parámetros:** periodo de espera 1–1440 min (demo: 1), saldo máximo 1–20 (por defecto 5), recarga 1–10 (por defecto 2); fuera de rango → 400.
 - **RN-19 Estadísticas del autor:** lecturas = `guest_reads` + `user_reads` de `chapter_read_counts`; total, últimos 7 y últimos 30 días (hoy incluido, día de `Europe/Madrid`); sin obras ni capítulos retirados; solo las obras propias.
 - **RN-20 Estadísticas globales:** solo el admin; solo agregados, sin correos ni nombres de usuario. Lecturas como RN-19, para toda la plataforma. «N días» son días naturales de `Europe/Madrid` con hoy incluido; «24 h» es una ventana móvil. Cuentas: las activas, por su rol (lector, autor, admin) y las suspendidas aparte, de modo que la suma es el total. Premium = cuenta activa, no admin, con `premium_until` futuro (RN-04). Usuarios activos = cuentas activas, no admin, con alguna lectura en los últimos 30 días. Comentarios moderados = comentarios distintos ocultados o eliminados por el admin. Obras más leídas: por lecturas de 30 días, después total y después slug. La exportación es la misma sección en vista de impresión: los mismos números.
 - **RN-21 Punto de abandono:** por lector registrado y capítulo, la viñeta máxima alcanzada (`chapter_reads.last_panel`). Solo se actualiza una fila que ya existe (la crea la lectura, RN-02); el valor solo sube y se valida contra el número de viñetas del capítulo. No cuentan el admin ni el autor dueño. «Llega al final» = `last_panel` igual al número de viñetas; «viñeta donde más se abandona» = la moda de `last_panel` entre quienes no llegan al final (empate: la menor). Las filas con `last_panel` NULL no entran en el cálculo. Solo envía progreso un lector con sesión; un fallo del envío no afecta a la lectura.
+- **RN-22 Ilustraciones (bloque 6):** imagen con las reglas de RN-10 (JPEG, PNG o WebP por firma, 5 MB, multer en disco, clave `UUID.ext`). Título de 1 a 100 caracteres, descripción de 0 a 500 (regla común de textos) y de 0 a 5 etiquetas libres, normalizadas con la regla del slug de RN-09 y de 2 a 30 caracteres cada una. Nace `pending` y solo `approved` es pública; rechazar exige motivo. La retiran su dueño o el admin (borrado lógico); una retirada no vuelve. Como mucho 5 pendientes por usuario. La publica una cuenta registrada activa que no sea admin. La ilustración de un suspendido sigue visible (RN-15). El contenido +18 no se admite: el admin lo rechaza con motivo (RN-17).
 
 ## Registro de auditoría y reversión
 
@@ -268,6 +280,7 @@ CREATE TABLE audit_log (
 | Obra | `comic.create`, `comic.update`, `comic.approve`, `comic.reject`, `comic.withdraw` |
 | Capítulo | `chapter.create`, `chapter.submit`, `chapter.approve`, `chapter.reject`, `chapter.withdraw` |
 | Comentario | `comment.delete_own`, `comment.hide`, `comment.delete` |
+| Ilustración | `illustration.create`, `illustration.approve`, `illustration.reject`, `illustration.withdraw` |
 | Suscripción | `subscription.start`, `subscription.renew`, `subscription.cancel`, `subscription.resume`, `subscription.expire` |
 | Sistema | `settings.update`, `content.import`, `system.seed` |
 
@@ -453,6 +466,7 @@ HOST=127.0.0.1                # solo esta máquina; Compose usa 0.0.0.0
 APP_URL=http://localhost:3000 # URLs absolutas que salen de la app (retorno de Stripe y Open Graph)
 ALLOWED_ORIGINS=http://localhost:3000 # CSRF: orígenes aceptados, separados por comas (por defecto, el de APP_URL)
 DISCORD_INVITE_URL=           # opcional: invitación de Discord (https://discord.gg/…); vacía = sin enlace
+TUTORIAL_VIDEOS_DIR=          # opcional, solo local (bloque 6, D13): carpeta con los <id>.mp4 de Tutoriales; con APP_URL https, la app no arranca
 DATABASE_URL=postgres://koma:koma@localhost:5432/koma  # en Compose: host "db"; Neon: conexión directa + ?sslmode=verify-full
 JWT_SECRET=cambia-esto
 COOKIE_SECRET=cambia-esto     # cookies firmadas (invitado, anuncio)
@@ -600,6 +614,9 @@ Cada ruta sirve un HTML estático de `client/public/`; Express comprueba antes l
 | `/autor` | `author` | Sesión y `is_author` | 200, 302, 403 |
 | `/crear` | `become-author` | Sesión; si es autor, 302 a `/autor` | 200, 302 |
 | `/admin` | `admin` | Sesión y `role = admin` | 200, 302, 403 |
+| `/comunidad` | `community` | — (el formulario y «Mis ilustraciones», según la sesión, en el cliente; bloque 6) | 200 |
+| `/tutoriales` | `tutorials` | — (bloque 6) | 200 |
+| `/videos/:file` | — (vídeo) | Solo con `TUTORIAL_VIDEOS_DIR`; nombre `^[A-Za-z0-9_-]{11}\.mp4$` y archivo existente (bloque 6, D13) | 200, 206, 404 |
 | `/files/:key` | — (imagen) | Solo con `STORAGE_DRIVER=local`; firma y caducidad válidas | 200, 403, 404 |
 | Cualquier ruta con `/` final | — | — | 301 a la ruta sin `/` |
 | Ruta inexistente | `errors/404` | — | 404 |
@@ -1343,9 +1360,134 @@ Sin API. `env.ts` valida `DISCORD_INVITE_URL` opcional: `https:` y host `discord
 | D12 | `DISCORD_INVITE_URL`: solo `https:` y host `discord.gg` o `discord.com` |
 | D13 | Enlace de Discord en el pie y en «Comunidad» de la portada; sin URL, nada de eso cambia |
 
-## Pulido (11 – 19 nov)
+## Contrato de la API del bloque 6
 
-Aprobado el 10-nov. (Dn) remite a las decisiones de la tabla del final de esta sección. Sin migraciones, sin dependencias, sin variables nuevas y sin funciones nuevas, salvo la actividad simulada (idea 24).
+Aprobado el 16-nov, con la propuesta `.claude/encargos/bloque6-propuesta.md`. (Dn) remite a «Decisiones aprobadas» de esta sección.
+
+Comunidad y Tutoriales (CU-18 sin reto, CU-32 para las ilustraciones y CU-42; RN-22 y RN-13). Migración `010_illustrations` (`modelo_datos.md`). Variable nueva: `TUTORIAL_VIDEOS_DIR` (opcional, solo local). Sin dependencias nuevas ni códigos de error nuevos.
+
+**Comunes a todo el bloque:**
+
+- Textos con la regla común (`utils/text.ts`); límites en `limits.ts`, duplicados en el cliente.
+- Imágenes siempre con URL firmada; subidas con las reglas de RN-10 y el limitador de subidas (RN-13).
+- Auditoría en la misma transacción, con `before`/`after` solo de los campos cambiados y en camelCase. Una acción ya hecha → 409 `CONFLICT`.
+
+### Comunidad (CU-18; RN-22)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/illustrations` | — | Query: `tag?`, `page` | 200 `{ illustrations: IllustrationDto[], tags: TagCountDto[], page, pageSize, total }`, de la más reciente a la más antigua | 400 | — |
+| `POST /api/illustrations` | `requireAuth`, no admin; limitador de subidas | `multipart/form-data`: `image`, `title`, `description?`, `tags` (texto, separadas por comas) | 201 `{ illustration: OwnIllustrationDto }` | 400, 401, 403, 409 (5 pendientes), 413 `FILE_TOO_LARGE`, 415 `UNSUPPORTED_FILE`, 429 | `illustration.create` |
+| `GET /api/me/illustrations` | `requireAuth` | Query: `page` | 200 `{ illustrations: OwnIllustrationDto[], page, pageSize, total }` (sin las retiradas) | 401 | — |
+| `POST /api/illustrations/:id/withdraw` | `requireAuth` + dueño, o admin | — | 204 | 401, 403, 404, 409 (ya retirada) | `illustration.withdraw` |
+
+```ts
+interface IllustrationDto {
+  id: number;
+  title: string;
+  description: string | null;
+  url: string;              // firmada
+  width: number;            // px, para reservar el hueco en el tablero
+  height: number;
+  tags: string[];           // slugs; el cliente pinta «#slug»
+  author: { displayName: string };
+  publishedAt: string;      // ISO 8601
+}
+
+interface OwnIllustrationDto extends Omit<IllustrationDto, 'publishedAt'> {
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+interface TagCountDto { tag: string; count: number } // de las públicas; las 30 más usadas
+```
+
+- **Lista:** solo `approved` y no retiradas; 24 por página (`ILLUSTRATIONS_PAGE_SIZE`). `tag` filtra por una sola etiqueta.
+- **Publicar (D2–D6):** a diferencia de las viñetas, multer admite aquí los tres campos de texto (`fields` acotado). Middlewares en orden: `validate` → `requireAuth` → permiso (no admin) y tope de 5 pendientes → limitador de subidas → `upload` → servicio. El texto se valida con zod después de multer, y el temporal se borra siempre (`finally`). Nace `pending`.
+- **Etiquetas (D3):** se normalizan con la regla del slug de RN-09 (minúsculas, sin acentos, guiones); vacías y repetidas fuera; de 0 a 5, de 2 a 30 caracteres cada una.
+- **Retirar:** `deleted_at = now()`, desde cualquier estado. El dueño, o el admin con el mismo endpoint. Auditoría: `before { deletedAt: null }`, `after { deletedAt }`.
+- **Auditoría de `create`:** en `after`, el título y las etiquetas; nunca la clave de la imagen.
+
+### Admin: ilustraciones (CU-32; RN-22) (D9)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores | Auditoría |
+| --- | --- | --- | --- | --- | --- |
+| `GET /api/admin/illustrations` | `requireAdmin` | Query: `status` (`pending` \| `approved`), `page` | 200 `{ illustrations: AdminIllustrationDto[], page, pageSize, total }` (pendientes: de la más antigua a la más reciente) | 400, 401, 403 | — |
+| `POST /api/admin/illustrations/:id/approve` | `requireAdmin` | — | 204 | 401, 403, 404, 409 (no está `pending`, o retirada) | `illustration.approve` |
+| `POST /api/admin/illustrations/:id/reject` | `requireAdmin` | `reason` (1–500) | 204 | 400, 401, 403, 404, 409 | `illustration.reject` |
+
+- `AdminIllustrationDto` = `OwnIllustrationDto` + `author: { id: number; displayName: string }`. Listas del admin con `ADMIN_PAGE_SIZE`, como el bloque 4.
+- **Aprobar:** de `pending` a `approved`, con `published_at = now()`. Auditoría: `before { status: 'pending', publishedAt: null }`, `after { status: 'approved', publishedAt }`.
+- **Rechazar:** `reason` de 1 a 500 (`REJECTION_REASON_MAX`). Auditoría: `before { status: 'pending', rejectionReason: null }`, `after { status: 'rejected', rejectionReason }`.
+- `GET /api/admin/review` y la cola de obras no cambian.
+
+### Tutoriales (CU-42) (D11–D13)
+
+| Método y ruta | Permiso | Entrada | Éxito | Errores |
+| --- | --- | --- | --- | --- |
+| `GET /api/tutorials` | — | — | 200 `{ tutorials: TutorialDto[] }` | — |
+
+```ts
+interface TutorialDto {
+  id: string;          // id de YouTube, 11 caracteres (^[A-Za-z0-9_-]{11}$)
+  title: string;
+  description: string;
+  local: boolean;      // true si hay archivo local (D13): la página usa <video> en lugar de YouTube
+}
+```
+
+- **Lista (D11):** constante versionada en `server/src/config/tutorials.ts`; un test valida cada id. `/constructor` pide al desarrollador el título y el enlace de cada vídeo al llegar a este paso.
+- **Reproductor (D12):** `<iframe src="https://www.youtube-nocookie.com/embed/<id>" loading="lazy" title="…">`, creado con la API del DOM. La CSP gana `frame-src https://www.youtube-nocookie.com`. La página manda `Referrer-Policy: same-origin` y YouTube rechaza los incrustados sin `Referer`: el `iframe` lleva su propio `referrerpolicy="strict-origin-when-cross-origin"` (se comprueba en la documentación de YouTube al construirlo).
+- **Respaldo local (D13):** con `TUTORIAL_VIDEOS_DIR` y el archivo `<id>.mp4` en ella, `local: true`. `env.ts` rechaza la variable con `APP_URL` en `https`. `GET /videos/:file` existe solo con la variable, valida el nombre antes de tocar el disco y sirve con `res.sendFile` (admite `Range`). Sin firma: son vídeos públicos de la plataforma, no contenido de usuarios. Excepción aprobada a «alojar vídeos», solo para la demo local sin internet.
+
+### Páginas
+
+| Ruta | Página | Qué cambia |
+| --- | --- | --- |
+| `/comunidad` | `community` (nueva) | Tablero en columnas CSS, con `width` y `height` en cada `<img>`; filtro por etiqueta; detalle en un `<dialog>` (D8); formulario de publicación y «Mis ilustraciones» con sesión (D7); sin ella, «Entra para compartir» con `next=/comunidad`; tarjeta «Únete a nuestro Discord» solo con `DISCORD_INVITE_URL` |
+| `/tutoriales` | `tutorials` (nueva) | Lista de vídeos (D12, D13) |
+| `/admin` | `admin` | Sección «Ilustraciones» (pendientes y publicadas), con el aviso flotante y el `<dialog>` que ya existen |
+| Cabecera, navegación móvil y portada | `layout.ts`, `home` | «Comunidad» y «Tutoriales» en la cabecera y en la navegación móvil; los accesos rápidos de la portada llevan a `/comunidad` y `/tutoriales`; el enlace de Discord sigue en el pie (D10) |
+
+### Tests existentes que cambian (excepción aprobada el 16-nov)
+
+D10 cambia lo que hoy fijan cuatro tests: que «Comunidad» de la portada lleva a Discord (o dice «Próximamente») y que «Tutoriales» dice «Próximamente».
+
+| Archivo | Test | Qué cambia |
+| --- | --- | --- |
+| `server/src/tests/unit/discord.test.ts` | Sin URL, «Comunidad» sigue en «Próximamente» | «Comunidad» pasa a ser un enlace a `/comunidad`: `quick-link--soon` y «Próximamente», de 1 a 0 |
+| `server/src/tests/unit/discord.test.ts` | Con URL, el pie y «Comunidad» enlazan a la invitación | El acceso rápido ya no enlaza a Discord: solo el pie (la nota oculta, de 2 a 1) |
+| `server/src/tests/api/discord.test.ts` | Con URL, la portada enlaza «Comunidad» y el pie | Enlaces a la invitación, de 2 a 1 (el pie); «Próximamente», de 1 a 0 |
+| `server/src/tests/api/pages.test.ts` | Sin URL, «Comunidad» en «Próximamente» | «Próximamente», de 2 a 0 |
+
+Al construir, cada aserción se entrega con su antes y su después, el desarrollador lista los archivos en `.claude/permiso-tests.txt` y queda en la bitácora. Lo que protegen (el pie sin enlace sin URL, el escape y `noopener noreferrer`) se mantiene.
+
+### Decisiones aprobadas (16-nov)
+
+| # | Decisión |
+| --- | --- |
+| D1 | «Bloque 6 · Comunidad y Tutoriales»; «Pruebas y demo» pasa a ser el bloque 7 |
+| D2 | Ilustraciones con aprobación previa del admin |
+| D3 | Etiquetas libres, de 0 a 5, normalizadas a slug; se revisan al aprobar |
+| D4 | Publica un registrado activo, autores y premium incluidos; el admin no |
+| D5 | Como mucho 5 pendientes por usuario |
+| D6 | Título obligatorio y descripción opcional |
+| D7 | «Mis ilustraciones», dentro de `/comunidad` |
+| D8 | Detalle en un `<dialog>`, sin ruta ni Open Graph |
+| D9 | Sección «Ilustraciones» propia en `/admin`; la cola de obras no cambia |
+| D10 | «Comunidad» y «Tutoriales» en la navegación y en los accesos rápidos; Discord dentro de `/comunidad` y en el pie |
+| D11 | Tutoriales en una constante versionada |
+| D12 | `youtube-nocookie.com`, `loading="lazy"`, CSP `frame-src` solo para ese host |
+| D13 | Respaldo local con `TUTORIAL_VIDEOS_DIR`, solo local |
+| D14 | Las ilustraciones de la demo las sube el desarrollador por la interfaz |
+| D15 | Las estadísticas globales (RN-20) no cambian |
+| D16 | Calendario y contingencia del 20-nov (sección «Calendario») |
+
+## Pulido (11 – 24 nov)
+
+Aprobado el 10-nov. Desde el 16-nov, con el plazo nuevo, la pasada de diseño sigue hasta el 24-nov y E2 y E4 van después del bloque 6, porque incluyen sus páginas. (Dn) remite a las decisiones de la tabla del final de esta sección. Sin migraciones, sin dependencias, sin variables nuevas y sin funciones nuevas, salvo la actividad simulada (idea 24).
 
 ### Pasada de diseño
 
@@ -1354,11 +1496,11 @@ El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude
 | Encargo | Alcance |
 | --- | --- |
 | E1 | `/premium`, `/premium/gracias` (con la bienvenida) y `/pago-simulado`: los valores exactos de la maqueta, la bienvenida como `welcome-card` centrada con halo, destellos y la mascota girada, los iconos de escudo y tarjeta en el sprite, la mascota en WebP (D9) y el ancho máximo del pago simulado desde 64rem |
-| E2 | `/admin`: la sección «Estadísticas» con sus cuatro tablas, las cuatro métricas y la vista de impresión (sin logo, D7), más los bajos visuales anotados: «Admin» activo distinguido solo por el color, `button--danger` sin `button--outline`, el diálogo en su propio CSS y el contador del motivo |
+| E2 | `/admin`: la sección «Estadísticas» con sus cuatro tablas, las cuatro métricas y la vista de impresión (sin logo, D7), más los bajos visuales anotados: «Admin» activo distinguido solo por el color, `button--danger` sin `button--outline`, el diálogo en su propio CSS y el contador del motivo; la sección «Ilustraciones» del bloque 6 |
 | E3 | Estudio del autor: se pule el diseño actual, más intuitivo y más cuidado; no se vuelve a la maqueta (D2). El punto de abandono, con texto y barra `<meter>`, como las lecturas (D3) |
-| E4 | Conjunto: cabecera, pie, «Comunidad», portada (banner del hero, D6), ficha («Descubrir Premium», D4), lector, perfil, auth y errores, con el repaso de los valores de la maqueta frente a los tokens |
+| E4 | Conjunto: cabecera (con «Comunidad» y «Tutoriales»), pie, `/comunidad` y `/tutoriales` (bloque 6), portada (banner del hero, D6), ficha («Descubrir Premium», D4), lector, perfil, auth y errores, con el repaso de los valores de la maqueta frente a los tokens |
 
-- **Orden:** E1 → E2 → E3 → E4. E4 va el último porque es el único que puede cambiar tokens compartidos, con una lista cerrada; E1–E3 solo añaden tokens con el prefijo de su página.
+- **Orden:** E1 → E2 → E3 → E4. E1 y E3 pueden ir mientras se construye el bloque 6; E2 y E4, después de él (16-nov). E4 va el último porque es el único que puede cambiar tokens compartidos, con una lista cerrada; E1–E3 solo añaden tokens con el prefijo de su página.
 - **Fuera de todos los encargos:** `server/` (salvo `server/src/tests/api/pages.test.ts`, justificado), `client/src/services/`, `client/src/utils/`, `docs/`, los tres `CLAUDE.md` (raíz, `client/` y `server/`) y `package.json`. `layout.ts`, solo en E4. En el TS, solo clases y presentación, nunca el flujo; el HTML semántico que comprueban los tests (ids, `data-*`, `role="status"`, un solo `h1`) se mantiene.
 - **Antes de E2**, la IA de este repositorio corrige los seis bajos funcionales de `/admin` anotados en el bloque 4 (D8): el paginador («Página 3 de 2» al vaciarse la última página), los límites escritos a mano en el HTML, `type="email"` sin `noValidate`, «Filtrar» sin `data-needs-js`, «Aprobar» en obras +18 y la entidad en crudo en la auditoría.
 - **Antes de E3**, la IA de este repositorio pasa el estudio del autor al aviso flotante y al `<dialog>` de confirmación de `/admin`, en lugar de los mensajes por sección y de `confirm()` (D2), con el agente `frontend`.
@@ -1370,7 +1512,7 @@ El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude
 | Página | Maqueta | Koma | Motivo |
 | --- | --- | --- | --- |
 | Ficha | «En publicación» junto al número de capítulos | No se muestra | El modelo de datos no tiene ese dato |
-| Cabecera y navegación móvil | «Comunidad» y «Tutoriales» | No están | No tienen página. «Comunidad» está en los accesos rápidos de la portada (D13 del bloque 5) |
+| Cabecera y navegación móvil | «Comunidad» y «Tutoriales» | Están desde el bloque 6 (D10, 16-nov) | Desvío revocado: las dos tienen página |
 | Pie | «Ayuda» | No está | No tiene página |
 
 Se recuperan de la maqueta: «Descubrir Premium» en «¿Cómo funciona la lectura?» de la ficha, enlazado a `/premium` (D4), y «Premium» en el pie (D5).
@@ -1537,9 +1679,9 @@ La IA tiende a escribir patrones antiguos. Estas reglas se copian a `server/CLAU
 - **Neon:** SSL obligatorio con `sslmode=verify-full` (con `require`, `pg` 8 avisa de que cambiará en la v9); migrar por la conexión directa, no la agrupada (`-pooler`).
 - **Render:** el build debe instalar `devDependencies` (`npm ci --include=dev`) o falta `typescript`.
 
-## Calendario hasta el 25 de noviembre
+## Calendario hasta el 30 de noviembre
 
-Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, documentación y ensayo. Con 6 h diarias hay 21 días hasta la congelación. Dentro de cada bloque, lo recortable por la contingencia va al final.
+Las funciones se congelan el 25 de noviembre para dejar 5 días a pruebas, documentación y ensayo, y la entrega es el 30 (DL9 de `plan_limpieza.md`, decidida el 16-nov: el plazo oficial se amplió). Hasta el 16-nov valían la congelación el 20 y la entrega el 25. Dentro de cada bloque, lo recortable por la contingencia va al final.
 
 | Bloque | Fechas | Contenido |
 | --- | --- | --- |
@@ -1549,10 +1691,11 @@ Las funciones se congelan el 20 de noviembre para dejar 6 días a pruebas, docum
 | 3 · Comunidad y autor | 10 – 14 nov | Migración 006, comentarios por viñeta, compartir viñeta, perfil (CU-23), crear obra, subir capítulo (borrador → revisión), retirar, panel del autor (CU-31 recortado, RN-19) (al final: editar obra) |
 | 4 · Admin y Stripe | 15 – 19 nov | Aprobación con `is_adult`, moderación, usuarios, parámetros, vista de auditoría, migración 009, suscripción con webhooks, portal, pago simulado mínimo (al final: Test Clocks) |
 | 5 · Fase 2 seleccionada | 10 – 15 nov | Hecho el 10-nov: cierre del bloque 4, demo en contenedores, CU-39 con su vista de impresión, punto de abandono, Open Graph y enlace de Discord |
-| Pulido | 11 – 19 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real y pruebas (demo en Docker con la red apagada, prueba completa de roles); sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), definida el 10-nov (sección «Pulido») |
-| 6 · Pruebas y demo | 20 – 25 nov | Congelación. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
+| Pulido | 11 – 24 nov | Pasada de diseño (estudio del autor, `/admin` con estadísticas, conjunto), contenido real y pruebas (demo en Docker con la red apagada, prueba completa de roles); sin funciones nuevas, salvo la actividad simulada para la demo (idea 24), definida el 10-nov (sección «Pulido»). Desde el 16-nov: E1 y E3 mientras se construye el bloque 6; E2, E4 y la actividad simulada, del 21 al 24 |
+| 6 · Comunidad y Tutoriales | 17 – 20 nov | Migración 010, ilustraciones (API, `/comunidad` y sección de `/admin`), `/tutoriales` con su respaldo local, navegación; tests, `frontend`, `auditor` y despliegue online (al final: respaldo local de vídeos, filtro y lista de etiquetas) |
+| 7 · Pruebas y demo | 26 – 30 nov | Congelación el 25. Revisión móvil y accesibilidad, README, guion de la demo, ensayo en ambos entornos (local con la red apagada) |
 
-Calendario original. Fechas reales en `bitacora.md`: el bloque 3 cerró el 8-nov, el 4 el 10-nov y el 5 el 10-nov (las cuatro funciones en el día). El pulido empieza el 11-nov.
+Calendario original hasta el bloque 5; el bloque 6 y las fechas nuevas, del 16-nov. Fechas reales en `bitacora.md`: el bloque 3 cerró el 8-nov, el 4 el 10-nov y el 5 el 10-nov (las cuatro funciones en el día). El pulido empieza el 11-nov.
 
 Cada bloque se da por cerrado solo cuando funciona desplegado, no solo en local.
 
@@ -1567,6 +1710,10 @@ Se activa por niveles, en orden, hasta recuperar el retraso:
 ### Contingencia del 14 de noviembre
 
 Si la noche del 14 lo empezado no está desplegado y auditado, se recorta en este orden: enlace de Discord, Open Graph. CU-39 y el punto de abandono no se dejan a medias: si el 13 no están cerrados, el bloque 5 se queda ahí. (No se activó: el bloque 5 cerró el 10-nov.)
+
+### Contingencia del 20 de noviembre
+
+Si la noche del 20 el bloque 6 no está desplegado y auditado, se recorta en este orden: el respaldo local de vídeos (en la demo, los vídeos se ponen con un reproductor fuera de Koma), el filtro por etiqueta y la lista de etiquetas. Publicar, aprobar y retirar ilustraciones no se recortan.
 
 ## Decisiones
 
@@ -1602,11 +1749,12 @@ Aprobadas el 30 de octubre tras las dos auditorías (la demo en la LAN de confia
 | Entorno técnico | ESM, Node 24 LTS, Express 5, jsonwebtoken, `node:test` sobre JS compilado, un solo `package.json` |
 | Cuentas demo | Contraseñas por variables de entorno, anotadas en `docs/credenciales.local.md` (ignorado por git) |
 | Idioma | Código y API en inglés; interfaz, URLs de páginas y mensajes en español |
-| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas; en el punto de abandono (RN-21), un enlace `#v-n` cuenta como viñeta alcanzada; las lecturas de la actividad simulada (idea 24) no se pueden retirar y se quedan en los totales |
+| Riesgos aceptados | `EMAIL_TAKEN` revela cuentas; releer un capítulo reemplazado consume saldo; sin caché de imágenes entre tramos de firma; los comentarios no pasan al capítulo de reemplazo; imágenes huérfanas de borradores, rechazos y obras cuya importación falla dentro de la transacción (RN-18); un invitado que borra cookies vuelve a contar; logout sin revocación del JWT (vale hasta caducar o hasta que cambie `token_version`); el login no tiene tope global por IP: cada correo válido distinto crea una entrada en memoria (de 0,4 a 0,5 kB con la clave y su contador) durante su ventana de 15 min (RN-13); los 5xx gastan intentos: con la BD caída, un 503 cuenta en el registro como uno de los 3 por hora y en el login como uno de los 5 fallos (el contador solo se pone a cero al acertar); un evento de Stripe de más de 100 kB recibe 413 y Stripe lo reintenta: se revisa en el bloque 4 si Workbench muestra entregas fallidas; en el punto de abandono (RN-21), un enlace `#v-n` cuenta como viñeta alcanzada; las lecturas de la actividad simulada (idea 24) no se pueden retirar y se quedan en los totales; sin internet, los vídeos de YouTube de Tutoriales no cargan (el respaldo local solo cubre los archivos que estén en el portátil); las etiquetas libres de las ilustraciones solo se revisan al aprobarlas; las imágenes de ilustraciones rechazadas o retiradas se quedan en el almacenamiento (bloque 6) |
 | Estado en el navegador | Lo que es preferencia o comodidad (advertencias aceptadas, ocultar iconos) vive en `localStorage`; permisos, saldo y límites, siempre en el servidor |
 | Estadísticas | Lecturas de invitados y de registrados por separado (`chapter_read_counts`) desde el MVP; las vistas, en fase 2 |
 | Valores | Los de RN-10, RN-13 y RN-16 y `AD_MIN_SECONDS=5` |
 | Fase 2 | Bloque 5 (10-nov): CU-39 con vista de impresión, punto de abandono, Open Graph con imagen propia y enlace de Discord. Siguen en fase 2, fuera de la entrega: avatar, PWA y webhook de Discord. Descartados: los reportes (idea 22) |
+| Bloque 6 | 16-nov: Comunidad (CU-18, sin reto, adelantado de la fase 3) y Tutoriales (CU-42), antes de la pasada de diseño; excepción a «alojar vídeos» solo para el respaldo local. Entrega el 30-nov y congelación el 25-nov (DL9) |
 | Harness | Plan de limpieza (`plan_limpieza.md`, 13-nov): se aprueban las carpetas `.claude/skills/`, `.claude/hooks/` y `.github/` (CI); `.claude/` pasa a git salvo `settings.local.json`, `permiso-tests.txt`, `maqueta/` y `parches/` |
 
 ## Guía para CLAUDE.md
@@ -1620,7 +1768,7 @@ Instrucciones para `/init` y para revisar el resultado. Los documentos viven en 
 
 **Raíz, en este orden:**
 
-1. **Proyecto:** una frase del objetivo del MVP, fecha de congelación (20-nov), bloque actual (la línea `- Bloque actual:`, que lee el hook `inicio-sesion`), el stack y qué hay en los `CLAUDE.md` de las carpetas.
+1. **Proyecto:** una frase del objetivo del MVP, fecha de congelación (25-nov, desde el 16-nov), bloque actual (la línea `- Bloque actual:`, que lee el hook `inicio-sesion`), el stack y qué hay en los `CLAUDE.md` de las carpetas.
 2. **Comandos:** la tabla de "Proyecto y comandos", con los mismos scripts que `package.json`.
 3. **Tests:** dónde van y cómo se nombran, la BD de pruebas, que los tests existentes no se tocan (y su excepción) y test primero.
 4. **Estructura:** árbol de carpetas del MVP (sin las de fases 2–3; lo vigila `claude-tree.test.ts`) y las reglas de arquitectura comunes: un solo servidor y el mapa de rutas, página = HTML + TS y el permiso de lectura en la API.

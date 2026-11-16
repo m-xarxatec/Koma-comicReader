@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-11-13. **Base revisada:** commit `d62ba1d` (copia del repositorio en el segundo ordenador).
 - **Estado:** versión definitiva, aprobada por el desarrollador el 2026-11-13 para ejecutarse. Lo aplicado está marcado en la sección 10; las condiciones de la ejecución, en la sección 12.
-- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1–DL8 y DL10–DL13 resueltas; DL9 sigue abierta (sección 9).
+- **Contrastado con:** `CLAUDE.md`, `docs/plan_mvp.md`, `docs/comandos.md`, `package.json`, `.gitignore`, `.dockerignore` y el contenido completo de `.claude/` (sección 12). Decisiones DL1–DL13 resueltas; DL9, la última, el 16-nov (sección 9).
 - **Objetivo:** que el harness de Claude Code (CLAUDE.md, agentes, skills, hooks, permisos) sea más eficiente, deje el código limpio, impida modificar los tests existentes, exija tests nuevos en cada funcionalidad y se pueda enseñar en la entrega del curso.
 - **Si eres un agente:** antes de actuar, lee la sección 11 («Instrucciones para el agente») entera. Las tareas están en la sección 10. La sección 12 corrige con datos reales lo que las secciones 1–9 suponían: si chocan, manda la 12.
 
@@ -285,7 +285,7 @@ Llevan el prefijo DL para no confundirlas con las D1–D21 de `plan_mvp.md`. Nin
 | DL6 | ¿Se activan los avisos de TypeScript de H9? Si aparecen errores, arreglarlos es tocar código de la app | Activarlos y decidir con la lista de errores delante. **Resuelta el 14-nov:** los cuatro activados; se borra el único error, un tipo sin usar (B11) |
 | DL7 | Nombre del test del árbol de `CLAUDE.md`: no tiene RN y la convención exige `RN-xx` o `Seguridad:` | `Seguridad:` o una excepción a la convención. **Resuelta el 14-nov:** `Seguridad:` (B10) |
 | DL8 | ¿Se declaran en `.claude/settings.json` los plugins que espera el proyecto? | Sí, si se usan en los dos ordenadores. **Resuelta el 14-nov:** no se declara ninguno; se anota para C1 (B6) |
-| DL9 | Calendario: ¿se dejan el 20-nov y el 25-nov en `plan_mvp.md`, o se anota también la fecha oficial nueva? | Dejarlas como objetivo y anotar la fecha nueva como margen. Mientras no haya respuesta, valen el 20-nov y el 25-nov |
+| DL9 | Calendario: ¿se dejan el 20-nov y el 25-nov en `plan_mvp.md`, o se anota también la fecha oficial nueva? | Dejarlas como objetivo y anotar la fecha nueva como margen. Mientras no haya respuesta, valen el 20-nov y el 25-nov. **Resuelta el 16-nov:** entrega el 30-nov y congelación el 25-nov, con el bloque 6 (Comunidad y Tutoriales) antes de la pasada de diseño (`plan_mvp.md`, «Calendario») |
 
 ## 10. Checklist de tareas
 

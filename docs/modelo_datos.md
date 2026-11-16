@@ -330,6 +330,46 @@ CREATE TABLE payment_events (
 
 `syncSubscription` actualiza `subscriptions` y recalcula `users.premium_until` en la misma transacción. Su valor es el `current_period_end` mayor entre las suscripciones `active` del usuario, o `NULL` si no hay ninguna.
 
+### 010_illustrations (bloque 6, aprobada el 16-nov)
+
+```sql
+CREATE TABLE illustrations (
+  id               INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id          INTEGER NOT NULL REFERENCES users(id),
+  title            TEXT NOT NULL,
+  description      TEXT,
+  image_key        TEXT NOT NULL UNIQUE CHECK (image_key ~ '^[0-9a-f-]{36}\.(jpg|png|webp)$'),
+  width            INTEGER NOT NULL CHECK (width > 0),      -- px, leídos de la cabecera del archivo
+  height           INTEGER NOT NULL CHECK (height > 0),
+  status           TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  rejection_reason TEXT,
+  published_at     TIMESTAMPTZ,                             -- se fija al aprobar
+  deleted_at       TIMESTAMPTZ,                             -- retirada (dueño o admin)
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT illustrations_rejection_reason CHECK (status <> 'rejected' OR rejection_reason IS NOT NULL),
+  CONSTRAINT illustrations_published CHECK (status <> 'approved' OR published_at IS NOT NULL)
+);
+CREATE INDEX illustrations_public_idx ON illustrations (published_at DESC)
+  WHERE status = 'approved' AND deleted_at IS NULL;
+CREATE INDEX illustrations_user_idx ON illustrations (user_id, created_at DESC);
+CREATE TRIGGER illustrations_set_updated_at BEFORE UPDATE ON illustrations
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE illustration_tags (
+  illustration_id INTEGER NOT NULL REFERENCES illustrations(id),
+  tag             TEXT NOT NULL CHECK (tag ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),  -- slug normalizado (RN-22)
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (illustration_id, tag)
+);
+CREATE INDEX illustration_tags_tag_idx ON illustration_tags (tag);
+```
+
+- Las etiquetas de la comunidad van aparte de `tags`, que son de las obras (géneros y temáticas): no se mezclan en el catálogo.
+- El tope de 5 pendientes por usuario (RN-22) no es un `CHECK`: se comprueba antes de multer y otra vez en la transacción del alta, con la fila del usuario bloqueada (`SELECT … FROM users WHERE id = $1 FOR UPDATE`), para que dos subidas a la vez no lo superen.
+- La retirada es lógica (`deleted_at`); la imagen se queda en el almacenamiento (riesgo aceptado, como los rechazos de RN-10).
+- Tutoriales no tiene tabla: su lista es una constante versionada (`server/src/config/tutorials.ts`, D11 del bloque 6).
+
 ## Consultas clave
 
 Búsqueda combinando etiquetas (Y, RN y CU-01):

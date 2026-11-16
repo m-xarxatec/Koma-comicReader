@@ -124,11 +124,12 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - Puntos insuficientes.
 
 ### CU-18 Publicar ilustración
-**Actor:** Registrado · **Fase:** 3
-**Objetivo:** Subir una ilustración a la comunidad, opcionalmente dentro del reto semanal.
+**Actor:** Registrado · **Fase:** bloque 6 (sin reto semanal, que sigue en fase 3)
+**Objetivo:** Subir una ilustración al tablero de la comunidad (`/comunidad`), con título, descripción opcional y hasta 5 etiquetas propias; se publica cuando la aprueba el admin, y su autor la ve con su estado en «Mis ilustraciones» y puede retirarla (RN-22).
 **Excepciones:**
 - Formato o tamaño de archivo no válido.
-- El reto semanal ya cerró.
+- Ya tiene 5 ilustraciones pendientes de aprobación.
+- La ilustración es rechazada por el admin: se muestra el motivo.
 
 ### CU-19 Solicitar verificación de edad
 **Actor:** Registrado · **Fase:** 3
@@ -227,7 +228,7 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 
 ### CU-32 Aprobar contenido
 **Actor:** Admin · **Fase:** MVP
-**Objetivo:** Aprobar o rechazar con motivo obras y capítulos en `pending` (los borradores no le llegan) (RN-05, RN-17).
+**Objetivo:** Aprobar o rechazar con motivo obras y capítulos en `pending` (los borradores no le llegan) (RN-05, RN-17), y, desde el bloque 6, las ilustraciones de la comunidad, en su propia sección de `/admin` (RN-22).
 **Excepciones:**
 - El contenido infringe derechos de autor.
 - El contenido +18 no está clasificado como tal.
@@ -235,8 +236,8 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - Rechazo sin motivo.
 
 ### CU-33 Moderar comunidad
-**Actor:** Admin · **Fase:** MVP (ilustraciones en fase 3)
-**Objetivo:** Ocultar o eliminar comentarios inapropiados (RN-11).
+**Actor:** Admin · **Fase:** MVP (ilustraciones en el bloque 6)
+**Objetivo:** Ocultar o eliminar comentarios inapropiados (RN-11) y retirar ilustraciones ya publicadas (RN-22).
 **Excepciones:**
 - El contenido ya fue eliminado.
 
@@ -292,3 +293,11 @@ Cada CU indica su fase (MVP, 2 o 3) según `plan_mvp.md`. Las reglas RN citadas 
 - La obra está marcada +18.
 - Una imagen no cumple formato, tamaño o máximo por capítulo.
 - Ya hay un capítulo vivo con ese número: se omite, salvo con `--replace`, que lo retira y lo sustituye en la misma transacción (RN-18).
+
+## Añadidos en el bloque 6
+
+### CU-42 Ver tutoriales
+**Actor:** Invitado · **Fase:** bloque 6
+**Objetivo:** Ver en `/tutoriales` los vídeos de ayuda de la plataforma, incrustados desde YouTube; en la demo local, desde archivos del portátil si están (respaldo sin internet).
+**Excepciones:**
+- Sin internet y sin archivo local: el vídeo no carga y la página sigue funcionando.
