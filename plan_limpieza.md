@@ -683,6 +683,10 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Corrige la sección 1:** había 28 archivos de tests unitarios y ahora hay 30 (`claude-tree` y `hooks`, del paso B); los de API siguen siendo 39.
     - **Comprobación:** typecheck y los dos scripts de cobertura en verde.
 - [ ] **C3 · Actividad simulada declarada** (sección 7) · **IA + D**. Una frase en el README y en el guion de la demo diciendo que la actividad de las cuentas `@demo.test` es simulada.
+  - 2026-11-16 · Hecha la mitad del README; la del guion, pendiente (decisiones del desarrollador). Por eso sigue sin marcar.
+    - **Comprobado antes de escribir:** la actividad simulada de la idea 24 no existe (ni `demo-activity*.ts` ni `demo:activity` en `package.json`; solo la skill y su apartado de `plan_mvp.md`). Tampoco hay guion de la demo: el calendario de `plan_mvp.md` lo pone en el bloque 6, y el apartado 9 de `docs/comandos.md` es una lista técnica del día de la presentación.
+    - **README:** una frase general tras la línea de `docs/harness.md`. Dice que las cuentas `@demo.test` son de demostración y que sus lecturas, comentarios y estadísticas los generan scripts. Hoy cubre `demo:data`, solo en local, y valdrá para `demo:activity` cuando exista. No dice «por la API» porque `demo:data` escribe por SQL los lectores, sus lecturas y sus comentarios (la API no admite fechas pasadas).
+    - **Pendiente (desarrollador):** la frase en el guion de la demo, cuando se escriba en el bloque 6. Al terminarlo, se marca esta tarea.
 - [ ] **C4 · Entrada de bitácora del paso C** · **IA**.
 - [ ] **C5 · Después de la entrega** (H9) · **D decide**. Partir `author.ts`, `admin.ts` y `reader.ts` con tests delante. No antes del 20-nov salvo aprobación expresa.
 
