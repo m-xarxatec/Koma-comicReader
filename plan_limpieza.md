@@ -657,6 +657,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
   - 2026-11-16 · Entrada «Limpieza del harness, paso B», al final de `docs/bitacora.md`, con la skill `bitacora`. Recoge esa aprobación en «Tests» (los tres `assert.deepEqual` añadieron `chaptersReplaced: 0`, el campo nuevo de `--replace`), las DL del paso, el arreglo de `proteger-secretos` y, como pendientes, B13 (DL5) y B15. El índice de la bitácora no cambia: la entrada cae en la fila «Pulido».
     - **Comprobación:** sobre `8733ef4`, typecheck, 193 unitarios y 310 de API en verde; `test:api:coverage` da el mismo 96,76 % de B14.
     - **Corregido:** la línea 5 de este plan daba DL3–DL5 y DL8 como abiertas; ahora solo queda DL9.
+    - **Después, 2026-11-16 (propuesta aceptada por el desarrollador):** el punto 5 de «Cómo trabajar cada tarea» (sección 11) recoge el aprendizaje de la entrada: qué se carga sin reiniciar y cuándo pedir el reinicio.
 
 ### Paso C · Para la entrega (bloque 6, 20 – 25 nov)
 
@@ -723,7 +724,7 @@ En este plan **sí puedes modificar archivos clave de configuración y de estruc
 5. **Después:**
    - ejecuta `npm run typecheck` y `npm test`;
    - si el cambio puede afectar a la API o a la BD, pide al desarrollador `npm run test:api` (necesita Postgres);
-   - para hooks, permisos, agentes y skills, pide al desarrollador que reinicie la sesión y pruébalos: un agente o una skill nuevos no se cargan hasta la sesión siguiente (bitácora, 2026-11-02).
+   - para hooks, permisos, agentes y skills, pruébalos en la misma sesión: los permisos y los hooks (A4–A6), una skill nueva en una carpeta de skills que ya existía (B1), un agente cambiado (B3) y el `CLAUDE.md` de una carpeta al leer uno de sus archivos (B9) se cargan sin reiniciar. Pide al desarrollador que reinicie la sesión solo para un agente nuevo, que no se ha probado (bitácora, 2026-11-02: no se cargaba hasta la sesión siguiente), o si lo nuevo no aparece.
 6. **Al cerrar:** marca la tarea aquí y entrega los comandos `git add` y `git commit` con el formato del proyecto (por ejemplo, `chore(claude): permisos y hooks de protección de tests y secretos`). Al final de cada paso, escribe la entrada de bitácora (A10, B16, C4).
 
 ### Cuidado con los hooks y los permisos
