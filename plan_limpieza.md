@@ -661,12 +661,18 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
 
 ### Paso C · Para la entrega (bloque 6, 20 – 25 nov)
 
-- [ ] **C1 · «Cómo trabajamos con IA»** (sección 2) · **IA**. `docs/harness.md`, o una sección del README:
+- [x] **C1 · «Cómo trabajamos con IA»** (sección 2) · **IA**. `docs/harness.md`, o una sección del README:
   - un esquema del flujo (plan → contrato → test → constructor → `frontend`/`auditor` → bitácora → commit del desarrollador);
   - qué hace cada agente, skill, hook y permiso, y por qué;
   - cómo desactivar un hook en una emergencia;
   - ejemplos reales de la bitácora. Por ejemplo, el auditor detectó que `/files/%E0%A4%A` y `?q=%00` daban 500.
   - plugins: el proyecto no declara ninguno (DL8). Si un ordenador tiene plugins de usuario (el segundo tiene `superpowers`), Claude puede comportarse distinto en cada uno.
+  - 2026-11-16 · `docs/harness.md` (decisión del desarrollador, frente a una sección del README), de 159 líneas y con seis apartados: flujo, piezas, emergencia, ejemplos, límites y plugins. Los datos se comprobaron en la sesión: `settings.json` (19 deny, 9 ask y 7 allow), la cabecera de cada hook y skill, y seis entradas de la bitácora leídas por tramos. Las reglas no se copian: se enlazan.
+    - **Enlaces (decisión del desarrollador):** `harness.md` entra en la línea `docs/` del árbol de `CLAUDE.md` (sigue en 135 líneas) y el README gana una línea tras la presentación. Esa línea amplía lo que la sección 11 permite tocar en el README, con permiso.
+    - **Emergencia, según la documentación oficial (16-nov):** `/hooks` es solo de lectura y no desactiva nada, aunque la sección 11 lo daba como ejemplo. Lo que vale es `claude --settings '{"disableAllHooks": true}'` para una sesión, `"disableAllHooks": true` en `.claude/settings.local.json` para el ordenador, o borrar la entrada de un hook en `settings.json`. Los permisos siguen activos.
+    - **Ejemplo nuevo, de esta sesión:** `proteger-secretos` bloqueó un `wc -l docs/*.md` de la IA, porque el comodín incluía `credenciales.local.md`. Se repitió el comando sin el secreto.
+    - **Sin tocar:** «Bloque actual» sigue en «Pulido» (decisión del desarrollador). La estructura de `docs/ideas_base.md` (línea 84) no nombra `harness.md`; no está en la lista de lo que se puede tocar.
+    - **Comprobación:** typecheck y 193 tests unitarios en verde (`claude-tree.test.ts` comprueba la ruta nueva); los 11 enlaces relativos de `harness.md` existen. Pendiente para el final: los anclajes del índice en GitHub.
 - [ ] **C2 · Cifras para la presentación** (sección 2) · **IA**. Número de tests (unitarios y de API), cobertura (B14), auditorías pasadas y hallazgos corregidos (contados en la bitácora), commits y bloques cerrados.
 - [ ] **C3 · Actividad simulada declarada** (sección 7) · **IA + D**. Una frase en el README y en el guion de la demo diciendo que la actividad de las cuentas `@demo.test` es simulada.
 - [ ] **C4 · Entrada de bitácora del paso C** · **IA**.

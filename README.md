@@ -2,6 +2,8 @@
 
 Un lector de cómics tipo webtoon: explora obras, léelas según tu tipo de cuenta, comenta viñetas y hazte premium. Proyecto final para XarxaTec Activa.
 
+Cómo se ha trabajado con IA (agentes, skills, hooks y permisos de Claude Code): [`docs/harness.md`](docs/harness.md).
+
 ## Probarlo en tu ordenador
 
 Necesitas Node 24 (24.2 o posterior), Docker y Git.

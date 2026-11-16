@@ -55,7 +55,7 @@
 │       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts
 │       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
-└── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md
+└── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md, harness.md
 ```
 
 - Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, y `<!-- @community -->` solo en `home.html`, e inyección de `requestId`), nunca por `express.static`.
