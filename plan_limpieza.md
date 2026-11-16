@@ -432,6 +432,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
       - en el caso 6 se respondió primero que sí, por error: el seed corrió contra Neon sin cambiar nada (es idempotente y marca `created` a cero);
       - en modo auto, el clasificador denegó lanzar el `auditor` del caso 10, así que se repitió en modo normal.
     - **Pendiente para el final:** Windows, cuando `develop` llegue al portátil (nada se sube antes).
+    - **Hecho, 2026-11-16 (lo comprobó el desarrollador):** en Windows, los hooks bloquean lo esperado.
 - [x] **A10 · Entrada de bitácora del paso A** (H1–H4) · **IA**. Con la plantilla de `docs/bitacora.md`, el resultado de A9 y los comandos git.
   - 2026-11-14 · Entrada «Limpieza del harness, paso A», al final de `docs/bitacora.md`: los cinco campos de la plantilla, más «Comprobación» y «Pendiente», como las entradas recientes (qué plantilla sigue la skill se decide en B1). Recoge el incidente del caso 6 y lo pendiente de Windows.
 
@@ -464,6 +465,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **`CLAUDE.md`:** en «Quién hace qué», la fila de skills nombra las cinco (siguen siendo 158 líneas).
     - **Sin reiniciar:** según la documentación, una skill nueva en una carpeta de skills que ya existía se carga en la misma sesión. `bitacora` y `entregar-commit` aparecieron al momento. Las dos prueban el formato aquí: `bitacora prueba` mostró la entrada y `entregar-commit` dio los comandos de B1.
     - **Pendiente (desarrollador):** ver `/cerrar-bloque` y `/encargo-codex` en el menú `/` (Claude no las ve porque son solo del usuario).
+    - **Hecho, 2026-11-16 (lo comprobó el desarrollador):** las skills salen en el menú `/`.
     - **Comprobación:** 188 tests unitarios en verde.
 - [x] **B2 · Skills opcionales** (H8) · **IA + D**. `actividad-simulada` y `reemplazar-capitulos`, con los pasos de «Pulido» de `plan_mvp.md`. Solo describen los pasos: no ejecutan nada `:online`.
   - 2026-11-14 · Aprobada por el desarrollador. `.claude/skills/reemplazar-capitulos/SKILL.md` y `.claude/skills/actividad-simulada/SKILL.md`, de 40 líneas cada una.
@@ -478,6 +480,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **`CLAUDE.md`:** la fila «Skills» de «Quién hace qué» nombra las dos (sigue en 158 líneas).
     - **Comprobación:** typecheck y 188 tests unitarios en verde. Cabecera YAML revisada a mano: la validación con `python3 -c` la bloqueó `proteger-secretos` por un error interno (ver «Fallos del analizador», tras B6).
     - **Pendiente (desarrollador):** ver `/reemplazar-capitulos` y `/actividad-simulada` en el menú `/`.
+    - **Hecho, 2026-11-16 (lo comprobó el desarrollador):** las skills salen en el menú `/`.
 - [x] **B3 · `auditor` ampliado** (H2, H4) · **IA**. Ampliar el apartado «F · Tests» que ya tiene `.claude/agents/auditor.md`. En el rango auditado, lista:
   - cada `assert` eliminado o cambiado en tests existentes;
   - cada `feat`/`fix` sin test nuevo;
@@ -511,6 +514,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **Hecho, 2026-11-14:**
       - **Maqueta:** el desarrollador la da por hecha. Se lleva una copia de `.claude/maqueta/` (1,9 MB) con un `cp -a` hacia la carpeta de su terminal: le sirve de respaldo y de origen para el `.claude/maqueta/` del otro ordenador.
       - **`/constructor`:** la cabecera YAML de la skill y de los dos agentes se lee bien (PyYAML). El menú `/` no lo ve la IA, porque la skill es solo del usuario.
+      - **Menú `/`, 2026-11-16 (lo comprobó el desarrollador):** las skills salen, `/constructor` incluida.
 - [x] **B5 · Encargos de Codex** (sección 5) · **IA + DL3**. Pasar los de `.git/codex-t13/` a `.claude/encargos/`, si se decide versionarlos. Mover también `.claude/t13-stripe-online.md` a `.claude/encargos/` (DL13), para que la raíz de `.claude/` solo tenga configuración.
   - 2026-11-14 · DL3 = sí, solo el encargo, no los registros (decisión del desarrollador).
     - **Qué hay en `.git/codex-t13/`:** nueve archivos, no siete (corrige la sección 12):
@@ -551,6 +555,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
     - **npm 11.19** no ejecuta los scripts de instalación sin aprobación (`allowScripts`). No afecta: `bcrypt` 6 carga sus binarios precompilados, comprobado en el clon.
     - **Falso positivo de `proteger-secretos`:** bloqueó un `python3` en línea que leía el workflow solo porque su texto decía «.env». No se rodeó. Queda como dato para C1.
     - **Pendiente para el final:** el verde en GitHub con el primer push. La CI no frena el despliegue de Render, salvo que se active en Render la opción de esperar a los checks (lo decide el desarrollador). El árbol de `CLAUDE.md` aún no nombra `.github/`: se puede añadir en B9.
+    - **Hecho, 2026-11-16 (lo comprobó el desarrollador):** con el paso de `develop` a `main` (`228c885`, avance rápido), la CI salió en verde en GitHub y Render desplegó con la versión de Node correcta; la app abre y deja entrar. Render sigue desplegando aunque la CI falle (decisión del desarrollador), así que el comentario de `tests.yml` sigue siendo exacto.
 - [x] **B8 · `CLAUDE.md` al día** (H6) · **IA**. Corregir el árbol (los archivos que faltan y los que sobran, según el estado real tras 0.1), añadir la fecha de congelación y `docs/comandos.md`, y poner una tabla de «quién hace qué» con agentes, skills y hooks. Sin perder reglas. `constructor` figura como skill, no como agente. Los archivos de la actividad simulada (`demo-activity*.ts` y `npm run demo:activity`) se quedan solo si ya existen: hoy `package.json` no tiene esos scripts, y el `auditor` exige que coincidan con la tabla de comandos (ver B10).
   - 2026-11-14 · Cambios:
     - **Salen** (no existen): `seeds/`, `demo-activity.ts`, `demo-activity-guard.ts`, `demo:activity` (y `:online`) y las cuentas `actividad1…6@demo.test`. Todo sigue en `plan_mvp.md` (líneas 374–375, 1371 y 1382), y «Bloque actual» sigue nombrando la actividad simulada.
@@ -605,6 +610,7 @@ Al terminar una tarea: `[x]`, la fecha y una nota de una línea. Ninguna tarea s
       - En `plan_mvp.md`, la fila «CLAUDE.md» de «Decisiones» (≤ 150 líneas) es histórica y no se ha tocado.
       - La línea 5 de este plan da DL3 y DL8 como abiertas, pero se resolvieron el 14-nov.
       - La carga en subagentes no se ha probado: `auditor` y `frontend` leen los tres `CLAUDE.md` porque se lo dice su archivo.
+        - **Probado, 2026-11-16 (a petición del desarrollador):** sí se cargan. Con la orden de no abrir ningún `CLAUDE.md`, el `auditor` leyó solo `client/src/components/ad.ts` y recibió `client/CLAUDE.md`, y el `frontend` leyó solo `server/src/utils/layout.ts` y recibió `server/CLAUDE.md`; los dos, también el de la raíz al arrancar. El título y los encabezados `##` que copiaron coinciden con los archivos reales.
 - [x] **B10 · Test del árbol de `CLAUDE.md`** (H6) · **IA + DL7**. Archivo **nuevo** en `server/src/tests/unit/` que comprueba que cada ruta del árbol de `CLAUDE.md` existe.
   - **Hecho cuando:** falla si se nombra un archivo inexistente y pasa con el árbol corregido de B8.
   - **Cuidado:** `CLAUDE.md` documenta por adelantado lo ya aprobado (hoy, la actividad simulada). El test tiene que convivir con eso: o el árbol solo nombra lo que existe, o el test admite una lista corta y explícita de «pendientes». Preguntar cuál.
