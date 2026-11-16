@@ -1,6 +1,6 @@
 # Ideas base · Koma — plataforma de cómics (proyecto final XarxaTec Activa)
 
-Entrega: 25 de noviembre de 2026 (congelación de funciones: 20 de noviembre).
+Entrega: 30 de noviembre de 2026 (congelación de funciones: 25 de noviembre; fechas nuevas desde el 16 de noviembre).
 Regla del documento: solo se anotan ideas discutidas y aprobadas.
 Documentos relacionados (en `docs/`): `plan_mvp.md` (alcance, fases, reglas RN, calendario, guía para CLAUDE.md) y `casos_de_uso.md`.
 
@@ -46,7 +46,7 @@ Un solo `package.json` en la raíz. Las versiones exactas se fijan al crearlo y 
 | `@aws-sdk/s3-request-presigner` | 3.1160.0 | | |
 
 ## Estructura del proyecto
-Monorepo con `client` y `server`. Un solo servidor Express sirve la API y el frontend. Las carpetas marcadas con fase **no se crean** antes de la entrega, salvo lo aprobado para el bloque 5 (ver "Decisiones tras el MVP").
+Monorepo con `client` y `server`. Un solo servidor Express sirve la API y el frontend. Las carpetas marcadas con fase **no se crean** antes de la entrega, salvo lo aprobado para los bloques 5 y 6 (ver "Decisiones tras el MVP" y "Bloque 6").
 
 ```
 koma/
@@ -57,7 +57,7 @@ koma/
 │   │   └── sw.js          # (fase 2: PWA; ruta propia en la raíz)
 │   ├── src/
 │   │   ├── pages/         # home, reader, comic, profile, premium, author, admin,
-│   │   │                  # auth, fake-checkout · (fase 3: community)
+│   │   │                  # auth, fake-checkout · (bloque 6: community, tutorials)
 │   │   ├── components/    # header, comic-card, comment-panel, ad, timer
 │   │   ├── services/      # api.ts (fetch centralizado), auth.ts
 │   │   └── utils/         # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts
@@ -65,14 +65,14 @@ koma/
 ├── server/
 │   ├── src/
 │   │   ├── modules/       # auth, users, comics, chapters, reading, comments, payments, audit, admin
-│   │   │                  # (fase 2: gamification · fase 3: illustrations)
+│   │   │                  # (bloque 6: illustrations · fase 2: gamification)
 │   │   │                  # reading/reading.rules.ts: reglas puras de RN-01–03 (sin BD ni reloj) · comics/comics.rules.ts: slug (RN-09)
 │   │   ├── middlewares/   # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   │   ├── integrations/  # storage/ (driver.ts, index.ts, local.ts, r2.ts), payments (stripe, fake)
 │   │   │                  # (fase 2: discord —webhook—, mailer)
 │   │   ├── db/            # pool.ts, migrations/, seeds/
 │   │   ├── scripts/       # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo BD local)
-│   │   ├── config/        # env.ts, paths.ts, limits.ts (valores fijos del plan)
+│   │   ├── config/        # env.ts, paths.ts, limits.ts (valores fijos del plan) · (bloque 6: tutorials.ts, la lista de vídeos)
 │   │   ├── utils/         # logger.ts, app-error.ts, html.ts, origin.ts, password.ts, page.ts, layout.ts, redirect.ts, image.ts, signing.ts, text.ts, open-graph.ts
 │   │   ├── tests/         # unit/ y api/: <tema>.test.ts
 │   │   ├── app.ts
@@ -146,7 +146,7 @@ Doble despliegue con el mismo código; solo cambian las variables de entorno.
 - Dedicación prevista: 6 h o más al día, fines de semana incluidos.
 
 ## Decisiones tras el MVP (10 de noviembre)
-El MVP (bloques 1–4) se cerró el 9 de noviembre, antes de lo previsto. Se abre un **bloque 5** con funciones de la fase 2 elegidas por su valor en la presentación. Es la única excepción a "nada de las fases 2 y 3".
+El MVP (bloques 1–4) se cerró el 9 de noviembre, antes de lo previsto. Se abre un **bloque 5** con funciones de la fase 2 elegidas por su valor en la presentación. Fue la primera excepción a "nada de las fases 2 y 3"; la segunda es el bloque 6 (16 de noviembre).
 
 Orden de construcción:
 
@@ -159,7 +159,7 @@ Orden de construcción:
 
 - El enlace de Discord empieza solo con las tres primeras desplegadas y auditadas.
 - Antes de la primera: cerrar lo pendiente del bloque 4 y probar la demo en contenedores de punta a punta.
-- Quedan fuera antes de la entrega: avatar, PWA, reportes (descartados), todo lo que necesita correo o cambia el login, puntos y logros, restauración y apelaciones, y la fase 3 entera.
+- Quedan fuera antes de la entrega: avatar, PWA, reportes (descartados), todo lo que necesita correo o cambia el login, puntos y logros, restauración y apelaciones, y la fase 3 entera (desde el 16 de noviembre, salvo las ilustraciones de la comunidad: ver "Bloque 6").
 - Actividad simulada antes de la demo (idea 24): excepción a la regla de que los datos de demostración solo viven en local.
 - Test Clocks de Stripe: recortado el 9 de noviembre (contingencia nivel 1).
 
@@ -167,12 +167,25 @@ Orden de construcción:
 El bloque 5 se cerró el 10 de noviembre. Sin funciones nuevas, salvo la actividad simulada (idea 24). Detalle, reparto y decisiones en `plan_mvp.md`, sección «Pulido».
 
 - **Diseño:** lo escribe Codex en encargos sucesivos (E1 premium, gracias y pago simulado; E2 `/admin`; E3 estudio del autor; E4 el conjunto), y Claude Code lo integra y lo audita. El estudio del autor se pule sobre su diseño actual, sin volver a la maqueta, y pasa al aviso flotante y al `<dialog>` de `/admin`.
-- **Maqueta:** vuelve «Descubrir Premium» en la ficha y «Premium» en el pie. Desvíos anotados: «En publicación» (no hay dato), y Comunidad, Tutoriales y «Ayuda» en la navegación y el pie (no tienen página).
+- **Maqueta:** vuelve «Descubrir Premium» en la ficha y «Premium» en el pie. Desvíos anotados: «En publicación» (no hay dato), y «Ayuda» en la navegación y el pie (no tiene página). Comunidad y Tutoriales dejaron de ser un desvío el 16 de noviembre: tienen página desde el bloque 6.
 - **Imágenes:** banner del hero temporal en `icons/koma-hero.webp` (la definitiva sustituye el archivo con el mismo nombre); mascota en WebP y nueva imagen de Open Graph a partir de la mascota con fondo transparente.
 - **Segunda obra:** los capítulos 2 a 4 siguen siendo provisionales; se reemplazarán al final con `--replace` (idea 23).
 
+## Bloque 6 · Comunidad y Tutoriales (16 de noviembre)
+Con el plazo nuevo (entrega el 30 de noviembre, congelación el 25) se abre un **bloque 6**, del 17 al 20 de noviembre, antes de terminar la pasada de diseño. Es la segunda excepción a "nada de las fases 2 y 3". Contrato y decisiones (D1–D16) en `plan_mvp.md`, «Contrato de la API del bloque 6».
+
+| # | Función | Idea | Notas |
+|---|---|---|---|
+| 1 | Comunidad: ilustraciones de los usuarios (CU-18, sin reto) | 3 | Adelantada de la fase 3; el reto semanal (CU-37) sigue en fase 3 |
+| 2 | Tutoriales (CU-42) | 25 | Vídeos de YouTube incrustados, con respaldo local solo para la demo sin internet |
+
+- «Comunidad» y «Tutoriales» entran en la cabecera, la navegación móvil y los accesos rápidos de la portada; el enlace de Discord pasa a estar dentro de `/comunidad` y sigue en el pie.
+- Sin dependencias nuevas. Una migración (`010_illustrations`) y una variable opcional, solo local (`TUTORIAL_VIDEOS_DIR`).
+- Si la noche del 20 no está desplegado y auditado, se recorta en este orden: el respaldo local de vídeos, el filtro por etiqueta y la lista de etiquetas. Publicar, aprobar y retirar ilustraciones no se recortan.
+- El pulido sigue en paralelo: E1 y E3 durante el bloque; E2, E4 y la actividad simulada, del 21 al 24.
+
 ## Aprobadas
-Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 5" = se construye antes de la entrega (ver "Decisiones tras el MVP").
+Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 5" y "Bloque 6" = se construyen antes de la entrega (ver "Decisiones tras el MVP" y "Bloque 6").
 
 ### 1. Compartir la viñeta exacta
 - Enlace profundo que abre el capítulo directamente en la viñeta compartida: `/leer/:slug/:numero#v-:n`.
@@ -190,8 +203,14 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 - Validación real de archivos subidos (firma del archivo y tamaño).
 - Registro de auditoría consultable desde el dashboard de administración.
 
-### 3. Retos semanales de ilustración (fase 3)
-- Un reto con temática por semana dentro de la comunidad.
+### 3. Ilustraciones de la comunidad (bloque 6; retos semanales en fase 3)
+- (Bloque 6) Tablero público en `/comunidad` con las ilustraciones de los usuarios registrados; el detalle se abre en la misma página.
+- (Bloque 6) Publica cualquier cuenta registrada activa, autores y premium incluidos; el admin no. Cada ilustración lleva imagen, título, descripción opcional y hasta 5 etiquetas libres.
+- (Bloque 6) Nada se ve hasta que el admin lo aprueba; rechazar exige motivo. La retiran su dueño o el admin, y una retirada no vuelve. Como mucho 5 pendientes por usuario (RN-22).
+- (Bloque 6) «Mis ilustraciones» dentro de `/comunidad`; el admin las revisa en una sección propia de `/admin`.
+- (Bloque 6) Las imágenes siguen las reglas de las demás subidas: firma del archivo, 5 MB y URL firmada.
+- Fuera del bloque 6: «me gusta», comentarios, perfiles públicos y contenido +18.
+- (Fase 3) Un reto con temática por semana dentro de la comunidad.
 
 ### 4. Comentarios por viñeta
 - Icono discreto con contador en cada viñeta.
@@ -243,6 +262,7 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 ### 10. Discord (enlace en el bloque 5; webhook en fase 2)
 - Canal real de la comunidad.
 - (Bloque 5) Enlace «Únete a nuestro Discord» que abre la invitación en otra pestaña: en el pie de todas las páginas y en el acceso rápido «Comunidad» de la portada. Sin la URL de invitación configurada (`DISCORD_INVITE_URL`), el pie no lo muestra y «Comunidad» sigue en «Próximamente». Sin internet no abre nada, y la plataforma sigue funcionando igual.
+- (Bloque 6) El acceso rápido «Comunidad» lleva a `/comunidad` y el enlace de Discord pasa a una tarjeta dentro de esa página; el del pie no cambia. Sin la URL configurada, ni la tarjeta ni el pie lo muestran.
 - (Fase 2) Webhook que publica automáticamente cada capítulo nuevo aprobado.
 
 ### 11. Anuncios falsos
@@ -278,11 +298,11 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 ### 19. Advertencias de contenido
 - Aviso previo en obras de horror o temas sensibles; la aceptación se recuerda por obra.
 
-### 20. Recursos para creadores (fase 3)
+### 20. Recursos para creadores (fase 3; los vídeos, en el bloque 6: idea 25)
 - Sección con libros, tutoriales, videos y tips de dibujo.
-- Videos: solo enlaces o incrustaciones de YouTube; nunca se alojan en la plataforma.
+- Videos: solo enlaces o incrustaciones de YouTube; nunca se alojan en la plataforma (única excepción: el respaldo local de la idea 25).
 - Temas: crear webtoons, crecer en la app, compartir en redes.
-- Ubicación por decidir: dentro de la comunidad o en una pestaña propia.
+- Ubicación: los vídeos, en la pestaña propia «Tutoriales» (idea 25); el resto, por decidir.
 
 ### 21. Eventos (fase 3)
 - El admin crea eventos: sorteos (tableta de dibujo, pase premium), concursos de dibujo y convocatorias de obras.
@@ -305,3 +325,10 @@ Entre paréntesis, la fase de cada idea o parte. Sin indicación = MVP. "Bloque 
 - **Entorno:** `npm run demo:activity` (local) y `npm run demo:activity:online`, con una guarda que impide ejecutarlos fuera de su destino. Una pasada al día en los días previos a la demo, lanzada por el desarrollador.
 - **Punto de abandono:** se enseña solo en local; online no se crean obras desde el script.
 - **Rastro y retirada:** solo queda lo que la API ya audita. Tras la demo, las cuentas se suspenden y sus comentarios se eliminan desde `/admin`; sus lecturas se quedan en los totales.
+
+### 25. Tutoriales (bloque 6)
+- Página `/tutoriales` con vídeos de YouTube incrustados, en la cabecera y en los accesos rápidos de la portada (CU-42).
+- La lista de vídeos es fija y vive en el código; no se gestiona desde `/admin` ni se suben vídeos.
+- Incrustados desde `youtube-nocookie.com`, cargados solo al llegar a ellos; es el único origen externo que admite la página.
+- Respaldo para la demo sin internet: si el portátil tiene el archivo de un vídeo en la carpeta `TUTORIAL_VIDEOS_DIR`, la página lo reproduce desde ahí. Solo en local: online, la variable se rechaza.
+- Es la única excepción a «no alojar vídeos», y solo vale para la demo local. Sin internet y sin archivo local, ese vídeo no carga.

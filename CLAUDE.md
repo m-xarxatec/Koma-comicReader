@@ -4,7 +4,7 @@
 
 **Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`. Funciones congeladas el 25-nov; entrega el 30-nov (`docs/plan_mvp.md`, «Calendario»).
 
-- Bloque actual: **Pulido (11 – 19 nov)**: pasada de diseño (encargos E1–E4 de Codex), contenido real y pruebas; sin funciones nuevas, salvo `--replace` de la importación y la actividad simulada (idea 24). Todo en `docs/plan_mvp.md`, «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **6 · Comunidad y Tutoriales (17 – 20 nov)**: ilustraciones de la comunidad (RN-22) y tutoriales (CU-42); en paralelo, el pulido (E1 y E3 de Codex, `--replace` y la actividad simulada, idea 24). Todo en `docs/plan_mvp.md`, «Contrato de la API del bloque 6» y «Pulido». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 - Reglas por carpeta: `client/CLAUDE.md` (HTML, CSS y TS del cliente) y `server/CLAUDE.md` (recorrido de una petición, convenciones y trampas del servidor). Claude Code los carga al leer archivos de su carpeta; antes de tocar una carpeta, lee su `CLAUDE.md`.
 
