@@ -1636,3 +1636,41 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Pendiente (desarrollador):**
   - `/autor` en el navegador, en el equipo de casa: la lista «Qué probar» de la revisión, con la navegación interna con un capítulo abierto, Atrás y Adelante, la retirada doble, guardar con y sin cambios, subir varias imágenes, mover y eliminar viñetas, la portada, y 360 px con teclado y consola.
   - El despliegue online (migración 010) y `/cerrar-bloque`. Hasta entonces, el bloque 6 queda cerrado en código.
+
+### 2026-11-17 · Pulido · Demo en la LAN probada en el portátil Windows: `http://koma.local` funciona
+- **Pedido a la IA:** que la demo funcione al 100 % desde el portátil Windows de la presentación (`docs/comandos.md`, apartado 10), con los móviles de la misma red entrando por `http://koma.local`, como ya funcionaba en el equipo Linux. También, resolver el choque con el PostgreSQL nativo de Windows.
+- **Resultado:** **probado en Windows y funciona.** Un Android en la misma wifi abre `http://koma.local` y carga Koma. El montaje:
+  - la app con Node directamente en Windows, en el puerto 80 y con el PostgreSQL nativo, configurada por la línea de comandos (contingencia del plan, nivel 3);
+  - `koma.local` anunciado por un respondedor mDNS en Node, sin dependencias: `server/src/scripts/demo-mdns.ts`, que se lanza con `npm run demo:mdns` (solo local, como `demo:data`);
+  - sin administrador, porque el cortafuegos ya permite la entrada a Node.
+  - El detalle y el paso a paso del día de la demo están en `docs/diario-windows.md`.
+  - Los comandos de Windows (subir, preparar, arrancar, comprobar, bajar y la red del instituto) están en `docs/comandos.md`, apartado 10.12, con un aviso al principio del apartado 10. `CLAUDE.md` recoge `demo:mdns` en la tabla de comandos y en el árbol.
+- **Tests:** 4 unitarios (`unit/demo-mdns.test.ts`, `Seguridad:`):
+  - la respuesta al resolvedor simple (su id, la pregunta repetida, TTL de 10 s y sin cache-flush);
+  - la respuesta mDNS (id 0, sin la pregunta, con cache-flush y TTL de 120 s);
+  - la lectura de preguntas, con nombres comprimidos, respuestas, paquetes cortados y un puntero que apunta a sí mismo;
+  - la IP según la red de quien pregunta (la wifi y no la red de WSL; de otra red, ninguna).
+  - Vistos fallar los 4 antes, con las firmas provisionales. Ningún test existente cambió.
+- **Decisiones del desarrollador:** la demo va en la misma red que los móviles, por `koma.local`, y sin contenedor. Los comandos de Windows van en la guía del repositorio.
+- **Fallos:**
+  - **La app en Docker, inaccesible desde la red en Windows.** Respondía en el portátil, pero ningún móvil llegó al puerto 80, ni con reglas del cortafuegos por puerto.
+  - **La zona wifi del portátil no sirvió.** El móvil se conectaba, pero no llegaba a la app, y Windows la apaga sola sin dispositivos.
+  - **Windows no anuncia `koma.local`.** Solo anuncia su propio nombre (`anonymous.local`).
+  - **La primera versión del respondedor no valía para Android.** Contestaba a Android sin repetir la pregunta ni su identificador, y Android la descartaba: es un «resolvedor simple» (RFC 6762, §6.7).
+  - **`.env.example` rompe el arranque en Compose.** `DISCORD_INVITE_URL=   # comentario` (paso 10.3) es vacío para Node pero no para Docker Compose, y `env.ts` lo rechaza: la app en contenedor no arranca.
+  - **El PostgreSQL nativo ocupa el 5432.** `docker compose up` choca con él.
+- **Corrección:**
+  - el respondedor responde también como resolvedor simple, con la pregunta y su identificador;
+  - el choque con el PostgreSQL de Docker se resolvió publicándolo en el 5433 desde `koma-lan.yml`, fuera del repositorio. Ya no hace falta para la demo, que usa el nativo;
+  - el comentario de `.env.example`, sin corregir: queda propuesto.
+- **Aprendizaje:** en Windows, la demo en la LAN no va con Docker Desktop: va con Node directo y un respondedor mDNS (`docs/comandos.md`, apartado 10.12). Un respondedor mDNS que tenga que servir a Android debe contestar también como «legacy unicast».
+- **Comprobación (IA):**
+  - desde el portátil, `/api/health` responde `ok` por `127.0.0.1`, por la IP de la wifi y por `koma.local`;
+  - entrar con el origen `koma.local` da 200, y con un origen ajeno, 403;
+  - el respondedor contesta a las dos formas de pregunta (mDNS, y resolvedor simple con la pregunta repetida).
+- **Comprobación (desarrollador, 17-nov, Android en la wifi de casa):** el móvil preguntó por `koma.local` como resolvedor simple, recibió la IP del portátil y cargó Koma 10 veces.
+- **Pendiente (desarrollador):**
+  - entrar con sesión desde el móvil con la contraseña correcta (los dos intentos dieron 401, contraseña incorrecta);
+  - probarlo en la wifi del instituto, que puede aislar a los dispositivos o filtrar el multicast;
+  - probar una vez el apartado 10.12 de `docs/comandos.md` de principio a fin, tal como está escrito;
+  - aprobar los cambios de `docs/comandos.md` y de `.env.example`.
