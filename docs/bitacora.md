@@ -1530,3 +1530,16 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** no se rodeó el candado: el botón del filtro de ilustraciones sigue llamándose «Mostrar».
 - **Comprobación (IA):** `npm test` (225) y `npm run test:api` (349), en verde.
 - **Pendiente (desarrollador):** vaciar `.claude/permiso-tests.txt` tras el commit. La navegación móvil con cinco enlaces en 360 px, sin ver. `quick-links.css` conserva los estilos de `quick-link--soon`, ya sin uso. Si se quiere «Filtrar» en ilustraciones, listar `client-parity.test.ts` en el archivo de permisos. Después: pruebas en el navegador, agentes `frontend` y `auditor`, despliegue online y `/cerrar-bloque`.
+
+### 2026-11-17 · Pulido · Estudio del autor: `<dialog>` de confirmación y aviso flotante (D2), y dos flecos del bloque 6
+- **Pedido a la IA:** los flecos pendientes del bloque 6 y pasar el estudio del autor al aviso flotante y al `<dialog>` de `/admin`, en lugar de los mensajes por sección y de `confirm()` («Pulido», «Antes de E3»; D2). El diseño queda para el desarrollador.
+- **Resultado:**
+  - `client/src/components/confirm-dialog.ts` (`confirmDialog`): solo confirma si el `<dialog>` se cierra con `returnValue` «confirm»; «Cancelar», Escape u otro cierre, no.
+  - `author.html`: un `<dialog id="author-dialog">` con `method="dialog"` y una sola región `role="status"` flotante al final de `main`; fuera los cuatro mensajes por sección (`works-status`, `obra-feedback`, `edit-status` y `editor-status`).
+  - `author.ts`: retirar una obra, retirar un capítulo y eliminar una viñeta confirman en el diálogo; `say()` escribe en el aviso flotante (en rojo si es un fallo). Los errores de cada formulario siguen junto a él (`role="alert"`).
+  - `author-page.css`: el aviso y el diálogo, con los tokens `--admin-feedback-*` y `--admin-dialog-width` que ya existían.
+  - Flecos: `/videos/` en `.gitignore` y la skill `/anadir-video` en `docs/harness.md`. `confirm-dialog` en «Estructura» de `CLAUDE.md`.
+- **Tests:** 4 unitarios (`unit/client-confirm-dialog.test.ts`, con un `<dialog>` simulado) y 2 de API (`api/author-dialog-page.test.ts`), todos `Seguridad:`. Vistos fallar antes: los 4 unitarios con la firma provisional (`true !== false`, `0 !== 1`) y los 2 de API con `0 !== 1`. Ningún test existente cambió.
+- **Decisiones del desarrollador:** el botón del filtro de ilustraciones de `/admin` se queda en «Mostrar»; el diseño (encargos de Codex y estilos sin uso de `quick-link--soon`) lo lleva él.
+- **Comprobación (IA):** `npm test` (229) y `npm run test:api` (351), en verde.
+- **Pendiente (desarrollador):** en el navegador, sin probar: en `/autor`, retirar una obra y un capítulo y eliminar una viñeta con el diálogo (también con Escape y con teclado), y ver el aviso flotante al subir viñetas, mover, guardar y enviar a revisión, en 360 px y escritorio. `author-page.css` y `chapter-editor.css` conservan estilos de los mensajes por sección, ya sin uso. `.claude/permiso-tests.txt` sigue con cuatro rutas: vaciarlo.

@@ -1,4 +1,5 @@
 import type { TagDto } from '../components/comic-card.js';
+import { confirmDialog, type ConfirmOptions } from '../components/confirm-dialog.js';
 import { api, type ApiError, type ApiResult } from '../services/api.js';
 import {
   authorCreditProblem,
@@ -187,11 +188,25 @@ function imageForm(file: File): FormData {
   return form;
 }
 
-// Regiones role="status" de cada sección: verde si es un éxito y rojo si es un fallo (.form__status--error).
-function say(region: HTMLElement, message: string, error = false): void {
-  region.classList.toggle('form__status--error', error);
-  region.textContent = message;
+// Avisos de las acciones (pulido, D2): una sola región role="status", flotante y al final de main, como en /admin.
+// En rojo si es un fallo (.author-page__feedback--error). Se vacía antes de escribir para que se anuncie también un
+// aviso igual al anterior (dos «Viñeta movida» seguidos); un mensaje vacío solo la limpia.
+const live = document.querySelector<HTMLElement>('[data-live]');
+let liveToken = 0;
+function say(message: string, error = false): void {
+  if (!live) return;
+  const token = ++liveToken;
+  live.textContent = '';
+  live.classList.toggle('author-page__feedback--error', error);
+  if (message === '') return;
+  requestAnimationFrame(() => {
+    if (token === liveToken) live.textContent = message;
+  });
 }
+
+// Confirmación en el <dialog> del estudio, en lugar de confirm().
+const dialog = document.querySelector<HTMLDialogElement>('#author-dialog');
+const confirmAction = (options: ConfirmOptions) => confirmDialog(dialog, options);
 
 function focusHeading(id: string): void {
   const heading = document.getElementById(id);
@@ -203,7 +218,6 @@ function focusHeading(id: string): void {
 
 const worksList = byId<HTMLUListElement>('works-list');
 const worksMessage = byId<HTMLElement>('works-message');
-const worksStatus = byId<HTMLElement>('works-status');
 const reviewsList = byId<HTMLUListElement>('reviews-list');
 const reviewsMessage = byId<HTMLElement>('reviews-message');
 const reviewsSection = byId<HTMLElement>('revisiones');
@@ -579,7 +593,6 @@ bindForm(
 const comicSection = byId<HTMLElement>('obra');
 const comicTitle = byId<HTMLElement>('obra-title');
 const comicBadge = byId<HTMLElement>('obra-status');
-const comicFeedback = byId<HTMLElement>('obra-feedback');
 const comicMessage = byId<HTMLElement>('obra-message');
 const comicBody = byId<HTMLElement>('obra-body');
 const comicPublic = byId<HTMLAnchorElement>('obra-public');
@@ -664,50 +677,62 @@ comicCoverInput.addEventListener('change', async () => {
   const file = comicCoverInput.files?.[0];
   if (!comic || !file) return;
   comicCoverInput.disabled = true;
-  say(comicFeedback, 'Subiendo la portada…');
+  say('Subiendo la portada…');
   const result = await uploadCover(comic.slug, file);
   comicCoverInput.disabled = false;
   comicCoverInput.value = '';
   comicCoverInput.focus(); // se desactivó con el foco dentro: se le devuelve
   if (!result.ok) {
-    say(comicFeedback, `No se pudo cambiar la portada. ${errorText(result)}`, true);
+    say(`No se pudo cambiar la portada. ${errorText(result)}`, true);
     return;
   }
   await reloadComics();
-  say(comicFeedback, 'Portada actualizada.');
+  say('Portada actualizada.');
 });
 
 comicWithdraw.addEventListener('click', async () => {
   const comic = currentComic();
   if (!comic) return;
-  if (!confirm(`¿Retirar «${comic.title}»? Dejará de estar visible para los lectores y no se puede deshacer desde el estudio.`)) return;
+  const sure = await confirmAction({
+    title: 'Retirar obra',
+    text: `«${comic.title}» dejará de estar visible para los lectores y no se puede deshacer desde el estudio.`,
+    confirm: 'Retirar obra',
+    danger: true,
+  });
+  if (!sure) return;
   comicWithdraw.disabled = true;
   const result = await api.post<void>(`/api/comics/${encodeURIComponent(comic.slug)}/withdraw`);
   comicWithdraw.disabled = false;
   if (!result.ok) {
     comicWithdraw.focus();
-    say(comicFeedback, `No se pudo retirar la obra. ${errorText(result)}`, true);
+    say(`No se pudo retirar la obra. ${errorText(result)}`, true);
     return;
   }
   await reloadComics();
   history.pushState(null, '', studioUrl());
   await route();
-  say(worksStatus, `«${comic.title}» se ha retirado.`);
+  say(`«${comic.title}» se ha retirado.`);
   focusHeading('mis-obras-title');
 });
 
 async function withdrawChapter(comic: AuthorComicDto, number: number): Promise<void> {
-  if (!confirm(`¿Retirar el capítulo ${number}? Dejará de estar visible y su número quedará libre.`)) return;
+  const sure = await confirmAction({
+    title: 'Retirar capítulo',
+    text: `El capítulo ${number} dejará de estar visible y su número quedará libre.`,
+    confirm: 'Retirar capítulo',
+    danger: true,
+  });
+  if (!sure) return;
   const result = await api.post<void>(`${chapterUrl(comic.slug, number)}/withdraw`);
   if (!result.ok) {
-    say(comicFeedback, `No se pudo retirar el capítulo ${number}. ${errorText(result)}`, true);
+    say(`No se pudo retirar el capítulo ${number}. ${errorText(result)}`, true);
     return;
   }
   await reloadComics();
   const open = new URLSearchParams(location.search).get('capitulo');
   if (open === String(number)) history.pushState(null, '', studioUrl(comic.slug));
   await route();
-  say(comicFeedback, `Capítulo ${number} retirado.`);
+  say(`Capítulo ${number} retirado.`);
   focusHeading('obra-title');
 }
 
@@ -737,7 +762,6 @@ const editTagChoices = byId<HTMLElement>('edit-tags-choices');
 const editWarningToggle = byId<HTMLInputElement>('edit-has-warning');
 const editWarningField = byId<HTMLElement>('edit-warning-field');
 const editAdult = byId<HTMLInputElement>('edit-is-adult');
-const editStatus = byId<HTMLElement>('edit-status');
 
 const syncEditWarning = () => {
   editWarningField.hidden = !editWarningToggle.checked;
@@ -763,7 +787,6 @@ function fillEditForm(comic: AuthorComicDto): void {
   byId('edit-is-adult-hint').textContent = comic.status === 'approved'
     ? 'No se puede cambiar en una obra ya publicada.'
     : 'Koma no publica obras +18: si la marcas, se guardará pero no podrá aprobarse.';
-  say(editStatus, '');
 }
 
 bindForm(
@@ -797,7 +820,7 @@ bindForm(
     if (next.contentWarning !== comic.contentWarning) changes['contentWarning'] = next.contentWarning;
     if (comic.status !== 'approved' && next.isAdult !== comic.isAdult) changes['isAdult'] = next.isAdult;
     if (Object.keys(changes).length === 0) {
-      say(editStatus, 'No hay cambios que guardar.');
+      say('No hay cambios que guardar.');
       return { ok: true };
     }
 
@@ -806,7 +829,7 @@ bindForm(
     store.editing = null; // el repintado vuelve a rellenar el formulario con lo guardado
     await reloadComics();
     renderComic();
-    say(editStatus, 'Cambios guardados.');
+    say('Cambios guardados.');
     return { ok: true };
   },
 );
@@ -824,7 +847,6 @@ const editorImages = byId<HTMLInputElement>('editor-images');
 const editorList = byId<HTMLOListElement>('editor-list');
 const editorEmpty = byId<HTMLElement>('editor-empty');
 const editorCount = byId<HTMLElement>('editor-count');
-const editorStatus = byId<HTMLElement>('editor-status');
 const editorSubmit = byId<HTMLButtonElement>('editor-submit');
 const editorWithdraw = byId<HTMLButtonElement>('editor-withdraw');
 const editorNote = byId<HTMLElement>('editor-note');
@@ -978,28 +1000,29 @@ editorList.addEventListener('click', async (event) => {
     const result = await api.patch<{ chapter: AuthorChapterDto }>(panelUrl, { position: to });
     setBusy(false);
     if (!result.ok) {
-      say(editorStatus, `No se pudo mover la viñeta ${position}. ${errorText(result)}`, true);
+      say(`No se pudo mover la viñeta ${position}. ${errorText(result)}`, true);
       return;
     }
     store.chapter = result.data.chapter;
     renderEditor();
-    say(editorStatus, `Viñeta ${position} movida a la posición ${to}.`);
+    say(`Viñeta ${position} movida a la posición ${to}.`);
     focusPanelButton(to, action);
     return;
   }
 
   if (action === 'remove') {
-    if (!confirm(`¿Eliminar la viñeta ${position}? Se borra definitivamente.`)) return;
+    const sure = await confirmAction({ title: 'Eliminar viñeta', text: `La viñeta ${position} se borra definitivamente.`, confirm: 'Eliminar', danger: true });
+    if (!sure) return;
     setBusy(true);
     const result = await api.delete<void>(panelUrl);
     if (!result.ok) {
       setBusy(false);
-      say(editorStatus, `No se pudo eliminar la viñeta ${position}. ${errorText(result)}`, true);
+      say(`No se pudo eliminar la viñeta ${position}. ${errorText(result)}`, true);
       return;
     }
     await loadChapter(slug, chapter.number);
     setBusy(false);
-    say(editorStatus, `Viñeta ${position} eliminada.`);
+    say(`Viñeta ${position} eliminada.`);
     const remaining = store.chapter?.panels.length ?? 0;
     if (remaining === 0) editorImages.focus();
     else focusPanelButton(Math.min(position, remaining), 'up');
@@ -1025,7 +1048,7 @@ editorImages.addEventListener('change', async () => {
       problems.push(`${file.name}: pasa de ${MAX_IMAGE_MB} MB.`);
       continue;
     }
-    say(editorStatus, `Subiendo ${index + 1} de ${files.length}: ${file.name}…`);
+    say(`Subiendo ${index + 1} de ${files.length}: ${file.name}…`);
     const result = await api.post<{ panel: AuthorPanelDto }>(`${chapterUrl(slug, chapter.number)}/panels`, imageForm(file));
     if (!result.ok) {
       problems.push(`${file.name}: ${errorText(result)}`);
@@ -1041,7 +1064,7 @@ editorImages.addEventListener('change', async () => {
   editorImages.value = '';
   setBusy(false);
   const summary = uploaded === 0 ? 'No se ha subido ninguna imagen.' : `${plural(uploaded, 'imagen subida', 'imágenes subidas')}.`;
-  say(editorStatus, [summary, ...problems].join(' '), problems.length > 0);
+  say([summary, ...problems].join(' '), problems.length > 0);
   void reloadComics();
 });
 
@@ -1053,12 +1076,12 @@ editorSubmit.addEventListener('click', async () => {
   const result = await api.post<{ chapter: AuthorChapterDto }>(`${chapterUrl(slug, chapter.number)}/submit`);
   setBusy(false);
   if (!result.ok) {
-    say(editorStatus, errorText(result), true);
+    say(errorText(result), true);
     return;
   }
   store.chapter = result.data.chapter;
   renderEditor();
-  say(editorStatus, 'Capítulo enviado a revisión: ya no se puede editar.');
+  say('Capítulo enviado a revisión: ya no se puede editar.');
   focusHeading('capitulo-title'); // el botón ha desaparecido: el foco no se queda en el vacío
   void reloadComics();
 });
@@ -1104,8 +1127,9 @@ async function route(options: RouteOptions = {}): Promise<void> {
   const slug = params.get('obra');
   const rawNumber = params.get('capitulo');
   const number = rawNumber !== null && /^[1-9]\d{0,9}$/.test(rawNumber) ? Number(rawNumber) : null;
-  say(comicFeedback, options.comicMessage ?? '', options.comicMessageIsError);
-  say(editorStatus, options.chapterMessage ?? '');
+  // Al cambiar de vista, el aviso anterior se limpia o se sustituye por el de la nueva (obra o capítulo).
+  if (options.comicMessage) say(options.comicMessage, options.comicMessageIsError);
+  else say(options.chapterMessage ?? '');
   renderComic();
 
   const showChapter = slug !== null && rawNumber !== null && currentComic() !== null;
