@@ -1,0 +1,27 @@
+# Diario del portátil Windows
+
+Diario sencillo del trabajo hecho en el portátil Windows, para el agente del equipo de casa (3vil4n0n) cuando haya que unir las dos líneas de trabajo. La bitácora oficial sigue siendo `docs/bitacora.md`; esto solo cuenta qué pasó aquí y qué hay que tener en cuenta al juntar.
+
+## Cómo unir (para el agente de casa)
+
+- **Rama de este equipo:** `windows/d2-estudio-dialogo`, creada desde `develop` en `5c473c8` («Comunidad y Tutoriales en la navegación…», 17-nov 01:18).
+- **Lo que casa tiene y aquí no** (nunca llegó a GitHub): la actividad simulada (idea 24, `server/src/scripts/demo-activity.ts` y lo que la acompañe), la rama `feat/premium-diseno` (encargo E1 de Codex, worktree `koma-premium`) y un `client/src/components/confirm-dialog.ts` sin commitear.
+- **Choque esperado:** D2 se ha rehecho aquí desde cero, así que el `confirm-dialog.ts` de casa y el de esta rama van a chocar. Quedarse con uno solo; si el de casa estaba a medias, manda el de esta rama.
+- **La idea 24 no debería chocar:** son archivos nuevos y `package.json`. Revisar solo `package.json`, `CLAUDE.md` (árbol y tabla de comandos) y `docs/bitacora.md` (entradas de las dos ramas: ordenarlas por fecha).
+- **No copiar de aquí:** `.env` ni `docs/credenciales.local.md`. Se generaron nuevos en este portátil con otros secretos y otras contraseñas demo; las de casa siguen valiendo allí.
+
+## Entorno de este portátil
+
+- Windows 11, Node 24.18, npm 12.1, PostgreSQL 18 **nativo** (servicio `postgresql-x64-18`) en el 5432, con el rol `koma`/`koma` y las bases `koma` y `koma_test`. No se usa el `db` de Docker: chocaría con el puerto. Para la demo con `docker compose up`, parar antes ese servicio.
+- `npm ci` avisa de que bloquea el script de instalación de `bcrypt`, pero funciona con su binario precompilado `win32-x64`.
+- `npm run test:api`: falla siempre 1 test, «Seguridad: ningún enlace simbólico de content/ se sigue…» (`api/import-content.test.ts`), con `EPERM: symlink`. Windows no deja crear enlaces simbólicos sin ser administrador o sin el Modo de desarrollador (Configuración → Sistema → Para programadores). No es un fallo del código: en casa y en la CI (Linux) pasa. El test no se toca.
+- Faltan `content/`, `storage/`, `.claude/maqueta/` y `.claude/parches/` (ignorados por git): hay que traerlos de casa en un `.zip`.
+
+## Entradas
+
+### 2026-11-17 · Puesta en marcha
+
+- La copia del proyecto traída en el disco externo llegó con **todos los archivos a 0 bytes** (también `.git` y `node_modules`). No se recuperó nada de ella: se clonó `develop` desde GitHub.
+- Comprobado en Windows: `npm ci`, `npm run build` (sin errores), `npm test` (225/225 en verde), `npm run migrate` (10/10), `npm run seed`, `npm run demo:data` y `npm run test:api` (348/349: el que falla es el de los enlaces simbólicos, ver «Entorno»).
+- `.env` y `docs/credenciales.local.md` generados nuevos (ignorados por git).
+- Siguiente tarea acordada: **D2** del pulido (estudio del autor con el `<dialog>` de confirmación y el aviso flotante, antes de E3), en la rama `windows/d2-estudio-dialogo`.
