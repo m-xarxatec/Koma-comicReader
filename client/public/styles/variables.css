@@ -752,4 +752,16 @@
   --admin-feedback-padding: 0.9rem;
   --admin-feedback-font-size: 0.85rem;
   --admin-feedback-clearance: 6rem; /* hueco que deja el aviso con texto: hasta tres líneas con el código de referencia */
+
+  /* Diálogo de confirmación y aviso flotante del estudio del autor (D2; components/confirm-dialog.ts). Genéricos,
+     con los valores del panel del admin: el diseño final los sustituye aquí. */
+  --confirm-dialog-width: var(--admin-dialog-width);
+  --confirm-dialog-backdrop: var(--color-comments-backdrop);
+  --floating-notice-offset: var(--admin-feedback-offset);
+  --floating-notice-offset-wide: var(--admin-feedback-offset-wide);
+  --floating-notice-width: var(--admin-feedback-width);
+  --floating-notice-padding: var(--admin-feedback-padding);
+  --floating-notice-font-size: var(--admin-feedback-font-size);
+  --floating-notice-clearance: var(--admin-feedback-clearance);
+  --floating-notice-error-border: var(--color-danger);
 }

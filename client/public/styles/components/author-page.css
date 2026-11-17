@@ -118,10 +118,6 @@
   color: var(--color-text-muted);
 }
 
-.author-page__status:not(:empty) {
-  margin-bottom: var(--author-heading-margin);
-}
-
 .author-page__works {
   display: grid;
   gap: var(--author-works-gap);

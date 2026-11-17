@@ -51,7 +51,7 @@
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials, community
-│       ├── components/         # header, comic-card, comment-panel, ad, timer
+│       ├── components/         # header, comic-card, comment-panel, ad, timer, confirm-dialog (diálogo y aviso flotante del estudio, D2)
 │       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts, illustrations.ts
 │       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)

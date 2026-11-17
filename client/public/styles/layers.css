@@ -9,6 +9,7 @@
   /* Página */
   --layer-header: 40;
   --layer-admin-feedback: 50; /* aviso de las acciones de /admin, sobre las tablas y bajo la navegación móvil */
+  --layer-floating-notice: 50; /* aviso de las acciones del estudio del autor (D2), el mismo lugar que el de /admin */
   --layer-mobile-nav: 60;
   --layer-skip-link: 200;
 

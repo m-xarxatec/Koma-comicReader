@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="/styles/components/author-summary.css">
   <link rel="stylesheet" href="/styles/components/reads-table.css">
   <link rel="stylesheet" href="/styles/components/recent-comment.css">
+  <link rel="stylesheet" href="/styles/components/confirm-dialog.css">
+  <link rel="stylesheet" href="/styles/components/floating-notice.css">
   <script type="module" src="/js/pages/author.js"></script>
 </head>
 <body>
@@ -128,7 +130,6 @@
             </div>
             <span class="author-page__muted" id="works-count"></span>
           </div>
-          <p class="form__status author-page__status" id="works-status" role="status"></p>
           <p class="author-page__message" id="works-message">Cargando tus obras…</p>
           <ul class="author-page__works" id="works-list"></ul>
         </section>
@@ -187,7 +188,6 @@
             </div>
             <span class="status-badge" id="obra-status"></span>
           </div>
-          <p class="form__status author-page__status" id="obra-feedback" role="status"></p>
           <p class="author-page__message" id="obra-message"></p>
           <div id="obra-body" hidden>
             <div class="author-page__actions">
@@ -308,7 +308,6 @@
                 <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
                 <div class="panel-card__actions">
                   <button class="button button--primary" type="submit" disabled data-needs-js>Guardar cambios</button>
-                  <p class="form__status" id="edit-status" role="status"></p>
                 </div>
               </form>
             </div>
@@ -342,7 +341,6 @@
               <h3 class="chapter-editor__subtitle">Orden de lectura <span class="author-page__muted" id="editor-count"></span></h3>
               <ol class="chapter-editor__list" id="editor-list" aria-label="Viñetas del capítulo en orden de lectura"></ol>
               <p class="author-page__message" id="editor-empty" hidden>Todavía no hay viñetas.</p>
-              <p class="form__status chapter-editor__status" id="editor-status" role="status"></p>
               <div class="chapter-editor__actions">
                 <button class="button button--primary" id="editor-submit" type="button">Enviar a revisión →</button>
                 <a class="button button--outline" id="editor-preview-link" href="/" hidden>Ver en el lector</a>
@@ -450,6 +448,23 @@
         <p class="panel-card__note">La obra nace en revisión: un administrador la aprueba antes de que sea pública.</p>
       </form>
     </section>
+
+    <!-- Confirmación de retirar una obra o un capítulo y de eliminar una viñeta (D2). method="dialog": no envía nada
+         al servidor. Lo abre components/confirm-dialog.ts con el texto de cada acción. -->
+    <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-text">
+      <form class="form confirm-dialog__form" method="dialog">
+        <h2 class="confirm-dialog__title" id="confirm-dialog-title"></h2>
+        <p class="confirm-dialog__text" id="confirm-dialog-text"></p>
+        <div class="confirm-dialog__actions">
+          <button class="button button--outline" type="button" data-confirm-dialog-cancel>Cancelar</button>
+          <button class="button button--primary" type="submit" value="confirm" data-confirm-dialog-confirm>Confirmar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Avisos de las acciones (portada, cambios, viñetas, envío a revisión, retiradas), éxito o error (D2): siempre
+         en el árbol para que se anuncien, y al final de main, fijos abajo de la pantalla (floating-notice.css). -->
+    <p class="floating-notice" role="status" aria-live="polite" data-notice></p>
   </main>
   <!-- @footer -->
 </body>

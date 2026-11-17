@@ -1,0 +1,33 @@
+/* Diálogo de confirmación (D2; components/confirm-dialog.ts). Estilo genérico, el mismo que el del panel del admin;
+   el diseño final cambia los tokens --confirm-dialog-* de variables.css. */
+
+.confirm-dialog {
+  width: min(100% - var(--space-8), var(--confirm-dialog-width));
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.confirm-dialog::backdrop {
+  background: var(--confirm-dialog-backdrop);
+}
+
+.confirm-dialog__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.confirm-dialog__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
