@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>Tutoriales · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/tutorials-page.css">
+</head>
+<body>
+  <!-- @header -->
+  <!-- /tutoriales (CU-42): pública. La lista llega de GET /api/tutorials y pages/tutorials.ts crea cada reproductor
+       con la API del DOM (YouTube sin cookies o, en la demo sin internet, el archivo local). -->
+  <main id="contenido" class="tutorials container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Tutoriales</span>
+    </nav>
+
+    <header class="tutorials__intro">
+      <p class="eyebrow">Aprende a dibujar</p>
+      <h1 class="tutorials__title">Tutoriales</h1>
+      <p class="tutorials__lead">Vídeos para empezar a dibujar tus propias viñetas, paso a paso.</p>
+    </header>
+
+    <p class="tutorials__status" role="status" data-tutorials-status></p>
+    <noscript>
+      <p class="tutorials__status">Para ver los tutoriales necesitas activar JavaScript en tu navegador.</p>
+    </noscript>
+    <ul class="tutorials__list" data-tutorials-list hidden></ul>
+  </main>
+  <!-- @footer -->
+  <script type="module" src="/js/pages/tutorials.js"></script>
+</body>
+</html>

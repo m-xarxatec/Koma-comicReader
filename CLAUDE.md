@@ -50,10 +50,10 @@
 ├── client/
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
 │   └── src/                    # TS → client/dist, servido en /js
-│       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin
+│       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
 │       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts
-│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md, harness.md
 ```

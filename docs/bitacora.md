@@ -1469,3 +1469,16 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Comprobación (IA):** el script en seco y de verdad: añade a la lista vacía y a una con entradas, omite un vídeo repetido y rechaza un texto que no es enlace y un id inexistente (salida 1). `npm test` (203) y `npm run test:api` (337), en verde.
 - **Pendiente (desarrollador):** bajar los `<id>.mp4` a `./videos`; añadir `/videos/` a `.gitignore`; `docker compose up` con el volumen nuevo, sin probar; `docs/harness.md` no nombra la skill.
 
+
+### 2026-11-17 · Bloque 6 · Página `/tutoriales` (CU-42; D12, D13)
+- **Pedido a la IA:** seguir con el bloque 6; tercera tarea, la página de Tutoriales («Contrato de la API del bloque 6», «Tutoriales» y «Páginas»).
+- **Resultado:**
+  - `client/public/pages/tutorials.html` y `client/src/pages/tutorials.ts`: la lista llega de `GET /api/tutorials` y cada reproductor se crea con la API del DOM: `<iframe>` de `youtube-nocookie.com` con `loading="lazy"` y `referrerpolicy="strict-origin-when-cross-origin"` (D12), o `<video preload="none">` sobre `/videos/<id>.mp4` si `local` es `true` (D13). Textos con `textContent`; sin JS, un `<noscript>`.
+  - `client/src/utils/tutorials.ts`: `embedUrl` y `localVideoUrl`, que vuelven a validar el id antes de montar la URL.
+  - `components/tutorials-page.css` y sus tokens `--tutorials-*` en `variables.css`.
+  - Ruta `/tutoriales` en `app.ts` y `tutorials` en `PageName`; los dos archivos nuevos del cliente, en «Estructura» de `CLAUDE.md`.
+- **Tests:** 3 unitarios (`unit/client-tutorials.test.ts`) y 3 de API (`api/tutorials-page.test.ts`), todos `Seguridad:`. Vistos fallar antes: los 3 unitarios con las firmas provisionales (`null` frente a la URL esperada y `'^$'` frente al patrón) y 2 de API con `404 !== 200`; el del 301 de la barra final pasó desde el principio (lo cubre `trailingSlash`). Ningún test existente cambió.
+- **Fallos:** la primera ejecución de `npm run test:api` dio `ECONNREFUSED 127.0.0.1:5432`: Postgres estaba parado.
+- **Corrección:** `docker compose up -d db` y se repitió.
+- **Comprobación (IA):** `npm test` (206) y `npm run test:api` (340), en verde. El valor de `referrerpolicy`, comprobado en la documentación de YouTube («Required Minimum Functionality»: recomienda `strict-origin-when-cross-origin`).
+- **Pendiente (desarrollador):** ver `/tutoriales` en el navegador (360 px y escritorio, con teclado): que los tres vídeos se reproducen y que la consola no da avisos de la CSP; probar el respaldo con un `.mp4` real. La página aún no está enlazada: la navegación y los accesos rápidos (D10) van con los 4 tests existentes. Quedan `/comunidad` y la sección «Ilustraciones» de `/admin`.
