@@ -33,3 +33,15 @@ Diario sencillo del trabajo hecho en el portátil Windows, para el agente del eq
 - **Archivos tocados:** `client/src/pages/author.ts`, `client/public/pages/author.html`, `variables.css`, `layers.css`, `author-page.css`, `chapter-editor.css`, `CLAUDE.md` (árbol) y `docs/bitacora.md`.
 - **Al unir con casa:** si allí hay un `confirm-dialog.ts` a medias, gana este, que tiene tests. Si casa tocó `author.ts` o `author.html` después del 17-nov a la 01:18, revisar a mano los choques en los `say(...)`, ahora `notify(...)`, y en las regiones de estado que se quitaron.
 - **Estado:** typecheck, unitarios 231/231 y API 350/351 (el de enlaces simbólicos, el de Windows). Falta probarlo en el navegador, y el diseño final.
+
+### 2026-11-17 · Revisión del bloque 6 y correcciones
+
+- **Qué es:** `frontend` y `auditor` revisaron el bloque 6 entero (nunca lo habían revisado), sin nada bloqueante. Se corrigieron el lote A (servidor y tests) y el lote B (cliente de `/comunidad`). El lote C (reorganizar CSS y tokens) queda para E4. Detalle en `docs/bitacora.md`, entrada «Revisión del bloque con `frontend` y `auditor`, y sus correcciones».
+- **Archivos nuevos:** `server/src/tests/api/illustrations-rate-limit.test.ts`, `server/src/tests/api/community-dialog-page.test.ts` y `server/src/tests/unit/client-community-review.test.ts`.
+- **Archivos tocados:**
+  - servidor: `illustrations.service.ts`, `illustrations.controller.ts` y `utils/layout.ts` (texto «Comparte tus ilustraciones»);
+  - cliente: `pages/community.ts`, `utils/illustrations.ts` y `community.html`;
+  - estilos: `community-page.css`, `quick-links.css` y `variables.css`;
+  - otros: `.gitignore` (`/videos/`), `docs/plan_mvp.md` (la excepción a RN-13) y `docs/bitacora.md`.
+- **Al unir con casa:** si casa tocó `community.ts`, `community.html` o `community-page.css` después del 17-nov a la 01:18, el choque más probable es el diálogo de retirar. Aquí ya usa el componente común de D2 (`#confirm-dialog`), y `#withdraw-dialog` y `.community-dialog*` desaparecen.
+- **Estado:** typecheck, unitarios 237/237 y API 353/354 (el de enlaces simbólicos, el de Windows). Falta probarlo en el navegador y desplegarlo.

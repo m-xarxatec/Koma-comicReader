@@ -1548,3 +1548,55 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - En el navegador, a 360 px y en escritorio, con teclado: retirar una obra, retirar un capítulo (desde la tabla y desde el editor) y eliminar una viñeta. Comprobar que el foco empieza en Cancelar, que Escape cancela y que el foco vuelve al botón o pasa al título. Ver también que el aviso queda sobre la navegación móvil, el borde de error, el progreso de subir varias imágenes y la consola.
   - Para E2: `/admin` pasa al componente y a sus dos CSS, y se borran `.admin-dialog*`, `.admin-page__feedback`, `--admin-feedback-*`, `--admin-dialog-width` y `--layer-admin-feedback` (hoy los tokens nuevos son alias de los del admin).
   - El agente `auditor`, sin pasar.
+
+### 2026-11-17 · Bloque 6 · Revisión del bloque con `frontend` y `auditor`, y sus correcciones
+- **Pedido a la IA:** pasar los agentes `frontend` y `auditor` por el bloque 6, que nunca los había pasado (tramo `f55191d..59777cb`, D2 incluido), y corregir lo aprobado por el desarrollador: el lote A (servidor y tests) y el lote B (cliente de `/comunidad`). El lote C (reorganizar CSS y tokens) queda para E4. Hecho en el portátil Windows, en la rama `windows/d2-estudio-dialogo`.
+- **Revisión (agente `auditor`):** apto con observaciones, nada bloqueante. Cumplen: la migración 010 igual al DDL, el SQL parametrizado, las acciones `illustration.*` en la misma transacción, los permisos en `permissions.ts`, las subidas por firma, `/videos` con su regex, la CSP y las variables en `.env.example` y en el README. Los tests existentes cambiados tienen el permiso anotado. Hallazgos:
+  - Sin test del 429 al publicar ilustraciones (RN-13). Corregido.
+  - El test de `/videos` «pasaría con el código anterior». No se toca: en el mismo archivo, el test anterior comprueba el 200 de un `<id>.mp4` válido, y `secreto.txt` existe en el disco, así que sin la validación se serviría. Su nombre («sin tocar el disco») es inexacto para `zzzzzzzzzzz.mp4`, pero cambiarlo exige el permiso de los tests existentes.
+  - `/videos/` faltaba en `.gitignore`. Corregido.
+  - El controlador de ilustraciones importaba `pool`. Corregido.
+  - El orden limitador → multer → zod contradice RN-13. Anotado como excepción (ver «Decisiones»).
+  - Los límites escritos a mano en `community.html`. Se quedan, como en D8, con un test de paridad.
+- **Revisión (agente `frontend`):** apto con observaciones, nada bloqueante. Este portátil no tiene `.claude/maqueta/`, así que no hubo comparación con la maqueta. Corregidos en el lote B: el diálogo de retirar duplicado, el error del tablero escrito en un párrafo oculto, la paginación fuera de rango, el `alt` repetido, el cierre del detalle al pulsar en su relleno, el foco al repintar «Mis ilustraciones», el `.webp` sin tipo, los estilos de «Próximamente» sin uso y el texto «Comenta y comparte». Para E4 (lote C): separar `discord-card`, `tag-filter` y `own-illustration` de `community-page.css`, los alias `--community-*` y `--tutorials-*`, las clases sin regla, el `[hidden]` redundante y la `<img>` sin `src` del detalle. Para el navegador: si la cabecera desborda entre 1024 y 1150 px con cinco enlaces.
+- **Resultado:**
+  - Lote A:
+    - `illustrations.service.ts`: `checkPublisher(user)` con el pool; el controlador ya no importa `pool`.
+    - `.gitignore`: `/videos/`.
+    - `docs/plan_mvp.md`: la excepción a RN-13 en los contratos de subir viñeta y de publicar ilustración.
+  - Lote B:
+    - `pages/community.ts`: la retirada con `confirmAction` del componente de D2; el mensaje del tablero visible al empezar cada carga; la paginación por `paginationView`; `alt=""` en las miniaturas; el detalle se cierra solo con un clic fuera del rectángulo; el foco en `#mine-title` tras retirar o cambiar de página.
+    - `utils/illustrations.ts`: `paginationView` (nueva, pura) e `imageProblem` deja pasar el tipo vacío (RN-10: decide la firma).
+    - `community.html`: `#confirm-dialog` en lugar de `#withdraw-dialog`, `confirm-dialog.css` enlazado y `tabindex="-1"` en `#mine-title`.
+    - Fuera: `.community-dialog*`, `--community-dialog-width`, `.quick-link--soon` y `.quick-link__soon`.
+    - `layout.ts`: «Comparte tus ilustraciones».
+- **Tests:**
+  - `api/illustrations-rate-limit.test.ts`, 1 `RN-13:`. Como el limitador ya existía, se vio fallar quitándolo un momento de la ruta (`201 !== 429`). La ruta se restauró sin diff.
+  - `unit/client-community-review.test.ts`, 6 (`RN-10:`, `RN-22:` y `Seguridad:`).
+  - `api/community-dialog-page.test.ts`, 2 `Seguridad:`.
+  - Vistos fallar antes, 7 de 8. El de la paridad de los límites de `community.html` pasó desde el principio: fija los valores, como el de D8.
+  - Ningún test existente cambió.
+- **Decisiones del desarrollador:**
+  - Lotes A y B ahora; C, en E4.
+  - Anotar la excepción a RN-13 en las subidas multipart, sin cambiar el orden.
+  - «Comparte tus ilustraciones» en el acceso rápido.
+- **Fallos:** un comando con un heredoc mal cerrado parecía no haber hecho nada, pero había aplicado el cambio. Se comprobó leyendo el archivo antes de seguir.
+- **Comprobación (IA):**
+  - `npm run typecheck`, sin errores.
+  - `npm test`, 237/237.
+  - `npm run test:api`, 353/354. El que falla es el de los enlaces simbólicos, por `EPERM` de Windows.
+  - Con el servidor en marcha, `curl`:
+    - `/comunidad` con 2 diálogos, uno `#confirm-dialog` y ninguno `withdraw-dialog`;
+    - `community.js`, `utils/illustrations.js` y `confirm-dialog.css` con 200;
+    - la portada con «Comparte tus ilustraciones»;
+    - `GET /api/illustrations?page=3` con `total: 0`.
+- **Pendiente (desarrollador):**
+  - En el navegador, a 360 px y en escritorio, con teclado:
+    - publicar y retirar en `/comunidad`: el diálogo común, con el foco después en «Mis ilustraciones»;
+    - el detalle: Escape, clic fuera, clic en el relleno y Enter en «Cerrar»;
+    - `?page=3` sin resultados;
+    - un `.webp` desde Windows;
+    - la cabecera entre 1024 y 1150 px;
+    - la consola.
+  - En `/admin`: aprobar, rechazar y retirar ilustraciones, y comprobarlo en la auditoría.
+  - El despliegue online (migración 010) y `/cerrar-bloque`.
