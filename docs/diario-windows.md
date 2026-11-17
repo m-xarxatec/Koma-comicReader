@@ -45,3 +45,13 @@ Diario sencillo del trabajo hecho en el portátil Windows, para el agente del eq
   - otros: `.gitignore` (`/videos/`), `docs/plan_mvp.md` (la excepción a RN-13) y `docs/bitacora.md`.
 - **Al unir con casa:** si casa tocó `community.ts`, `community.html` o `community-page.css` después del 17-nov a la 01:18, el choque más probable es el diálogo de retirar. Aquí ya usa el componente común de D2 (`#confirm-dialog`), y `#withdraw-dialog` y `.community-dialog*` desaparecen.
 - **Estado:** typecheck, unitarios 237/237 y API 353/354 (el de enlaces simbólicos, el de Windows). Falta probarlo en el navegador y desplegarlo.
+
+### 2026-11-17 · Pruebas en el navegador y revisión de /autor
+
+- **Probado aquí en el navegador (por el desarrollador):** `/comunidad`, `/tutoriales` y «Ilustraciones» de `/admin`, todo correcto. Falta el diseño.
+- **Sin probar en el navegador:** `/autor`. Se prueba en casa con la lista de la bitácora (entrada «Pruebas en el navegador, revisión de `/autor` y sus correcciones»).
+- **Corregido tras la revisión de `/autor`:** navegación interna sin volver a pintar, foco con Atrás y Adelante y tras guardar, retirada de capítulo de una en una, detalle de los errores de subida, `aria-label`, `<noscript>` muerto y paridad de límites. Archivo nuevo: `client/src/utils/author.ts`.
+- **Cuentas de prueba solo de este portátil:** `prueba1@demo.test` y `prueba2@demo.test`, creadas por la API en la BD local de Windows. En casa no existen; no hace falta crearlas.
+- **Windows:** `npm run dev` (`node --watch`) se reinicia solo y corta peticiones. Para probar a mano, mejor `node --env-file=.env server/dist/server.js`, y reiniciarlo tras compilar.
+- **Al unir con casa:** `author.ts` ha cambiado bastante (D2 y esta revisión). Si casa tocó `author.ts` o `author.html` después del 17-nov a la 01:18, revisar los choques a mano.
+- **Estado:** bloque 6 cerrado en código. Typecheck, unitarios 243/243 y API 355/356 (el de los enlaces simbólicos). Falta probar `/autor`, desplegar online y lanzar `/cerrar-bloque`.

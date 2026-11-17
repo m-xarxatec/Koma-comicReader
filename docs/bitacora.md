@@ -1600,3 +1600,39 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
     - la consola.
   - En `/admin`: aprobar, rechazar y retirar ilustraciones, y comprobarlo en la auditoría.
   - El despliegue online (migración 010) y `/cerrar-bloque`.
+
+### 2026-11-17 · Bloque 6 · Pruebas en el navegador, revisión de `/autor` y sus correcciones
+- **Pedido a la IA:** el desarrollador probó en el navegador el bloque 6, con el servidor local y los datos de ejemplo. Pidió pasar el agente `frontend` por el estudio del autor completo (que se probará en otro equipo) y dar el bloque por cerrado en código. Hecho en el portátil Windows, en la rama `windows/d2-estudio-dialogo`.
+- **Datos de ejemplo:** por la API, sin tocar la BD ni los secretos. Un script fuera del repositorio registró `prueba1@demo.test` y `prueba2@demo.test`, con una contraseña conocida que solo vale en local. Cada una publicó 4 ilustraciones, pendientes de revisión. Las imágenes para subir a mano quedaron fuera del repositorio. Las contraseñas de las cuentas demo siguen en `docs/credenciales.local.md`, que la IA no puede leer.
+- **Revisión (agente `frontend`, `/autor` completo):** apto con observaciones, nada bloqueante. Cumplen el HTML sin JS, los tokens, la CSP, `textContent`, las peticiones por `api.ts`, la paridad de RN-09 y RN-10 y las fases. Corregidos:
+  - **A corregir:**
+    - un enlace a una sección (`#resumen`, `#nuevo-capitulo`…) lanzaba `popstate` y volvía a ejecutar `route()`: vaciaba el aviso, pisaba el número escrito en «Nuevo capítulo» y volvía a pedir el capítulo abierto, incluso mientras se subían imágenes;
+    - el foco caía en `<body>` con Atrás y Adelante dentro del estudio;
+    - un capítulo se podía retirar dos veces a la vez, y desde el editor seguían activos sus botones durante la petición;
+    - el foco caía en `<body>` tras guardar «Datos de la obra».
+  - **Menores:**
+    - los `aria-label` de «Ver ficha» y «Ver motivo» no contenían el texto visible;
+    - un `<noscript>` dentro de `#crear-obra`, que nunca se veía;
+    - los límites de `author.html` no tenían test de paridad, y a la advertencia de edición le faltaba su pista;
+    - un 400 de una subida perdía el detalle de `fields`;
+    - el foco, si fallaba la recarga tras eliminar una viñeta.
+  - **Sin corregir:** el formulario que no avisa si `/api/tags` falla (menor, anotado). Las clases sin regla (`reads-table__chapter-title`, `reads-table__details`), para E4.
+- **Resultado:**
+  - `client/src/utils/author.ts` (nuevo), con funciones puras: `isNewRoute`, `viewHeading`, `oneAtATime` y `withFieldDetails`.
+  - `pages/author.ts`:
+    - `popstate` solo vuelve a pintar si cambia la consulta y, si el foco queda en `<body>` o dentro de algo oculto, lo lleva al título de la vista;
+    - `withdrawChapter` va con `oneAtATime` y usa `setBusy` si el capítulo está abierto;
+    - el foco va a `#edit-title` tras guardar;
+    - `errorText` añade los `fields`;
+    - los `aria-label` nuevos;
+    - el foco va a `capitulo-title` si falla la recarga.
+  - `author.html`: `#edit-title` con `tabindex="-1"`, la pista de la advertencia de edición y fuera el `<noscript>` muerto.
+  - `CLAUDE.md`: `author.ts` en la lista de `utils/` del árbol.
+- **Tests:** 6 unitarios (`unit/client-author-review.test.ts`, `Seguridad:`, `RN-09:` y `RN-10:`) y 2 de API (`api/author-review-page.test.ts`, `Seguridad:`). Vistos fallar los 8 antes, también el de paridad, por la pista que faltaba. Ningún test existente cambió.
+- **Fallos:** el test de `oneAtATime` se colgó con el cuerpo provisional, porque el segundo clic esperaba una promesa que nadie resolvía.
+- **Corrección:** el test lleva `timeout: 2000`, así que ahora falla en lugar de colgarse. Además, en Windows `node --watch` (`npm run dev`) se reiniciaba solo y cortaba peticiones; para las pruebas a mano se usó `node --env-file=.env server/dist/server.js`.
+- **Comprobación (IA):** `npm run typecheck` sin errores; `npm test` 243/243; `npm run test:api` 355/356 (falla el de los enlaces simbólicos, por `EPERM` de Windows). Con `curl`: `/js/utils/author.js`, `/js/pages/author.js` y `/js/components/confirm-dialog.js`, 200; `/autor` sin sesión, 302.
+- **Comprobación (desarrollador, 17-nov, en el navegador):** `/comunidad`, `/tutoriales` y la sección «Ilustraciones» de `/admin` funcionan. El diseño queda por mejorar (E4).
+- **Pendiente (desarrollador):**
+  - `/autor` en el navegador, en el equipo de casa: la lista «Qué probar» de la revisión, con la navegación interna con un capítulo abierto, Atrás y Adelante, la retirada doble, guardar con y sin cambios, subir varias imágenes, mover y eliminar viñetas, la portada, y 360 px con teclado y consola.
+  - El despliegue online (migración 010) y `/cerrar-bloque`. Hasta entonces, el bloque 6 queda cerrado en código.
