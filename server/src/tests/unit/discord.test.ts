@@ -66,23 +66,26 @@ test('Seguridad: un DISCORD_INVITE_URL no válido impide arrancar (http, otro ho
   }
 });
 
-test('Seguridad: sin URL, el pie no muestra el enlace y «Comunidad» sigue en «Próximamente»', () => {
+// Bloque 6 (D10): «Comunidad» es un enlace a /comunidad, con URL de Discord o sin ella; ya no hay «Próximamente».
+test('Seguridad: sin URL, el pie no muestra el enlace y «Comunidad» lleva a /comunidad', () => {
   for (const html of [renderTemplate(page, {}, '/'), renderTemplate(page, {}, '/', null)]) {
     assert.equal(count(html, 'discord'), 0);
     assert.equal(count(html, 'Únete a nuestro Discord'), 0);
     assert.equal(count(html, 'target="_blank"'), 0);
-    assert.equal(count(html, '<span class="quick-link quick-link--soon">'), 1);
+    assert.equal(count(html, '<span class="quick-link quick-link--soon">'), 0);
+    assert.equal(count(html, '<a class="quick-link" href="/comunidad">'), 1);
     assert.equal(count(html, '<strong>Comunidad</strong>'), 1);
-    assert.equal(count(html, 'Próximamente'), 1);
+    assert.equal(count(html, 'Próximamente'), 0);
     assert.equal(count(html, '<!-- @'), 0, 'sin marcadores');
   }
 });
 
-test('Seguridad: con URL, el pie y «Comunidad» enlazan a la invitación en otra pestaña, con noopener noreferrer y el aviso oculto', () => {
+test('Seguridad: con URL, solo el pie enlaza a la invitación en otra pestaña, con noopener noreferrer y el aviso oculto; «Comunidad» lleva a /comunidad', () => {
   const html = renderTemplate(page, {}, '/', INVITE);
   assert.equal(count(html, `<a class="site-footer__link" href="${INVITE}" ${NEW_TAB}>Únete a nuestro Discord${NOTE}</a>`), 1, 'pie');
-  assert.equal(count(html, `<a class="quick-link" href="${INVITE}" ${NEW_TAB}>`), 1, 'Comunidad');
-  assert.equal(count(html, NOTE), 2);
+  assert.equal(count(html, `<a class="quick-link" href="${INVITE}" ${NEW_TAB}>`), 0, 'Comunidad ya no enlaza a Discord');
+  assert.equal(count(html, '<a class="quick-link" href="/comunidad">'), 1, 'Comunidad');
+  assert.equal(count(html, NOTE), 1);
   assert.equal(count(html, 'Próximamente'), 0);
   assert.equal(count(html, 'quick-link--soon'), 0);
   assert.equal(count(html, '<!-- @'), 0, 'sin marcadores');
@@ -91,7 +94,7 @@ test('Seguridad: con URL, el pie y «Comunidad» enlazan a la invitación en otr
 test('Seguridad: la URL de Discord sale escapada en el atributo href', () => {
   const html = renderTemplate(page, {}, '/', `${INVITE}?a="><script>&b='x'`);
   assert.ok(!html.includes('"><script>'), 'sin inyección');
-  assert.equal(count(html, `href="${INVITE}?a=&quot;&gt;&lt;script&gt;&amp;b=&#39;x&#39;"`), 2);
+  assert.equal(count(html, `href="${INVITE}?a=&quot;&gt;&lt;script&gt;&amp;b=&#39;x&#39;"`), 1, 'solo el pie (D10)');
 });
 
 test('Seguridad: solo home.html lleva el marcador de «Comunidad», una vez; ninguna otra plantilla', async () => {

@@ -11,13 +11,14 @@ const srv = startTestServer();
 const count = (html: string, text: string) => html.split(text).length - 1;
 const LINK = `href="${INVITE}" target="_blank" rel="noopener noreferrer"`;
 
-test('Seguridad: con DISCORD_INVITE_URL, la portada enlaza «Comunidad» y el pie a la invitación', async () => {
+// Bloque 6 (D10): en la portada solo el pie enlaza a la invitación; «Comunidad» y «Tutoriales» llevan a sus páginas.
+test('Seguridad: con DISCORD_INVITE_URL, la portada enlaza el pie a la invitación y «Comunidad» a /comunidad', async () => {
   const res = await fetch(`${srv.baseUrl}/`);
   const html = await res.text();
   assert.equal(res.status, 200);
-  assert.equal(count(html, LINK), 2, 'pie y «Comunidad»');
+  assert.equal(count(html, LINK), 1, 'solo el pie');
   assert.equal(count(html, 'Únete a nuestro Discord'), 1);
-  assert.equal(count(html, 'Próximamente'), 1, 'solo «Tutoriales» sigue en Próximamente');
+  assert.equal(count(html, 'Próximamente'), 0, 'ya nada está en Próximamente');
 });
 
 test('Seguridad: con DISCORD_INVITE_URL, el pie de otras páginas y de las de error lleva el enlace', async () => {

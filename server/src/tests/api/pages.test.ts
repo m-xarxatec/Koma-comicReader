@@ -82,11 +82,12 @@ test('Seguridad: / sirve home.html con el requestId de la petición inyectado', 
   assert.ok(!html.includes('{{'), 'sin marcadores sin rellenar');
 });
 
-test('Seguridad: sin DISCORD_INVITE_URL, la portada deja «Comunidad» en «Próximamente» y el pie sin enlace', async () => {
+// Bloque 6 (D10): «Comunidad» y «Tutoriales» ya tienen página; nada queda en «Próximamente».
+test('Seguridad: sin DISCORD_INVITE_URL, la portada no enlaza a Discord y nada queda en «Próximamente»', async () => {
   const html = await (await get('/')).text();
   assert.ok(!html.includes('Únete a nuestro Discord'));
   assert.ok(!html.includes('target="_blank"'));
-  assert.equal(html.split('Próximamente').length - 1, 2, '«Comunidad» y «Tutoriales»');
+  assert.equal(html.split('Próximamente').length - 1, 0, '«Comunidad» y «Tutoriales» son enlaces');
 });
 
 test('Seguridad: Referrer-Policy es same-origin (con no-referrer, un formulario POST enviaría Origin: null)', async () => {
@@ -427,7 +428,7 @@ test('Seguridad: /admin sirve admin.html al admin, con un solo h1, sin marcadore
   assert.ok(html.includes('<dialog class="admin-dialog" id="admin-dialog"'));
   assert.match(html, /<button class="button button--primary" type="submit" disabled data-needs-js>Guardar parámetros<\/button>/);
   assert.ok(!html.includes('Ir al estudio del autor'), 'un admin nunca es autor');
-  assert.equal((html.match(/<caption/g) ?? []).length, 8, 'ocho tablas con caption: cuatro de estadísticas y cuatro listas');
+  assert.equal((html.match(/<caption/g) ?? []).length, 9, 'nueve tablas con caption: cuatro de estadísticas y cinco listas (bloque 6: ilustraciones)');
   // Bloque 5 (CU-39, D1–D3, D5, D10): «Estadísticas», primera ancla; cuatro métricas con su periodo en la etiqueta; la
   // vista de impresión con su cabecera de informe y el botón desactivado hasta que llegan los datos.
   assert.ok(html.indexOf('href="#estadisticas"') < html.indexOf('href="#aprobaciones"'), 'Estadísticas, primera ancla');

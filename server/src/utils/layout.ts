@@ -10,7 +10,7 @@ import { escapeHtml, fillTemplate } from './html.js';
 export const HEAD_MARKER = '<!-- @head -->';
 export const HEADER_MARKER = '<!-- @header -->';
 export const FOOTER_MARKER = '<!-- @footer -->';
-// Solo en home.html: el acceso rápido «Comunidad» (enlace de Discord, contrato del bloque 5, D13).
+// Solo en home.html: el acceso rápido «Comunidad», que lleva a /comunidad (contrato del bloque 6, D10).
 export const COMMUNITY_MARKER = '<!-- @community -->';
 // Solo en community.html: la tarjeta «Únete a nuestro Discord» (contrato del bloque 6, «Páginas»).
 export const DISCORD_CARD_MARKER = '<!-- @discord-card -->';
@@ -35,6 +35,9 @@ interface NavItem {
 const NAV: readonly NavItem[] = [
   { href: '/', label: 'Inicio', icon: 'home', isCurrent: (path) => path === '/' },
   { href: '/#catalogo', label: 'Explorar', icon: 'compass', isCurrent: () => false },
+  // Bloque 6 (D10): las dos tienen página.
+  { href: '/comunidad', label: 'Comunidad', icon: 'users', isCurrent: (path) => path === '/comunidad' },
+  { href: '/tutoriales', label: 'Tutoriales', icon: 'cap', isCurrent: (path) => path === '/tutoriales' },
   { href: '/crear', label: 'Crear', icon: 'pencil', isCurrent: (path) => path === '/crear' || path === '/autor' },
 ];
 
@@ -96,13 +99,10 @@ function siteFooter(path: string, discordUrl: string | null): string {
   </nav>`;
 }
 
-// «Comunidad» de la portada: con URL, enlace a la invitación en otra pestaña; sin ella, «Próximamente» (D13).
-function communityLink(discordUrl: string | null): string {
-  const copy = '<span class="quick-link__copy"><strong>Comunidad</strong><small>Comenta y comparte</small>';
-  if (!discordUrl) {
-    return `<span class="quick-link quick-link--soon">${icon('users', 'icon quick-link__icon')}${copy}<small class="quick-link__soon">Próximamente</small></span></span>`;
-  }
-  return `<a class="quick-link" href="${escapeHtml(discordUrl)}"${NEW_TAB}>${icon('users', 'icon quick-link__icon')}${copy}${NEW_TAB_NOTE}</span>${icon('arrow', 'icon quick-link__arrow')}</a>`;
+// «Comunidad» de la portada (bloque 6, D10): enlace a /comunidad. Discord queda en el pie y en la tarjeta de esa página.
+function communityLink(): string {
+  const copy = '<span class="quick-link__copy"><strong>Comunidad</strong><small>Comenta y comparte</small></span>';
+  return `<a class="quick-link" href="/comunidad">${icon('users', 'icon quick-link__icon')}${copy}${icon('arrow', 'icon quick-link__arrow')}</a>`;
 }
 
 // Tarjeta de Discord de /comunidad (contrato del bloque 6, D10): solo con URL; sin ella, el marcador desaparece.
@@ -122,7 +122,7 @@ export function applyLayout(template: string, path = '', discordUrl: string | nu
     .replaceAll(HEAD_MARKER, SITE_HEAD)
     .replaceAll(HEADER_MARKER, siteHeader(path))
     .replaceAll(FOOTER_MARKER, siteFooter(path, discordUrl))
-    .replaceAll(COMMUNITY_MARKER, communityLink(discordUrl))
+    .replaceAll(COMMUNITY_MARKER, communityLink())
     .replaceAll(DISCORD_CARD_MARKER, discordCard(discordUrl));
 }
 

@@ -1509,3 +1509,24 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** sin tocar los tests: el botón del filtro de ilustraciones se llama «Mostrar» (también llega desactivado con `data-needs-js`) y su tabla no lleva `<caption>`: toma el nombre del título de la sección con `aria-labelledby`.
 - **Comprobación (IA):** `npm test` (221) y `npm run test:api` (347), en verde.
 - **Pendiente (desarrollador):** en el navegador, sin probar: publicar con `reader@demo.test`, aprobar, rechazar con motivo y retirar desde `/admin`, y ver las cuatro acciones `illustration.*` en la auditoría; 360 px, teclado y consola. Decidir si, al abrir `pages.test.ts` y `client-parity.test.ts` con permiso, la sección vuelve a «Filtrar» y a `<caption>` como las demás. Sin pasar el agente `frontend` ni el `auditor`. Queda la navegación y los accesos rápidos (D10), con los 4 tests existentes.
+
+### 2026-11-17 · Bloque 6 · Navegación y accesos rápidos (D10), con la excepción sobre tests existentes
+- **Pedido a la IA:** última tarea de construcción del bloque 6: enlazar `/comunidad` y `/tutoriales` («Contrato de la API del bloque 6», «Páginas» y «Tests existentes que cambian»). El desarrollador listó los tres archivos en `.claude/permiso-tests.txt`.
+- **Resultado:**
+  - `layout.ts`: «Comunidad» y «Tutoriales» en la cabecera y en la navegación móvil (Inicio, Explorar, Comunidad, Tutoriales y Crear), con `aria-current` en su página; el acceso rápido «Comunidad» es un enlace a `/comunidad`, con URL de Discord o sin ella.
+  - `home.html`: «Tutoriales» pasa de «Próximamente» a un enlace a `/tutoriales`.
+  - Discord queda en el pie y en la tarjeta de `/comunidad`.
+  - `admin.html`: la tabla de ilustraciones recupera su `<caption>`, como las demás.
+- **Tests:** 4 unitarios (`unit/nav-layout.test.ts`) y 2 de API (`api/nav-pages.test.ts`), todos `Seguridad:`. Los 4 unitarios, vistos fallar antes (`0 !== 1` y `0 !== 2`); los 2 de API no se ejecutaron antes del cambio.
+- **Excepción sobre tests existentes (autorizada por el desarrollador):** las cuatro del contrato (aprobadas el 16-nov) y dos más, autorizadas el 17-nov «solo esta vez». Antes → después:
+  - `unit/discord.test.ts`, «sin URL…»: `quick-link--soon`, de 1 a 0; «Próximamente», de 1 a 0; nueva, el enlace a `/comunidad`, 1. Cambia el nombre del test.
+  - `unit/discord.test.ts`, «con URL…»: el acceso rápido a la invitación, de 1 a 0; la nota oculta, de 2 a 1; nueva, el enlace a `/comunidad`, 1. Cambia el nombre del test.
+  - `unit/discord.test.ts`, «la URL de Discord sale escapada…» (fuera de las cuatro): el `href` escapado, de 2 a 1, porque el acceso rápido ya no enlaza a Discord; el escape de la tarjeta lo cubre `community-layout.test.ts`.
+  - `api/discord.test.ts`, «con `DISCORD_INVITE_URL`, la portada…»: enlaces a la invitación, de 2 a 1; «Próximamente», de 1 a 0. Cambia el nombre del test.
+  - `api/pages.test.ts`, «sin `DISCORD_INVITE_URL`…»: «Próximamente», de 2 a 0. Cambia el nombre del test.
+  - `api/pages.test.ts`, «`/admin` sirve admin.html…» (fuera de las cuatro): `<caption>`, de 8 a 9, por la tabla de ilustraciones.
+  - Se mantiene lo que protegen: el pie sin enlace sin URL, el escape y `noopener noreferrer`.
+- **Fallos:** `proteger-tests` bloqueó el cambio en `unit/client-parity.test.ts` (3 → 4 botones «Filtrar»): el archivo no está en `.claude/permiso-tests.txt`.
+- **Corrección:** no se rodeó el candado: el botón del filtro de ilustraciones sigue llamándose «Mostrar».
+- **Comprobación (IA):** `npm test` (225) y `npm run test:api` (349), en verde.
+- **Pendiente (desarrollador):** vaciar `.claude/permiso-tests.txt` tras el commit. La navegación móvil con cinco enlaces en 360 px, sin ver. `quick-links.css` conserva los estilos de `quick-link--soon`, ya sin uso. Si se quiere «Filtrar» en ilustraciones, listar `client-parity.test.ts` en el archivo de permisos. Después: pruebas en el navegador, agentes `frontend` y `auditor`, despliegue online y `/cerrar-bloque`.
