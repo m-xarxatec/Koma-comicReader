@@ -118,6 +118,11 @@ export async function requirePublisher(db: Queryable, user: User): Promise<void>
   }
 }
 
+// La comprobación previa a multer, con el pool: el controlador no decide la conexión.
+export function checkPublisher(user: User): Promise<void> {
+  return requirePublisher(pool, user);
+}
+
 // POST /api/illustrations: guarda la imagen (RN-10: 400 sin archivo, 415 por la firma) y crea la ilustración en
 // `pending`. En la auditoría van el título y las etiquetas, nunca la clave de la imagen.
 export async function publish(user: User, input: IllustrationInput, file: UploadedFile | undefined, ctx: RequestContext): Promise<OwnIllustrationDto> {

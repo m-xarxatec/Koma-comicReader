@@ -3,6 +3,7 @@
 node_modules/
 dist/
 /storage/
+/videos/
 content/
 docs/credenciales.local.md
 .claude/settings.local.json

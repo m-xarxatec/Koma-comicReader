@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from 'express';
-import { pool } from '../../db/pool.js';
 import type { RejectInput } from '../admin/admin.schema.js';
 import type { AdminIllustrationsQuery, BoardQuery, IllustrationInput, IllustrationParams, OwnQuery } from './illustrations.schema.js';
 import * as illustrationsService from './illustrations.service.js';
@@ -20,7 +19,7 @@ export async function listOwn(_req: Request, res: Response): Promise<void> {
 
 // Antes de multer: sin permiso (403) o con el tope de pendientes (409), no se escribe nada en disco.
 export async function checkPublisher(_req: Request, res: Response, next: NextFunction): Promise<void> {
-  await illustrationsService.requirePublisher(pool, res.locals.user!);
+  await illustrationsService.checkPublisher(res.locals.user!);
   next();
 }
 
