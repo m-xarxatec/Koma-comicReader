@@ -1,6 +1,7 @@
 import type { TagDto } from '../components/comic-card.js';
 import { announce, confirmAction, confirmDialogParts } from '../components/confirm-dialog.js';
 import { api, type ApiError, type ApiResult } from '../services/api.js';
+import { isNewRoute, oneAtATime, viewHeading, withFieldDetails } from '../utils/author.js';
 import {
   authorCreditProblem,
   bindForm,
@@ -162,10 +163,11 @@ const dayFormat = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'sho
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const isLive = (chapter: AuthorChapterSummaryDto) => chapter.status !== 'rejected';
 
-// Mensaje de un fallo de la API (con el código de referencia si es del servidor o de la red).
+// Mensaje de un fallo de la API (con el código de referencia si es del servidor o de la red). Un 400 de una subida
+// trae el motivo en fields, sin formulario donde pintarlo: va al mensaje.
 function errorText(result: { status: number; error: ApiError }): string {
   const outcome = failureOutcome(result.status, result.error);
-  return outcome.ok ? '' : outcome.message;
+  return outcome.ok ? '' : withFieldDetails(outcome.message, result.error.fields);
 }
 
 const comicUrl = (slug: string) => `/api/author/comics/${encodeURIComponent(slug)}`;
@@ -381,10 +383,10 @@ function workTile(comic: AuthorComicDto): HTMLLIElement {
     link.setAttribute('aria-label', name);
     actions.append(link);
   };
-  if (comic.status === 'approved') action('Ver ficha', `/obra/${encodeURIComponent(comic.slug)}`, `Ver la ficha de ${comic.title}`);
+  if (comic.status === 'approved') action('Ver ficha', `/obra/${encodeURIComponent(comic.slug)}`, `Ver ficha de ${comic.title}`);
   // D10: la ficha de una obra en revisión solo la ven su autor y el admin.
   if (comic.status === 'pending') action('Vista previa', `/obra/${encodeURIComponent(comic.slug)}`, `Vista previa de la ficha de ${comic.title}`);
-  if (comic.status === 'rejected') action('Ver motivo', '#revisiones', `Ver el motivo del rechazo de ${comic.title}`);
+  if (comic.status === 'rejected') action('Ver motivo', '#revisiones', `Ver motivo del rechazo de ${comic.title}`);
   if (comic.status !== 'rejected') action('+ Nuevo capítulo', newChapterUrl(comic.slug), `Nuevo capítulo de ${comic.title}`);
   action('Gestionar →', studioUrl(comic.slug), `Gestionar ${comic.title}`, 'text-link');
   if (comic.status === 'pending') action('Revisiones →', '#revisiones', `Revisiones de ${comic.title}`, 'text-link');
@@ -701,7 +703,9 @@ comicWithdraw.addEventListener('click', async () => {
   focusHeading('mis-obras-title');
 });
 
-async function withdrawChapter(comic: AuthorComicDto, number: number): Promise<void> {
+// De una en una (oneAtATime): un segundo «Retirar» mientras dura el primero, desde la tabla o desde el editor, no
+// hace nada. Si el capítulo está abierto en el editor, sus botones esperan (setBusy) mientras dura la petición.
+const withdrawChapter = oneAtATime(async (comic: AuthorComicDto, number: number): Promise<void> => {
   const confirmed = await confirmAction(dialogParts, {
     title: `¿Retirar el capítulo ${number}?`,
     text: 'Dejará de estar visible y su número quedará libre.',
@@ -709,7 +713,10 @@ async function withdrawChapter(comic: AuthorComicDto, number: number): Promise<v
     danger: true,
   });
   if (!confirmed) return;
+  const editing = store.chapter?.number === number;
+  if (editing) setBusy(true);
   const result = await api.post<void>(`${chapterUrl(comic.slug, number)}/withdraw`);
+  if (editing) setBusy(false);
   if (!result.ok) {
     notify(`No se pudo retirar el capítulo ${number}. ${errorText(result)}`, true);
     return;
@@ -720,7 +727,7 @@ async function withdrawChapter(comic: AuthorComicDto, number: number): Promise<v
   await route();
   notify(`Capítulo ${number} retirado.`);
   focusHeading('obra-title');
-}
+});
 
 bindForm(chapterForm, { number: chapterNumberProblem, title: chapterTitleProblem }, async (values): Promise<SubmitOutcome> => {
   const comic = currentComic();
@@ -805,8 +812,10 @@ bindForm(
     if (next.tags.join(',') !== comic.tags.map((tag) => tag.slug).sort().join(',')) changes['tags'] = next.tags;
     if (next.contentWarning !== comic.contentWarning) changes['contentWarning'] = next.contentWarning;
     if (comic.status !== 'approved' && next.isAdult !== comic.isAdult) changes['isAdult'] = next.isAdult;
+    // bindForm desactiva el botón, que tenía el foco: tras el aviso, el foco va al título del formulario.
     if (Object.keys(changes).length === 0) {
       notify('No hay cambios que guardar.');
+      focusHeading('edit-title');
       return { ok: true };
     }
 
@@ -816,6 +825,7 @@ bindForm(
     await reloadComics();
     renderComic();
     notify('Cambios guardados.');
+    focusHeading('edit-title');
     return { ok: true };
   },
 );
@@ -1011,9 +1021,15 @@ editorList.addEventListener('click', async (event) => {
       notify(`No se pudo eliminar la viñeta ${position}. ${errorText(result)}`, true);
       return;
     }
-    await loadChapter(slug, chapter.number);
+    const loaded = await loadChapter(slug, chapter.number);
     setBusy(false);
     notify(`Viñeta ${position} eliminada.`);
+    // Si no se pudo recargar, el editor se oculta con su mensaje: el foco va a su título.
+    if (!loaded) {
+      focusHeading('capitulo-title');
+      void reloadComics();
+      return;
+    }
     const remaining = store.chapter?.panels.length ?? 0;
     if (remaining === 0) editorImages.focus();
     else focusPanelButton(Math.min(position, remaining), 'up');
@@ -1103,7 +1119,11 @@ function focusNewChapter(): void {
   chapterNumber.focus({ preventScroll: true });
 }
 
+// La consulta ya pintada: popstate solo vuelve a pintar si cambia (isNewRoute).
+let routedSearch: string | null = null;
+
 async function route(options: RouteOptions = {}): Promise<void> {
+  routedSearch = location.search;
   // Vista de nueva obra: solo el formulario; el estudio (obras, revisiones, obra y capítulo abiertos) se oculta.
   const creating = isNewComicView();
   studioView.hidden = creating;
@@ -1142,14 +1162,19 @@ async function route(options: RouteOptions = {}): Promise<void> {
     }
   }
   if (location.hash === '#nuevo-capitulo' && !showChapter) focusNewChapter();
-  else if (options.focus) focusHeading(showChapter ? 'capitulo-title' : slug !== null ? 'obra-title' : 'mis-obras-title');
+  else if (options.focus) focusHeading(viewHeading({ creating: false, slug, showChapter }));
 }
 
-// Atrás y Adelante: si cambia de vista (estudio ↔ nueva obra), lo que tenía el foco queda oculto; se lleva al título
-// de la vista visible.
+// Atrás y Adelante. Un enlace a una sección de la página (#resumen, #nuevo-capitulo…) también lanza popstate, con la
+// misma consulta: no se vuelve a pintar (de su foco se encarga hashchange). Si la vista cambia y el foco se queda en
+// <body> o dentro de lo que se ha ocultado, se lleva al título de la vista visible.
 window.addEventListener('popstate', () => {
-  const changedView = studioView.hidden !== isNewComicView();
-  void route({ focus: changedView });
+  if (!isNewRoute(routedSearch, location.search)) return;
+  void route().then(() => {
+    const active = document.activeElement;
+    if (active && active !== document.body && !active.closest('[hidden]')) return;
+    focusHeading(viewHeading({ creating: isNewComicView(), slug: currentSlug(), showChapter: !chapterSection.hidden }));
+  });
 });
 window.addEventListener('hashchange', focusNewChapter);
 // Si la URL ya acaba en #nuevo-capitulo, el enlace no lanza hashchange: el foco se lleva igual.

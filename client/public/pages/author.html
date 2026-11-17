@@ -250,7 +250,7 @@
                  publicada (D14). Solo se envía lo que cambia. -->
             <div class="panel-card author-page__new-chapter" id="editar-obra">
               <div class="panel-card__heading">
-                <h3 class="panel-card__title">Datos de la obra</h3>
+                <h3 class="panel-card__title" id="edit-title" tabindex="-1">Datos de la obra</h3>
                 <p class="panel-card__text">Los cambios se publican sin volver a revisión. La dirección de la obra no cambia.</p>
               </div>
               <form class="form panel-card__form" id="edit-form">
@@ -294,7 +294,8 @@
                 </label>
                 <div class="form__field" id="edit-warning-field" hidden>
                   <label class="form__label" for="edit-content-warning">Advertencia</label>
-                  <input class="form__input" id="edit-content-warning" name="contentWarning" type="text" autocomplete="off" aria-describedby="edit-content-warning-error">
+                  <input class="form__input" id="edit-content-warning" name="contentWarning" type="text" autocomplete="off" aria-describedby="edit-content-warning-hint edit-content-warning-error">
+                  <p class="form__hint" id="edit-content-warning-hint">Se mostrará antes del primer capítulo. Hasta 200 caracteres.</p>
                   <p class="form__error" id="edit-content-warning-error" hidden></p>
                 </div>
                 <div class="form__field">
@@ -438,9 +439,6 @@
           </label>
           <p class="form__error" id="comic-authorship-error" hidden></p>
         </div>
-        <noscript>
-          <p class="form__notice">Para crear una obra hace falta JavaScript.</p>
-        </noscript>
         <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
         <div class="panel-card__actions">
           <button class="button button--primary" type="submit" disabled data-needs-js>Crear obra</button>
