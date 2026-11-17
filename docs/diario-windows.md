@@ -25,3 +25,11 @@ Diario sencillo del trabajo hecho en el portátil Windows, para el agente del eq
 - Comprobado en Windows: `npm ci`, `npm run build` (sin errores), `npm test` (225/225 en verde), `npm run migrate` (10/10), `npm run seed`, `npm run demo:data` y `npm run test:api` (348/349: el que falla es el de los enlaces simbólicos, ver «Entorno»).
 - `.env` y `docs/credenciales.local.md` generados nuevos (ignorados por git).
 - Siguiente tarea acordada: **D2** del pulido (estudio del autor con el `<dialog>` de confirmación y el aviso flotante, antes de E3), en la rama `windows/d2-estudio-dialogo`.
+
+### 2026-11-17 · D2 hecho (estudio del autor con diálogo y aviso flotante)
+
+- **Qué es:** el estudio del autor ya no usa `confirm()` ni un mensaje por sección. Confirma en un `<dialog>` y avisa en un solo aviso flotante, como `/admin`. Detalle completo en `docs/bitacora.md`, entrada del 17-nov «Estudio del autor con el diálogo de confirmación y el aviso flotante (D2)».
+- **Archivos nuevos:** `client/src/components/confirm-dialog.ts`, `client/public/styles/components/confirm-dialog.css`, `client/public/styles/components/floating-notice.css` y los tests `server/src/tests/unit/client-confirm-dialog.test.ts` y `server/src/tests/api/author-dialog-page.test.ts`.
+- **Archivos tocados:** `client/src/pages/author.ts`, `client/public/pages/author.html`, `variables.css`, `layers.css`, `author-page.css`, `chapter-editor.css`, `CLAUDE.md` (árbol) y `docs/bitacora.md`.
+- **Al unir con casa:** si allí hay un `confirm-dialog.ts` a medias, gana este, que tiene tests. Si casa tocó `author.ts` o `author.html` después del 17-nov a la 01:18, revisar a mano los choques en los `say(...)`, ahora `notify(...)`, y en las regiones de estado que se quitaron.
+- **Estado:** typecheck, unitarios 231/231 y API 350/351 (el de enlaces simbólicos, el de Windows). Falta probarlo en el navegador, y el diseño final.
