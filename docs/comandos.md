@@ -20,6 +20,7 @@ Todos se ejecutan desde la raíz del repositorio. Los que llevan `sudo` piden la
 | `npm run seed` | Crea las cuentas demo, etiquetas, anuncios y parámetros. Repetirlo no duplica nada |
 | `npm run content:import` | Importa las obras de `content/`. Solo añade lo nuevo |
 | `npm run demo:data` | Datos de demostración del panel del autor (obras, lectores, lecturas, comentarios). Solo BD local: aborta si no lo es |
+| `npm run demo:activity` | Una pasada de la actividad simulada (idea 24), con la app arrancada: seis cuentas `actividad*@demo.test` y tres invitados leen y comentan por la API. Solo en local (`http` y host local); `-- --fast` para probar. Online: `npm run demo:activity:online -- --confirm <host de APP_URL>` |
 
 Orden en una BD vacía: `migrate` → `seed` → `content:import` → `demo:data`.
 

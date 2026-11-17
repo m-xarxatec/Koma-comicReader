@@ -259,6 +259,8 @@ Si una obra tiene un error, se omite con un mensaje y las demás se cargan igual
 | `npm run seed:online` · `npm run content:import:online` (desde el bloque 2) | Lo mismo, hacia la versión online |
 | `npm run content:import -- --replace <obra>:<n>,…` (y `:online`) | Sustituye capítulos ya cargados por los de `content/` (ver «Sustituir capítulos ya cargados») |
 | `npm run demo:data` | Solo en tu ordenador: la autora demo con 4 obras de 4 capítulos (aprobadas, en revisión, rechazada y borradores), 6 lectores (`lector1…6@demo.test`, con la contraseña de `SEED_READER_PASSWORD`), lecturas de los últimos 14 días y 30 comentarios, para ver el panel del autor. Necesita `migrate` y `seed`. Se puede repetir sin duplicar nada. Se niega a ejecutarse si la base de datos no es local, si es `koma_test`, con `NODE_ENV=production` o sin los drivers locales |
+| `npm run demo:activity` | Una pasada de la actividad simulada, con la app arrancada: las cuentas `actividad1…6@demo.test` (con la contraseña de `SEED_READER_PASSWORD`) y tres invitados leen, avanzan y comentan por la API, con pausas de persona; dura unos 15–20 minutos. Registra como mucho 3 cuentas por pasada: las otras, al menos 1 h después. Solo actúa con `APP_URL` en `http` y en `localhost`, `127.0.0.1` o `koma.local`. `-- --fast` reduce las pausas para probar |
+| `npm run demo:activity:online -- --confirm <host>` | La misma pasada contra la web desplegada, desde tu ordenador y con las variables de `.env.online` (necesita `APP_URL` y `SEED_READER_PASSWORD`). Exige `https` y que `<host>` sea el de `APP_URL`. Después de la demo, las cuentas se suspenden y sus comentarios se eliminan desde `/admin` |
 
 ## Variables
 
