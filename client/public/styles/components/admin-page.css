@@ -84,6 +84,22 @@ body:has(.admin-page__feedback:not(:empty)) {
   overflow-wrap: anywhere;
 }
 
+/* Miniatura de una ilustración de la comunidad: enlace a la imagen completa, con área táctil de 44 px. */
+.admin-page__thumb-link {
+  display: inline-block;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+
+.admin-page__thumb {
+  display: block;
+  width: var(--admin-thumb-size);
+  height: var(--admin-thumb-size);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  object-fit: cover;
+}
+
 .admin-page__comment {
   display: block;
   max-width: var(--measure-story);

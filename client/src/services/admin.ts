@@ -1,4 +1,5 @@
 import { api } from './api.js';
+import type { OwnIllustrationDto } from './illustrations.js';
 
 // Panel del admin (contrato del bloque 4). Todas las peticiones pasan por api.ts. Duplicado explícito de los DTO
 // del servidor (admin.service.ts, comments.service.ts y users.service.ts).
@@ -77,6 +78,11 @@ export interface AdminStatsDto {
   auditLast24h: number;
 }
 
+// OwnIllustrationDto con el id del autor (contrato del bloque 6, «Admin: ilustraciones»).
+export interface AdminIllustrationDto extends Omit<OwnIllustrationDto, 'author'> {
+  author: { id: number; displayName: string };
+}
+
 export interface PageDto {
   page: number;
   pageSize: number;
@@ -114,3 +120,10 @@ export const saveSettings = (settings: ReadingSettingsDto) => api.put<{ settings
 
 export const searchAudit = (params: Readonly<Record<string, string | number>>) =>
   api.get<PageDto & { entries: AuditEntryDto[] }>(`/api/admin/audit${query(params)}`);
+
+// Ilustraciones de la comunidad (CU-32; RN-22; contrato del bloque 6, D9). Retirar usa la ruta común del dueño y del
+// admin (withdrawIllustration, services/illustrations.ts).
+export const listIllustrations = (params: Readonly<Record<string, string | number>>) =>
+  api.get<PageDto & { illustrations: AdminIllustrationDto[] }>(`/api/admin/illustrations${query(params)}`);
+export const reviewIllustration = (id: number, decision: 'approve' | 'reject', reason?: string) =>
+  api.post<void>(`/api/admin/illustrations/${id}/${decision}`, decision === 'reject' ? { reason } : undefined);

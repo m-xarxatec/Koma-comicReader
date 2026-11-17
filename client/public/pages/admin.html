@@ -60,6 +60,7 @@
     <nav class="author-page__nav" aria-label="Secciones del panel">
       <a class="author-page__nav-link" href="#estadisticas">Estadísticas</a>
       <a class="author-page__nav-link" href="#aprobaciones">Aprobaciones</a>
+      <a class="author-page__nav-link" href="#ilustraciones">Ilustraciones</a>
       <a class="author-page__nav-link" href="#comentarios">Comentarios</a>
       <a class="author-page__nav-link" href="#usuarios">Usuarios</a>
       <a class="author-page__nav-link" href="#parametros">Parámetros</a>
@@ -198,6 +199,51 @@
             <tbody data-rows="review"></tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- CU-32 · RN-22 (bloque 6, D9): ilustraciones de la comunidad, aparte de la cola de obras. -->
+    <section id="ilustraciones" class="author-page__section" aria-labelledby="ilustraciones-title">
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Comunidad</p>
+          <h2 class="author-page__heading-title" id="ilustraciones-title">Ilustraciones</h2>
+          <p class="author-page__muted">Las pendientes, de la más antigua a la más reciente. Abre la imagen antes de decidir; el contenido +18 se rechaza con motivo.</p>
+        </div>
+      </div>
+      <div class="admin-data-panel">
+        <div class="admin-data-panel__toolbar">
+          <form class="admin-page__filters" data-filters="illustrations" aria-label="Filtrar ilustraciones">
+            <div class="form__field">
+              <label class="form__label" for="illustrations-status">Estado</label>
+              <select class="form__input" id="illustrations-status" name="status">
+                <option value="pending" selected>Pendientes</option>
+                <option value="approved">Publicadas</option>
+              </select>
+            </div>
+            <button class="button button--outline" type="submit" disabled data-needs-js>Mostrar</button>
+          </form>
+          <p class="admin-data-panel__count" data-count="illustrations"></p>
+        </div>
+        <p class="author-page__message admin-data-panel__message" data-message="illustrations" role="status" tabindex="-1">Cargando ilustraciones…</p>
+        <!-- Sin título propio de tabla: la tabla y su región toman el nombre del título de la sección (aria-labelledby). -->
+        <div class="chapter-table__scroll" role="region" aria-labelledby="ilustraciones-title" tabindex="0" data-table="illustrations" hidden>
+          <table class="chapter-table" aria-labelledby="ilustraciones-title">
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Imagen</th>
+              <th class="chapter-table__head" scope="col">Ilustración</th>
+              <th class="chapter-table__head" scope="col">Usuario</th>
+              <th class="chapter-table__head" scope="col">Fecha</th>
+              <th class="chapter-table__head" scope="col">Acciones</th>
+            </tr></thead>
+            <tbody data-rows="illustrations"></tbody>
+          </table>
+        </div>
+        <nav class="admin-page__pager" aria-label="Páginas de ilustraciones" data-pager="illustrations" hidden>
+          <button class="button button--outline" type="button" data-page="prev">Anterior</button>
+          <span class="author-page__muted" data-page="label"></span>
+          <button class="button button--outline" type="button" data-page="next">Siguiente</button>
+        </nav>
       </div>
     </section>
 

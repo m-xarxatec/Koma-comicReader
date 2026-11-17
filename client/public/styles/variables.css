@@ -725,6 +725,7 @@
   --admin-filter-min-width: 12rem;
   --admin-settings-width: 32rem;
   --admin-json-width: 28rem;
+  --admin-thumb-size: 5rem; /* miniatura de una ilustración de la comunidad */
   --admin-dialog-width: 32rem;
   /* /admin: tarjetas de tablas, notas y aviso flotante (maqueta admin/index.html). */
   --admin-data-toolbar-gap: var(--space-3);

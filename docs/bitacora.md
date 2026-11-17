@@ -1496,3 +1496,16 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** el comentario dice «diálogo modal».
 - **Comprobación (IA):** `npm test` (217) y `npm run test:api` (344), en verde.
 - **Pendiente (desarrollador):** todo lo visual, sin probar: `/comunidad` en 360 px y escritorio, con teclado; publicar con `reader@demo.test`, ver el aviso y «Mis ilustraciones», retirar, el filtro y el detalle; la consola sin avisos de la CSP. Sin pasar el agente `frontend` ni el `auditor`. La página aún no está enlazada (D10, con los 4 tests existentes). Queda la sección «Ilustraciones» de `/admin`: hasta entonces nada se puede aprobar desde la interfaz.
+
+### 2026-11-17 · Bloque 6 · Sección «Ilustraciones» de `/admin` (CU-32; RN-22; D9)
+- **Pedido a la IA:** seguir sin pausa con la sección «Ilustraciones» de `/admin` («Contrato de la API del bloque 6», «Admin: ilustraciones» y «Páginas»).
+- **Resultado:**
+  - `admin.html`: sección `#ilustraciones` entre la cola de aprobación y los comentarios, con su enlace en las secciones del panel, filtro de estado (pendientes o publicadas), tabla y paginación. Usa el `<dialog>` y el aviso flotante que ya existían; la cola de obras no cambia.
+  - `pages/admin.ts`: cada fila con la miniatura (enlace a la imagen firmada en otra pestaña), título, descripción, etiquetas, usuario y fecha; «Aprobar», «Rechazar» (con motivo) y «Retirar» en las pendientes, y solo «Retirar» en las publicadas.
+  - `services/admin.ts` (`listIllustrations`, `reviewIllustration`, `AdminIllustrationDto`) y `utils/admin.ts` (`ILLUSTRATION_REVIEW_STATUSES`, `illustrationActions`); retirar usa `withdrawIllustration`, la ruta común.
+  - `admin-page.css` y el token `--admin-thumb-size`.
+- **Tests:** 4 unitarios (`unit/client-admin-illustrations.test.ts`, RN-22) y 3 de API (`api/admin-illustrations-page.test.ts`, `Seguridad:`). Vistos fallar antes: los 4 unitarios con las firmas provisionales y 2 de API con `0 !== 1`; el de «`/admin` sigue cerrada» pasó desde el principio (protege lo que ya había). Ningún test existente cambió.
+- **Fallos:** dos tests existentes fijan cifras de `admin.html` y fallaron con la sección nueva: `client-parity.test.ts` cuenta 3 botones «Filtrar» y `pages.test.ts` cuenta 8 `<caption>`.
+- **Corrección:** sin tocar los tests: el botón del filtro de ilustraciones se llama «Mostrar» (también llega desactivado con `data-needs-js`) y su tabla no lleva `<caption>`: toma el nombre del título de la sección con `aria-labelledby`.
+- **Comprobación (IA):** `npm test` (221) y `npm run test:api` (347), en verde.
+- **Pendiente (desarrollador):** en el navegador, sin probar: publicar con `reader@demo.test`, aprobar, rechazar con motivo y retirar desde `/admin`, y ver las cuatro acciones `illustration.*` en la auditoría; 360 px, teclado y consola. Decidir si, al abrir `pages.test.ts` y `client-parity.test.ts` con permiso, la sección vuelve a «Filtrar» y a `<caption>` como las demás. Sin pasar el agente `frontend` ni el `auditor`. Queda la navegación y los accesos rápidos (D10), con los 4 tests existentes.

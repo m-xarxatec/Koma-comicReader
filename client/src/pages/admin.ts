@@ -6,12 +6,15 @@ import {
   getSettings,
   hideComment,
   listComments,
+  listIllustrations,
   listUsers,
   reviewChapter,
   reviewComic,
+  reviewIllustration,
   saveSettings,
   searchAudit,
   type AdminCommentDto,
+  type AdminIllustrationDto,
   type AdminStatsDto,
   type AdminUserChange,
   type AdminUserDto,
@@ -20,10 +23,21 @@ import {
   type ReviewItemDto,
 } from '../services/admin.js';
 import type { ApiError, ApiResult } from '../services/api.js';
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, auditEntityLabel, canApprove, lastPage, reasonProblem, settingProblem } from '../utils/admin.js';
+import { withdrawIllustration } from '../services/illustrations.js';
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  ILLUSTRATION_REVIEW_STATUSES,
+  auditEntityLabel,
+  canApprove,
+  illustrationActions,
+  lastPage,
+  reasonProblem,
+  settingProblem,
+} from '../utils/admin.js';
 import { bindForm, failureOutcome } from '../utils/validate.js';
 
-// /admin (contratos de los bloques 4 y 5): estadísticas (CU-39), cola de aprobación, comentarios, usuarios, parámetros y auditoría. Cada sección pide
+// /admin (contratos de los bloques 4, 5 y 6): estadísticas (CU-39), cola de aprobación, ilustraciones (RN-22), comentarios, usuarios, parámetros y auditoría. Cada sección pide
 // su lista a /api/admin/*; los filtros van a la API. Todo dato se pinta con textContent. Lo que decide es el servidor:
 // aquí solo se ocultan o desactivan botones (p. ej. los de la propia cuenta).
 
@@ -340,6 +354,89 @@ async function loadReview(): Promise<void> {
   showRows(reviewView, items.map(reviewRow), 'No hay nada pendiente de revisión.', total);
 }
 
+// --- Ilustraciones de la comunidad (CU-32; RN-22; bloque 6, D9) ---
+
+const illustrationsView = listView('illustrations');
+// El filtro empieza en el primer estado (pendientes), como el <select> y como el servidor.
+const illustrationsState: Paged = { page: 1, filters: { status: ILLUSTRATION_REVIEW_STATUSES[0] } };
+
+function illustrationRow(illustration: AdminIllustrationDto): HTMLTableRowElement {
+  const row = el('tr');
+  const label = `la ilustración «${illustration.title}»`;
+
+  // La imagen completa se abre en otra pestaña (URL firmada); la miniatura reserva su hueco con width y height.
+  const open = el('a', 'admin-page__thumb-link');
+  open.href = illustration.url;
+  open.target = '_blank';
+  open.rel = 'noopener noreferrer';
+  const image = el('img', 'admin-page__thumb');
+  image.width = illustration.width;
+  image.height = illustration.height;
+  image.alt = `${illustration.title} (se abre en otra pestaña)`;
+  image.loading = 'lazy';
+  image.src = illustration.url;
+  open.append(image);
+
+  const what: Node[] = [el('span', 'admin-page__strong', illustration.title)];
+  if (illustration.description) what.push(el('span', 'admin-page__comment', illustration.description));
+  if (illustration.tags.length > 0) what.push(el('span', 'admin-page__small', illustration.tags.map((tag) => `#${tag}`).join(' ')));
+
+  const published = illustration.status === 'approved' && illustration.publishedAt;
+  const date = el('span', 'admin-page__small', published ? 'Publicada' : 'Enviada');
+
+  const handlers = {
+    approve: () =>
+      actionButton('Aprobar', async (button) => {
+        const ok = await confirmAction({ title: 'Aprobar ilustración', text: `Se publicará ${label} en el tablero de la comunidad.`, confirm: 'Aprobar' });
+        if (ok !== null) await run(button, () => reviewIllustration(illustration.id, 'approve'), `Aprobada: ${label}.`, illustrationsView, loadIllustrations);
+      }),
+    reject: () =>
+      actionButton(
+        'Rechazar',
+        async (button) => {
+          const reason = await confirmAction({ title: 'Rechazar ilustración', text: `Rechazar ${label}.`, confirm: 'Rechazar', danger: true, withReason: true });
+          if (reason !== null) {
+            await run(button, () => reviewIllustration(illustration.id, 'reject', reason), `Rechazada: ${label}.`, illustrationsView, loadIllustrations);
+          }
+        },
+        true,
+      ),
+    withdraw: () =>
+      actionButton(
+        'Retirar',
+        async (button) => {
+          const ok = await confirmAction({ title: 'Retirar ilustración', text: `Dejará de verse ${label}. No se puede deshacer.`, confirm: 'Retirar', danger: true });
+          if (ok !== null) await run(button, () => withdrawIllustration(illustration.id), `Retirada: ${label}.`, illustrationsView, loadIllustrations);
+        },
+        true,
+      ),
+  };
+  const actions = el('div', 'chapter-table__actions');
+  actions.append(...illustrationActions(illustration.status).map((action) => handlers[action]()));
+
+  row.append(
+    cell(open),
+    cell(...what),
+    cell(illustration.author.displayName),
+    cell(formatDateTime(published ? illustration.publishedAt! : illustration.createdAt), date),
+    cell(actions),
+  );
+  return row;
+}
+
+async function loadIllustrations(): Promise<void> {
+  if (illustrationsView.count) illustrationsView.count.textContent = '';
+  const result = await listIllustrations({ ...illustrationsState.filters, page: illustrationsState.page });
+  if (!result.ok) {
+    showError(illustrationsView, result.error);
+    return;
+  }
+  if (pageOutOfRange(illustrationsState, result.data)) return loadIllustrations();
+  const empty = illustrationsState.filters['status'] === 'approved' ? 'No hay ilustraciones publicadas.' : 'No hay ilustraciones pendientes de revisión.';
+  showRows(illustrationsView, result.data.illustrations.map(illustrationRow), empty, result.data.total);
+  updatePager(illustrationsView, illustrationsState, result.data, loadIllustrations);
+}
+
 // --- Comentarios (CU-33) ---
 
 const commentsView = listView('comments');
@@ -650,8 +747,9 @@ printButton?.addEventListener('click', () => window.print());
 
 // --- Arranque: cada sección carga por su cuenta ---
 
+bindFilters('illustrations', illustrationsState, loadIllustrations);
 bindFilters('comments', commentsState, loadComments);
 bindFilters('users', usersState, loadUsers);
 bindFilters('audit', auditState, loadAudit);
 fillAuditFilters();
-void Promise.all([loadStats(), loadReview(), loadComments(), loadUsers(), setUpSettings(), loadAudit()]);
+void Promise.all([loadStats(), loadReview(), loadIllustrations(), loadComments(), loadUsers(), setUpSettings(), loadAudit()]);

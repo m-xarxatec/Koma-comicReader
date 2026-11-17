@@ -98,3 +98,17 @@ export const lastPage = (total: number, pageSize: number): number => Math.max(1,
 // CU-32, RN-17: una obra +18 no se aprueba (el servidor responde 409); solo se rechaza con motivo. Un capítulo
 // suyo sí se puede aprobar con la obra en pending (D2 del bloque 4): la regla es de la obra.
 export const canApprove = (comic: { readonly isAdult: boolean }, chapter: object | null): boolean => chapter !== null || !comic.isAdult;
+
+// Ilustraciones de la comunidad (CU-32; RN-22; contrato del bloque 6, D9). Los estados que admite el filtro de
+// GET /api/admin/illustrations (adminIllustrationsQuery); el primero es el de por defecto.
+export const ILLUSTRATION_REVIEW_STATUSES = ['pending', 'approved'] as const;
+
+export type IllustrationAction = 'approve' | 'reject' | 'withdraw';
+
+// Qué botones lleva cada fila: una pendiente se aprueba, se rechaza o se retira; una publicada solo se retira. El
+// servidor decide igualmente (409 si el estado ya cambió).
+export function illustrationActions(status: string): readonly IllustrationAction[] {
+  if (status === 'pending') return ['approve', 'reject', 'withdraw'];
+  if (status === 'approved') return ['withdraw'];
+  return [];
+}
