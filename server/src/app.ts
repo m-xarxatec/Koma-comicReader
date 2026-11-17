@@ -123,6 +123,8 @@ app.use('/api/admin', adminRouter);
 // Mapa de rutas HTML (docs/plan_mvp.md). Los HTML no se sirven nunca por express.static.
 app.use(trailingSlash);
 app.get('/', (_req, res) => sendPage(res, 'home', homeOpenGraph(env.APP_URL))); // Open Graph de la portada (bloque 5)
+// CU-18: pública; el formulario y «Mis ilustraciones» los resuelve el cliente según la sesión (bloque 6, D7).
+app.get('/comunidad', (_req, res) => sendPage(res, 'community'));
 app.get('/tutoriales', (_req, res) => sendPage(res, 'tutorials')); // CU-42: pública, sin comprobación (bloque 6)
 app.use(authPagesRouter);
 app.use(comicsPagesRouter);

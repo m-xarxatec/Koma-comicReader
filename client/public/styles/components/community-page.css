@@ -1,0 +1,227 @@
+/* Comunidad (pages/community.html, CU-18): cabecera, secciones, tarjeta de Discord, filtro por etiqueta,
+   «Mis ilustraciones» y el diálogo de confirmación. El tablero y el detalle van en illustration-board.css. */
+.community {
+  display: grid;
+  gap: var(--community-gap);
+  padding-block: var(--community-padding);
+}
+
+/* Los hijos de la rejilla no fuerzan su ancho mínimo (imágenes y textos largos). */
+.community > * {
+  min-width: 0;
+}
+
+.community .breadcrumb {
+  margin-bottom: 0;
+}
+
+.community__intro {
+  display: grid;
+  gap: var(--community-intro-gap);
+}
+
+.community__intro .eyebrow {
+  margin-bottom: 0;
+}
+
+.community__title {
+  margin: 0;
+  font-size: var(--font-size-author-title);
+  line-height: var(--line-height-author-title);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.community__lead {
+  max-width: var(--measure-text);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+.community__section {
+  display: grid;
+  gap: var(--community-section-gap);
+  scroll-margin-top: var(--scroll-offset);
+}
+
+.community__share {
+  display: grid;
+  gap: var(--community-section-gap);
+}
+
+.community__guest {
+  display: grid;
+  gap: var(--community-section-gap);
+}
+
+.community__heading {
+  margin: 0;
+  font-size: var(--font-size-community-heading);
+  letter-spacing: var(--letter-spacing-heading);
+}
+
+.community__message {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.community__message:empty,
+.community__status:empty {
+  display: none;
+}
+
+/* [hidden] gana a los display de esta página (grid y flex). */
+.community [hidden] {
+  display: none;
+}
+
+/* Tarjeta «Únete a nuestro Discord» (layout.ts, solo con DISCORD_INVITE_URL). */
+.discord-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--community-discord-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+}
+
+.discord-card__icon {
+  flex: none;
+  color: var(--color-secondary);
+}
+
+.discord-card__text {
+  flex: 1 1 var(--community-discord-text-basis);
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.discord-card__text strong {
+  color: var(--color-text);
+}
+
+/* Filtro por etiqueta: enlaces en forma de píldora; la activa, con texto y borde (no solo color). */
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tag-filter__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: var(--community-tag-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.tag-filter__link:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.tag-filter__link--active {
+  border-color: var(--color-accent);
+  border-width: var(--border-width-strong);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Mis ilustraciones (D7): miniatura, título, estado y «Retirar». */
+.own-illustration__list {
+  display: grid;
+  gap: var(--community-own-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.own-illustration {
+  display: grid;
+  grid-template-columns: var(--community-own-thumb) minmax(0, 1fr);
+  gap: var(--community-own-gap);
+  align-items: start;
+  min-width: 0;
+  padding: var(--community-own-padding);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.own-illustration__image {
+  width: 100%;
+  height: auto;
+  max-height: calc(var(--community-own-thumb) * 2);
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.own-illustration__body {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.own-illustration__title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  overflow-wrap: anywhere;
+}
+
+.own-illustration__meta,
+.own-illustration__reason {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.own-illustration__reason {
+  color: var(--color-danger);
+}
+
+/* Confirmación de la retirada. */
+.community-dialog {
+  width: min(100% - var(--space-8), var(--community-dialog-width));
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.community-dialog::backdrop {
+  background: var(--color-comments-backdrop);
+}
+
+.community-dialog__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.community-dialog__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.community-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (min-width: 64rem) {
+  .own-illustration__list {
+    grid-template-columns: repeat(var(--community-own-columns-wide), minmax(0, 1fr));
+  }
+}

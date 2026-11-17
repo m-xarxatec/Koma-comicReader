@@ -1,0 +1,165 @@
+/* Tablero de ilustraciones de /comunidad: columnas CSS (cada imagen conserva su proporción; width y height en el
+   <img> reservan el hueco) y detalle de una ilustración en un <dialog> (D8). */
+.illustration-board {
+  columns: var(--community-board-columns);
+  column-gap: var(--community-board-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.illustration-board:empty {
+  display: none;
+}
+
+.illustration-board__item {
+  margin-bottom: var(--community-board-gap);
+  break-inside: avoid;
+}
+
+/* Cada ilustración es un botón que abre el detalle. */
+.illustration-tile {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast);
+}
+
+.illustration-tile:hover {
+  border-color: var(--color-border-strong);
+}
+
+.illustration-tile__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-surface-soft);
+}
+
+.illustration-tile__caption {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--community-tile-caption-padding);
+}
+
+.illustration-tile__title {
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.illustration-tile__author {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+/* Detalle. */
+.illustration-detail {
+  width: min(100% - var(--space-4), var(--community-detail-width));
+  max-height: calc(100% - var(--space-4));
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.illustration-detail::backdrop {
+  background: var(--color-comments-backdrop);
+}
+
+.illustration-detail__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.illustration-detail__title {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--font-size-xl);
+  overflow-wrap: anywhere;
+}
+
+.illustration-detail__close {
+  flex: none;
+}
+
+.illustration-detail__body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.illustration-detail__image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: var(--community-detail-image-height);
+  margin-inline: auto;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.illustration-detail__info {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.illustration-detail__meta,
+.illustration-detail__description {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.illustration-detail__meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* La descripción conserva sus saltos de línea. */
+.illustration-detail__description {
+  line-height: var(--line-height-relaxed);
+  white-space: pre-line;
+}
+
+.illustration-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.illustration-detail [hidden] {
+  display: none;
+}
+
+@media (min-width: 40rem) {
+  .illustration-board {
+    columns: var(--community-board-columns-medium);
+  }
+}
+
+@media (min-width: 64rem) {
+  .illustration-board {
+    columns: var(--community-board-columns-wide);
+  }
+
+  .illustration-detail__body {
+    grid-template-columns: minmax(0, 1fr) var(--community-detail-info-width);
+  }
+}

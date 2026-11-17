@@ -421,6 +421,32 @@
   --tutorials-player-ratio: 16 / 9;
 }
 
+/* Comunidad (/comunidad, bloque 6): tablero de ilustraciones en columnas, filtro por etiqueta, «Mis ilustraciones»,
+   detalle y confirmación en <dialog>, y tarjeta de Discord. */
+:root {
+  --community-padding: var(--space-8) var(--space-10);
+  --community-gap: var(--space-8); /* entre las secciones de la página */
+  --community-intro-gap: var(--space-3);
+  --community-section-gap: var(--space-4);
+  --font-size-community-heading: clamp(1.25rem, 2vw, 1.65rem);
+  --community-board-columns: 2;
+  --community-board-columns-medium: 3;
+  --community-board-columns-wide: 4;
+  --community-board-gap: var(--space-3);
+  --community-tile-caption-padding: var(--space-2) var(--space-3);
+  --community-tag-padding: 0 var(--space-3);
+  --community-own-gap: var(--space-4);
+  --community-own-padding: var(--space-3);
+  --community-own-thumb: 6rem;
+  --community-own-columns-wide: 2;
+  --community-discord-padding: var(--space-4);
+  --community-discord-text-basis: 16rem; /* por debajo, el botón baja a otra línea */
+  --community-dialog-width: 32rem;
+  --community-detail-width: 64rem;
+  --community-detail-image-height: 70vh;
+  --community-detail-info-width: 20rem;
+}
+
 /* Perfil (/perfil, bloque 3): valores de la maqueta (perfil/index.html y account.css), salvo el relleno
    inferior (7rem en la maqueta): aquí basta 2.5rem, porque el pie ya deja --mobile-nav-clearance. */
 :root {

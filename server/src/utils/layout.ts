@@ -2,7 +2,7 @@ import { escapeHtml, fillTemplate } from './html.js';
 
 // Cabecera, pie y navegación comunes, en un solo sitio. Las plantillas de client/public (pages/ y errors/)
 // llevan los marcadores <!-- @head --> (dentro de <head>), <!-- @header --> y <!-- @footer --> (y home.html,
-// además, <!-- @community -->), y todas las páginas (sendPage, plantillas de error y la página genérica del
+// además, <!-- @community -->; community.html, <!-- @discord-card -->), y todas las páginas (sendPage, plantillas de error y la página genérica del
 // error-handler) pasan por renderTemplate.
 // Son fragmentos fijos, sin datos de usuario: el nombre del usuario lo pinta components/header.ts con
 // textContent. La página activa (aria-current) la marca el servidor, así funciona también sin JavaScript.
@@ -12,6 +12,8 @@ export const HEADER_MARKER = '<!-- @header -->';
 export const FOOTER_MARKER = '<!-- @footer -->';
 // Solo en home.html: el acceso rápido «Comunidad» (enlace de Discord, contrato del bloque 5, D13).
 export const COMMUNITY_MARKER = '<!-- @community -->';
+// Solo en community.html: la tarjeta «Únete a nuestro Discord» (contrato del bloque 6, «Páginas»).
+export const DISCORD_CARD_MARKER = '<!-- @discord-card -->';
 
 // Excepción a "todo valor visual en variables.css": theme-color es un <meta> y el navegador no lee custom
 // properties en él. Repite --color-bg (tests/unit/layout.test.ts comprueba que coinciden). Un solo valor:
@@ -103,6 +105,16 @@ function communityLink(discordUrl: string | null): string {
   return `<a class="quick-link" href="${escapeHtml(discordUrl)}"${NEW_TAB}>${icon('users', 'icon quick-link__icon')}${copy}${NEW_TAB_NOTE}</span>${icon('arrow', 'icon quick-link__arrow')}</a>`;
 }
 
+// Tarjeta de Discord de /comunidad (contrato del bloque 6, D10): solo con URL; sin ella, el marcador desaparece.
+function discordCard(discordUrl: string | null): string {
+  if (!discordUrl) return '';
+  return `<aside class="discord-card" aria-label="Discord de Koma">
+      ${icon('users', 'icon discord-card__icon')}
+      <p class="discord-card__text"><strong>¿Quieres charlar con otros lectores y artistas?</strong> La conversación sigue en nuestro servidor.</p>
+      <a class="button button--outline discord-card__link" href="${escapeHtml(discordUrl)}"${NEW_TAB}>Únete a nuestro Discord${NEW_TAB_NOTE}</a>
+    </aside>`;
+}
+
 // `path` es la ruta de la petición (req.path): marca con aria-current el enlace de la página actual.
 // `discordUrl`: DISCORD_INVITE_URL ya validada, o null sin ella.
 export function applyLayout(template: string, path = '', discordUrl: string | null = null): string {
@@ -110,7 +122,8 @@ export function applyLayout(template: string, path = '', discordUrl: string | nu
     .replaceAll(HEAD_MARKER, SITE_HEAD)
     .replaceAll(HEADER_MARKER, siteHeader(path))
     .replaceAll(FOOTER_MARKER, siteFooter(path, discordUrl))
-    .replaceAll(COMMUNITY_MARKER, communityLink(discordUrl));
+    .replaceAll(COMMUNITY_MARKER, communityLink(discordUrl))
+    .replaceAll(DISCORD_CARD_MARKER, discordCard(discordUrl));
 }
 
 // Cabecera, pie y navegación, y después los valores ({{clave}}), siempre escapados.

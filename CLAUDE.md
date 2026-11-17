@@ -50,15 +50,15 @@
 ├── client/
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
 │   └── src/                    # TS → client/dist, servido en /js
-│       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials
+│       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials, community
 │       ├── components/         # header, comic-card, comment-panel, ad, timer
-│       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts
-│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts
+│       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts, illustrations.ts
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md, harness.md
 ```
 
-- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, y `<!-- @community -->` solo en `home.html`, e inyección de `requestId`), nunca por `express.static`.
+- Un solo servidor Express: API en `/api/*`; `express.static` solo para `/styles` e `/icons` (de `client/public`) y `/js` (`client/dist`). Los HTML salen siempre por el mapa de rutas (comprobaciones, theme-color, cabecera, pie y página activa de `layout.ts` con los marcadores `<!-- @head -->`, `<!-- @header -->` y `<!-- @footer -->`, `<!-- @community -->` solo en `home.html` y `<!-- @discord-card -->` solo en `community.html`, e inyección de `requestId`), nunca por `express.static`.
 - Cada página = `client/public/pages/<página>.html` + `client/src/pages/<página>.ts`, cargado con `<script type="module" src="/js/pages/<página>.js">`. Una página solo informativa (`become-author`) no lleva `.ts`.
 - El permiso de lectura de un capítulo lo decide la API, no la ruta HTML: la página carga y la API devuelve capítulo, anuncio, invitación a registrarse o muro de límite.
 

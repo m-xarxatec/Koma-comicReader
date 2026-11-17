@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- @head -->
+  <meta name="request-id" content="{{requestId}}">
+  <title>Comunidad · Koma</title>
+  <link rel="icon" href="/icons/favicon.svg">
+  <link rel="stylesheet" href="/styles/variables.css">
+  <link rel="stylesheet" href="/styles/layers.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/components/button.css">
+  <link rel="stylesheet" href="/styles/components/form.css">
+  <link rel="stylesheet" href="/styles/components/site-header.css">
+  <link rel="stylesheet" href="/styles/components/mobile-nav.css">
+  <link rel="stylesheet" href="/styles/components/site-footer.css">
+  <link rel="stylesheet" href="/styles/components/breadcrumb.css">
+  <link rel="stylesheet" href="/styles/components/panel-card.css">
+  <link rel="stylesheet" href="/styles/components/status-badge.css">
+  <link rel="stylesheet" href="/styles/components/catalog-pagination.css">
+  <link rel="stylesheet" href="/styles/components/community-page.css">
+  <link rel="stylesheet" href="/styles/components/illustration-board.css">
+</head>
+<body>
+  <!-- @header -->
+  <!-- /comunidad (CU-18 sin reto; RN-22): pública. pages/community.ts pinta el tablero con GET /api/illustrations y,
+       según la sesión (GET /api/me), muestra el formulario y «Mis ilustraciones» (D7). Sin JS queda la invitación a
+       entrar. El detalle de una ilustración es un diálogo modal, sin ruta propia (D8). -->
+  <main id="contenido" class="community container">
+    <nav class="breadcrumb" aria-label="Ruta de navegación">
+      <a class="breadcrumb__link" href="/">Inicio</a>
+      <span class="breadcrumb__separator" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">Comunidad</span>
+    </nav>
+
+    <header class="community__intro">
+      <p class="eyebrow">Ilustraciones de los lectores</p>
+      <h1 class="community__title">Comunidad</h1>
+      <p class="community__lead">Comparte tus dibujos y descubre los de otros lectores. Cada ilustración se revisa antes de publicarse.</p>
+    </header>
+
+    <!-- @discord-card -->
+
+    <noscript>
+      <p class="community__message">Para ver las ilustraciones y compartir las tuyas necesitas activar JavaScript en tu navegador.</p>
+    </noscript>
+
+    <section class="panel-card community__share" id="compartir" aria-labelledby="share-title">
+      <div class="panel-card__heading">
+        <p class="eyebrow panel-card__eyebrow">Tu turno</p>
+        <h2 class="panel-card__title" id="share-title">Comparte una ilustración</h2>
+      </div>
+
+      <!-- Sin sesión (y sin JS): invitación a entrar, con vuelta a esta página. -->
+      <div class="community__guest" data-share-guest>
+        <p class="panel-card__text">Con una cuenta puedes publicar tus ilustraciones en el tablero.</p>
+        <div class="panel-card__actions">
+          <a class="button button--primary" href="/entrar?next=/comunidad">Entra para compartir</a>
+        </div>
+      </div>
+
+      <!-- Un administrador no publica (D4): revisa. -->
+      <div class="community__guest" data-share-admin hidden>
+        <p class="panel-card__text">Un administrador no publica ilustraciones: las revisa.</p>
+        <div class="panel-card__actions">
+          <a class="button button--outline" href="/admin">Ir al panel de administración</a>
+        </div>
+      </div>
+
+      <!-- Publicar (D2–D6): nace pendiente de revisión. multipart/form-data por api.ts; method="post" para que sin JS
+           nada acabe en la URL. -->
+      <form class="form panel-card__form" id="share-form" method="post" enctype="multipart/form-data" data-share-form hidden>
+        <p class="panel-card__text">La revisará un administrador antes de publicarla. Puedes tener hasta 5 pendientes de revisión.</p>
+        <div class="form__field">
+          <label class="form__label" for="share-image">Imagen</label>
+          <input class="form__input form__file" id="share-image" name="image" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="share-image-hint share-image-error">
+          <p class="form__hint" id="share-image-hint">JPEG, PNG o WebP, hasta 5 MB.</p>
+          <p class="form__error" id="share-image-error" hidden></p>
+        </div>
+        <div class="form__field">
+          <label class="form__label" for="share-title-input">Título</label>
+          <input class="form__input" id="share-title-input" name="title" type="text" autocomplete="off" required aria-describedby="share-title-hint share-title-input-error">
+          <p class="form__hint" id="share-title-hint">Hasta 100 caracteres.</p>
+          <p class="form__error" id="share-title-input-error" hidden></p>
+        </div>
+        <div class="form__field">
+          <label class="form__label" for="share-description">Descripción (opcional)</label>
+          <textarea class="form__input form__textarea" id="share-description" name="description" rows="3" aria-describedby="share-description-hint share-description-error"></textarea>
+          <p class="form__hint" id="share-description-hint">Hasta 500 caracteres.</p>
+          <p class="form__error" id="share-description-error" hidden></p>
+        </div>
+        <div class="form__field">
+          <label class="form__label" for="share-tags">Etiquetas (opcional)</label>
+          <input class="form__input" id="share-tags" name="tags" type="text" autocomplete="off" aria-describedby="share-tags-hint share-tags-error">
+          <p class="form__hint" id="share-tags-hint">Hasta 5, separadas por comas: acuarela, fan-art, personajes.</p>
+          <p class="form__error" id="share-tags-error" hidden></p>
+        </div>
+        <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+        <div class="panel-card__actions">
+          <button class="button button--primary" type="submit" disabled data-needs-js>Enviar a revisión</button>
+        </div>
+      </form>
+      <p class="form__status community__status" role="status" data-share-status></p>
+    </section>
+
+    <!-- D7: las del usuario, con su estado; sin las retiradas. Solo con sesión. -->
+    <section class="community__section" id="mis-ilustraciones" aria-labelledby="mine-title" hidden>
+      <h2 class="community__heading" id="mine-title">Mis ilustraciones</h2>
+      <p class="form__status community__status" role="status" data-mine-status></p>
+      <p class="community__message" data-mine-message></p>
+      <ul class="own-illustration__list" data-mine-list></ul>
+      <nav class="catalog-pagination" aria-label="Páginas de mis ilustraciones" data-mine-pagination hidden></nav>
+    </section>
+
+    <section class="community__section" id="tablero" aria-labelledby="board-title">
+      <h2 class="community__heading" id="board-title">Tablero</h2>
+      <nav class="tag-filter" aria-label="Filtrar por etiqueta" data-board-tags hidden></nav>
+      <p class="visually-hidden" role="status" data-board-status></p>
+      <p class="community__message" data-board-message></p>
+      <ul class="illustration-board" data-board-list></ul>
+      <nav class="catalog-pagination" aria-label="Páginas del tablero" data-board-pagination hidden></nav>
+    </section>
+
+    <!-- Detalle de una ilustración (D8): sin ruta ni Open Graph. La imagen y los textos los pone community.ts. -->
+    <dialog class="illustration-detail" id="illustration-detail" aria-labelledby="illustration-detail-title">
+      <form class="illustration-detail__bar" method="dialog">
+        <h2 class="illustration-detail__title" id="illustration-detail-title"></h2>
+        <button class="button button--outline illustration-detail__close" type="submit">Cerrar</button>
+      </form>
+      <div class="illustration-detail__body">
+        <img class="illustration-detail__image" alt="" data-detail-image>
+        <div class="illustration-detail__info">
+          <p class="illustration-detail__meta" data-detail-meta></p>
+          <p class="illustration-detail__description" data-detail-description></p>
+          <ul class="illustration-detail__tags" aria-label="Etiquetas" data-detail-tags></ul>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Confirmación de la retirada. method="dialog": no envía nada al servidor. -->
+    <dialog class="community-dialog" id="withdraw-dialog" aria-labelledby="withdraw-dialog-title">
+      <form class="form" method="dialog">
+        <h2 class="community-dialog__title" id="withdraw-dialog-title">¿Retirar la ilustración?</h2>
+        <p class="community-dialog__text" data-withdraw-text></p>
+        <div class="community-dialog__actions">
+          <button class="button button--outline" type="submit" value="cancel">Cancelar</button>
+          <button class="button button--outline button--danger" type="submit" value="confirm">Retirar</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+  <!-- @footer -->
+  <script type="module" src="/js/pages/community.js"></script>
+</body>
+</html>

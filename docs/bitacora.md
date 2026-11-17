@@ -1482,3 +1482,17 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** `docker compose up -d db` y se repitió.
 - **Comprobación (IA):** `npm test` (206) y `npm run test:api` (340), en verde. El valor de `referrerpolicy`, comprobado en la documentación de YouTube («Required Minimum Functionality»: recomienda `strict-origin-when-cross-origin`).
 - **Pendiente (desarrollador):** ver `/tutoriales` en el navegador (360 px y escritorio, con teclado): que los tres vídeos se reproducen y que la consola no da avisos de la CSP; probar el respaldo con un `.mp4` real. La página aún no está enlazada: la navegación y los accesos rápidos (D10) van con los 4 tests existentes. Quedan `/comunidad` y la sección «Ilustraciones» de `/admin`.
+
+### 2026-11-17 · Bloque 6 · Página `/comunidad` (CU-18; RN-22; D7, D8, D10)
+- **Pedido a la IA:** seguir sin pausa con `/comunidad` («Contrato de la API del bloque 6», «Comunidad» y «Páginas»); las verificaciones en el navegador quedan para el día siguiente.
+- **Resultado:**
+  - `client/public/pages/community.html` y `client/src/pages/community.ts`: tablero en columnas CSS con `width` y `height` en cada `<img>`, filtro por etiqueta y páginas con el estado en la URL (`/comunidad?tag=…&page=…`), detalle en un `<dialog>` (D8), formulario de publicación y «Mis ilustraciones» con sesión (D7), con la retirada confirmada en otro `<dialog>`. Sin sesión (y sin JS), «Entra para compartir» con `next=/comunidad`; al admin se le dice que no publica (D4).
+  - `client/src/services/illustrations.ts` (DTO y peticiones) y `client/src/utils/illustrations.ts` (límites, etiquetas, título, descripción, imagen y estado del tablero, duplicados del servidor).
+  - `layout.ts`: marcador `<!-- @discord-card -->`, que pone la tarjeta «Únete a nuestro Discord» solo con `DISCORD_INVITE_URL` (D10), con la URL escapada.
+  - `components/community-page.css` e `illustration-board.css`, con sus tokens `--community-*`.
+  - Ruta `/comunidad` en `app.ts` y `community` en `PageName`; los archivos nuevos y el marcador, en `CLAUDE.md`.
+- **Tests:** 11 unitarios (`unit/client-illustrations.test.ts`, 7 de RN-22 y RN-10; `unit/community-layout.test.ts`, 4 `Seguridad:`) y 4 de API (`api/community-page.test.ts`, `Seguridad:`). Vistos fallar antes: los unitarios con las firmas provisionales (`0 !== 100`, `'?'` frente al valor esperado, el marcador sin sustituir y `ENOENT` de `community.html`) y los 4 de API (`404 !== 200`, `0 !== 1` y `1 !== 2`). Ningún test existente cambió.
+- **Fallos:** un test nuevo contaba 3 `<dialog` en lugar de 2: un comentario del HTML nombraba la etiqueta.
+- **Corrección:** el comentario dice «diálogo modal».
+- **Comprobación (IA):** `npm test` (217) y `npm run test:api` (344), en verde.
+- **Pendiente (desarrollador):** todo lo visual, sin probar: `/comunidad` en 360 px y escritorio, con teclado; publicar con `reader@demo.test`, ver el aviso y «Mis ilustraciones», retirar, el filtro y el detalle; la consola sin avisos de la CSP. Sin pasar el agente `frontend` ni el `auditor`. La página aún no está enlazada (D10, con los 4 tests existentes). Queda la sección «Ilustraciones» de `/admin`: hasta entonces nada se puede aprobar desde la interfaz.
