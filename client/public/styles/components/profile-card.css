@@ -36,6 +36,16 @@
   margin-top: var(--space-1);
 }
 
+.profile-card__actions .button {
+  width: 100%;
+}
+
+@media (min-width: 40rem) {
+  .profile-card__actions .button {
+    width: auto;
+  }
+}
+
 /* Estado Premium */
 .profile-card--premium {
   overflow: hidden;

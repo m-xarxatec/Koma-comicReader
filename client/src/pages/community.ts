@@ -1,3 +1,4 @@
+import { confirmAction, confirmDialogParts } from '../components/confirm-dialog.js';
 import type { ApiError } from '../services/api.js';
 import { getMe, type UserDto } from '../services/auth.js';
 import {
@@ -16,6 +17,7 @@ import {
   illustrationTitleProblem,
   imageProblem,
   pageCount,
+  paginationView,
   readBoardState,
   type BoardState,
 } from '../utils/illustrations.js';
@@ -49,12 +51,13 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: strin
   return node;
 }
 
-// width y height reservan el hueco antes de que llegue la imagen.
-function picture(illustration: Pick<IllustrationDto, 'url' | 'width' | 'height' | 'title'>, className: string, lazy: boolean): HTMLImageElement {
+// width y height reservan el hueco antes de que llegue la imagen. alt vacío: en el tablero y en «Mis ilustraciones»
+// el título ya está junto a la miniatura, y el lector de pantalla lo repetiría.
+function picture(illustration: Pick<IllustrationDto, 'url' | 'width' | 'height'>, className: string, lazy: boolean): HTMLImageElement {
   const image = element('img', className);
   image.width = illustration.width;
   image.height = illustration.height;
-  image.alt = illustration.title;
+  image.alt = '';
   if (lazy) image.loading = 'lazy';
   image.src = illustration.url;
   return image;
@@ -78,11 +81,12 @@ function pageControl(label: string, available: boolean, target: string | (() => 
 function renderPagination(nav: HTMLElement | null, page: number, pages: number, target: (page: number) => string | (() => void)): void {
   if (!nav) return;
   nav.replaceChildren();
-  nav.hidden = pages <= 1 && page <= 1;
-  if (nav.hidden) return;
-  // Más allá de la última página (un enlace antiguo): solo la vuelta atrás.
-  if (page > pages) {
-    nav.append(pageControl('Anterior', pages >= 1, target(Math.max(pages, 1))));
+  const view = paginationView(page, pages);
+  nav.hidden = view.kind === 'hidden';
+  if (view.kind === 'hidden') return;
+  // Más allá de la última página (un enlace antiguo, o sin resultados): solo la vuelta atrás, siempre activa.
+  if (view.kind === 'back') {
+    nav.append(pageControl('Anterior', true, target(view.to)));
     return;
   }
   nav.append(
@@ -130,9 +134,14 @@ function openDetail(illustration: IllustrationDto): void {
 
 // Al cerrar se suelta la imagen: no sigue descargándose ni queda la anterior al abrir otra.
 detail?.addEventListener('close', () => detail.querySelector<HTMLImageElement>('[data-detail-image]')?.removeAttribute('src'));
-// Un clic en el fondo (fuera de la caja) cierra el detalle.
+// Un clic en el fondo (fuera de la caja) cierra el detalle. El fondo y el relleno de la caja tienen el mismo target
+// (el propio <dialog>), así que se mira si el punto cae fuera del rectángulo. Con teclado (Enter o Espacio en un
+// botón) el clic llega sin coordenadas: no cuenta.
 detail?.addEventListener('click', (event) => {
-  if (event.target === detail) detail.close();
+  if (event.target !== detail || (event.clientX === 0 && event.clientY === 0)) return;
+  const box = detail.getBoundingClientRect();
+  const outside = event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+  if (outside) detail.close();
 });
 
 // --- Tablero ---
@@ -184,6 +193,9 @@ async function loadBoard(): Promise<void> {
   const message = find('[data-board-message]');
   const status = find('[data-board-status]');
   if (!list || !message) return;
+  // Se muestra siempre al empezar: tras una carga correcta quedó oculto, y un error de la siguiente (al retirar una
+  // ilustración publicada) se escribiría en un párrafo oculto.
+  message.hidden = false;
   message.textContent = 'Cargando las ilustraciones…';
   const result = await getBoard(store.board);
   if (!result.ok) {
@@ -215,7 +227,8 @@ const STATUS: Readonly<Record<OwnIllustrationDto['status'], { text: string; modi
 };
 
 const mineStatus = find('[data-mine-status]');
-const withdrawDialog = find<HTMLDialogElement>('#withdraw-dialog');
+const mineTitle = find('#mine-title');
+const dialogParts = confirmDialogParts();
 
 function setStatus(region: HTMLElement | null, text: string, isError = false): void {
   if (!region) return;
@@ -223,23 +236,18 @@ function setStatus(region: HTMLElement | null, text: string, isError = false): v
   region.classList.toggle('form__status--error', isError);
 }
 
-// Confirma en el <dialog>; sin él (navegador muy antiguo), no se retira nada.
-function confirmWithdraw(illustration: OwnIllustrationDto): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (!withdrawDialog) {
-      resolve(false);
-      return;
-    }
-    const text = withdrawDialog.querySelector<HTMLElement>('[data-withdraw-text]');
-    if (text) text.textContent = `«${illustration.title}» dejará de verse y no se podrá recuperar.`;
-    withdrawDialog.returnValue = 'cancel';
-    withdrawDialog.addEventListener('close', () => resolve(withdrawDialog.returnValue === 'confirm'), { once: true });
-    withdrawDialog.showModal();
-  });
-}
+// Repintar la lista hace desaparecer el botón que tenía el foco: se lleva al título de la sección.
+const focusMine = () => mineTitle?.focus();
 
 async function withdraw(illustration: OwnIllustrationDto, button: HTMLButtonElement): Promise<void> {
-  if (!(await confirmWithdraw(illustration))) return;
+  // El diálogo común (components/confirm-dialog.ts, D2); sin sus piezas no se retira nada.
+  const confirmed = await confirmAction(dialogParts, {
+    title: '¿Retirar la ilustración?',
+    text: `«${illustration.title}» dejará de verse y no se podrá recuperar.`,
+    confirm: 'Retirar',
+    danger: true,
+  });
+  if (!confirmed) return;
   button.disabled = true;
   setStatus(mineStatus, '');
   const result = await withdrawIllustration(illustration.id);
@@ -251,6 +259,7 @@ async function withdraw(illustration: OwnIllustrationDto, button: HTMLButtonElem
   }
   setStatus(mineStatus, `«${illustration.title}» se ha retirado.`);
   await loadMine();
+  focusMine();
   if (illustration.status === 'approved') await loadBoard();
 }
 
@@ -305,9 +314,10 @@ async function loadMine(): Promise<void> {
   list.replaceChildren(...illustrations.map(ownItem));
   message.textContent = total === 0 ? 'Todavía no has compartido ninguna ilustración.' : '';
   message.hidden = total > 0;
-  renderPagination(find('[data-mine-pagination]'), store.minePage, pages, (page) => () => {
+  renderPagination(find('[data-mine-pagination]'), store.minePage, pages, (page) => async () => {
     store.minePage = page;
-    void loadMine();
+    await loadMine();
+    focusMine();
   });
 }
 

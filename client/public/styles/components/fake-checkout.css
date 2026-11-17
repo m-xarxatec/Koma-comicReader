@@ -184,7 +184,9 @@
   .checkout {
     padding-block: var(--premium-page-padding-medium);
   }
+}
 
+@media (min-width: 64rem) {
   .checkout__grid {
     grid-template-columns: var(--checkout-grid-columns-medium);
   }

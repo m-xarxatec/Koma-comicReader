@@ -879,7 +879,7 @@ interface AuthorPanelDto {
 
 - **Crear (CU-29):** `number`, entero de 1 a 2³¹ − 1 (el formulario propone el siguiente libre, D22); `title`, de 1 a 100 o, si falta, "Capítulo N" (solo al crearlo, D21). Nace `draft`. Se admite en una obra `pending` o `approved`; en una `rejected`, 409 (D8). Un número ocupado por un capítulo vivo da 409 "El número de capítulo ya está en uso" (23505 en `chapters_comic_number_uq`). El de un retirado o rechazado se reutiliza y hereda su URL (RN-09).
 - **Subir una viñeta (RN-10, RN-13):**
-  - Middlewares en orden: `validate` (params) → `requireAuthor` → limitador de subidas (100 / h por usuario; cuenta cada intento validado, portada incluida, D19) → `upload` → servicio.
+  - Middlewares en orden: `validate` (params) → `requireAuthor` → limitador de subidas (100 / h por usuario; cuenta cada intento validado, portada incluida, D19) → `upload` → servicio. Excepción a RN-13 (aprobada el 17-nov): el archivo solo se comprueba después de multer, así que un 400 sin archivo cuenta como intento; igual en las ilustraciones («Contrato de la API del bloque 6», «Publicar»).
   - `upload`: multer en disco (`os.tmpdir()`), un solo archivo en el campo `image`, sin campos de texto y 5 MB como mucho (si no, 413 `FILE_TOO_LARGE`).
   - Servicio: la firma de la cabecera debe ser JPEG, PNG o WebP (`utils/image.ts`; si no, 415 `UNSUPPORTED_FILE`), y de ella salen el ancho y el alto. Clave `UUID.ext` del servidor y `storage.put` desde el temporal, que se borra siempre (`finally`).
   - Con el capítulo bloqueado (`FOR UPDATE`): con 60 viñetas ya, 400; la posición nueva es `max + 1`. Si la transacción falla después de `put`, la imagen queda huérfana (riesgo aceptado de los borradores).
@@ -1406,6 +1406,7 @@ interface TagCountDto { tag: string; count: number } // de las públicas; las 30
 
 - **Lista:** solo `approved` y no retiradas; 24 por página (`ILLUSTRATIONS_PAGE_SIZE`). `tag` filtra por una sola etiqueta.
 - **Publicar (D2–D6):** a diferencia de las viñetas, multer admite aquí los tres campos de texto (`fields` acotado). Middlewares en orden: `validate` → `requireAuth` → permiso (no admin) y tope de 5 pendientes → limitador de subidas → `upload` → servicio. El texto se valida con zod después de multer, y el temporal se borra siempre (`finally`). Nace `pending`.
+  - **Excepción a RN-13 (aprobada el 17-nov):** el texto llega en el mismo multipart que la imagen y solo se puede validar después de multer, así que el limitador va antes: un 400 del título, la descripción o las etiquetas cuenta como intento de subida. Lo cubre `api/illustrations-rate-limit.test.ts`. Pasa lo mismo con las viñetas (un 400 sin archivo cuenta).
 - **Etiquetas (D3):** se normalizan con la regla del slug de RN-09 (minúsculas, sin acentos, guiones); vacías y repetidas fuera; de 0 a 5, de 2 a 30 caracteres cada una.
 - **Retirar:** `deleted_at = now()`, desde cualquier estado. El dueño, o el admin con el mismo endpoint. Auditoría: `before { deletedAt: null }`, `after { deletedAt }`.
 - **Auditoría de `create`:** en `after`, el título y las etiquetas; nunca la clave de la imagen.

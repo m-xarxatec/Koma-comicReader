@@ -3,6 +3,11 @@
   padding-block: var(--author-page-padding);
 }
 
+/* Contiene las secciones y las tablas tanto en móvil como en la rejilla de escritorio. */
+.author-page__main {
+  min-width: 0;
+}
+
 .author-page__intro {
   display: flex;
   flex-wrap: wrap;
@@ -118,12 +123,9 @@
   color: var(--color-text-muted);
 }
 
-.author-page__status:not(:empty) {
-  margin-bottom: var(--author-heading-margin);
-}
-
 .author-page__works {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--author-works-gap);
   margin: 0;
   padding: 0;
@@ -199,12 +201,6 @@
     column-gap: var(--space-8);
   }
 
-  /* Dos hijos: la navegación (columna 1, fija al desplazar) y .author-page__main (columna 2, con todas las
-     secciones, se vean o no). */
-  .author-page__main {
-    min-width: 0;
-  }
-
   /* Solo dentro de la rejilla del estudio: en /admin (sin .author-page__studio) la navegación sigue en fila. */
   .author-page__studio > .author-page__nav {
     position: sticky;
@@ -223,86 +219,5 @@
   .author-page__works {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--author-works-gap-wide);
-  }
-}
-
-/* Avisos de las acciones del estudio (pulido, D2), como en /admin: siempre en el árbol y último hijo de main, fijos
-   abajo de la pantalla. Comparten los tokens --admin-feedback-* y la capa del aviso de /admin. */
-.author-page__feedback {
-  position: fixed;
-  bottom: var(--admin-feedback-offset);
-  left: 50%;
-  z-index: var(--layer-admin-feedback);
-  width: var(--admin-feedback-width);
-  margin: 0;
-  transform: translateX(-50%);
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.author-page__feedback:not(:empty) {
-  padding: var(--admin-feedback-padding);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-panel);
-  font-size: var(--admin-feedback-font-size);
-}
-
-/* Un fallo: borde y texto en rojo, además del propio mensaje (no solo color). */
-.author-page__feedback--error:not(:empty) {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
-/* Con texto se queda hasta la siguiente acción, así que deja su hueco: el final de la página sube por encima de él
-   y el foco de teclado no queda debajo al desplazarse. */
-html:has(.author-page__feedback:not(:empty)) {
-  scroll-padding-bottom: calc(var(--admin-feedback-offset) + var(--admin-feedback-clearance));
-}
-
-body:has(.author-page__feedback:not(:empty)) {
-  padding-bottom: var(--admin-feedback-clearance);
-}
-
-/* Diálogo de confirmación del estudio (retirar y eliminar), en el top layer del navegador. */
-.author-dialog {
-  width: min(100% - var(--space-8), var(--admin-dialog-width));
-  padding: var(--space-panel);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-.author-dialog::backdrop {
-  background: var(--color-comments-backdrop);
-}
-
-.author-dialog__title {
-  margin: 0;
-  font-size: var(--font-size-xl);
-}
-
-.author-dialog__text {
-  margin: 0;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
-}
-
-.author-dialog__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
-@media (min-width: 64rem) {
-  .author-page__feedback {
-    bottom: var(--admin-feedback-offset-wide);
-  }
-
-  html:has(.author-page__feedback:not(:empty)) {
-    scroll-padding-bottom: calc(var(--admin-feedback-offset-wide) + var(--admin-feedback-clearance));
   }
 }

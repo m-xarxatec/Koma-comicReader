@@ -19,6 +19,8 @@
 
 .form__input {
   width: 100%;
+  min-width: 0;
+  font-size: var(--font-size-base);
   min-height: var(--control-height);
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--color-border-strong);
@@ -45,7 +47,12 @@
 
 .form__hint,
 .form__error {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+}
+
+.form__input[readonly] {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
 }
 
 .form__hint {

@@ -112,6 +112,8 @@ Para restaurar el nombre del equipo después de la demo: `sudo hostnamectl set-h
 
 ## 10. Levantar la app en local accesible desde la red
 
+> **En el portátil Windows de la presentación, usa el 10.12.** Probado el 17-nov con un Android: en la misma wifi, `http://koma.local` carga Koma, sin Docker y sin administrador. Con la app en Docker (10.8), ningún móvil llegó a ella en Windows.
+
 Paso a paso para el portátil de la presentación con Windows, en **PowerShell**, desde la raíz del repositorio. El móvil entra por `http://<nombre-del-equipo>.local`, sin cambiar el nombre del portátil: Windows 10 y 11 ya anuncian su propio nombre por mDNS, igual que Avahi en Linux (en el equipo de desarrollo, `3vil4n0n.local`).
 
 > **Importante:** el control CSRF solo acepta los orígenes de `ALLOWED_ORIGINS`. Si entras por un nombre o una IP que no está ahí, las páginas cargan, pero entrar, registrarse, comentar o pagar dan **403**. Por eso el paso 10.6 añade el nombre y la IP del portátil en un archivo aparte, fuera del repositorio.
@@ -255,3 +257,80 @@ Para quitar las reglas del cortafuegos (como administrador):
 ```powershell
 Remove-NetFirewallRule -DisplayName "Koma demo (HTTP 80)", "Koma demo (mDNS)"
 ```
+
+### 10.12. Windows sin Docker: la demo que funciona (probada el 17-nov)
+
+Probado en el portátil Windows con un Android en la misma wifi: `http://koma.local` carga Koma.
+
+- **La app** corre con Node directamente en Windows, en el puerto 80 y con el PostgreSQL nativo (servicio `postgresql-x64-18`, que arranca con Windows).
+- **`koma.local`** lo anuncia `npm run demo:mdns`: Windows solo anuncia su propio nombre y no tiene Avahi.
+- **No hace falta administrador:** el cortafuegos ya deja entrar a Node.
+- Todo en **PowerShell**, desde la raíz del repositorio.
+
+#### Subir los cambios (en el equipo donde trabajas)
+
+```powershell
+git status
+git add <ruta> <ruta>                      # cada archivo por su nombre
+git commit -m "tipo(módulo): qué cambia"
+git push
+```
+
+#### Preparar el portátil (cada vez que haya código nuevo)
+
+```powershell
+cd C:\Users\micha\Desktop\portfolio\ultimo_entregable_xarxa
+git pull
+npm ci                                     # solo si cambió package-lock.json
+npm run build
+npm run migrate
+Get-Service postgresql-x64-18              # Status: Running
+```
+
+La primera vez, además: `npm run seed`, `npm run content:import` (con `content/` copiada de casa) y `npm run demo:data`. Van contra el PostgreSQL nativo, que es el de `.env`.
+
+#### Arrancar (dos terminales, con el portátil en la misma wifi que los móviles)
+
+Terminal 1, la app:
+
+```powershell
+$ip = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi*" | Select-Object -First 1).IPAddress
+$env:HOST = "0.0.0.0"
+$env:PORT = "80"
+$env:APP_URL = "http://koma.local"
+$env:ALLOWED_ORIGINS = "http://koma.local,http://$ip,http://127.0.0.1,http://localhost"
+"Plan B para los móviles: http://$ip"
+node --env-file=.env server/dist/server.js
+```
+
+Las variables de la terminal mandan sobre `.env` (contingencia del plan, nivel 3).
+
+Terminal 2, el nombre en la red:
+
+```powershell
+npm run demo:mdns
+```
+
+Cada móvil que pregunta por `koma.local` aparece aquí. «resolvedor simple» es Android; «mDNS», iPhone o un ordenador.
+
+#### Comprobar
+
+```powershell
+curl.exe http://koma.local/api/health      # {"status":"ok","db":"ok"}
+```
+
+Desde un móvil en la misma wifi, abre `http://koma.local` escribiendo `http://` delante. Si no carga, usa la dirección del plan B que imprime la terminal 1.
+
+#### Bajar
+
+Ctrl+C en las dos terminales. Las variables `$env:` solo viven en esa terminal: al cerrarla, el desarrollo diario (`npm run dev`, puerto 3000) sigue igual.
+
+#### En la red del instituto, para que otros entren por `koma.local`
+
+- **Misma wifi:** el portátil y los móviles, en la misma red. `demo:mdns` anuncia el nombre en la wifi a la que esté conectado el portátil. Si cambias de wifi, se une a la nueva en unos 10 s.
+- **Si cambia la IP:** reinicia la terminal 1, porque `ALLOWED_ORIGINS` lleva la IP del plan B.
+- **Primera vez en una red nueva:** si Windows pregunta si permite a Node.js, pulsa «Permitir».
+- **Antes de empezar,** prueba con tu móvil y mira la terminal 2.
+- **Si nadie entra, ni por nombre ni por IP,** la wifi aísla a los dispositivos (pasa en las de invitados). Activa la zona wifi de un móvil, conecta a ella el portátil y los demás móviles, y reinicia las dos terminales. Sin probar todavía. La zona wifi del propio portátil no sirvió.
+- **Sin internet funciona igual:** todo es local.
+- **Al terminar, Ctrl+C:** no dejes el puerto 80 abierto en una red ajena.

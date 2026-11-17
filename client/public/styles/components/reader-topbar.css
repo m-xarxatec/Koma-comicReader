@@ -4,16 +4,21 @@
   top: 0;
   z-index: var(--layer-reader-topbar);
   display: grid;
-  grid-template-columns: 1fr auto 1fr; /* el logo queda centrado aunque el botón esté oculto */
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--reader-topbar-height);
-  padding: var(--reader-topbar-padding-block) max(var(--gutter), env(safe-area-inset-left));
+  padding-top: calc(var(--reader-topbar-padding-block) + env(safe-area-inset-top));
+  padding-bottom: var(--reader-topbar-padding-block);
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
 }
 
 .reader-topbar__back {
+  min-width: 0;
+  overflow-wrap: anywhere;
   grid-column: 1;
   justify-self: start;
   display: inline-flex;
@@ -39,7 +44,7 @@
 }
 
 .reader-topbar__expand {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
   min-width: var(--touch-target);
   padding-inline: var(--reader-expand-padding);
@@ -57,7 +62,13 @@
 
 @media (min-width: 40rem) {
   .reader-topbar {
-    padding-inline: var(--gutter-wide);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    padding-left: max(var(--gutter-wide), env(safe-area-inset-left));
+    padding-right: max(var(--gutter-wide), env(safe-area-inset-right));
+  }
+
+  .reader-topbar__expand {
+    grid-column: 3;
   }
 
   .reader-topbar__brand {

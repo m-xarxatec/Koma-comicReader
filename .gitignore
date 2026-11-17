@@ -3,6 +3,7 @@
 node_modules/
 dist/
 /storage/
+/videos/
 content/
 docs/credenciales.local.md
 .claude/settings.local.json
@@ -10,4 +11,3 @@ docs/credenciales.local.md
 .claude/maqueta/
 .claude/parches/
 CLAUDE.local.md
-/videos/

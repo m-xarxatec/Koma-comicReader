@@ -126,10 +126,6 @@
   color: var(--color-danger);
 }
 
-.chapter-editor__status:not(:empty) {
-  margin-top: var(--chapter-editor-actions-margin);
-}
-
 .chapter-editor__actions {
   display: flex;
   flex-wrap: wrap;

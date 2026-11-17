@@ -7,6 +7,8 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  max-width: 100%;
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid transparent;
   border-radius: var(--radius-sm);
@@ -14,6 +16,8 @@
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-snug);
   text-decoration: none;
+  text-align: center;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition:
     background var(--duration-fast),
@@ -21,11 +25,12 @@
     transform var(--duration-fast);
 }
 
-.button:hover {
+.button:hover:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(var(--lift-hover));
 }
 
-.button:disabled {
+.button:disabled,
+.button[aria-disabled="true"] {
   opacity: var(--opacity-disabled);
   cursor: var(--cursor-disabled);
   transform: none;
@@ -36,7 +41,7 @@
   color: var(--color-accent-contrast);
 }
 
-.button--primary:hover {
+.button--primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--color-accent-hover);
   color: var(--color-accent-hover-contrast);
 }
@@ -47,7 +52,7 @@
   color: var(--color-text);
 }
 
-.button--outline:hover {
+.button--outline:hover:not(:disabled):not([aria-disabled="true"]) {
   border-color: var(--color-secondary);
   background: var(--color-surface-raised);
 }
@@ -58,7 +63,23 @@
 
 /* Acciones que retiran o eliminan (estudio del autor): texto y borde del color de peligro, sobre el contorno. */
 .button--danger,
-.button--danger:hover {
+.button--danger:hover:not(:disabled):not([aria-disabled="true"]) {
   border-color: var(--color-danger);
   color: var(--color-danger);
+}
+
+.button:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: none;
+}
+
+.button--primary:active:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-accent-active);
+}
+
+.button--outline:active:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-surface-soft);
+}
+
+.button[aria-busy="true"] {
+  cursor: progress;
 }

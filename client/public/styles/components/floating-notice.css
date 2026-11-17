@@ -1,0 +1,48 @@
+/* Aviso flotante de los resultados de las acciones (D2; announce de components/confirm-dialog.ts). Estilo
+   genérico, el mismo que el del panel del admin; el diseño final cambia los tokens --floating-notice-* de variables.css. */
+
+/* Fijo abajo, sobre el contenido y bajo la navegación móvil; vacío no ocupa nada. */
+.floating-notice {
+  position: fixed;
+  bottom: var(--floating-notice-offset);
+  left: 50%;
+  z-index: var(--layer-floating-notice);
+  width: var(--floating-notice-width);
+  margin: 0;
+  transform: translateX(-50%);
+  text-align: center;
+  font-weight: var(--font-weight-regular);
+  overflow-wrap: anywhere;
+}
+
+/* Con texto, el aviso no tapa lo último de la página ni el elemento enfocado. */
+html:has(.floating-notice:not(:empty)) {
+  scroll-padding-bottom: calc(var(--floating-notice-offset) + var(--floating-notice-clearance));
+}
+
+body:has(.floating-notice:not(:empty)) {
+  padding-bottom: var(--floating-notice-clearance);
+}
+
+.floating-notice:not(:empty) {
+  padding: var(--floating-notice-padding);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-panel);
+  font-size: var(--floating-notice-font-size);
+}
+
+.floating-notice--error:not(:empty) {
+  border-color: var(--floating-notice-error-border);
+}
+
+@media (min-width: 64rem) {
+  .floating-notice {
+    bottom: var(--floating-notice-offset-wide);
+  }
+
+  html:has(.floating-notice:not(:empty)) {
+    scroll-padding-bottom: calc(var(--floating-notice-offset-wide) + var(--floating-notice-clearance));
+  }
+}

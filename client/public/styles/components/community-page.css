@@ -188,38 +188,6 @@
   color: var(--color-danger);
 }
 
-/* Confirmación de la retirada. */
-.community-dialog {
-  width: min(100% - var(--space-8), var(--community-dialog-width));
-  padding: var(--space-panel);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-.community-dialog::backdrop {
-  background: var(--color-comments-backdrop);
-}
-
-.community-dialog__title {
-  margin: 0;
-  font-size: var(--font-size-xl);
-}
-
-.community-dialog__text {
-  margin: 0;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
-}
-
-.community-dialog__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
 @media (min-width: 64rem) {
   .own-illustration__list {
     grid-template-columns: repeat(var(--community-own-columns-wide), minmax(0, 1fr));

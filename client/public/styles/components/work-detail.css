@@ -14,6 +14,7 @@
 
 .work-detail__cover {
   grid-area: cover;
+  align-self: start;
   overflow: hidden;
   aspect-ratio: var(--cover-ratio);
   border-radius: var(--radius-md);
@@ -78,6 +79,8 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-work-tag);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* La píldora mide 32 px, como en la maqueta; el área táctil llega a 44 px por arriba y por abajo. */
@@ -103,6 +106,7 @@
 
 .work-detail__body {
   grid-area: body;
+  min-width: 0;
 }
 
 .work-detail__heading {
@@ -170,10 +174,6 @@
       "cover body";
     gap: var(--space-5) var(--space-6);
     padding: var(--space-6);
-  }
-
-  .work-detail__title {
-    overflow-wrap: normal;
   }
 
   .work-detail__credits {

@@ -27,6 +27,8 @@
   <link rel="stylesheet" href="/styles/components/author-summary.css">
   <link rel="stylesheet" href="/styles/components/reads-table.css">
   <link rel="stylesheet" href="/styles/components/recent-comment.css">
+  <link rel="stylesheet" href="/styles/components/confirm-dialog.css">
+  <link rel="stylesheet" href="/styles/components/floating-notice.css">
   <script type="module" src="/js/pages/author.js"></script>
 </head>
 <body>
@@ -248,7 +250,7 @@
                  publicada (D14). Solo se envía lo que cambia. -->
             <div class="panel-card author-page__new-chapter" id="editar-obra">
               <div class="panel-card__heading">
-                <h3 class="panel-card__title">Datos de la obra</h3>
+                <h3 class="panel-card__title" id="edit-title" tabindex="-1">Datos de la obra</h3>
                 <p class="panel-card__text">Los cambios se publican sin volver a revisión. La dirección de la obra no cambia.</p>
               </div>
               <form class="form panel-card__form" id="edit-form">
@@ -292,7 +294,8 @@
                 </label>
                 <div class="form__field" id="edit-warning-field" hidden>
                   <label class="form__label" for="edit-content-warning">Advertencia</label>
-                  <input class="form__input" id="edit-content-warning" name="contentWarning" type="text" autocomplete="off" aria-describedby="edit-content-warning-error">
+                  <input class="form__input" id="edit-content-warning" name="contentWarning" type="text" autocomplete="off" aria-describedby="edit-content-warning-hint edit-content-warning-error">
+                  <p class="form__hint" id="edit-content-warning-hint">Se mostrará antes del primer capítulo. Hasta 200 caracteres.</p>
                   <p class="form__error" id="edit-content-warning-error" hidden></p>
                 </div>
                 <div class="form__field">
@@ -436,9 +439,6 @@
           </label>
           <p class="form__error" id="comic-authorship-error" hidden></p>
         </div>
-        <noscript>
-          <p class="form__notice">Para crear una obra hace falta JavaScript.</p>
-        </noscript>
         <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
         <div class="panel-card__actions">
           <button class="button button--primary" type="submit" disabled data-needs-js>Crear obra</button>
@@ -447,22 +447,22 @@
       </form>
     </section>
 
-    <!-- Confirmación de las acciones que no se deshacen (retirar una obra o un capítulo, eliminar una viñeta), en
-         lugar de confirm() (pulido, D2). method="dialog": no envía nada al servidor. -->
-    <dialog class="author-dialog" id="author-dialog" aria-labelledby="author-dialog-title">
-      <form class="form author-dialog__form" method="dialog">
-        <h2 class="author-dialog__title" id="author-dialog-title" data-dialog-title></h2>
-        <p class="author-dialog__text" data-dialog-text></p>
-        <div class="author-dialog__actions">
-          <button class="button button--outline" type="button" data-dialog-cancel>Cancelar</button>
-          <button class="button button--primary" type="submit" value="confirm" data-dialog-confirm>Confirmar</button>
+    <!-- Confirmación de retirar una obra o un capítulo y de eliminar una viñeta (D2). method="dialog": no envía nada
+         al servidor. Lo abre components/confirm-dialog.ts con el texto de cada acción. -->
+    <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-text">
+      <form class="form confirm-dialog__form" method="dialog">
+        <h2 class="confirm-dialog__title" id="confirm-dialog-title"></h2>
+        <p class="confirm-dialog__text" id="confirm-dialog-text"></p>
+        <div class="confirm-dialog__actions">
+          <button class="button button--outline" type="button" data-confirm-dialog-cancel>Cancelar</button>
+          <button class="button button--primary" type="submit" value="confirm" data-confirm-dialog-confirm>Confirmar</button>
         </div>
       </form>
     </dialog>
 
-    <!-- Avisos de las acciones (portada cambiada, capítulo retirado, viñeta movida…): siempre en el árbol para que
-         se anuncien, y al final de main, fijos abajo de la pantalla mientras se recorre el estudio (author-page.css). -->
-    <p class="author-page__feedback" role="status" aria-live="polite" data-live></p>
+    <!-- Avisos de las acciones (portada, cambios, viñetas, envío a revisión, retiradas), éxito o error (D2): siempre
+         en el árbol para que se anuncien, y al final de main, fijos abajo de la pantalla (floating-notice.css). -->
+    <p class="floating-notice" role="status" aria-live="polite" data-notice></p>
   </main>
   <!-- @footer -->
 </body>

@@ -1559,3 +1559,177 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 - **Corrección:** test nuevo que lo reproduce, visto fallar (`15 !== 24`), y una mezcla final en el hash. Los dos archivos y la documentación se escribieron con la herramienta de edición, sin tocar ningún archivo de secretos.
 - **Comprobación (IA):** `npm test` (244) y `npm run test:api` (353), en verde. En la salida de la pasada de prueba: 3 altas, lecturas hasta viñetas distintas, comentarios y los tres invitados con su anuncio.
 - **Pendiente (desarrollador):** una pasada real en local (`npm run build && npm run demo:activity -- --fast`, con la app arrancada), sin hacer en esta sesión; después, a ritmo real, y mirar `/admin` → Estadísticas y Auditoría. Online: `APP_URL` y `SEED_READER_PASSWORD` en `.env.online` y `npm run demo:activity:online -- --confirm <host>`. Anotar las seis cuentas en `docs/credenciales.local.md`. Ilustraciones en la pasada: fuera del contrato, pendiente de aprobar.
+### 2026-11-17 · Pulido · Estudio del autor con el diálogo de confirmación y el aviso flotante (D2)
+- **Pedido a la IA:** con `/constructor`, D2 del pulido antes de E3 (`docs/plan_mvp.md`, «Pulido»): el estudio del autor pasa al `<dialog>` de confirmación y al aviso flotante de `/admin`, en lugar de `confirm()` y de los mensajes por sección. Hecho en el portátil Windows, en la rama `windows/d2-estudio-dialogo` (ver `docs/diario-windows.md`).
+- **Resultado:**
+  - `client/src/components/confirm-dialog.ts` (nuevo): `confirmAction`, `announce` y `confirmDialogParts`, con el mismo mecanismo que `pages/admin.ts` (`method="dialog"`, `returnValue === 'confirm'`, un `AbortController` por apertura), sin el campo de motivo. Las piezas llegan como parámetros, así que se prueba sin navegador.
+  - `pages/author.ts`: los tres `confirm()` (retirar obra, retirar capítulo y eliminar viñeta) pasan al diálogo; los resultados que iban por `say()` a `#obra-feedback`, `#edit-status`, `#editor-status` y `#works-status` van al aviso flotante. `route()` vacía el aviso al cambiar de vista, como antes se vaciaban los mensajes de cada sección. Se quedan en su sitio los mensajes de carga o lista vacía y los `role="alert"` de los formularios.
+  - `author.html`: el `<dialog>` y el aviso `role="status"` al final de `main`, sin las cuatro regiones anteriores.
+  - CSS genérico, con los valores del panel del admin: `components/confirm-dialog.css` y `components/floating-notice.css`, los tokens `--confirm-dialog-*` y `--floating-notice-*` en `variables.css` y `--layer-floating-notice` en `layers.css`. Fuera, sin uso: `.author-page__status` y `.chapter-editor__status`.
+  - `CLAUDE.md`: `confirm-dialog` en la lista de `components/` del árbol.
+  - `admin.ts` y `comic.ts` no cambian.
+- **Tests:** 6 unitarios (`unit/client-confirm-dialog.test.ts`) y 2 de API (`api/author-dialog-page.test.ts`), todos `Seguridad:`. Vistos fallar antes, con las firmas provisionales: los unitarios con `false !== true` («se abre como modal»), `true !== false`, `'' !== 'button button--danger'`, `null`, `'' !== 'Portada actualizada.'` y los 3 `confirm(` de `author.js`; los de API con `0 !== 1` diálogos y sin el aviso flotante. Ningún test existente cambió.
+- **Revisión (agente `frontend`):** apto con observaciones, nada bloqueante. Corregidos: Confirmar, en una acción peligrosa, como `button button--outline button--danger`, igual que los «Retirar» del estudio (antes solo `button--danger`, el bajo visual que E2 corrige en `/admin`); el aviso flotante en su propio CSS (BEM, un archivo por componente); `route()` vacía el aviso al ir a la vista de nueva obra con Atrás o Adelante. Sin corregir, a propósito: `confirm-dialog__form` sin regla, gancho para E3, y el CSS y la lógica duplicados con `/admin` (ver «Pendiente»).
+- **Decisiones del desarrollador:** el alcance anterior (componente solo para el estudio, sin tocar `admin.ts`); el aviso distingue los errores con `floating-notice--error`, como el estudio hacía con `form__status--error`; el diseño final lo hace el desarrollador después.
+- **Comprobación (IA):** `npm run typecheck` sin errores; `npm test` 231/231; `npm run test:api` 350/351. El que falla es «Seguridad: ningún enlace simbólico de content/ se sigue…», por `EPERM: symlink` de Windows, no del código. Con el servidor en marcha, `curl`: `/js/components/confirm-dialog.js`, `/styles/components/confirm-dialog.css` y `/js/pages/author.js`, 200; `/autor` sin sesión, 302 a `/entrar?next=%2Fautor`.
+- **Pendiente (desarrollador):**
+  - En el navegador, a 360 px y en escritorio, con teclado: retirar una obra, retirar un capítulo (desde la tabla y desde el editor) y eliminar una viñeta. Comprobar que el foco empieza en Cancelar, que Escape cancela y que el foco vuelve al botón o pasa al título. Ver también que el aviso queda sobre la navegación móvil, el borde de error, el progreso de subir varias imágenes y la consola.
+  - Para E2: `/admin` pasa al componente y a sus dos CSS, y se borran `.admin-dialog*`, `.admin-page__feedback`, `--admin-feedback-*`, `--admin-dialog-width` y `--layer-admin-feedback` (hoy los tokens nuevos son alias de los del admin).
+  - El agente `auditor`, sin pasar.
+
+### 2026-11-17 · Bloque 6 · Revisión del bloque con `frontend` y `auditor`, y sus correcciones
+- **Pedido a la IA:** pasar los agentes `frontend` y `auditor` por el bloque 6, que nunca los había pasado (tramo `f55191d..59777cb`, D2 incluido), y corregir lo aprobado por el desarrollador: el lote A (servidor y tests) y el lote B (cliente de `/comunidad`). El lote C (reorganizar CSS y tokens) queda para E4. Hecho en el portátil Windows, en la rama `windows/d2-estudio-dialogo`.
+- **Revisión (agente `auditor`):** apto con observaciones, nada bloqueante. Cumplen: la migración 010 igual al DDL, el SQL parametrizado, las acciones `illustration.*` en la misma transacción, los permisos en `permissions.ts`, las subidas por firma, `/videos` con su regex, la CSP y las variables en `.env.example` y en el README. Los tests existentes cambiados tienen el permiso anotado. Hallazgos:
+  - Sin test del 429 al publicar ilustraciones (RN-13). Corregido.
+  - El test de `/videos` «pasaría con el código anterior». No se toca: en el mismo archivo, el test anterior comprueba el 200 de un `<id>.mp4` válido, y `secreto.txt` existe en el disco, así que sin la validación se serviría. Su nombre («sin tocar el disco») es inexacto para `zzzzzzzzzzz.mp4`, pero cambiarlo exige el permiso de los tests existentes.
+  - `/videos/` faltaba en `.gitignore`. Corregido.
+  - El controlador de ilustraciones importaba `pool`. Corregido.
+  - El orden limitador → multer → zod contradice RN-13. Anotado como excepción (ver «Decisiones»).
+  - Los límites escritos a mano en `community.html`. Se quedan, como en D8, con un test de paridad.
+- **Revisión (agente `frontend`):** apto con observaciones, nada bloqueante. Este portátil no tiene `.claude/maqueta/`, así que no hubo comparación con la maqueta. Corregidos en el lote B: el diálogo de retirar duplicado, el error del tablero escrito en un párrafo oculto, la paginación fuera de rango, el `alt` repetido, el cierre del detalle al pulsar en su relleno, el foco al repintar «Mis ilustraciones», el `.webp` sin tipo, los estilos de «Próximamente» sin uso y el texto «Comenta y comparte». Para E4 (lote C): separar `discord-card`, `tag-filter` y `own-illustration` de `community-page.css`, los alias `--community-*` y `--tutorials-*`, las clases sin regla, el `[hidden]` redundante y la `<img>` sin `src` del detalle. Para el navegador: si la cabecera desborda entre 1024 y 1150 px con cinco enlaces.
+- **Resultado:**
+  - Lote A:
+    - `illustrations.service.ts`: `checkPublisher(user)` con el pool; el controlador ya no importa `pool`.
+    - `.gitignore`: `/videos/`.
+    - `docs/plan_mvp.md`: la excepción a RN-13 en los contratos de subir viñeta y de publicar ilustración.
+  - Lote B:
+    - `pages/community.ts`: la retirada con `confirmAction` del componente de D2; el mensaje del tablero visible al empezar cada carga; la paginación por `paginationView`; `alt=""` en las miniaturas; el detalle se cierra solo con un clic fuera del rectángulo; el foco en `#mine-title` tras retirar o cambiar de página.
+    - `utils/illustrations.ts`: `paginationView` (nueva, pura) e `imageProblem` deja pasar el tipo vacío (RN-10: decide la firma).
+    - `community.html`: `#confirm-dialog` en lugar de `#withdraw-dialog`, `confirm-dialog.css` enlazado y `tabindex="-1"` en `#mine-title`.
+    - Fuera: `.community-dialog*`, `--community-dialog-width`, `.quick-link--soon` y `.quick-link__soon`.
+    - `layout.ts`: «Comparte tus ilustraciones».
+- **Tests:**
+  - `api/illustrations-rate-limit.test.ts`, 1 `RN-13:`. Como el limitador ya existía, se vio fallar quitándolo un momento de la ruta (`201 !== 429`). La ruta se restauró sin diff.
+  - `unit/client-community-review.test.ts`, 6 (`RN-10:`, `RN-22:` y `Seguridad:`).
+  - `api/community-dialog-page.test.ts`, 2 `Seguridad:`.
+  - Vistos fallar antes, 7 de 8. El de la paridad de los límites de `community.html` pasó desde el principio: fija los valores, como el de D8.
+  - Ningún test existente cambió.
+- **Decisiones del desarrollador:**
+  - Lotes A y B ahora; C, en E4.
+  - Anotar la excepción a RN-13 en las subidas multipart, sin cambiar el orden.
+  - «Comparte tus ilustraciones» en el acceso rápido.
+- **Fallos:** un comando con un heredoc mal cerrado parecía no haber hecho nada, pero había aplicado el cambio. Se comprobó leyendo el archivo antes de seguir.
+- **Comprobación (IA):**
+  - `npm run typecheck`, sin errores.
+  - `npm test`, 237/237.
+  - `npm run test:api`, 353/354. El que falla es el de los enlaces simbólicos, por `EPERM` de Windows.
+  - Con el servidor en marcha, `curl`:
+    - `/comunidad` con 2 diálogos, uno `#confirm-dialog` y ninguno `withdraw-dialog`;
+    - `community.js`, `utils/illustrations.js` y `confirm-dialog.css` con 200;
+    - la portada con «Comparte tus ilustraciones»;
+    - `GET /api/illustrations?page=3` con `total: 0`.
+- **Pendiente (desarrollador):**
+  - En el navegador, a 360 px y en escritorio, con teclado:
+    - publicar y retirar en `/comunidad`: el diálogo común, con el foco después en «Mis ilustraciones»;
+    - el detalle: Escape, clic fuera, clic en el relleno y Enter en «Cerrar»;
+    - `?page=3` sin resultados;
+    - un `.webp` desde Windows;
+    - la cabecera entre 1024 y 1150 px;
+    - la consola.
+  - En `/admin`: aprobar, rechazar y retirar ilustraciones, y comprobarlo en la auditoría.
+  - El despliegue online (migración 010) y `/cerrar-bloque`.
+
+### 2026-11-17 · Bloque 6 · Pruebas en el navegador, revisión de `/autor` y sus correcciones
+- **Pedido a la IA:** el desarrollador probó en el navegador el bloque 6, con el servidor local y los datos de ejemplo. Pidió pasar el agente `frontend` por el estudio del autor completo (que se probará en otro equipo) y dar el bloque por cerrado en código. Hecho en el portátil Windows, en la rama `windows/d2-estudio-dialogo`.
+- **Datos de ejemplo:** por la API, sin tocar la BD ni los secretos. Un script fuera del repositorio registró `prueba1@demo.test` y `prueba2@demo.test`, con una contraseña conocida que solo vale en local. Cada una publicó 4 ilustraciones, pendientes de revisión. Las imágenes para subir a mano quedaron fuera del repositorio. Las contraseñas de las cuentas demo siguen en `docs/credenciales.local.md`, que la IA no puede leer.
+- **Revisión (agente `frontend`, `/autor` completo):** apto con observaciones, nada bloqueante. Cumplen el HTML sin JS, los tokens, la CSP, `textContent`, las peticiones por `api.ts`, la paridad de RN-09 y RN-10 y las fases. Corregidos:
+  - **A corregir:**
+    - un enlace a una sección (`#resumen`, `#nuevo-capitulo`…) lanzaba `popstate` y volvía a ejecutar `route()`: vaciaba el aviso, pisaba el número escrito en «Nuevo capítulo» y volvía a pedir el capítulo abierto, incluso mientras se subían imágenes;
+    - el foco caía en `<body>` con Atrás y Adelante dentro del estudio;
+    - un capítulo se podía retirar dos veces a la vez, y desde el editor seguían activos sus botones durante la petición;
+    - el foco caía en `<body>` tras guardar «Datos de la obra».
+  - **Menores:**
+    - los `aria-label` de «Ver ficha» y «Ver motivo» no contenían el texto visible;
+    - un `<noscript>` dentro de `#crear-obra`, que nunca se veía;
+    - los límites de `author.html` no tenían test de paridad, y a la advertencia de edición le faltaba su pista;
+    - un 400 de una subida perdía el detalle de `fields`;
+    - el foco, si fallaba la recarga tras eliminar una viñeta.
+  - **Sin corregir:** el formulario que no avisa si `/api/tags` falla (menor, anotado). Las clases sin regla (`reads-table__chapter-title`, `reads-table__details`), para E4.
+- **Resultado:**
+  - `client/src/utils/author.ts` (nuevo), con funciones puras: `isNewRoute`, `viewHeading`, `oneAtATime` y `withFieldDetails`.
+  - `pages/author.ts`:
+    - `popstate` solo vuelve a pintar si cambia la consulta y, si el foco queda en `<body>` o dentro de algo oculto, lo lleva al título de la vista;
+    - `withdrawChapter` va con `oneAtATime` y usa `setBusy` si el capítulo está abierto;
+    - el foco va a `#edit-title` tras guardar;
+    - `errorText` añade los `fields`;
+    - los `aria-label` nuevos;
+    - el foco va a `capitulo-title` si falla la recarga.
+  - `author.html`: `#edit-title` con `tabindex="-1"`, la pista de la advertencia de edición y fuera el `<noscript>` muerto.
+  - `CLAUDE.md`: `author.ts` en la lista de `utils/` del árbol.
+- **Tests:** 6 unitarios (`unit/client-author-review.test.ts`, `Seguridad:`, `RN-09:` y `RN-10:`) y 2 de API (`api/author-review-page.test.ts`, `Seguridad:`). Vistos fallar los 8 antes, también el de paridad, por la pista que faltaba. Ningún test existente cambió.
+- **Fallos:** el test de `oneAtATime` se colgó con el cuerpo provisional, porque el segundo clic esperaba una promesa que nadie resolvía.
+- **Corrección:** el test lleva `timeout: 2000`, así que ahora falla en lugar de colgarse. Además, en Windows `node --watch` (`npm run dev`) se reiniciaba solo y cortaba peticiones; para las pruebas a mano se usó `node --env-file=.env server/dist/server.js`.
+- **Comprobación (IA):** `npm run typecheck` sin errores; `npm test` 243/243; `npm run test:api` 355/356 (falla el de los enlaces simbólicos, por `EPERM` de Windows). Con `curl`: `/js/utils/author.js`, `/js/pages/author.js` y `/js/components/confirm-dialog.js`, 200; `/autor` sin sesión, 302.
+- **Comprobación (desarrollador, 17-nov, en el navegador):** `/comunidad`, `/tutoriales` y la sección «Ilustraciones» de `/admin` funcionan. El diseño queda por mejorar (E4).
+- **Pendiente (desarrollador):**
+  - `/autor` en el navegador, en el equipo de casa: la lista «Qué probar» de la revisión, con la navegación interna con un capítulo abierto, Atrás y Adelante, la retirada doble, guardar con y sin cambios, subir varias imágenes, mover y eliminar viñetas, la portada, y 360 px con teclado y consola.
+  - El despliegue online (migración 010) y `/cerrar-bloque`. Hasta entonces, el bloque 6 queda cerrado en código.
+
+### 2026-11-17 · Pulido · Demo en la LAN probada en el portátil Windows: `http://koma.local` funciona
+- **Pedido a la IA:** que la demo funcione al 100 % desde el portátil Windows de la presentación (`docs/comandos.md`, apartado 10), con los móviles de la misma red entrando por `http://koma.local`, como ya funcionaba en el equipo Linux. También, resolver el choque con el PostgreSQL nativo de Windows.
+- **Resultado:** **probado en Windows y funciona.** Un Android en la misma wifi abre `http://koma.local` y carga Koma. El montaje:
+  - la app con Node directamente en Windows, en el puerto 80 y con el PostgreSQL nativo, configurada por la línea de comandos (contingencia del plan, nivel 3);
+  - `koma.local` anunciado por un respondedor mDNS en Node, sin dependencias: `server/src/scripts/demo-mdns.ts`, que se lanza con `npm run demo:mdns` (solo local, como `demo:data`);
+  - sin administrador, porque el cortafuegos ya permite la entrada a Node.
+  - El detalle y el paso a paso del día de la demo están en `docs/diario-windows.md`.
+  - Los comandos de Windows (subir, preparar, arrancar, comprobar, bajar y la red del instituto) están en `docs/comandos.md`, apartado 10.12, con un aviso al principio del apartado 10. `CLAUDE.md` recoge `demo:mdns` en la tabla de comandos y en el árbol.
+- **Tests:** 4 unitarios (`unit/demo-mdns.test.ts`, `Seguridad:`):
+  - la respuesta al resolvedor simple (su id, la pregunta repetida, TTL de 10 s y sin cache-flush);
+  - la respuesta mDNS (id 0, sin la pregunta, con cache-flush y TTL de 120 s);
+  - la lectura de preguntas, con nombres comprimidos, respuestas, paquetes cortados y un puntero que apunta a sí mismo;
+  - la IP según la red de quien pregunta (la wifi y no la red de WSL; de otra red, ninguna).
+  - Vistos fallar los 4 antes, con las firmas provisionales. Ningún test existente cambió.
+- **Decisiones del desarrollador:** la demo va en la misma red que los móviles, por `koma.local`, y sin contenedor. Los comandos de Windows van en la guía del repositorio.
+- **Fallos:**
+  - **La app en Docker, inaccesible desde la red en Windows.** Respondía en el portátil, pero ningún móvil llegó al puerto 80, ni con reglas del cortafuegos por puerto.
+  - **La zona wifi del portátil no sirvió.** El móvil se conectaba, pero no llegaba a la app, y Windows la apaga sola sin dispositivos.
+  - **Windows no anuncia `koma.local`.** Solo anuncia su propio nombre (`anonymous.local`).
+  - **La primera versión del respondedor no valía para Android.** Contestaba a Android sin repetir la pregunta ni su identificador, y Android la descartaba: es un «resolvedor simple» (RFC 6762, §6.7).
+  - **`.env.example` rompe el arranque en Compose.** `DISCORD_INVITE_URL=   # comentario` (paso 10.3) es vacío para Node pero no para Docker Compose, y `env.ts` lo rechaza: la app en contenedor no arranca.
+  - **El PostgreSQL nativo ocupa el 5432.** `docker compose up` choca con él.
+- **Corrección:**
+  - el respondedor responde también como resolvedor simple, con la pregunta y su identificador;
+  - el choque con el PostgreSQL de Docker se resolvió publicándolo en el 5433 desde `koma-lan.yml`, fuera del repositorio. Ya no hace falta para la demo, que usa el nativo;
+  - el comentario de `.env.example`, sin corregir: queda propuesto.
+- **Aprendizaje:** en Windows, la demo en la LAN no va con Docker Desktop: va con Node directo y un respondedor mDNS (`docs/comandos.md`, apartado 10.12). Un respondedor mDNS que tenga que servir a Android debe contestar también como «legacy unicast».
+- **Comprobación (IA):**
+  - desde el portátil, `/api/health` responde `ok` por `127.0.0.1`, por la IP de la wifi y por `koma.local`;
+  - entrar con el origen `koma.local` da 200, y con un origen ajeno, 403;
+  - el respondedor contesta a las dos formas de pregunta (mDNS, y resolvedor simple con la pregunta repetida).
+- **Comprobación (desarrollador, 17-nov, Android en la wifi de casa):** el móvil preguntó por `koma.local` como resolvedor simple, recibió la IP del portátil y cargó Koma 10 veces.
+- **Pendiente (desarrollador):**
+  - entrar con sesión desde el móvil con la contraseña correcta (los dos intentos dieron 401, contraseña incorrecta);
+  - probarlo en la wifi del instituto, que puede aislar a los dispositivos o filtrar el multicast;
+  - probar una vez el apartado 10.12 de `docs/comandos.md` de principio a fin, tal como está escrito;
+  - aprobar los cambios de `docs/comandos.md` y de `.env.example`.
+
+### 2026-11-17 · Pulido · Unión de la rama de Windows y `diseno-final` en `develop`, y revisión del CSS de Codex
+- **Pedido a la IA:** traer de GitHub `windows/d2-estudio-dialogo` y `diseno-final`, revisarlas (en `diseno-final`, el trabajo de Codex sin revisar), unirlas a `develop` y mantener `diseno-final` para seguir trabajando en este equipo. Borrar `feat/premium-diseno`.
+- **Resultado:**
+  - La unión se simuló antes en una copia aparte, sin tocar el repositorio. `diseno-final` contiene la rama de Windows entera: basta con unirla.
+  - D2 estaba hecho dos veces: en casa (`ac87624`) y en Windows (`cc7189b`). Se queda el de Windows, como pide `docs/diario-windows.md`, porque las correcciones posteriores dependen de él (`/comunidad` con `#confirm-dialog`, `utils/author.ts`). `author.html`, `author.ts` y `confirm-dialog.ts` quedan como en `diseno-final`. De `author-page.css` salen los estilos del D2 de casa (`.author-page__feedback`, `.author-dialog`), que la unión automática dejaba duplicados.
+  - `CLAUDE.md` y `package.json` con `demo:activity` (casa) y `demo:mdns` (Windows). `.gitignore` con un solo `/videos/`. En esta bitácora, las entradas de las dos ramas en orden de hora.
+  - `feat/premium-diseno` (E1 de Codex) ya estaba en `develop`: borrada con `git branch -d`, y quitado su worktree `../koma-premium`. Sus 11 archivos ignorados (la maqueta de premium y `encargos/codex-premium.md`) estaban idénticos en el repositorio principal.
+- **Tests:** excepción aprobada sobre 2 tests existentes (`CLAUDE.md`, «Tests»), creados con el mismo nombre en las dos ramas: `api/author-dialog-page.test.ts` y `unit/client-confirm-dialog.test.ts`.
+  - Los de casa comprobaban `#author-dialog`, `[data-dialog-*]`, la región `author-page__feedback` y `confirmDialog(dialog, opciones)`. Con el código de Windows, fallarían.
+  - Quedan los de Windows: `#confirm-dialog`, `[data-confirm-dialog-*]`, `.floating-notice`, `confirmAction` y `announce`.
+  - El desarrollador los listó en `.claude/permiso-tests.txt` y tomó su versión con `git checkout --theirs`. Ningún otro test existente cambió.
+- **Revisión (IA) del commit de Codex `314c14d`** («style(ui): pulir la lectura y la navegación con prioridad móvil»): solo CSS y una clase en `reader.html`; mobile-first y con todos los tokens definidos; nada bloqueante. Llegó sin entrada de bitácora: es esta. Para mirar en el navegador, sin corregir:
+  - cabecera: sin el `max-width: var(--header-user-max-wide)` desde 40rem, el nombre de la sesión se recorta en escritorio a 6rem (`--header-user-max`). `--header-search-min` y `--header-user-max-wide` quedan sin uso;
+  - `.button` con `min-width: var(--touch-target)` y `overflow-wrap: anywhere`: en una fila flex sin `wrap`, un botón puede estrecharse por debajo de su palabra más larga y partirla;
+  - home en móvil: `--home-hero-min-height` pasa de 175px a `var(--space-12)` (48 px), lejos de la maqueta;
+  - pago simulado: las dos columnas, desde 64rem (antes, 40rem);
+  - `env(safe-area-inset-*)` en la cabecera, la navegación móvil y el pie no actúa fuera del lector: solo `reader.html` lleva `viewport-fit=cover`.
+- **Decisiones del desarrollador:** se queda la versión de `diseno-final`, la rama que tiene todo y funciona en el portátil Windows, también en los 2 tests. Permiso para manejar git solo en esta tarea. Borrar `feat/premium-diseno`.
+- **Fallos:**
+  - D2 hecho dos veces, en casa y en Windows, porque la versión de casa no estaba en GitHub: 8 conflictos al unir.
+  - El candado de tests (`proteger-tests`) paró el `git checkout --theirs` de la IA, como debe. Lo ejecutó el desarrollador, tras listar los dos archivos.
+- **Aprendizaje:** al alternar entre dos equipos, subir a GitHub lo hecho en uno antes de empezar una tarea en el otro.
+- **Comprobación (IA):**
+  - en la copia, antes de la unión real: el mismo código, con typecheck sin errores y `npm test` 262/262. El árbol unido coincide archivo por archivo con ella, salvo `CLAUDE.md`, esta bitácora y el orden de `package.json` y `.gitignore`;
+  - en el repositorio, ya unido: `npm run build` sin errores, `npm test` 262/262 y `npm run test:api` 358/358 (con `docker compose up -d db`).
+- **Pendiente (desarrollador):**
+  - en el navegador (360 px y escritorio, con teclado): `/autor` con el diálogo y el aviso flotante, y los puntos de la revisión de Codex;
+  - el commit de la unión, `diseno-final` al día con `develop` y el `push` de las dos;
+  - vaciar `.claude/permiso-tests.txt` tras el commit (seis rutas);
+  - el despliegue online y `/cerrar-bloque` del bloque 6, como ya estaba pendiente.

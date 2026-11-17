@@ -67,6 +67,7 @@
 
 .comic-card__body {
   padding: var(--space-3);
+  overflow-wrap: anywhere;
 }
 
 .comic-card__title {

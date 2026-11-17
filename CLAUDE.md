@@ -18,6 +18,7 @@
 | `npm start` · `npm run migrate` | `node server/dist/server.js` (online; aplica migraciones al arrancar) · solo las migraciones pendientes |
 | `npm run seed` · `npm run content:import` (y `seed:online` · `content:import:online`) | Cuentas demo, etiquetas base, anuncios y `settings` · importa `content/` (RN-18; requiere `migrate`; `-- --replace <slug>:<n>,…` retira y reimporta capítulos). `:online` se ejecuta desde local hacia Neon + R2 con `--env-file=.env.online` (ignorado por git y Docker) e imprime al empezar el host de la BD y `STORAGE_DRIVER` |
 | `npm run demo:data` · `npm run demo:activity` (y `demo:activity:online -- --confirm <host>`) | Datos de demostración para el panel del autor (obras, lecturas y comentarios); solo BD local: aborta si no lo es · una pasada de la actividad simulada (idea 24) por la API, con la app arrancada; `-- --fast` solo en local |
+| `npm run demo:mdns` | Anuncia `koma.local` en la red del portátil (respondedor mDNS, solo local; para la demo en Windows sin Docker, `docs/comandos.md`, apartado 10.12) |
 | `npm test` (y `test:coverage`) | `tsc -b && node --test "server/dist/tests/unit/**/*.test.js"` (funciones puras). `test:coverage` añade `--experimental-test-coverage` sobre `server/dist` (sin `tests/`) e imprime la tabla; solo cuenta los archivos que carga algún test |
 | `npm run test:api` (y `test:api:coverage`) | `tsc -b && node --env-file=.env --env-file=.env.test server/dist/scripts/reset-test-db.js && node --env-file=.env --env-file=.env.test --test "server/dist/tests/api/**/*.test.js"` (reinicia `koma_test`). `test:api:coverage`, lo mismo con la cobertura de `test:coverage` |
 | `docker compose up` | App + BD en contenedores (respaldo de la demo sin internet) |
@@ -43,7 +44,7 @@
 │   ├── middlewares/            # request-id, trailing-slash, auth, roles, rate-limit, validate, upload, csrf, error-handler
 │   ├── integrations/           # misma interfaz por driver: storage (local | r2), payments (fake | stripe)
 │   ├── db/                     # pool.ts (pool, withTransaction, Queryable), migrations/ (001_users … 010_illustrations)
-│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo local), demo-activity.ts, demo-activity-guard.ts y demo-activity-plan.ts (actividad simulada, idea 24)
+│   ├── scripts/                # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts, demo-png.ts y demo-mdns.ts (solo local), demo-activity.ts, demo-activity-guard.ts y demo-activity-plan.ts (actividad simulada, idea 24)
 │   ├── config/                 # env.ts (valida variables con zod al arrancar; si falta una, termina), paths.ts, limits.ts (valores fijos del plan), tutorials.ts (lista de vídeos, CU-42)
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph), tutorials.ts (lista con respaldo local y `/videos`)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
@@ -51,9 +52,9 @@
 │   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials, community
-│       ├── components/         # header, comic-card, comment-panel, ad, timer, confirm-dialog
+│       ├── components/         # header, comic-card, comment-panel, ad, timer, confirm-dialog (diálogo y aviso flotante del estudio, D2)
 │       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts, illustrations.ts
-│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts, author.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md, harness.md
 ```

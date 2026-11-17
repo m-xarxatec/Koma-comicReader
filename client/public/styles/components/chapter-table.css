@@ -2,12 +2,19 @@
    (RN-19, con lo propio en reads-table.css). <table> con <caption> y <th scope>. En móvil se desplaza en horizontal
    dentro de su región (enfocable con el teclado). */
 .chapter-table__scroll {
+  position: relative;
+  min-width: 0;
   max-width: 100%;
   overflow-x: auto;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+.chapter-table__scroll:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring));
 }
 
 .chapter-table {
@@ -46,6 +53,11 @@
 
 .chapter-table__row:last-child .chapter-table__cell {
   border-bottom: 0;
+}
+
+.chapter-table__row:hover,
+.chapter-table__row:focus-within {
+  background: var(--color-surface-raised);
 }
 
 .chapter-table__title {

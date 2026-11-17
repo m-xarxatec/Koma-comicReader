@@ -18,6 +18,7 @@
     "demo:data": "node --env-file=.env server/dist/scripts/demo-data.js",
     "demo:activity": "node --env-file=.env server/dist/scripts/demo-activity.js",
     "demo:activity:online": "node --env-file=.env.online server/dist/scripts/demo-activity.js --online",
+    "demo:mdns": "node server/dist/scripts/demo-mdns.js",
     "seed:online": "node --env-file=.env.online server/dist/scripts/seed.js",
     "content:import:online": "node --env-file=.env.online server/dist/scripts/import-content.js",
     "test": "tsc -b && node --test \"server/dist/tests/unit/**/*.test.js\"",

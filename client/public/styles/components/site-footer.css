@@ -9,7 +9,8 @@
   flex-direction: column;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-6) 0 var(--mobile-nav-clearance);
+  padding: var(--space-6) 0 calc(var(--mobile-nav-clearance) + env(safe-area-inset-bottom));
+  overflow-wrap: anywhere;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
@@ -20,6 +21,7 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--touch-target);
+  text-decoration: underline;
 }
 
 .site-footer__link:hover {
