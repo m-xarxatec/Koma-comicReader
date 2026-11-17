@@ -20,7 +20,7 @@
   transition: background var(--duration-fast);
 }
 
-.quick-link:not(.quick-link--soon):hover {
+.quick-link:hover {
   background: var(--color-surface-raised);
 }
 
@@ -45,11 +45,6 @@
 .quick-link__copy small {
   color: var(--color-text-muted);
   font-size: var(--font-size-home-quick-small);
-}
-
-.quick-link__copy .quick-link__soon {
-  color: var(--color-accent-soft);
-  font-weight: var(--font-weight-semibold);
 }
 
 .quick-link__arrow {

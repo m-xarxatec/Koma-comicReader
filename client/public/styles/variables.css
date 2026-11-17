@@ -441,7 +441,6 @@
   --community-own-columns-wide: 2;
   --community-discord-padding: var(--space-4);
   --community-discord-text-basis: 16rem; /* por debajo, el botón baja a otra línea */
-  --community-dialog-width: 32rem;
   --community-detail-width: 64rem;
   --community-detail-image-height: 70vh;
   --community-detail-info-width: 20rem;

@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="/styles/components/catalog-pagination.css">
   <link rel="stylesheet" href="/styles/components/community-page.css">
   <link rel="stylesheet" href="/styles/components/illustration-board.css">
+  <link rel="stylesheet" href="/styles/components/confirm-dialog.css">
 </head>
 <body>
   <!-- @header -->
@@ -106,7 +107,7 @@
 
     <!-- D7: las del usuario, con su estado; sin las retiradas. Solo con sesión. -->
     <section class="community__section" id="mis-ilustraciones" aria-labelledby="mine-title" hidden>
-      <h2 class="community__heading" id="mine-title">Mis ilustraciones</h2>
+      <h2 class="community__heading" id="mine-title" tabindex="-1">Mis ilustraciones</h2>
       <p class="form__status community__status" role="status" data-mine-status></p>
       <p class="community__message" data-mine-message></p>
       <ul class="own-illustration__list" data-mine-list></ul>
@@ -138,14 +139,15 @@
       </div>
     </dialog>
 
-    <!-- Confirmación de la retirada. method="dialog": no envía nada al servidor. -->
-    <dialog class="community-dialog" id="withdraw-dialog" aria-labelledby="withdraw-dialog-title">
-      <form class="form" method="dialog">
-        <h2 class="community-dialog__title" id="withdraw-dialog-title">¿Retirar la ilustración?</h2>
-        <p class="community-dialog__text" data-withdraw-text></p>
-        <div class="community-dialog__actions">
-          <button class="button button--outline" type="submit" value="cancel">Cancelar</button>
-          <button class="button button--outline button--danger" type="submit" value="confirm">Retirar</button>
+    <!-- Confirmación de la retirada: el diálogo común (components/confirm-dialog.ts, D2), que pone el título y el
+         texto. method="dialog": no envía nada al servidor. -->
+    <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-text">
+      <form class="form confirm-dialog__form" method="dialog">
+        <h2 class="confirm-dialog__title" id="confirm-dialog-title"></h2>
+        <p class="confirm-dialog__text" id="confirm-dialog-text"></p>
+        <div class="confirm-dialog__actions">
+          <button class="button button--outline" type="button" data-confirm-dialog-cancel>Cancelar</button>
+          <button class="button button--primary" type="submit" value="confirm" data-confirm-dialog-confirm>Confirmar</button>
         </div>
       </form>
     </dialog>

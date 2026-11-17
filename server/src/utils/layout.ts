@@ -101,7 +101,7 @@ function siteFooter(path: string, discordUrl: string | null): string {
 
 // «Comunidad» de la portada (bloque 6, D10): enlace a /comunidad. Discord queda en el pie y en la tarjeta de esa página.
 function communityLink(): string {
-  const copy = '<span class="quick-link__copy"><strong>Comunidad</strong><small>Comenta y comparte</small></span>';
+  const copy = '<span class="quick-link__copy"><strong>Comunidad</strong><small>Comparte tus ilustraciones</small></span>';
   return `<a class="quick-link" href="/comunidad">${icon('users', 'icon quick-link__icon')}${copy}${icon('arrow', 'icon quick-link__arrow')}</a>`;
 }
 

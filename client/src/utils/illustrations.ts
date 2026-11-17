@@ -48,7 +48,8 @@ export const illustrationTagsProblem = (value: string) => tagsProblem(parseTags(
 // Aviso temprano: el servidor vuelve a comprobar el tamaño (413) y la firma del archivo (415).
 export function imageProblem(file: { size: number; type: string } | null): string | null {
   if (!file || file.size === 0) return 'Elige una imagen';
-  if (!IMAGE_TYPES.includes(file.type)) return 'La imagen debe ser JPEG, PNG o WebP';
+  // Sin tipo (un .webp en algunos Windows): decide el servidor por la firma del archivo (RN-10).
+  if (file.type !== '' && !IMAGE_TYPES.includes(file.type)) return 'La imagen debe ser JPEG, PNG o WebP';
   if (file.size > MAX_IMAGE_BYTES) return IMAGE_TOO_LARGE;
   return null;
 }
@@ -82,3 +83,12 @@ export function boardQueryString(state: BoardState): string {
 }
 
 export const pageCount = (total: number, pageSize: number) => Math.ceil(total / pageSize);
+
+// Qué muestra la paginación del tablero y de «Mis ilustraciones»: nada con una sola página; más allá de la última
+// (un enlace antiguo, o ?page=3 sin resultados), solo la vuelta a la última que existe o a la 1; si no, la completa.
+export type PaginationView = { kind: 'hidden' } | { kind: 'back'; to: number } | { kind: 'full'; page: number; pages: number };
+export function paginationView(page: number, pages: number): PaginationView {
+  if (pages <= 1 && page <= 1) return { kind: 'hidden' };
+  if (page > pages) return { kind: 'back', to: Math.max(pages, 1) };
+  return { kind: 'full', page, pages };
+}
