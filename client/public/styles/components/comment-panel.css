@@ -54,6 +54,7 @@
   min-height: 0;
   padding: var(--comments-dialog-padding);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Región viva siempre en el árbol (aunque esté vacía): si apareciera a la vez que su texto, no se anunciaría. */
@@ -119,6 +120,7 @@
   display: grid;
   gap: var(--comments-dialog-gap);
   padding: var(--comments-dialog-padding);
+  padding-bottom: max(var(--comments-dialog-padding), env(safe-area-inset-bottom));
   border-top: var(--border-width) solid var(--color-border);
 }
 

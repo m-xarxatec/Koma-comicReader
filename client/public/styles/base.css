@@ -17,6 +17,7 @@ html {
   text-size-adjust: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: var(--scroll-offset);
+  scroll-padding-bottom: var(--scroll-bottom-offset);
 }
 
 body {
@@ -182,6 +183,10 @@ code {
 }
 
 @media (min-width: 40rem) {
+  :root {
+    --scroll-offset: var(--scroll-offset-wide);
+  }
+
   .container,
   .page {
     width: min(100% - 2 * var(--gutter-wide), var(--content-width));
@@ -189,6 +194,10 @@ code {
 }
 
 @media (min-width: 64rem) {
+  html {
+    scroll-padding-bottom: var(--space-4);
+  }
+
   .page {
     padding-block: var(--space-12);
   }
