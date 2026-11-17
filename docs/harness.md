@@ -72,6 +72,7 @@ Por qué: el que construye no se corrige a sí mismo, y un revisor que no puede 
 | `/cerrar-bloque` | El desarrollador | Recorre la definición de terminado: typecheck, unitarios y API, `/code-review` y `/simplify`, `frontend` y `auditor`, la línea «Bloque actual», el árbol de `CLAUDE.md` y la bitácora |
 | `/encargo-codex` | El desarrollador | Redacta un encargo para Codex con el alcance cerrado, la regla de los tests y la de los secretos, y cómo integrarlo sin perder el worktree |
 | `/reemplazar-capitulos` · `/actividad-simulada` | El desarrollador | Guían dos operaciones del pulido. Claude solo lee y comprueba; lo que escribe en una base de datos lo ejecuta el desarrollador |
+| `/anadir-video <enlace>` | El desarrollador | Añade un vídeo a Tutoriales (CU-42): saca el título y la descripción de YouTube y lo escribe en `server/src/config/tutorials.ts` |
 | `bitacora` | Claude, al cerrar una tarea, o el desarrollador | Escribe la entrada de [`bitacora.md`](bitacora.md) con su plantilla y solo con datos comprobados en la sesión |
 | `entregar-commit` | Claude, al cerrar una tarea, o el desarrollador | Da los comandos `git add` y `git commit` con rutas explícitas y el formato `tipo(módulo): … (RN-xx)` |
 
