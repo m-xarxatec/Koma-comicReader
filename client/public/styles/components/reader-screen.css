@@ -21,7 +21,6 @@
 .reader-screen--end {
   margin-block: var(--reader-end-margin);
   padding: var(--reader-end-padding);
-  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
   border: var(--border-width) solid var(--color-border);
   border-top: var(--border-width-strong) solid var(--color-accent);
   border-radius: var(--radius-lg);

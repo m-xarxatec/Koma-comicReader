@@ -11,7 +11,8 @@
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-.profile-page__head > div {
+/* Nombre y cuenta junto al avatar: un nombre largo se parte en lugar de empujar el avatar. */
+.profile-page__identity {
   min-width: 0;
   overflow-wrap: anywhere;
 }

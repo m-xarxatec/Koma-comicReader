@@ -89,7 +89,6 @@
 
 .author-page__section {
   margin-top: var(--author-section-margin);
-  scroll-margin-top: var(--scroll-offset);
 }
 
 .author-page__heading {

@@ -1733,3 +1733,47 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - el commit de la unión, `diseno-final` al día con `develop` y el `push` de las dos;
   - vaciar `.claude/permiso-tests.txt` tras el commit (seis rutas);
   - el despliegue online y `/cerrar-bloque` del bloque 6, como ya estaba pendiente.
+
+### 2026-11-18 · Pulido · Correcciones al CSS de Codex (`314c14d`) y encargo E3
+- **Pedido a la IA:** retomar el trabajo sin commit de la sesión anterior (las correcciones al CSS de Codex que la entrada del 17-nov dejó «para mirar en el navegador») y cerrarlo con su entrada y su commit. Antes, el encargo E3 para Codex, con lo que pidió el desarrollador: los colores de Koma, móvil primero, lo secundario detrás de botones, intuitivo, transiciones y efectos de color y de desplazamiento, y varias propuestas para elegir.
+- **Resultado:**
+  - **Cabecera:** el nombre de la sesión, con `--header-user-max-wide` entre 40 y 64rem y con `--header-user-max` desde 64rem. Fuera `--header-search-min`, que no se usaba.
+  - **`.button`:** `overflow-wrap: break-word` en lugar de `anywhere`. Fuera los estados `[aria-disabled="true"]` y `[aria-busy="true"]`, que nadie pone.
+  - **Anclas:**
+    - sin `scroll-margin-top: var(--scroll-offset)` en `author-page.css`, `community-page.css` y `panel-card.css`, porque se sumaba al `scroll-padding-top` de `base.css`;
+    - el hueco de abajo, en `--scroll-bottom-offset`: desde 64rem, el token nuevo `--scroll-bottom-offset-wide`, y en el lector, solo el área segura, porque no tiene navegación móvil. Fuera el `padding-bottom` con `env()` de `reader-screen.css`.
+  - **BEM:** `.checkout__product-info` y `.profile-page__identity` en lugar de `> div`, con su clase en `fake-checkout.html` y `profile.html`.
+  - **Repetidos, fuera:** los `[hidden]` de `community-page.css` e `illustration-board.css`, que ya cubre `base.css`, y el `:hover` del enlace de Discord en el pie, igual a su regla sin `:hover`.
+  - **Orden:** los `@media` al final de `profile-card.css` y `reads-table.css`.
+  - **Encargo E3:** `.claude/encargos/codex-e3-estudio.md`, para la rama `feat/e3-estudio`, que sale de `diseno-final`. Sus apartados: las propuestas antes de programar; lo secundario con `<details>` y `popover`, sin `<dialog>` nuevos; efectos ligados al desplazamiento con CSS, dentro de `@supports` y quietos con movimiento reducido; el `<meter>` del punto de abandono (D3); y el cuidado con `author-page.css`, `chapter-table.css` y `confirm-dialog.css`, que comparten `/admin` y `/comunidad`. El desarrollador autoriza en el encargo a Codex a hacer commits y `push` solo en su rama.
+- **Tests:**
+  - `unit/client-styles.test.ts`, 9 `Seguridad:` que leen las hojas como texto:
+    - cada token se usa;
+    - las anclas se desplazan en un solo sitio;
+    - `.button` sin `overflow-wrap: anywhere`;
+    - cada `aria-*` de un selector lo pone alguien;
+    - el hueco de abajo del lector y el de escritorio;
+    - los `@media` al final;
+    - ningún `:hover` redundante;
+    - sin `> etiqueta`;
+    - `[hidden]` solo en `base.css`.
+  - Vistos fallar los 9 en esta sesión, en una copia de `HEAD` (`git archive`) con el test nuevo: tokens sin uso, tres hojas con `scroll-margin-top`, `aria-disabled` sin uso, reglas de `profile-card.css` y `reads-table.css` después de un `@media`…
+  - Ningún test existente cambió.
+- **Fallos:**
+  - En `author.html` hay dos `id="edit-title"`: el `<h3>` «Datos de la obra», que lleva ese id desde `28b3b6e`, y el campo «Título de la obra».
+    - `fillEditForm` busca el campo con `getElementById`, que devuelve el `<h3>`, así que el título no se rellena al editar una obra.
+    - El `<label for="edit-title">` también apunta al `<h3>`.
+  - Sin corregir: arreglarlo cambia una aserción de `api/author-review-page.test.ts`, que fija el id del `<h3>`, y necesita el permiso del desarrollador.
+- **Comprobación (IA):** `npm test` (compila con `tsc -b`, sin errores), 271/271. `npm run test:api`, 358/358, con `docker compose up -d db`.
+- **Pendiente (desarrollador):**
+  - En el navegador, a 360 px y en escritorio, con teclado:
+    - el nombre de la sesión en la cabecera, entre 40 y 64rem y desde 64rem;
+    - los botones de las tablas («Retirar» entero);
+    - los saltos a las anclas de `/autor`, `/comunidad` y `/admin`, que ya no quedan el doble de bajos;
+    - el final del lector en un iPhone;
+    - `/perfil` y `/pago-simulado`.
+  - Quedan sin tocar dos puntos de la revisión del 17-nov: el hero de la portada en móvil (`--home-hero-min-height`, ahora 48 px) y las dos columnas del pago simulado desde 64rem.
+  - Decidir sobre el `id="edit-title"` duplicado.
+  - La cabecera de 64 a 80rem, aprobada el 17-nov y sin hacer.
+  - Crear `feat/e3-estudio` desde `diseno-final` después de este commit y pasarle el encargo a Codex.
+  - El despliegue online del bloque 6 y `/cerrar-bloque`.

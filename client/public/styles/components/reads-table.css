@@ -93,17 +93,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Desde 64rem la tabla cabe entera: el aviso de desplazamiento sobra. */
-@media (min-width: 64rem) {
-  .reads-table__hint {
-    display: none;
-  }
-}
-
 /* Punto de abandono de cada capítulo (RN-21, bloque 5): una línea bajo sus lecturas. */
 .reads-table__abandonment {
   margin: var(--space-2) 0 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   white-space: normal;
+}
+
+/* Desde 64rem la tabla cabe entera: el aviso de desplazamiento sobra. */
+@media (min-width: 64rem) {
+  .reads-table__hint {
+    display: none;
+  }
 }

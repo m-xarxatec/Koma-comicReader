@@ -134,7 +134,7 @@
   margin-bottom: var(--space-5);
 }
 
-.checkout__product > div {
+.checkout__product-info {
   display: grid;
   gap: var(--space-1);
 }

@@ -1,8 +1,10 @@
 /* Página del lector: sin desplazamiento suave (los saltos a #v-N y "Recargar" no deben animarse, como en la
    maqueta), los botones deshabilitados de la maqueta (también el de la barra, fuera de main), la columna de
-   lectura y el antetítulo que comparten la introducción y las pantallas. */
+   lectura y el antetítulo que comparten la introducción y las pantallas. El lector no tiene navegación móvil: abajo
+   solo reserva el área segura. */
 :root:has(.reader-page) {
   --scroll-offset: calc(var(--reader-topbar-height) + env(safe-area-inset-top));
+  --scroll-bottom-offset: env(safe-area-inset-bottom);
   --opacity-disabled: var(--opacity-reader-disabled);
   --cursor-disabled: var(--cursor-reader-disabled);
   scroll-behavior: auto;

@@ -1,5 +1,5 @@
 /* Comunidad (pages/community.html, CU-18): cabecera, secciones, tarjeta de Discord, filtro por etiqueta,
-   «Mis ilustraciones» y el diálogo de confirmación. El tablero y el detalle van en illustration-board.css. */
+   y «Mis ilustraciones». El tablero y el detalle van en illustration-board.css; el diálogo, en confirm-dialog.css. */
 .community {
   display: grid;
   gap: var(--community-gap);
@@ -41,7 +41,6 @@
 .community__section {
   display: grid;
   gap: var(--community-section-gap);
-  scroll-margin-top: var(--scroll-offset);
 }
 
 .community__share {
@@ -67,11 +66,6 @@
 
 .community__message:empty,
 .community__status:empty {
-  display: none;
-}
-
-/* [hidden] gana a los display de esta página (grid y flex). */
-.community [hidden] {
   display: none;
 }
 

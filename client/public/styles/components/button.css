@@ -17,7 +17,7 @@
   line-height: var(--line-height-snug);
   text-decoration: none;
   text-align: center;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* parte lo que no cabe sin bajar el ancho mínimo de la palabra más larga (anywhere sí) */
   cursor: pointer;
   transition:
     background var(--duration-fast),
@@ -25,12 +25,11 @@
     transform var(--duration-fast);
 }
 
-.button:hover:not(:disabled):not([aria-disabled="true"]) {
+.button:hover:not(:disabled) {
   transform: translateY(var(--lift-hover));
 }
 
-.button:disabled,
-.button[aria-disabled="true"] {
+.button:disabled {
   opacity: var(--opacity-disabled);
   cursor: var(--cursor-disabled);
   transform: none;
@@ -41,7 +40,7 @@
   color: var(--color-accent-contrast);
 }
 
-.button--primary:hover:not(:disabled):not([aria-disabled="true"]) {
+.button--primary:hover:not(:disabled) {
   background: var(--color-accent-hover);
   color: var(--color-accent-hover-contrast);
 }
@@ -52,7 +51,7 @@
   color: var(--color-text);
 }
 
-.button--outline:hover:not(:disabled):not([aria-disabled="true"]) {
+.button--outline:hover:not(:disabled) {
   border-color: var(--color-secondary);
   background: var(--color-surface-raised);
 }
@@ -63,23 +62,19 @@
 
 /* Acciones que retiran o eliminan (estudio del autor): texto y borde del color de peligro, sobre el contorno. */
 .button--danger,
-.button--danger:hover:not(:disabled):not([aria-disabled="true"]) {
+.button--danger:hover:not(:disabled) {
   border-color: var(--color-danger);
   color: var(--color-danger);
 }
 
-.button:active:not(:disabled):not([aria-disabled="true"]) {
+.button:active:not(:disabled) {
   transform: none;
 }
 
-.button--primary:active:not(:disabled):not([aria-disabled="true"]) {
+.button--primary:active:not(:disabled) {
   background: var(--color-accent-active);
 }
 
-.button--outline:active:not(:disabled):not([aria-disabled="true"]) {
+.button--outline:active:not(:disabled) {
   background: var(--color-surface-soft);
-}
-
-.button[aria-busy="true"] {
-  cursor: progress;
 }

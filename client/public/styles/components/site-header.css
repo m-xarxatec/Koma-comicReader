@@ -182,11 +182,20 @@
   .site-header__signup {
     display: inline-flex;
   }
+
+  /* En tableta sobra sitio para el nombre de la sesión; desde 64rem vuelve al tope de móvil (navegación). */
+  .site-header__user {
+    max-width: var(--header-user-max-wide);
+  }
 }
 
 @media (min-width: 64rem) {
   .site-header__premium-label {
     display: inline;
+  }
+
+  .site-header__user {
+    max-width: var(--header-user-max);
   }
 
   .site-header__inner {

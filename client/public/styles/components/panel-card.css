@@ -5,7 +5,6 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  scroll-margin-top: var(--scroll-offset);
 }
 
 .panel-card__heading {

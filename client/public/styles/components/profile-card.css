@@ -27,7 +27,8 @@
   gap: var(--profile-form-gap);
 }
 
-/* Botón y aviso de éxito en la misma fila: el aviso vacío (role="status", siempre en el árbol) no ocupa sitio. */
+/* Botón y aviso de éxito: en móvil el botón ocupa todo el ancho y el aviso va debajo; desde 40rem, en la misma
+   fila. El aviso vacío (role="status", siempre en el árbol) no ocupa sitio. */
 .profile-card__actions {
   display: flex;
   flex-wrap: wrap;
@@ -38,12 +39,6 @@
 
 .profile-card__actions .button {
   width: 100%;
-}
-
-@media (min-width: 40rem) {
-  .profile-card__actions .button {
-    width: auto;
-  }
 }
 
 /* Estado Premium */
@@ -125,4 +120,10 @@
 
 .profile-card__premium-actions {
   margin-top: var(--space-5);
+}
+
+@media (min-width: 40rem) {
+  .profile-card__actions .button {
+    width: auto;
+  }
 }

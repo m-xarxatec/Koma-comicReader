@@ -194,8 +194,8 @@ code {
 }
 
 @media (min-width: 64rem) {
-  html {
-    scroll-padding-bottom: var(--space-4);
+  :root {
+    --scroll-bottom-offset: var(--scroll-bottom-offset-wide);
   }
 
   .page {

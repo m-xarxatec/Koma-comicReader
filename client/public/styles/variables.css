@@ -156,7 +156,6 @@
   --reader-width: 50rem;
   --header-height: 76px;
   --header-height-wide: 78px;
-  --header-search-min: 240px;
   --header-search-min-wide: 180px;
   --header-search-max: 330px;
   --header-gap-wide: clamp(0.65rem, 1.3vw, 1.35rem);
@@ -170,6 +169,7 @@
   --scroll-offset: calc(var(--header-height) + var(--control-height) + env(safe-area-inset-top));
   --scroll-offset-wide: calc(var(--header-height-wide) + var(--space-4) + env(safe-area-inset-top));
   --scroll-bottom-offset: calc(var(--mobile-nav-height) + var(--space-4) + env(safe-area-inset-bottom));
+  --scroll-bottom-offset-wide: var(--space-4); /* desde 64rem, sin navegación móvil */
   --nav-indicator-height: 3px;
   --icon-size: 1.25rem;
   --icon-size-sm: 1rem;
