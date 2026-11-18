@@ -2005,3 +2005,44 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
     - la prueba A;
     - `demo:mdns` en el instituto;
     - una pasada de `demo:activity`.
+
+### 2026-11-18 · Pulido · Prueba de API del recorrido completo de la demo
+- **Pedido a la IA:** mientras Codex sigue con E2 y E4, una prueba de punta a punta del guion del MVP: la «prueba completa de roles» del pulido (`docs/plan_mvp.md`, «Pulido»). Solo servidor y tests, sin tocar los archivos de Codex. El desarrollador aprobó antes la lista de etapas.
+- **Resultado:** `api/demo-journey.test.ts`, 10 tests en orden que comparten estado y pasan por la API real.
+  - Datos de partida:
+    - una obra aprobada con 2 capítulos libres, tantos como `reading.max_balance` y uno más (`createComic`);
+    - el admin y el autor, de `createUser`;
+    - la lectora se registra por la API.
+  - `AD_MIN_SECONDS=1` en el propio archivo: el anuncio se completa de verdad con `GET …/ad`, sin falsificar el token.
+- **Tests:** los 10 nuevos.
+  - `RN-01`: el visitante encuentra la obra en el catálogo y la ficha. Los caps. 1–2 se leen libres; el 3, tras el anuncio; el 4 da 401 `UNAUTHENTICATED`.
+  - `RN-12`: el registro deja la sesión activa, con rol `user` y sin premium.
+  - `RN-02`: el saldo baja desde el cap. 3 y releer no consume. Sin saldo, 403 `READING_LIMIT` con `retryAt`.
+  - `RN-03`: el anuncio al final del capítulo.
+  - `RN-11`: el comentario en una viñeta sale en la lista pública con su nombre.
+  - `RN-04`: el pago simulado da premium. El capítulo del límite se lee sin saldo y sin anuncios.
+  - `RN-05`, en dos tests:
+    - el autor crea la obra (`pending`) y el cap. 1 (`draft`), sube una viñeta PNG y lo envía. Mientras, el visitante recibe 404;
+    - solo el admin aprueba (el lector y el autor reciben 403). Con la obra aprobada, la ficha es pública; con el capítulo aprobado, el visitante lo lee.
+  - `Seguridad:` el admin oculta el comentario (el lector recibe 403) y deja de verse.
+  - `Seguridad:` la auditoría, consultada por correo del actor:
+    - de la lectora, `user.register` y `subscription.start`;
+    - del autor, `comic.create`, `chapter.create` y `chapter.submit`;
+    - del admin, `comic.approve`, `chapter.approve` y `comment.hide`;
+    - el lector recibe 403 en la auditoría.
+  - **Cubren código que ya funcionaba,** así que pasan a la primera. Para comprobar que detectan un fallo, se alteró a mano una expectativa en el JS compilado (el cap. 4 del visitante con «200 OK»): falló el test `RN-01`, 9/10. Después se recompiló.
+  - Ningún test existente cambió.
+- **Decisiones del desarrollador:**
+  - la prueba del recorrido antes que el guion de la demo;
+  - las etapas, tal como se propusieron.
+
+  Quedan fuera, porque ya tienen su test: el anuncio intersticial, Stripe real, las ilustraciones y la recarga del saldo.
+- **Fallos:**
+  - La primera versión esperaba 200 al aprobar, y la API responde 204. El fallo arrastró la comprobación de `chapter.approve` en la auditoría.
+  - Tras alterar el JS compilado, `npm run build` (`tsc -b`) no lo volvió a escribir, porque el código fuente no había cambiado. Hizo falta `npx tsc -b --force`.
+- **Aprendizaje:** si se edita algo en `dist/` a mano, se recompila con `npx tsc -b --force`: `tsc -b` solo mira el código fuente.
+- **Comprobación (IA):**
+  - `node --test` del archivo: 10/10;
+  - `npm run typecheck`, sin errores;
+  - `npm test`, 291/291;
+  - `npm run test:api`, 370/370 (360 + 10).
