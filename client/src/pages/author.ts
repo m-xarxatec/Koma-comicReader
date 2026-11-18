@@ -815,7 +815,7 @@ bindForm(
     // bindForm desactiva el botón, que tenía el foco: tras el aviso, el foco va al título del formulario.
     if (Object.keys(changes).length === 0) {
       notify('No hay cambios que guardar.');
-      focusHeading('edit-title');
+      focusHeading('edit-heading');
       return { ok: true };
     }
 
@@ -825,7 +825,7 @@ bindForm(
     await reloadComics();
     renderComic();
     notify('Cambios guardados.');
-    focusHeading('edit-title');
+    focusHeading('edit-heading');
     return { ok: true };
   },
 );

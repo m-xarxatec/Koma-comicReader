@@ -23,7 +23,7 @@ async function studio(): Promise<string> {
 
 test('Seguridad: /autor tiene a dónde llevar el foco tras guardar «Datos de la obra» y un solo aviso sin JavaScript', async () => {
   const html = await studio();
-  assert.ok(html.includes('<h3 class="panel-card__title" id="edit-title" tabindex="-1">Datos de la obra</h3>'), 'título enfocable');
+  assert.ok(html.includes('<h3 class="panel-card__title" id="edit-heading" tabindex="-1">Datos de la obra</h3>'), 'título enfocable');
   assert.equal(count(html, '<noscript>'), 1, 'el de la cabecera de la página; el de «Nueva obra» nunca se veía');
 });
 
