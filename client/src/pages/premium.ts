@@ -1,4 +1,4 @@
-import type { ApiError } from '../services/api.js';
+import { errorMessage, type ApiError } from '../services/api.js';
 import { getMe, type UserDto } from '../services/auth.js';
 import { getSubscription, openPortal, periodText, startCheckout } from '../services/payments.js';
 
@@ -15,7 +15,7 @@ const errorBox = document.querySelector<HTMLElement>('[data-plan-error]');
 
 function showError(error: ApiError): void {
   if (!errorBox) return;
-  errorBox.textContent = error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message;
+  errorBox.textContent = errorMessage(error);
 }
 
 // Navega a Checkout, al portal o a /pago-simulado; el botón queda desactivado mientras tanto.

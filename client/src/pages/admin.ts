@@ -22,7 +22,7 @@ import {
   type PageDto,
   type ReviewItemDto,
 } from '../services/admin.js';
-import type { ApiError, ApiResult } from '../services/api.js';
+import { errorMessage, type ApiError, type ApiResult } from '../services/api.js';
 import { withdrawIllustration } from '../services/illustrations.js';
 import {
   AUDIT_ACTIONS,
@@ -71,7 +71,6 @@ function actionButton(label: string, onClick: (button: HTMLButtonElement) => voi
   return button;
 }
 
-const errorText = (error: ApiError) => (error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message);
 
 // Avisos de las acciones (role="status", al final de main). Se vacía antes de escribir para que se anuncie también
 // un aviso igual al anterior (p. ej. dos "Comentario ocultado." seguidos).
@@ -181,7 +180,7 @@ async function run(
     focusList(view);
     return;
   }
-  announce(errorText(result.error));
+  announce(errorMessage(result.error));
   // Un 409, 410 o 404 significan que otro admin (u otra pestaña) cambió el estado: se recarga para verlo.
   if (result.status === 409 || result.status === 410 || result.status === 404) {
     await reload();
@@ -226,7 +225,7 @@ function showRows(view: ListView, rows: HTMLTableRowElement[], empty: string, to
 function showError(view: ListView, error: ApiError): void {
   view.rows?.replaceChildren();
   if (view.table) view.table.hidden = true;
-  if (view.message) view.message.textContent = errorText(error);
+  if (view.message) view.message.textContent = errorMessage(error);
   if (view.pager) view.pager.hidden = true;
   if (view.count) view.count.textContent = '';
 }
@@ -568,7 +567,7 @@ async function setUpSettings(): Promise<void> {
     // Sin los valores actuales no se puede guardar: el fallo va en la caja de error del formulario (role="alert") y
     // el botón sigue desactivado.
     if (formError) {
-      formError.textContent = errorText(result.error);
+      formError.textContent = errorMessage(result.error);
       formError.hidden = false;
     }
     return;
@@ -721,7 +720,7 @@ async function loadStats(): Promise<void> {
   const result = await getStats();
   if (!result.ok) {
     // Las tarjetas se quedan en «—»; el error se dice en la sección y no bloquea el resto del panel.
-    if (statsMessage) statsMessage.textContent = errorText(result.error);
+    if (statsMessage) statsMessage.textContent = errorMessage(result.error);
     return;
   }
   const { stats } = result.data;

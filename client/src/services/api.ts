@@ -10,6 +10,10 @@ export interface ApiError {
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError };
 
+// Mensaje de un error de la API para el usuario, con el código de referencia de los logs si lo trae.
+export const errorMessage = (error: ApiError): string =>
+  error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message;
+
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 // Opciones por petición. Las llamadas que no las pasan no cambian.

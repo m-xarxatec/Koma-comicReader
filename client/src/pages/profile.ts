@@ -1,3 +1,4 @@
+import { errorMessage } from '../services/api.js';
 import { changePassword, updateProfile } from '../services/auth.js';
 import { getSubscription, openPortal, periodText } from '../services/payments.js';
 import {
@@ -101,9 +102,7 @@ async function setUpPremium(premiumCard: HTMLElement, until: string): Promise<vo
         return;
       }
       if (manageError) {
-        manageError.textContent = result.error.requestId
-          ? `${result.error.message} (código de referencia: ${result.error.requestId})`
-          : result.error.message;
+        manageError.textContent = errorMessage(result.error);
         manageError.hidden = false;
       }
       manage.disabled = false;

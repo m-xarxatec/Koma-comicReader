@@ -1,4 +1,4 @@
-import { api, type ApiError } from '../services/api.js';
+import { api, errorMessage } from '../services/api.js';
 import { embedUrl, localVideoUrl } from '../utils/tutorials.js';
 
 // /tutoriales (CU-42; contrato del bloque 6, «Tutoriales» y «Páginas»). La lista llega de GET /api/tutorials y cada
@@ -17,10 +17,6 @@ const status = document.querySelector<HTMLElement>('[data-tutorials-status]');
 
 function setStatus(text: string): void {
   if (status) status.textContent = text;
-}
-
-function errorText(error: ApiError): string {
-  return error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message;
 }
 
 // null si el id no es válido: ese vídeo no se pinta.
@@ -76,7 +72,7 @@ async function loadTutorials(): Promise<void> {
   setStatus('Cargando los tutoriales…');
   const result = await api.get<{ tutorials: TutorialDto[] }>('/api/tutorials');
   if (!result.ok) {
-    setStatus(errorText(result.error));
+    setStatus(errorMessage(result.error));
     return;
   }
   const cards = result.data.tutorials.map(tutorialCard).filter((card) => card !== null);

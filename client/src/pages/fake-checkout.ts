@@ -1,4 +1,4 @@
-import type { ApiError } from '../services/api.js';
+import { errorMessage, type ApiError } from '../services/api.js';
 import { getMe } from '../services/auth.js';
 import { fakeCancel, fakePay, formatDate, getSubscription, type SubscriptionDto } from '../services/payments.js';
 
@@ -9,8 +9,8 @@ const status = document.querySelector<HTMLElement>('[data-status]');
 const say = (message: string) => {
   if (status) status.textContent = message;
 };
-// Como en premium.ts y profile.ts: el mensaje con su código de referencia.
-const sayError = (error: ApiError) => say(error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message);
+// El mensaje de la API con su referencia de los logs (errorMessage, services/api.ts).
+const sayError = (error: ApiError) => say(errorMessage(error));
 
 type Step = 'pay' | 'cancel' | 'none';
 function show(step: Step, text = ''): void {
