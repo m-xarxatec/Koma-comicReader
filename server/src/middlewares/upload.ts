@@ -21,12 +21,18 @@ export const uploadImage = multer({
 // Ilustraciones de la comunidad (RN-22; contrato del bloque 6): la misma imagen y, a diferencia de las viñetas, hasta
 // tres campos de texto (`title`, `description` y `tags`), que zod valida después. `fieldSize` acota cada texto: la
 // descripción (500 caracteres) y las etiquetas caben de sobra.
-const ILLUSTRATION_TEXT_FIELDS = 3;
+export const ILLUSTRATION_TEXT_FIELDS: readonly string[] = ['title', 'description', 'tags']; // error-handler.ts nombra el que se pasa
 const ILLUSTRATION_FIELD_BYTES = 4 * 1024;
 
 export const uploadIllustration = multer({
   storage: multer.diskStorage({ destination: (_req, _file, cb) => cb(null, os.tmpdir()) }),
-  limits: { fileSize: MAX_IMAGE_BYTES, files: 1, fields: ILLUSTRATION_TEXT_FIELDS, fieldSize: ILLUSTRATION_FIELD_BYTES, parts: ILLUSTRATION_TEXT_FIELDS + 1 },
+  limits: {
+    fileSize: MAX_IMAGE_BYTES,
+    files: 1,
+    fields: ILLUSTRATION_TEXT_FIELDS.length,
+    fieldSize: ILLUSTRATION_FIELD_BYTES,
+    parts: ILLUSTRATION_TEXT_FIELDS.length + 1,
+  },
 }).single('image');
 
 // Va detrás de lo que sigue a multer en la ruta: si la validación del texto (o cualquier otro paso) falla, el temporal

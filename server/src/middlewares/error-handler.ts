@@ -8,6 +8,7 @@ import { paths } from '../config/paths.js';
 import { AppError, INTERNAL_ERROR_MESSAGE, type ErrorCode } from '../utils/app-error.js';
 import { FOOTER_MARKER, HEAD_MARKER, HEADER_MARKER, renderTemplate } from '../utils/layout.js';
 import { logger } from '../utils/logger.js';
+import { ILLUSTRATION_TEXT_FIELDS } from './upload.js';
 
 const ERROR_PAGES = new Set([403, 404, 410, 500, 503]); // client/public/errors/<código>.html
 // Errores 4xx de body-parser (campo `type`) → código de la tabla de errores del plan. Los demás tipos
@@ -22,14 +23,20 @@ const BODY_PARSER_ERRORS: Record<string, [status: number, code: ErrorCode, messa
   'charset.unsupported': [415, 'UNSUPPORTED_MEDIA_TYPE', UNSUPPORTED],
   'encoding.unsupported': [415, 'UNSUPPORTED_MEDIA_TYPE', UNSUPPORTED],
 };
-// Errores de multer (subidas, contrato del bloque 3): el tamaño es 413 FILE_TOO_LARGE; los demás (más de un
-// archivo, otro campo, campos de texto, demasiadas partes…) son 400 en fields.image. busboy lanza Error a secas
-// cuando el multipart está mal formado o llega cortado: también es un 400, no un fallo del servidor.
+// Errores de multer (subidas, contrato del bloque 3): el tamaño es 413 FILE_TOO_LARGE; un texto de una ilustración
+// que pasa de su límite, 400 en su campo; los demás (más de un archivo, otro campo, campos de texto, demasiadas
+// partes…) son 400 en fields.image. busboy lanza Error a secas cuando el multipart está mal formado o llega cortado:
+// también es un 400, no un fallo del servidor.
 const MULTIPART_BROKEN = /^(Unexpected end of (form|file)|Malformed part header|Multipart: Boundary not found)$/;
 
 function uploadError(err: unknown): AppError | null {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') return new AppError(413, 'FILE_TOO_LARGE', `La imagen no puede pasar de ${MAX_IMAGE_BYTES / (1024 * 1024)} MB`, { cause: err });
+    // Un texto de una ilustración que pasa de su fieldSize (upload.ts): el error va en su campo. Solo los nombres de la
+    // ilustración: el de cualquier otro campo lo manda el cliente y no se repite.
+    if (err.code === 'LIMIT_FIELD_VALUE' && err.field !== undefined && ILLUSTRATION_TEXT_FIELDS.includes(err.field)) {
+      return new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', { fields: { [err.field]: 'Este texto es demasiado largo' }, cause: err });
+    }
     return new AppError(400, 'VALIDATION_ERROR', 'Revisa los datos enviados', {
       fields: { image: 'Envía una sola imagen en el campo image, sin otros campos' },
       cause: err,
