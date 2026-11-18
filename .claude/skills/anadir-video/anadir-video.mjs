@@ -49,10 +49,14 @@ export function shortDescription(raw) {
   return `${(lastSpace > DESCRIPTION_MAX / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:.]+$/, '')}…`;
 }
 
-const decodeEntities = (text) =>
+// Entidades HTML de la meta description (respaldo de la descripción): numéricas (decimales y hexadecimales) y las
+// cinco con nombre. &amp; va la última para no decodificar dos veces («&amp;#39;» queda «&#39;»).
+export const decodeEntities = (text) =>
   text
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#[xX]([0-9a-fA-F]+);/g, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
     .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&');
@@ -89,10 +93,13 @@ const literal = (text) => `'${text.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'
 const entry = (video) =>
   `  {\n    id: ${literal(video.id)},\n    title: ${literal(video.title)},\n    description: ${literal(video.description)},\n  },\n`;
 
-// Inserta las entradas al final de la lista. Devuelve el archivo nuevo.
+// Inserta las entradas al final de la lista. Devuelve el archivo nuevo. El cierre es «];» justo tras la apertura
+// (lista vacía) o al principio de una línea: un «];» dentro del texto de una entrada va siempre sangrado.
 export function insertEntries(source, videos) {
   const start = source.indexOf(LIST_START);
-  const end = source.indexOf('];', start);
+  const rest = start === -1 ? '' : source.slice(start + LIST_START.length);
+  const offset = start === -1 ? -1 : rest.startsWith('];') ? 0 : rest.search(/^\];/m);
+  const end = offset === -1 ? -1 : start + LIST_START.length + offset;
   if (start === -1 || end === -1) throw new Error(`No encuentro la lista TUTORIALS en ${path.relative(ROOT, LIST_FILE)}`);
   const body = source.slice(start + LIST_START.length, end).trim();
   const kept = body === '' ? '' : `${body.replace(/,?\s*$/, ',')}\n`.replace(/^(?! {2})/, '  ');
