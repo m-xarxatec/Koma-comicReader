@@ -102,6 +102,7 @@ function showMessage(text: string, retry = false): void {
 function renderCover(comic: ComicDto): void {
   if (!cover) return;
   cover.replaceChildren();
+  cover.dataset['letter'] = Array.from(comic.title.trim())[0] ?? 'K';
   if (!comic.coverUrl) {
     cover.setAttribute('aria-hidden', 'true');
     return;
@@ -109,6 +110,10 @@ function renderCover(comic: ComicDto): void {
   // Primera pantalla: sin loading="lazy".
   const image = document.createElement('img');
   image.className = 'work-detail__image';
+  image.addEventListener('error', () => {
+    image.remove();
+    cover.setAttribute('aria-hidden', 'true');
+  }, { once: true });
   image.src = comic.coverUrl;
   image.alt = `Portada de ${comic.title}`;
   const size = sizeFromRatioToken('--cover-ratio');
@@ -207,7 +212,10 @@ function renderComic(comic: ComicDto): void {
     preview.hidden = preview.textContent === '';
   }
   if (synopsis) synopsis.textContent = comic.synopsis;
-  if (author) author.textContent = comic.authorCredit;
+  if (author) {
+    author.textContent = `Por ${comic.authorCredit}`;
+    author.hidden = false;
+  }
   // RN-07: el nombre del autor que la publicó o, si es importada, la plataforma.
   if (publisher) publisher.textContent = comic.publishedBy ?? 'La plataforma';
   renderLicense(comic);
@@ -263,8 +271,9 @@ async function withdrawComic(): Promise<void> {
     return;
   }
   // La ficha, el lector y la API ya responden 410 (RN-06): fuera la ficha y los capítulos; queda el aviso, con el foco.
-  for (const part of [body, status, preview, tags, warning, chapters]) if (part) part.hidden = true;
+  for (const part of [body, author, status, preview, tags, warning, chapters]) if (part) part.hidden = true;
   cover?.replaceChildren();
+  if (cover) delete cover.dataset['letter'];
   showMessage('Obra retirada: ya no la ve nadie y la retirada queda en la auditoría.');
   message?.focus();
 }

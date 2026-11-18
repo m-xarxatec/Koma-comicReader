@@ -36,81 +36,12 @@
         <p class="eyebrow profile-page__eyebrow">Mi espacio en Koma</p>
         <h1 class="profile-page__title">Mi perfil</h1>
         <p class="profile-page__meta"><span data-display-name>{{displayName}}</span> · {{accountLabel}}</p>
+        <p class="profile-page__email" id="profile-email" aria-describedby="profile-email-hint"><span class="visually-hidden">Correo electrónico: </span>{{email}}</p>
+        <span class="visually-hidden" id="profile-email-hint">El correo no se puede cambiar.</span>
       </div>
     </header>
 
-    <noscript>
-      <p class="form__notice profile-page__notice">Para cambiar tu nombre o tu contraseña hay que activar JavaScript en el navegador.</p>
-    </noscript>
-
     <div class="profile-page__grid">
-      <section class="profile-card" aria-labelledby="personal-title">
-        <div class="profile-card__header">
-          <h2 class="profile-card__title" id="personal-title">Datos personales</h2>
-          <p class="profile-card__text">El nombre que verá la comunidad en tus comentarios.</p>
-        </div>
-        <!-- PATCH /api/me (RN-12): la misma regla que el registro. Sin maxlength: cuenta unidades UTF-16 y no
-             dejaría escribir 30 emojis, que valen (bindForm cuenta puntos de código). Un formulario no puede enviar
-             PATCH: sin action ni method, y el botón llega desactivado (profile.ts lo activa). Sin JS no se envía
-             nada (con el botón por defecto desactivado, Intro tampoco envía) y se ve el aviso de noscript. -->
-        <form class="form profile-card__form" id="profile-form">
-          <div class="form__field">
-            <label class="form__label" for="profile-display-name">Nombre de usuario</label>
-            <input class="form__input" id="profile-display-name" name="displayName" type="text" value="{{displayName}}" autocomplete="nickname" required minlength="3" aria-describedby="profile-display-name-hint profile-display-name-error">
-            <p class="form__hint" id="profile-display-name-hint">De 3 a 30 caracteres.</p>
-            <p class="form__error" id="profile-display-name-error" hidden></p>
-          </div>
-          <div class="form__field">
-            <label class="form__label" for="profile-email">Correo electrónico</label>
-            <!-- Sin name: no se envía. El correo no se edita en el MVP. -->
-            <input class="form__input" id="profile-email" type="email" value="{{email}}" autocomplete="email" readonly aria-describedby="profile-email-hint">
-            <p class="form__hint" id="profile-email-hint">El correo no se puede cambiar.</p>
-          </div>
-          <noscript>
-            <p class="form__notice">Para guardar el nombre hace falta JavaScript.</p>
-          </noscript>
-          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
-          <div class="profile-card__actions">
-            <button class="button button--primary" type="submit" disabled data-needs-js>Guardar nombre</button>
-            <p class="form__status" data-form-status role="status"></p>
-          </div>
-        </form>
-      </section>
-
-      <section class="profile-card" aria-labelledby="password-title">
-        <div class="profile-card__header">
-          <h2 class="profile-card__title" id="password-title">Seguridad</h2>
-          <p class="profile-card__text">Al cambiar la contraseña se cierra la sesión en los demás dispositivos.</p>
-        </div>
-        <!-- POST /api/auth/password (RN-12, RN-15). "Repite la nueva contraseña" se comprueba solo en el cliente
-             y no se envía. Nunca GET: sin JS, las contraseñas no pueden acabar en la URL. -->
-        <form class="form profile-card__form" id="password-form" method="post" action="/api/auth/password">
-          <!-- Para los gestores de contraseñas: la cuenta a la que pertenece la contraseña (sin name, no se envía). -->
-          <input type="email" value="{{email}}" autocomplete="username" readonly hidden>
-          <div class="form__field">
-            <label class="form__label" for="password-current">Contraseña actual</label>
-            <input class="form__input" id="password-current" name="currentPassword" type="password" placeholder="Contraseña actual" autocomplete="current-password" required aria-describedby="password-current-error">
-            <p class="form__error" id="password-current-error" hidden></p>
-          </div>
-          <div class="form__field">
-            <label class="form__label" for="password-new">Nueva contraseña</label>
-            <input class="form__input" id="password-new" name="newPassword" type="password" placeholder="Nueva contraseña" autocomplete="new-password" required minlength="10" aria-describedby="password-new-hint password-new-error">
-            <p class="form__hint" id="password-new-hint">Mínimo 10 caracteres.</p>
-            <p class="form__error" id="password-new-error" hidden></p>
-          </div>
-          <div class="form__field">
-            <label class="form__label" for="password-confirm">Repite la nueva contraseña</label>
-            <input class="form__input" id="password-confirm" name="newPasswordConfirm" type="password" placeholder="Repite la nueva contraseña" autocomplete="new-password" required aria-describedby="password-confirm-error">
-            <p class="form__error" id="password-confirm-error" hidden></p>
-          </div>
-          <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
-          <div class="profile-card__actions">
-            <button class="button button--outline" type="submit">Cambiar contraseña</button>
-            <p class="form__status" data-form-status role="status"></p>
-          </div>
-        </form>
-      </section>
-
       <!-- Estado Premium (D17) y, desde el bloque 4, sus acciones (D18): "Hacerse premium" lleva a /premium (sin JS
            también); "Gestionar suscripción" abre el portal de Stripe o el pago simulado (POST /api/payments/portal).
            profile-card.css muestra solo lo del plan que pone el servidor (data-plan). -->
@@ -120,23 +51,91 @@
             <svg class="icon"><use href="/icons/sprite.svg#icon-crown"/></svg>
           </div>
           <span class="profile-card__badge profile-card__only-free">Plan gratuito</span>
+          <span class="profile-card__badge profile-card__only-admin">Administración</span>
           <span class="profile-card__badge profile-card__badge--premium profile-card__only-premium">Premium</span>
+          <h2 class="profile-card__title profile-card__title--large" id="premium-title">Tu estado Premium</h2>
         </div>
-        <h2 class="profile-card__title profile-card__title--large" id="premium-title">Tu estado Premium</h2>
         <p class="profile-card__text profile-card__only-free">Ahora estás en el plan gratuito. Con Premium, las historias fluyen sin interrupciones.</p>
         <p class="profile-card__text profile-card__only-premium" data-premium-period>Tu suscripción Premium está activa hasta el <span data-premium-until="{{premiumUntil}}">{{premiumUntilDate}}</span>.</p>
         <p class="profile-card__text profile-card__only-admin">La cuenta de administración lee sin límites ni anuncios: no necesita premium.</p>
-        <ul class="profile-card__benefits profile-card__hide-admin">
-          <li class="profile-card__benefit">Lectura sin anuncios</li>
-          <li class="profile-card__benefit">Capítulos sin límites</li>
-          <li class="profile-card__benefit">Suscripción de prueba, sin pagos reales</li>
-        </ul>
         <div class="profile-card__actions profile-card__premium-actions profile-card__hide-admin">
           <a class="button button--primary profile-card__only-free" href="/premium">Hacerse premium</a>
           <button class="button button--outline profile-card__only-premium" type="button" disabled data-needs-js data-manage-subscription>Gestionar suscripción</button>
         </div>
         <p class="form__error form__error--form" role="alert" data-manage-error hidden></p>
+        <ul class="profile-card__benefits profile-card__hide-admin">
+          <li class="profile-card__benefit">Lectura sin anuncios</li>
+          <li class="profile-card__benefit">Capítulos sin límites</li>
+          <li class="profile-card__benefit">Suscripción de prueba, sin pagos reales</li>
+        </ul>
       </aside>
+
+      <section class="profile-card" aria-labelledby="personal-title">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title" id="personal-title">Datos personales</h2>
+          <p class="profile-card__text">El nombre que verá la comunidad en tus comentarios.</p>
+        </div>
+        <details class="profile-card__edit">
+          <summary class="profile-card__toggle">Editar nombre</summary>
+          <!-- PATCH /api/me (RN-12): la misma regla que el registro. Sin maxlength: cuenta unidades UTF-16 y no
+               dejaría escribir 30 emojis, que valen (bindForm cuenta puntos de código). Un formulario no puede enviar
+               PATCH: sin action ni method, y el botón llega desactivado (profile.ts lo activa). Sin JS no se envía
+               nada (con el botón por defecto desactivado, Intro tampoco envía) y se ve el aviso de noscript. -->
+          <form class="form profile-card__form" id="profile-form">
+            <div class="form__field">
+              <label class="form__label" for="profile-display-name">Nombre de usuario</label>
+              <input class="form__input" id="profile-display-name" name="displayName" type="text" value="{{displayName}}" autocomplete="nickname" required minlength="3" aria-describedby="profile-display-name-hint profile-display-name-error">
+              <p class="form__hint" id="profile-display-name-hint">De 3 a 30 caracteres.</p>
+              <p class="form__error" id="profile-display-name-error" hidden></p>
+            </div>
+            <noscript>
+              <p class="form__notice">Para guardar el nombre hace falta JavaScript.</p>
+            </noscript>
+            <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+            <div class="profile-card__actions">
+              <button class="button button--primary" type="submit" disabled data-needs-js>Guardar nombre</button>
+              <p class="form__status" data-form-status role="status"></p>
+            </div>
+          </form>
+        </details>
+      </section>
+
+      <section class="profile-card" aria-labelledby="password-title">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title" id="password-title">Seguridad</h2>
+          <p class="profile-card__text">Al cambiar la contraseña se cierra la sesión en los demás dispositivos.</p>
+        </div>
+        <details class="profile-card__edit">
+          <summary class="profile-card__toggle">Cambiar contraseña</summary>
+          <!-- POST /api/auth/password (RN-12, RN-15). "Repite la nueva contraseña" se comprueba solo en el cliente
+               y no se envía. Nunca GET: sin JS, las contraseñas no pueden acabar en la URL. -->
+          <form class="form profile-card__form" id="password-form" method="post" action="/api/auth/password">
+            <!-- Para los gestores de contraseñas: la cuenta a la que pertenece la contraseña (sin name, no se envía). -->
+            <input type="email" value="{{email}}" autocomplete="username" readonly hidden>
+            <div class="form__field">
+              <label class="form__label" for="password-current">Contraseña actual</label>
+              <input class="form__input" id="password-current" name="currentPassword" type="password" placeholder="Contraseña actual" autocomplete="current-password" required aria-describedby="password-current-error">
+              <p class="form__error" id="password-current-error" hidden></p>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="password-new">Nueva contraseña</label>
+              <input class="form__input" id="password-new" name="newPassword" type="password" placeholder="Nueva contraseña" autocomplete="new-password" required minlength="10" aria-describedby="password-new-hint password-new-error">
+              <p class="form__hint" id="password-new-hint">Mínimo 10 caracteres.</p>
+              <p class="form__error" id="password-new-error" hidden></p>
+            </div>
+            <div class="form__field">
+              <label class="form__label" for="password-confirm">Repite la nueva contraseña</label>
+              <input class="form__input" id="password-confirm" name="newPasswordConfirm" type="password" placeholder="Repite la nueva contraseña" autocomplete="new-password" required aria-describedby="password-confirm-error">
+              <p class="form__error" id="password-confirm-error" hidden></p>
+            </div>
+            <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
+            <div class="profile-card__actions">
+              <button class="button button--outline" type="submit">Cambiar contraseña</button>
+              <p class="form__status" data-form-status role="status"></p>
+            </div>
+          </form>
+        </details>
+      </section>
     </div>
   </main>
   <!-- @footer -->

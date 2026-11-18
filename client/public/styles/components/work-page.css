@@ -17,11 +17,22 @@
   display: grid;
   align-items: start;
   gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.work-page .breadcrumb__link {
+  min-width: var(--touch-target);
 }
 
 @media (min-width: 40rem) {
   .work-page {
     padding-top: var(--space-8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-page .button:hover:not(:disabled) {
+    transform: none;
   }
 }
 

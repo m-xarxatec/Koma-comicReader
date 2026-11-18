@@ -22,6 +22,12 @@ const premiumUntil = document.querySelector<HTMLElement>('[data-premium-until]')
 const until = premiumUntil?.dataset['premiumUntil'];
 if (premiumUntil && until) premiumUntil.textContent = dateFormat.format(new Date(until));
 
+// Si se plegó el formulario durante la petición, su respuesta y el destino del foco deben quedar visibles.
+function revealForm(form: HTMLFormElement): void {
+  const details = form.closest('details');
+  if (details) details.open = true;
+}
+
 // Aviso de éxito del formulario (role="status", siempre en el árbol). Se borra al volver a escribir.
 function statusOf(form: HTMLFormElement): (message: string) => void {
   const status = form.querySelector<HTMLElement>('[data-form-status]');
@@ -42,6 +48,7 @@ if (profileForm && nameInput) {
   bindForm(profileForm, { displayName: displayNameProblem }, async (values) => {
     setStatus('');
     const result = await updateProfile(values['displayName'] ?? '');
+    revealForm(profileForm);
     if (!result.ok) return failureOutcome(result.status, result.error);
 
     const { displayName } = result.data.user; // ya recortado por el servidor
@@ -70,6 +77,7 @@ if (passwordForm) {
     setStatus('');
     // Solo los campos del contrato: la confirmación se queda en el cliente.
     const result = await changePassword(values['currentPassword'] ?? '', values['newPassword'] ?? '');
+    revealForm(passwordForm);
     if (!result.ok) return failureOutcome(result.status, result.error);
 
     // RN-15: la respuesta trae la cookie nueva; esta sesión sigue abierta y las demás se cierran.

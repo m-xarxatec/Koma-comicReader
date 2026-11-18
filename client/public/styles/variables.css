@@ -229,6 +229,10 @@
   --home-hero-description-width: 32rem;
   --home-hero-actions-gap: 1.45rem;
   --home-hero-min-height: 175px; /* maqueta: .hero__art en móvil */
+  --home-feature-columns: minmax(0, 3fr) minmax(0, 2fr);
+  --home-shelf-cover-width: clamp(4.5rem, 10vw, 6rem);
+  --home-cover-lines: repeating-radial-gradient(ellipse at 120% 110%, transparent 0 13%, var(--color-home-cover-sheen) 13.2% 14%, transparent 14.3% 17%);
+  --home-cover-type: Georgia, "Times New Roman", serif;
   --home-hero-min-height-medium: 280px;
   --home-hero-min-height-wide: 320px;
   --home-section-gap: clamp(1.7rem, 3vw, 2.4rem);
@@ -292,6 +296,7 @@
   --gradient-work-cover: linear-gradient(150deg, var(--color-work-cover-from), var(--color-work-cover-mid) 58%, var(--color-work-cover-to));
   --font-weight-label: 750; /* antetítulo de la ficha y estado de un capítulo */
   --work-page-width: 1180px;
+  --work-anchor-duration: 800ms;
   --breadcrumb-gap: 0.6rem;
   --work-cover-width: 108px;
   --work-cover-width-medium: minmax(190px, 235px);
@@ -465,10 +470,10 @@
   --color-profile-premium-glow: #ff2e9328;
   --gradient-profile-avatar: linear-gradient(135deg, var(--color-profile-avatar-from), var(--color-profile-avatar-to));
   --gradient-profile-premium: radial-gradient(ellipse at 92% 0%, var(--color-profile-premium-glow), transparent 60%);
-  --profile-page-padding: var(--space-8) var(--space-10);
+  --profile-page-padding: var(--space-3) var(--space-10);
   --profile-page-padding-wide: 2.8rem 5rem;
   --profile-head-gap: 1rem;
-  --profile-head-padding: 1.8rem;
+  --profile-head-padding: var(--space-4);
   --profile-avatar-size: 70px;
   --profile-avatar-size-medium: 84px;
   --profile-avatar-radius: 22px;
@@ -478,7 +483,7 @@
   --font-size-profile-title: clamp(1.65rem, 4vw, 2.3rem);
   --line-height-profile-title: 1.1;
   --profile-grid-gap: 1.25rem;
-  --profile-grid-margin: 1.7rem;
+  --profile-grid-margin: var(--space-4);
   --profile-grid-columns-medium: minmax(0, 1fr) minmax(0, 1fr);
   --profile-grid-columns-wide: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(270px, 0.9fr);
   --profile-form-gap: 1rem;
@@ -487,8 +492,8 @@
   --font-size-profile-card-title: 1.15rem;
   --font-size-profile-premium-title: 1.3rem;
   --profile-card-title-margin: 0 0 0.35rem;
-  --profile-premium-title-margin: 1.15rem 0 0.55rem;
-  --profile-premium-text-margin: 0 0 1.3rem;
+  --profile-premium-title-margin: var(--space-1) 0 0;
+  --profile-premium-text-margin: 0 0 var(--space-3);
   --profile-card-top-gap: 0.8rem;
   --profile-card-icon-size: 46px;
   --profile-card-icon-glyph: 26px;

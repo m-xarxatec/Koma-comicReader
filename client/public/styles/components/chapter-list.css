@@ -16,6 +16,15 @@
   font-size: var(--font-size-sm);
 }
 
+.chapter-list:target .chapter-list__title {
+  border-left-color: var(--color-secondary);
+}
+
+@keyframes chapter-arrival {
+  from { border-left-color: var(--color-highlight); background-color: var(--color-surface-raised); }
+  to { border-left-color: var(--color-secondary); background-color: transparent; }
+}
+
 .chapter-list__items {
   display: grid;
   gap: var(--space-2);
@@ -121,5 +130,11 @@
 
   .chapter-list__arrow {
     display: block;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chapter-list:target .chapter-list__title {
+    animation: chapter-arrival var(--work-anchor-duration) ease-out;
   }
 }
