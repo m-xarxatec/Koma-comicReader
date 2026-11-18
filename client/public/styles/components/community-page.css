@@ -2,6 +2,7 @@
    y «Mis ilustraciones». El tablero y el detalle van en illustration-board.css; el diálogo, en confirm-dialog.css. */
 .community {
   display: grid;
+  align-content: start;
   gap: var(--community-gap);
   padding-block: var(--community-padding);
 }
@@ -17,11 +18,34 @@
 
 .community__intro {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--community-intro-gap);
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border);
+  border-inline-start: var(--focus-ring) solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  background: var(--community-intro-surface);
 }
 
 .community__intro .eyebrow {
   margin-bottom: 0;
+}
+
+.community__pencil {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  width: var(--community-pencil-size);
+  height: var(--community-pencil-size);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-secondary);
+  border-radius: var(--radius-md);
+  color: var(--color-secondary);
+}
+
+.community__board-link {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .community__title {
@@ -32,20 +56,97 @@
 }
 
 .community__lead {
+  grid-column: 1 / -1;
   max-width: var(--measure-text);
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-lg);
 }
 
+.community__layout,
+.community__tools,
 .community__section {
   display: grid;
+  align-content: start;
+  min-width: 0;
   gap: var(--community-section-gap);
 }
 
-.community__share {
-  display: grid;
+.community__layout {
+  gap: var(--community-gap);
+}
+
+.community__panel {
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.community__panel .community__fold,
+.community__fold-body,
+.community__panel .community__message:not(:empty),
+.community__status:not(:empty) {
+  margin-block-start: var(--space-3);
+}
+
+.community__toggle {
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  align-content: center;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--community-ease), border-color var(--duration-fast) var(--community-ease);
+}
+
+.community__toggle::marker {
+  color: var(--color-secondary);
+}
+
+.community__toggle--primary {
+  border-color: var(--color-accent);
+  color: var(--color-accent-soft);
+}
+
+.community__toggle:hover,
+.community__toggle:focus-visible,
+.community__fold[open] > .community__toggle {
+  border-color: var(--color-secondary);
+  background-color: var(--color-surface-soft);
+}
+
+.community__toggle:active {
+  border-color: var(--color-highlight);
+}
+
+.community__board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--community-section-gap);
+}
+
+.community__fold--filters[open] {
+  flex-basis: 100%;
+}
+
+.community__fold--filters:has(.tag-filter:empty),
+.community__fold--mine:has(.own-illustration__list:empty) {
+  display: none;
+}
+
+.community__count {
+  color: var(--color-secondary);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
 }
 
 .community__guest {
@@ -61,12 +162,18 @@
 
 .community__message {
   margin: 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: var(--border-width-strong) solid var(--color-secondary);
   color: var(--color-text-muted);
+  overflow-wrap: anywhere;
 }
 
-.community__message:empty,
-.community__status:empty {
+.community__message:empty {
   display: none;
+}
+
+.community__status {
+  overflow-wrap: anywhere;
 }
 
 /* Tarjeta «Únete a nuestro Discord» (layout.ts, solo con DISCORD_INVITE_URL). */
@@ -106,9 +213,12 @@
 .tag-filter__link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
+  max-width: 100%;
   min-height: var(--touch-target);
   padding: var(--community-tag-padding);
-  border: var(--border-width) solid var(--color-border);
+  border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-muted);
@@ -117,7 +227,7 @@
 }
 
 .tag-filter__link:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-secondary);
   color: var(--color-text);
 }
 
@@ -182,8 +292,67 @@
   color: var(--color-danger);
 }
 
-@media (min-width: 64rem) {
+.own-illustration:has(.status-badge--warning) {
+  border-inline-start-color: var(--color-warning);
+}
+
+.own-illustration:has(.status-badge--success) {
+  border-inline-start-color: var(--color-success);
+}
+
+.own-illustration:has(.status-badge--danger) {
+  border-inline-start-color: var(--color-danger);
+}
+
+.community .confirm-dialog {
+  margin: auto;
+}
+
+.community .confirm-dialog[open],
+.community__fold[open] > .community__fold-body {
+  animation: community-unfold var(--duration-fast) var(--community-ease);
+}
+
+/* El contenido ya es legible en el primer fotograma. */
+@keyframes community-unfold {
+  from { transform: translateY(var(--lift-hover)); }
+  to { transform: none; }
+}
+
+@media (min-width: 40rem) {
+  .community__pencil {
+    grid-row: 1 / 5;
+    padding: var(--space-4);
+  }
+
+  .community__lead,
+  .community__board-link {
+    grid-column: 1;
+  }
+
   .own-illustration__list {
     grid-template-columns: repeat(var(--community-own-columns-wide), minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .community__layout {
+    grid-template-columns: var(--community-rail-width) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .own-illustration__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community .confirm-dialog[open],
+  .community__fold[open] > .community__fold-body {
+    animation: none;
+  }
+
+  .community .button:hover:not(:disabled) {
+    transform: none;
   }
 }

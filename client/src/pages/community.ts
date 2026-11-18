@@ -40,6 +40,15 @@ const formatDate = (iso: string) => dateFormat.format(new Date(iso));
 
 const find = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector);
 
+function openLinkedFold(): void {
+  const target = document.getElementById(location.hash.slice(1));
+  const fold = target?.closest('details') ?? target?.closest('.community__panel')?.querySelector('details');
+  if (fold) fold.open = true;
+}
+
+openLinkedFold();
+window.addEventListener('hashchange', openLinkedFold);
+
 function errorText(error: ApiError): string {
   return error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message;
 }
@@ -354,7 +363,12 @@ function setUpShare(user: UserDto | null): void {
         description: values['description'] ?? '',
         tags: values['tags'] ?? '',
       });
-      if (!result.ok) return failureOutcome(result.status, result.error);
+      if (!result.ok) {
+        // Se puede plegar el formulario mientras se envía. Sus errores deben quedar a la vista.
+        const fold = form.closest('details');
+        if (fold) fold.open = true;
+        return failureOutcome(result.status, result.error);
+      }
       form.reset();
       setStatus(status, `«${result.data.illustration.title}» se ha enviado a revisión. La verás en el tablero cuando se apruebe.`);
       store.minePage = 1;
