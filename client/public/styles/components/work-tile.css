@@ -75,6 +75,38 @@
   margin-top: var(--work-tile-actions-margin);
 }
 
+.work-tile { position: relative; border-top: var(--studio-rule-height) solid var(--work-tile-state); }
+.work-tile--approved { --work-tile-state: var(--color-success); }
+.work-tile--pending { --work-tile-state: var(--color-warning); }
+.work-tile--rejected { --work-tile-state: var(--color-danger); }
+.work-tile__body { position: relative; isolation: isolate; }
+.work-tile__body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--layer-back);
+  color: var(--work-tile-state);
+  background-image: var(--work-tile-wash);
+}
+.work-tile:hover, .work-tile:focus-within { border-color: var(--work-tile-state); }
+.work-tile__actions { justify-content: space-between; }
+.work-tile__options { max-width: 100%; }
+.work-tile__options[open] { width: 100%; }
+.work-tile__options .button, .work-tile__options .text-link { display: flex; }
+.work-tile__cover-image { transition: filter var(--studio-duration) var(--studio-ease); }
+.work-tile:hover .work-tile__cover-image { filter: var(--filter-home-cover-hover); }
+/* Solo se desplaza la portada, el texto y los botones quedan quietos. */
+@keyframes studio-cover-in {
+  from { transform: translateY(var(--studio-travel)); }
+  to { transform: none; }
+}
+@supports (animation-timeline: view()) {
+  .work-tile__cover {
+    animation: studio-cover-in linear both;
+    animation-timeline: view();
+    animation-range: entry;
+  }
+}
 @media (min-width: 40rem) {
   .work-tile {
     grid-template-columns: var(--work-tile-columns-medium);
@@ -85,4 +117,8 @@
   .work-tile {
     grid-template-columns: var(--work-tile-columns-wide);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-tile__cover { animation: none; }
 }

@@ -1,0 +1,64 @@
+.studio-rail {
+  position: fixed;
+  z-index: var(--layer-raised);
+  inset-inline: var(--gutter);
+  bottom: var(--studio-dock-bottom);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-panel);
+}
+.studio-rail .button { padding-block: var(--space-2); }
+.studio-rail__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding-inline: var(--space-2);
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  list-style: none;
+}
+.studio-rail__toggle::-webkit-details-marker { display: none; }
+.studio-rail__toggle::after { content: "›" / ""; transition: transform var(--duration-fast) var(--studio-ease); }
+.studio-rail__sections[open] .studio-rail__toggle::after { transform: rotate(var(--studio-turn)); }
+.studio-rail__links {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 100%;
+  display: grid;
+  grid-template-columns: var(--studio-pair);
+  gap: var(--space-2);
+  max-height: var(--studio-menu-limit);
+  overflow-y: auto;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.studio-rail__links .author-page__nav-link { white-space: normal; }
+.studio:has(#obra:not([hidden])) .studio-rail .button {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.studio:has(.floating-notice:not(:empty)) .studio-rail__links {
+  bottom: calc(100% + var(--floating-notice-clearance));
+}
+@media (min-width: 64rem) {
+  .studio-rail {
+    position: sticky;
+    inset: auto;
+    top: var(--scroll-offset);
+    align-self: start;
+    display: grid;
+    padding: var(--space-3);
+  }
+  .studio-rail__links { position: static; grid-template-columns: minmax(0, 1fr); border: none; padding: 0; max-height: none; }
+}
