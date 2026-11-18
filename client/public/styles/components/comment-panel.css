@@ -179,6 +179,22 @@
   font-size: var(--font-size-comments-feedback);
 }
 
+@keyframes comments-from-bottom {
+  from { transform: translateY(var(--space-4)); }
+  to { transform: none; }
+}
+
+@keyframes comments-from-right {
+  from { transform: translateX(var(--space-4)); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .comments-dialog[open] {
+    animation: comments-from-bottom var(--duration-fast) ease-out;
+  }
+}
+
 @media (min-width: 64rem) {
   .comments-dialog {
     inset: 0 0 0 auto;
@@ -186,5 +202,11 @@
     height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
+  }
+}
+
+@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+  .comments-dialog[open] {
+    animation-name: comments-from-right;
   }
 }
