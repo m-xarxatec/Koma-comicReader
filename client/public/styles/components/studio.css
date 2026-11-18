@@ -87,8 +87,7 @@ body:has(.studio .floating-notice:not(:empty)) { padding-bottom: calc(var(--stud
   .studio .author-page__metric:first-child { grid-column: auto; }
   .studio .author-page__create .panel-card__form { grid-template-columns: var(--studio-pair); }
   .studio .author-page__create .panel-card__form > * { grid-column: var(--studio-full-row); }
-  .studio .author-page__create .form__field:has(#comic-license, #comic-author-credit),
-  .studio .author-page__create .studio-fold { grid-column: auto; }
+  .studio .author-page__create .form__field:has(#comic-license, #comic-author-credit) { grid-column: auto; }
 }
 @media (min-width: 64rem) {
   .studio .author-page__create .panel-card__actions { position: static; }

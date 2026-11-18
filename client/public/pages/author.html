@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content ="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- @head -->
-  <meta name="request-id" content ="{{requestId}}">
+  <meta name="request-id" content="{{requestId}}">
   <title>Estudio del autor · Koma</title>
   <link rel="icon" href="/icons/favicon.svg">
   <link rel="stylesheet" href="/styles/variables.css">
@@ -239,7 +239,7 @@
                     <p class="form__error" id="edit-tags-error" hidden></p>
                   </fieldset>
                   <label class="form__check">
-                    <input class="form__check-input" id="edit-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls ="edit-warning-field">
+                    <input class="form__check-input" id="edit-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls="edit-warning-field">
                     <span>Esta obra necesita una advertencia de contenido</span>
                   </label>
                   <div class="form__field" id="edit-warning-field" hidden>
@@ -417,15 +417,12 @@
         </div>
         <!-- Las casillas las pinta author.ts desde GET /api/tags. La primera se llama comic-tags: bindForm pinta el
              error de `tags` en #comic-tags-error (<id de la primera casilla>-error). -->
-        <details class="studio-fold">
-          <summary class="studio-fold__toggle">Etiquetas</summary>
-          <fieldset class="form__fieldset" aria-describedby="comic-tags-hint">
-            <legend class="form__label">Etiquetas</legend>
-            <p class="form__hint" id="comic-tags-hint">De 1 a 10, con al menos un género.</p>
-            <div class="form__choices" id="comic-tags-choices"></div>
-            <p class="form__error" id="comic-tags-error" hidden></p>
-          </fieldset>
-        </details>
+        <fieldset class="form__fieldset" aria-describedby="comic-tags-hint">
+          <legend class="form__label">Etiquetas</legend>
+          <p class="form__hint" id="comic-tags-hint">De 1 a 10, con al menos un género.</p>
+          <div class="form__choices" id="comic-tags-choices"></div>
+          <p class="form__error" id="comic-tags-error" hidden></p>
+        </fieldset>
         <details class="studio-fold">
           <summary class="studio-fold__toggle">Portada y advertencia de contenido</summary>
           <div class="form__field">
@@ -434,7 +431,7 @@
             <p class="form__hint" id="comic-cover-hint">JPEG, PNG o WebP, hasta 5 MB. Se sube al crear la obra.</p>
           </div>
           <label class="form__check">
-            <input class="form__check-input" id="comic-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls ="comic-warning-field">
+            <input class="form__check-input" id="comic-has-warning" name="hasWarning" type="checkbox" value="true" aria-controls="comic-warning-field">
             <span>Esta obra necesita una advertencia de contenido</span>
           </label>
           <div class="form__field" id="comic-warning-field" hidden>

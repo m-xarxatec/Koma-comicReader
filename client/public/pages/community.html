@@ -53,25 +53,25 @@
       <div class="community__tools">
         <section class="community__panel" id="compartir" aria-labelledby="share-title">
           <h2 class="community__heading" id="share-title">Comparte una ilustración</h2>
-          <details class="community__fold">
+          <!-- Sin sesión (y sin JS): invitación a entrar, con vuelta a esta página. -->
+          <div class="community__guest" data-share-guest>
+            <p class="panel-card__text">Con una cuenta puedes publicar tus ilustraciones en el tablero.</p>
+            <div class="panel-card__actions">
+              <a class="button button--primary" href="/entrar?next=/comunidad">Entra para compartir</a>
+            </div>
+          </div>
+
+          <!-- Un administrador no publica (D4): revisa. -->
+          <div class="community__guest" data-share-admin hidden>
+            <p class="panel-card__text">Un administrador no publica ilustraciones: las revisa.</p>
+            <div class="panel-card__actions">
+              <a class="button button--outline" href="/admin">Ir al panel de administración</a>
+            </div>
+          </div>
+
+          <details class="community__fold community__fold--share">
             <summary class="community__toggle community__toggle--primary">Opciones de publicación</summary>
             <div class="community__fold-body">
-              <!-- Sin sesión (y sin JS): invitación a entrar, con vuelta a esta página. -->
-              <div class="community__guest" data-share-guest>
-                <p class="panel-card__text">Con una cuenta puedes publicar tus ilustraciones en el tablero.</p>
-                <div class="panel-card__actions">
-                  <a class="button button--primary" href="/entrar?next=/comunidad">Entra para compartir</a>
-                </div>
-              </div>
-
-              <!-- Un administrador no publica (D4): revisa. -->
-              <div class="community__guest" data-share-admin hidden>
-                <p class="panel-card__text">Un administrador no publica ilustraciones: las revisa.</p>
-                <div class="panel-card__actions">
-                  <a class="button button--outline" href="/admin">Ir al panel de administración</a>
-                </div>
-              </div>
-
               <!-- Publicar (D2–D6): nace pendiente de revisión. multipart/form-data por api.ts; method="post" para que sin JS
                    nada acabe en la URL. -->
               <form class="form panel-card__form" id="share-form" method="post" enctype="multipart/form-data" data-share-form hidden>

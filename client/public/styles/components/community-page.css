@@ -85,6 +85,7 @@
 }
 
 .community__panel .community__fold,
+.community__panel .community__guest,
 .community__fold-body,
 .community__panel .community__message:not(:empty),
 .community__status:not(:empty) {
@@ -140,6 +141,11 @@
 
 .community__fold--filters:has(.tag-filter:empty),
 .community__fold--mine:has(.own-illustration__list:empty) {
+  display: none;
+}
+
+/* Sin sesión o como admin, el formulario sigue oculto: el desplegable no tiene nada que abrir. */
+.community__fold--share:has(.panel-card__form[hidden]) {
   display: none;
 }
 

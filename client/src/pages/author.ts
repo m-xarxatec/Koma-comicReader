@@ -1241,28 +1241,36 @@ studioView.addEventListener('click', (event) => {
       focusNewChapter();
     }
     if (menu && target && target.id !== 'nuevo-capitulo') {
-      target.tabIndex = -1;
+      // El menú se cierra y su enlace deja de verse: el foco va a la sección. Su tabindex dura lo que dura el foco.
+      if (!target.hasAttribute('tabindex')) {
+        target.tabIndex = -1;
+        target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
+      }
       target.focus({ preventScroll: true });
     }
   }
 });
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape' || dialogParts?.dialog.open) return;
-  const active = document.activeElement?.closest<HTMLDetailsElement>('details[open]');
+  // Solo los menús: un formulario plegable («Datos de la obra», «Nuevo capítulo») no se cierra mientras se escribe.
+  const active = document.activeElement?.closest<HTMLDetailsElement>('.work-tile__options[open], .studio-rail__sections[open]');
   const fold = active ?? (!wide.matches && rail.open ? rail : null);
   if (!fold || (fold === rail && wide.matches)) return;
   fold.open = false;
   fold.querySelector('summary')?.focus();
 });
 
-// bindForm pinta también errores asíncronos. Revelar el primer campo inválido
-// cuando el navegador no ha podido enfocarlo dentro de un details cerrado.
+// bindForm pinta también errores asíncronos. Cuando un campo pasa a inválido, se abren todos los desplegables con
+// un error, para que se vean todos, y el foco va al primero si el navegador no pudo enfocarlo porque estaba plegado.
+// Al limpiar un error (bindForm quita aria-invalid en cada `input`) no se hace nada: el foco sigue donde se escribe.
 for (const form of [comicForm, chapterForm, editForm]) {
-  new MutationObserver(() => {
-    const field = form.querySelector<HTMLElement>('[aria-invalid="true"]');
-    if (!field?.closest('details:not([open])')) return;
-    reveal(field);
-    if (!form.querySelector('[role="alert"]:focus')) field.focus();
+  new MutationObserver((mutations) => {
+    if (!mutations.some((mutation) => (mutation.target as Element).getAttribute('aria-invalid') === 'true')) return;
+    const fields = [...form.querySelectorAll<HTMLElement>('[aria-invalid="true"]')];
+    const first = fields[0];
+    const folded = first?.closest('details:not([open])') !== null;
+    fields.forEach(reveal);
+    if (first && folded && !form.querySelector('[role="alert"]:focus')) first.focus();
   }).observe(form, { subtree: true, attributes: true, attributeFilter: ['aria-invalid'] });
 }
 // Si la URL ya acaba en #nuevo-capitulo, el enlace no lanza hashchange: el foco se lleva igual.
