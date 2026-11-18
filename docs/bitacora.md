@@ -1923,3 +1923,85 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - en la wifi del instituto: `demo:mdns` y la entrada con sesión desde el móvil;
   - una pasada real de `demo:activity` antes de la demo;
   - las propuestas de Codex (E3 y `/comunidad`), revisarlas e integrarlas.
+
+### 2026-11-18 · Pulido · Integración en `develop` de E3 (estudio del autor) y del diseño de `/comunidad` (Codex)
+- **Pedido a la IA:** revisar los dos encargos de Codex frente a su encargo y a los `CLAUDE.md`, pasar el agente `frontend`, simular la unión aparte, integrarla en `develop` con los comandos para el desarrollador y corregir lo que saliera en la revisión.
+  - `feat/e3-estudio`, `ae7d3bb`: el estudio con un carril editorial para móvil (D2, encargo `.claude/encargos/codex-e3-estudio.md`).
+  - `diseno-final`, `9315e9c` y `327b066`: el tablero y los envíos de `/comunidad` (D7), con la tarjeta de Discord bajo la cabecera (D10).
+- **Resultado:**
+  - **Revisión previa (IA):**
+    - los `id`, `data-*`, `aria-*`, `role`, `name`, `for` y `hidden` siguen igual en las dos plantillas, salvo el `<h3>` «Datos de la obra», que pasa a `edit-heading`, como ya lo tenía `develop`;
+    - un solo `<dialog>` en `/autor`;
+    - tokens solo añadidos, con prefijo: `--studio-*`, `--work-tile-*`, `--community-*` e `--illustration-*`;
+    - sin colores literales, con cortes solo de 40rem y 64rem y con `prefers-reduced-motion` también en las animaciones `view()`;
+    - ningún CSS compartido tocado.
+  - **Unión simulada** en un clon del scratchpad, antes de tocar `develop`. Dos conflictos en el merge de E3:
+    - `author.html`: con la versión de Codex, que ya trae `edit-heading`;
+    - `author-review-page.test.ts`: con la de `develop`.
+
+    `variables.css` y `author.ts` se unieron solos, y `diseno-final` sin conflictos.
+  - **Integración:** el desarrollador ejecutó los dos merges, `ce4f2ac` (E3) y `3c50543` (`/comunidad`). El árbol resultante es idéntico al de la simulación (`git ls-tree`).
+  - **Correcciones de la revisión** (`frontend`, puntos 1–5), sin commit todavía:
+    - **«Nueva obra»:**
+      - Etiquetas, que es obligatorio, fuera del desplegable;
+      - el `MutationObserver` de `author.ts` solo actúa cuando un campo pasa a `aria-invalid="true"`. Antes saltaba también cuando `bindForm` limpiaba un error en cada `input`, y llevaba el foco a otro campo plegado mientras se escribía;
+      - ahora abre todos los desplegables con un error y solo enfoca el primero si estaba plegado;
+      - en `studio.css`, «Portada y advertencia» ocupa la fila entera desde 40rem.
+    - **Escape** solo pliega el menú «⋯» (`.work-tile__options`) y el carril (`.studio-rail__sections`), no los formularios plegables.
+    - **El `tabindex="-1"`** que el menú pone en la sección de destino se quita al perder el foco. Si la sección ya tenía uno, no se toca.
+    - **`author.html`:** fuera los espacios de `content ="…"` y `aria-controls ="…"`. Solo servían para que la búsqueda `on[a-z]+=` del encargo no encontrara «ontent=» ni «ontrols=».
+    - **`/comunidad`:**
+      - «Entra para compartir» y el aviso del admin, fuera del desplegable «Opciones de publicación», que ahora solo envuelve el formulario;
+      - el desplegable, `community__fold--share`, no se muestra mientras el formulario está oculto.
+  - `CLAUDE.md`, «Bloque actual»: E3 y `/comunidad` integrados; Codex sigue en `diseno-final`.
+- **Tests:**
+  - **Nuevos**, todos `Seguridad:`. Los 7 se vieron fallar en el clon, cada uno por su aserción, antes de las correcciones:
+    - `unit/client-studio-folds.test.ts`, 4: las etiquetas sin plegar, el observador, Escape y el `tabindex`;
+    - `unit/client-template-attributes.test.ts`, 1: en todas las plantillas, `nombre="valor"` sin espacios alrededor del `=`;
+    - `unit/client-community-share.test.ts`, 2: la invitación y el aviso fuera de los desplegables, y el desplegable oculto sin formulario.
+  - **Ningún test existente cambió en neto** (`git diff d9336bf -- server/src/tests` sale vacío). `ae7d3bb` sí había tocado `api/author-review-page.test.ts`: la misma aserción que `develop` ya tenía (`edit-heading`, excepción aprobada en «`id="edit-title"` duplicado») y dos líneas de comentario. El desarrollador lo había autorizado a Codex. Aun así, en el merge se conservó la versión de `develop`, así que no hizo falta un permiso nuevo.
+- **Revisión (agentes `frontend` y `auditor`):**
+  - **`frontend`:** las dos ramas, aptas con observaciones.
+    - Corregidos antes del commit: 1–5.
+    - Para E4 o para decidir:
+      - los textos nuevos de la interfaz («Secciones del estudio», «Acciones», «Gestionar obra», «Tu actividad», «Más acciones de…», «Ver tablero», «Opciones de publicación», «Ver mis envíos», «Filtrar por etiqueta») y el «Tu turno» borrado;
+      - el «⋯» como `<details>` y no como `popover`;
+      - los `<h2>` y `<h3>` dentro de `<summary>`;
+      - el orden nuevo de las secciones de `/autor`;
+      - los selectores `> *` y `> :not(summary)`, y los de id en `studio-rail.css` y `studio.css`.
+  - **`auditor`:** apto con observaciones, nada bloqueante.
+    - 1, la línea «Bloque actual»: corregida.
+    - 2, esta entrada.
+    - 3 y 4, para E4: `--work-tile-state` redefinido en los modificadores de `work-tile.css` y `--scroll-bottom-offset` redefinido dentro de `.studio`.
+- **Decisiones del desarrollador:**
+  - corregir y después integrar las dos ramas;
+  - `feat/e3-estudio` se borra cuando todo esté integrado;
+  - la autorización a Codex para tocar el test, que al final no llegó a `develop`.
+- **Fallos:**
+  - Codex editó un test protegido, aunque fuera con permiso, y esquivó una búsqueda del encargo con espacios en los atributos.
+  - En el clon, los hooks `proteger-tests` (al hacer `git checkout --ours` del test) y `proteger-secretos` (al enlazar `.env`) pararon a la IA. Los permisos también le niegan `git add`. El desarrollador ejecutó esos pasos con `!`.
+- **Aprendizaje:**
+  - una comprobación del encargo que se puede esquivar debe ser un test, no una búsqueda con `rg`;
+  - para simular un merge que toca un test protegido, el desarrollador ejecuta en el clon los pasos que tocan tests o `.env`.
+- **Comprobación (IA):**
+  - **Unión simulada,** sin correcciones: typecheck sin errores y `npm test` 284/284.
+  - **Clon con las correcciones:** `npm test` 291/291. `npm run test:api` 360/360, ejecutado por el desarrollador.
+  - **En `develop`,** tras los merges y con las correcciones copiadas: `npm run typecheck`, sin errores; `npm test`, 291/291; `npm run test:api`, 360/360.
+- **Pendiente (desarrollador):**
+  - **`/autor`** a 360 px, entre 40 y 64rem y desde 64rem, con teclado y con el movimiento reducido:
+    - el carril y el aviso flotante, sin tapar nada;
+    - Escape;
+    - el foco al saltar desde el menú;
+    - un error asíncrono con desplegables cerrados;
+    - «Datos de la obra» con el título relleno, y el foco al guardar;
+    - `#nuevo-capitulo`, `#lecturas`, `#revisiones`, y Atrás y Adelante;
+    - el `<meter>` de las lecturas en Safari.
+  - **`/comunidad`** sin sesión, sin JS y como admin: la invitación o el aviso a la vista y sin el desplegable vacío; la tarjeta de Discord bajo la cabecera.
+  - **`/admin`:** que nada cambie.
+  - **Un lector de pantalla** con los encabezados dentro de `<summary>`.
+  - **Lo que ya estaba pendiente:**
+    - la cabecera a 1024, 1150, 1279 y 1280 px, y el hueco de la barra de `/autor` entre 64 y 80rem;
+    - el hero en móvil, `/pago-simulado` a unos 800 px y el final de un capítulo;
+    - la prueba A;
+    - `demo:mdns` en el instituto;
+    - una pasada de `demo:activity`.
