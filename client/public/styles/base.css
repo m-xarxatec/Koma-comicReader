@@ -195,11 +195,19 @@ code {
 
 @media (min-width: 64rem) {
   :root {
+    --scroll-offset: var(--scroll-offset-nav-row);
     --scroll-bottom-offset: var(--scroll-bottom-offset-wide);
   }
 
   .page {
     padding-block: var(--space-12);
+  }
+}
+
+/* Desde 80rem la navegación vuelve a la fila de la cabecera (site-header.css): las anclas, con su altura. */
+@media (min-width: 80rem) {
+  :root {
+    --scroll-offset: var(--scroll-offset-wide);
   }
 }
 

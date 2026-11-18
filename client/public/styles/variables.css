@@ -168,6 +168,7 @@
   --mobile-nav-clearance: 6rem; /* aire bajo el pie para que la navegación móvil fija no lo tape */
   --scroll-offset: calc(var(--header-height) + var(--control-height) + env(safe-area-inset-top));
   --scroll-offset-wide: calc(var(--header-height-wide) + var(--space-4) + env(safe-area-inset-top));
+  --scroll-offset-nav-row: calc(var(--header-height-wide) + var(--touch-target) + var(--space-4) + env(safe-area-inset-top)); /* 64–80rem: cabecera con la navegación en su propia fila */
   --scroll-bottom-offset: calc(var(--mobile-nav-height) + var(--space-4) + env(safe-area-inset-bottom));
   --scroll-bottom-offset-wide: var(--space-4); /* desde 64rem, sin navegación móvil */
   --nav-indicator-height: 3px;

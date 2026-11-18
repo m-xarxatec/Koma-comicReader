@@ -55,7 +55,7 @@ Un desvío está **justificado** solo si consta en `docs/bitacora.md`, en un com
 - Ningún `z-index` fuera de `var(--layer-…)` de `layers.css`.
 - Ningún `@import` en los CSS.
 - Sin CSS duplicado: el mismo selector o las mismas declaraciones en dos archivos; un componente por archivo, BEM.
-- Puntos de corte solo `min-width: 40rem` y `64rem`, mobile-first.
+- Puntos de corte solo `min-width: 40rem` y `64rem`, mobile-first. Excepción: `80rem` en `site-header.css` (la navegación en su propia fila entre 64 y 80rem) y en el `--scroll-offset` de `base.css`.
 - Solo tema oscuro: `color-scheme: dark` en `variables.css`, ningún `prefers-color-scheme` ni variante clara en ninguna hoja, y un solo `<meta name="theme-color">` en `layout.ts`.
 
 ### 2 · CSP

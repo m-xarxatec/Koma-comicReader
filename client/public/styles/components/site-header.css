@@ -1,6 +1,7 @@
 /* Cabecera del sitio (server/src/utils/layout.ts): logotipo, navegación, búsqueda y cuenta. Fija arriba y
    translúcida. Móvil: logotipo y cuenta, con la búsqueda debajo; 40rem: en una fila; 64rem: con la
-   navegación (en móvil la navegación va abajo, en mobile-nav.css). */
+   navegación en su propia fila; 80rem: todo en una fila (en móvil la navegación va abajo, en mobile-nav.css).
+   80rem es una excepción, solo de la cabecera: con cinco enlaces, la navegación no cabe en la fila hasta ~1280 px. */
 
 .site-header {
   position: sticky;
@@ -183,7 +184,7 @@
     display: inline-flex;
   }
 
-  /* En tableta sobra sitio para el nombre de la sesión; desde 64rem vuelve al tope de móvil (navegación). */
+  /* Hasta 80rem sobra sitio para el nombre de la sesión; desde 80rem comparte la fila con la navegación. */
   .site-header__user {
     max-width: var(--header-user-max-wide);
   }
@@ -194,14 +195,12 @@
     display: inline;
   }
 
-  .site-header__user {
-    max-width: var(--header-user-max);
-  }
-
   .site-header__inner {
-    grid-template-columns: auto minmax(0, max-content) minmax(var(--header-search-min-wide), 1fr) auto;
-    grid-template-areas: "brand nav search account";
-    gap: var(--header-gap-wide);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand search account"
+      "nav nav nav";
+    gap: 0 var(--header-gap-wide);
   }
 
   .site-nav {
@@ -256,5 +255,17 @@
     justify-self: end;
     width: 100%;
     max-width: var(--header-search-max);
+  }
+}
+
+@media (min-width: 80rem) {
+  .site-header__inner {
+    grid-template-columns: auto minmax(0, max-content) minmax(var(--header-search-min-wide), 1fr) auto;
+    grid-template-areas: "brand nav search account";
+    gap: var(--header-gap-wide);
+  }
+
+  .site-header__user {
+    max-width: var(--header-user-max);
   }
 }
