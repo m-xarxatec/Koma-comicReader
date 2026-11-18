@@ -448,6 +448,12 @@
   --community-detail-width: 64rem;
   --community-detail-image-height: 70vh;
   --community-detail-info-width: 20rem;
+  --community-intro-surface: radial-gradient(ellipse at top right, color-mix(in srgb, var(--color-secondary) 24%, var(--color-surface)), transparent 65%), var(--color-surface);
+  --community-pencil-size: clamp(3rem, 8vw, 7rem);
+  --community-rail-width: clamp(18rem, 27vw, 24rem);
+  --community-ease: ease-out;
+  --illustration-entry-offset: var(--space-2);
+  --illustration-entry-range: entry 0% entry 85%;
 }
 
 /* Perfil (/perfil, bloque 3): valores de la maqueta (perfil/index.html y account.css), salvo el relleno

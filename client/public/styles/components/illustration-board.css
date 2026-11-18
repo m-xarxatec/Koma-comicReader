@@ -23,18 +23,26 @@
   width: 100%;
   padding: 0;
   overflow: hidden;
-  border: var(--border-width) solid var(--color-border);
+  min-height: var(--touch-target);
+  border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--duration-fast);
+  transition: border-color var(--duration-fast) var(--community-ease), transform var(--duration-fast) var(--community-ease);
 }
 
-.illustration-tile:hover {
-  border-color: var(--color-border-strong);
+.illustration-tile:hover,
+.illustration-tile:focus-visible {
+  border-color: var(--color-secondary);
+  transform: translateY(var(--lift-hover));
+}
+
+.illustration-tile:active {
+  border-color: var(--color-highlight);
+  transform: none;
 }
 
 .illustration-tile__image {
@@ -48,6 +56,7 @@
   display: grid;
   gap: var(--space-1);
   padding: var(--community-tile-caption-padding);
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .illustration-tile__title {
@@ -66,10 +75,16 @@
   width: min(100% - var(--space-4), var(--community-detail-width));
   max-height: calc(100% - var(--space-4));
   padding: var(--space-4);
+  margin: auto;
   border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
+  box-shadow: var(--shadow-panel);
+}
+
+.illustration-detail[open] {
+  animation: illustration-enter var(--duration-fast) var(--community-ease);
 }
 
 .illustration-detail::backdrop {
@@ -144,9 +159,35 @@
   list-style: none;
 }
 
+/* Se desplaza un pequeño tramo sin ocultar la imagen en ningún fotograma. */
+@keyframes illustration-enter {
+  from { transform: translateY(var(--illustration-entry-offset)); }
+  to { transform: none; }
+}
+
+@supports (animation-timeline: view()) and (animation-range: entry) {
+  .illustration-board__item {
+    animation: illustration-enter auto var(--community-ease) both;
+    animation-timeline: view();
+    animation-range: var(--illustration-entry-range);
+  }
+}
+
 @media (min-width: 40rem) {
   .illustration-board {
     columns: var(--community-board-columns-medium);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illustration-board__item,
+  .illustration-detail[open] {
+    animation: none;
+  }
+
+  .illustration-tile:hover,
+  .illustration-tile:focus-visible {
+    transform: none;
   }
 }
 
