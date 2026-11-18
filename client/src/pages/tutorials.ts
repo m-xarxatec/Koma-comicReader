@@ -14,6 +14,9 @@ interface TutorialDto {
 
 const list = document.querySelector<HTMLElement>('[data-tutorials-list]');
 const status = document.querySelector<HTMLElement>('[data-tutorials-status]');
+const viewer = document.getElementById('tutorial-viewer');
+const viewerTitle = document.getElementById('tutorial-viewer-title');
+const frame = viewer?.querySelector<HTMLElement>('.tutorial-viewer__frame');
 
 function setStatus(text: string): void {
   if (status) status.textContent = text;
@@ -23,42 +26,46 @@ function errorText(error: ApiError): string {
   return error.requestId ? `${error.message} (código de referencia: ${error.requestId})` : error.message;
 }
 
-// null si el id no es válido: ese vídeo no se pinta.
-function player(tutorial: TutorialDto): HTMLElement | null {
+function player(tutorial: TutorialDto, src: string): HTMLVideoElement | HTMLIFrameElement {
   if (tutorial.local) {
-    const src = localVideoUrl(tutorial.id);
-    if (!src) return null;
     const video = document.createElement('video');
-    video.className = 'tutorial-card__player';
+    video.className = 'tutorial-viewer__player';
     video.controls = true;
-    video.preload = 'none'; // no descarga nada hasta que se pulsa reproducir
+    video.playsInline = true;
+    video.autoplay = true;
     video.src = src;
     video.setAttribute('aria-label', tutorial.title);
     return video;
   }
-  const src = embedUrl(tutorial.id);
-  if (!src) return null;
-  const frame = document.createElement('iframe');
-  frame.className = 'tutorial-card__player';
-  frame.title = tutorial.title;
-  frame.loading = 'lazy';
+  const embed = document.createElement('iframe');
+  embed.className = 'tutorial-viewer__player';
+  embed.title = tutorial.title;
   // La página manda Referrer-Policy: same-origin y YouTube rechaza un incrustado sin Referer: este marco envía
   // solo el origen, el valor que recomienda YouTube para identificar al sitio.
-  frame.referrerPolicy = 'strict-origin-when-cross-origin';
-  frame.allowFullscreen = true;
-  frame.src = src;
-  return frame;
+  embed.referrerPolicy = 'strict-origin-when-cross-origin';
+  embed.allow = 'autoplay';
+  embed.allowFullscreen = true;
+  embed.src = `${src}?autoplay=1&playsinline=1`;
+  return embed;
 }
 
+function stopPlayer(): void {
+  frame?.querySelector('video')?.pause();
+  // Quitar el iframe destruye el reproductor de YouTube, también si aún estaba cargando.
+  frame?.replaceChildren();
+}
+
+viewer?.addEventListener('beforetoggle', (event) => {
+  if ((event as ToggleEvent).newState === 'closed') stopPlayer();
+});
+window.addEventListener('pagehide', () => viewer?.hidePopover());
+
 function tutorialCard(tutorial: TutorialDto): HTMLElement | null {
-  const media = player(tutorial);
-  if (!media) return null;
+  const src = tutorial.local ? localVideoUrl(tutorial.id) : embedUrl(tutorial.id);
+  if (!src || !viewer || !frame || !viewerTitle) return null;
 
   const item = document.createElement('li');
   item.className = 'tutorial-card';
-  const frame = document.createElement('div');
-  frame.className = 'tutorial-card__frame';
-  frame.append(media);
 
   const title = document.createElement('h2');
   title.className = 'tutorial-card__title';
@@ -67,7 +74,30 @@ function tutorialCard(tutorial: TutorialDto): HTMLElement | null {
   description.className = 'tutorial-card__description';
   description.textContent = tutorial.description;
 
-  item.append(frame, title, description);
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'button button--outline tutorial-card__open';
+  const cover = document.createElement('img');
+  cover.className = 'tutorial-card__cover';
+  cover.alt = '';
+  cover.width = 640;
+  cover.height = 360;
+  cover.src = `/icons/tutorials/${tutorial.id}.webp`;
+  cover.addEventListener('error', () => cover.remove(), { once: true });
+  const action = document.createElement('span');
+  action.className = 'tutorial-card__action';
+  action.textContent = 'Ver tutorial';
+  open.append(cover, action);
+  open.setAttribute('aria-label', `Ver tutorial: ${tutorial.title}`);
+  open.popoverTargetElement = viewer;
+  open.popoverTargetAction = 'show';
+  open.addEventListener('click', () => {
+    open.focus({ preventScroll: true });
+    stopPlayer();
+    viewerTitle.textContent = tutorial.title;
+    frame.replaceChildren(player(tutorial, src));
+  });
+  item.append(title, description, open);
   return item;
 }
 
