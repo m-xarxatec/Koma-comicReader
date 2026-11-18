@@ -98,12 +98,7 @@ function renderTags(tags: TagDto[]): void {
     const link = document.createElement('a');
     link.className = 'genre-tile';
     link.href = `/${catalogQueryString({ q: '', tags: [tag.slug], page: 1 })}#catalogo`;
-    const art = document.createElement('span');
-    art.className = 'genre-tile__art';
-    art.setAttribute('aria-hidden', 'true');
-    const name = document.createElement('span');
-    name.textContent = tag.name;
-    link.append(art, name);
+    link.textContent = tag.name;
     genreGrid.append(link);
     genreFilters.append(makeChoice(tag));
   }
@@ -143,12 +138,57 @@ function renderPagination(total: number): void {
   );
 }
 
+// La letra queda detrás de la imagen si la portada falta o su URL ya no responde.
+function prepareCover(cover: HTMLElement, title: string): void {
+  cover.classList.add('home-cover');
+  cover.dataset['letter'] = Array.from(title.trim())[0] ?? 'K';
+  cover.setAttribute('aria-hidden', 'true');
+  const image = cover.querySelector('img');
+  if (image) {
+    image.addEventListener('error', () => image.remove(), { once: true });
+    if (image.complete && image.naturalWidth === 0) image.remove();
+  }
+}
+
+function homeCard(comic: ComicCardDto, index: number, eager = false): HTMLElement {
+  const card = comicCard(comic, index, eager);
+  const cover = card.querySelector<HTMLElement>('.comic-card__cover');
+  if (cover) prepareCover(cover, comic.title);
+  return card;
+}
+
+function featureComic(comic: ComicCardDto): void {
+  const title = document.getElementById('hero-title');
+  const label = document.getElementById('hero-label');
+  const byline = document.getElementById('hero-byline');
+  const action = document.getElementById('hero-action');
+  const link = document.querySelector<HTMLAnchorElement>('#hero-link');
+  const cover = document.querySelector<HTMLElement>('.hero__art');
+  if (!title || !label || !byline || !action || !link || !cover) return;
+  title.textContent = comic.title;
+  label.textContent = comic.tags.find(tag => tag.type === 'genre')?.name ?? 'Cómic';
+  byline.textContent = comic.authorCredit;
+  link.href = `/obra/${encodeURIComponent(comic.slug)}`;
+  action.textContent = 'Ver obra';
+  cover.replaceChildren();
+  if (comic.coverUrl) {
+    const image = new Image();
+    image.alt = '';
+    image.className = 'home-cover__image';
+    image.src = comic.coverUrl;
+    cover.append(image);
+  }
+  prepareCover(cover, comic.title);
+}
+
 function renderComics(data: CatalogPageDto): void {
   if (!grid || !trending || !trendingGrid || !message) return;
-  grid.replaceChildren(...data.comics.map((comic, index) => comicCard(comic, index)));
+  grid.replaceChildren(...data.comics.map((comic, index) => homeCard(comic, index)));
   const isFirstUnfiltered = !store.state.q && store.state.tags.length === 0 && store.state.page === 1;
-  trending.hidden = !isFirstUnfiltered || data.comics.length === 0;
-  trendingGrid.replaceChildren(...(trending.hidden ? [] : data.comics.slice(0, TRENDING_SIZE).map((comic, index) => comicCard(comic, index, index < TRENDING_EAGER_COVERS))));
+  const [featured, ...others] = data.comics;
+  if (isFirstUnfiltered && featured) featureComic(featured);
+  trending.hidden = !isFirstUnfiltered || others.length === 0;
+  trendingGrid.replaceChildren(...(trending.hidden ? [] : others.slice(0, TRENDING_SIZE - 1).map((comic, index) => homeCard(comic, index + 1, index + 1 < TRENDING_EAGER_COVERS))));
   if (data.comics.length === 0) {
     const pages = Math.ceil(data.total / CATALOG_PAGE_SIZE);
     showMessage(data.total > 0
