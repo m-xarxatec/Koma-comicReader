@@ -1777,3 +1777,49 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - La cabecera de 64 a 80rem, aprobada el 17-nov y sin hacer.
   - Crear `feat/e3-estudio` desde `diseno-final` después de este commit y pasarle el encargo a Codex.
   - El despliegue online del bloque 6 y `/cerrar-bloque`.
+
+### 2026-11-18 · Pulido · `id="edit-title"` duplicado en el estudio del autor
+- **Pedido a la IA:** corregir el fallo anotado en la entrada anterior. En `author.html`, el `<h3>` «Datos de la obra» y el campo «Título de la obra» compartían `id="edit-title"`: al editar una obra, el título no se rellenaba y su `<label>` no nombraba al campo.
+- **Resultado:**
+  - `author.html`: el `<h3>` pasa a `id="edit-heading"`; el campo conserva `id="edit-title"`.
+  - `pages/author.ts`: las dos llamadas a `focusHeading` que llevan el foco al `<h3>` tras guardar usan `edit-heading`.
+- **Tests:**
+  - `unit/client-page-ids.test.ts`, 2 `Seguridad:` sobre todas las plantillas de `pages/` y `errors/`:
+    - cada id aparece una sola vez. Visto fallar antes de corregir (`pages/author.html: #edit-title`);
+    - cada `<label for>` apunta a un `input`, `select` o `textarea` de la misma página. Pasó desde el principio, porque el campo existía: queda como guarda.
+  - **Excepción aprobada sobre un test existente (`CLAUDE.md`, «Tests»):** en `api/author-review-page.test.ts`, la aserción del título enfocable pasa de `id="edit-title"` a `id="edit-heading"`. Fijaba el id del campo en el `<h3>`, que era el origen del fallo. El desarrollador lo autorizó y listó el archivo en `.claude/permiso-tests.txt`.
+- **Comprobación (IA):** `npm test` (con `tsc -b`, sin errores), 273/273. `npm run test:api`, 358/358, y antes de cambiar la aserción, 357/358, con el fallo esperado.
+- **Pendiente (desarrollador):**
+  - en `/autor`, abrir una obra y comprobar que «Datos de la obra» trae el título relleno y que se guarda con cambios y sin ellos, con el foco en «Datos de la obra» al terminar;
+  - vaciar `.claude/permiso-tests.txt` después del commit.
+
+### 2026-11-18 · Pulido · Cabecera de escritorio: la navegación en su propia fila entre 64 y 80rem
+- **Pedido a la IA:** construir la cabecera elegida por el desarrollador el 17-nov, entre tres opciones con capturas. Con cinco enlaces (Inicio, Explorar, Comunidad, Tutoriales y Crear), la navegación no cabe en la fila de la cabecera hasta unos 1280 px: a 1024 px saltaba a tres líneas.
+- **Resultado:**
+  - `site-header.css`:
+    - desde 64rem, dos filas: `"brand search account"` y `"nav nav nav"`;
+    - desde 80rem, una fila: `"brand nav search account"`, como la dejó Codex en `314c14d`;
+    - el nombre de la sesión, con `--header-user-max-wide` hasta 80rem y con `--header-user-max` desde 80rem, cuando comparte la fila con la navegación.
+  - Las anclas cuentan con la fila de la navegación:
+    - `variables.css`: el token nuevo `--scroll-offset-nav-row`, la altura de la cabecera más un área táctil;
+    - `base.css`: `--scroll-offset` usa ese token desde 64rem y vuelve a `--scroll-offset-wide` desde 80rem. La barra fija de `/autor` y `/admin` (`top: var(--scroll-offset)`) baja con él.
+  - Reglas: `client/CLAUDE.md` y el agente `frontend` recogen la excepción de 80rem, solo en la cabecera y en el `--scroll-offset` de `base.css`.
+  - El encargo E3 queda coherente con lo que decidió el desarrollador: Codex trabaja en `diseno-final`, que también aparece en la sección de git y en la entrega.
+- **Tests:**
+  - `unit/client-header-wide.test.ts`, 3 `Seguridad:`:
+    - los cortes son 40rem y 64rem, y 80rem solo en `site-header.css` y en `base.css`;
+    - las dos filas entre 64 y 80rem, y una sola desde 80rem;
+    - el `--scroll-offset` de cada tramo.
+  - Vistos fallar antes los dos de la cabecera y de las anclas. El de los cortes pasó desde el principio, porque no había ningún 80rem: queda como guarda.
+  - Ningún test existente cambió.
+- **Decisiones del desarrollador:**
+  - la navegación en su propia fila entre 64 y 80rem (17-nov);
+  - la IA trabaja en `develop` y Codex en `diseno-final`.
+- **Comprobación (IA):** `npm test` (con `tsc -b`, sin errores), 276/276. `npm run test:api`, 358/358.
+- **Pendiente (desarrollador):**
+  - en el navegador, a 1024, 1150, 1279 y 1280 px:
+    - la navegación en su fila, sin saltar de línea;
+    - la búsqueda y la cuenta en la primera fila;
+    - la barra del enlace activo;
+    - un salto a una sección de `/autor` o de `/admin` que no quede tapado;
+    - con sesión, un nombre largo.
