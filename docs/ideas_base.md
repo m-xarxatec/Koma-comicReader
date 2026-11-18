@@ -71,9 +71,9 @@ koma/
 │   │   ├── integrations/  # storage/ (driver.ts, index.ts, local.ts, r2.ts), payments (stripe, fake)
 │   │   │                  # (fase 2: discord —webhook—, mailer)
 │   │   ├── db/            # pool.ts, migrations/, seeds/
-│   │   ├── scripts/       # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo BD local)
+│   │   ├── scripts/       # migrate.ts, seed.ts, import-content.ts, reset-test-db.ts, demo-data.ts, demo-guard.ts y demo-png.ts (solo BD local) · (pulido: demo-mdns.ts, solo local; demo-activity.ts, demo-activity-guard.ts y demo-activity-plan.ts, la actividad simulada de la idea 24)
 │   │   ├── config/        # env.ts, paths.ts, limits.ts (valores fijos del plan) · (bloque 6: tutorials.ts, la lista de vídeos)
-│   │   ├── utils/         # logger.ts, app-error.ts, html.ts, origin.ts, password.ts, page.ts, layout.ts, redirect.ts, image.ts, signing.ts, text.ts, open-graph.ts
+│   │   ├── utils/         # logger.ts, app-error.ts, html.ts, origin.ts, password.ts, page.ts, layout.ts, redirect.ts, image.ts, signing.ts, text.ts, open-graph.ts · (bloque 6: tutorials.ts, la lista con respaldo local y `/videos`)
 │   │   ├── tests/         # unit/ y api/: <tema>.test.ts
 │   │   ├── app.ts
 │   │   └── server.ts

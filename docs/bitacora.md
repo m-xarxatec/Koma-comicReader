@@ -15,7 +15,8 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
 | Bloque 4 | 8 – 10 nov | [primera](#2026-11-08--bloque-4--contrato-de-la-api-borrador) · [cierre (T15)](#2026-11-09--bloque-4--t13-online-t14-recortada-y-t15-cierre-del-bloque) |
 | Bloque 5 | 10-nov | [primera](#2026-11-10--bloque-5--documentación-aprobada-y-cu-39-estadísticas-globales-rn-20) · [cierre](#2026-11-10--bloque-5--cierre-del-bloque) |
 | Pulido | desde el 10-nov | [primera](#2026-11-10--pulido--informe-aprobado-y-documentación) |
-| Bloque 6 | desde el 16-nov | [primera](#2026-11-16--bloque-6--api-de-ilustraciones-rn-22) |
+| Bloque 6 | 16 – 18 nov | [primera](#2026-11-16--bloque-6--api-de-ilustraciones-rn-22) · [cierre](#2026-11-18--bloque-6--cierre-del-bloque) |
+| Bloque 7 | desde el 26-nov | — |
 
 ## Plantilla
 
@@ -1823,3 +1824,102 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
     - la barra del enlace activo;
     - un salto a una sección de `/autor` o de `/admin` que no quede tapado;
     - con sesión, un nombre largo.
+
+### 2026-11-18 · Bloque 6 · Correcciones del cierre tras `/code-review`, `frontend` y `/simplify`
+- **Pedido a la IA:** dentro de `/cerrar-bloque`, proponer los hallazgos de `/code-review` (nivel `high`, sin verificar) y del agente `frontend`, comprobarlos en el código y aplicar los que el desarrollador aprobó, cada uno con su test. Después, `/simplify`.
+- **Resultado:**
+  - `4b53d90`, `/comunidad` (RN-22): al retirar una ilustración, el tablero se recarga siempre. Antes solo se recargaba si su fila decía «aprobada», y una aprobada después de pintar la lista seguía en el tablero.
+  - `4f18afd`, ilustraciones (RN-22): un texto de más de 4 KB (`LIMIT_FIELD_VALUE`) da 400 en su campo (`title`, `description` o `tags`), en lugar del mensaje de las viñetas en `fields.image`.
+    - La lista de campos está en `upload.ts` (`ILLUSTRATION_TEXT_FIELDS`). Con otro nombre de campo se mantiene el mensaje general, porque ese nombre lo manda el cliente.
+    - Documentado en `plan_mvp.md`, «Errores de las subidas».
+  - `ae942b9`, `/anadir-video` (CU-42):
+    - el final de la lista se busca con «];» al principio de una línea o justo tras la apertura (lista vacía), no con el primer «];»;
+    - `decodeEntities` se exporta y traduce también las entidades hexadecimales y `&apos;`, con `&amp;` en último lugar.
+  - `7edd354`, de vuelta a la maqueta (los puntos 1–3 del `frontend`, que venían de `314c14d`):
+    - el hero de la portada, 175 px en móvil;
+    - el pago simulado, a dos columnas desde 40rem;
+    - el final del capítulo, texto centrado sin caja: fuera `.reader-screen--end` y sus dos tokens.
+  - **`/simplify`:** `errorMessage` en `services/api.ts`, usada en `tutorials.ts`, `admin.ts`, `premium.ts`, `fake-checkout.ts` y `profile.ts`, que repetían el mensaje con «código de referencia».
+  - **Documentación** (hallazgos del `auditor`):
+    - `ideas_base.md`: los scripts del pulido y `utils/tutorials.ts`;
+    - `plan_mvp.md`, «Pulido»: `demo:mdns` entre las excepciones a «sin funciones nuevas».
+  - **Carpeta aparte para Codex.** Codex editaba `/comunidad` en la carpeta de este repositorio, sobre `develop`. Con el permiso del desarrollador (excepción a «git lo maneja solo el usuario»), la IA:
+    - creó el worktree `../koma-codex` en `diseno-final`, puesta al día con `develop` (`git worktree add -B`);
+    - instaló sus dependencias y copió la maqueta;
+    - le pasó su `community.html` sin commit con `cp`, comprobado con su hash. El desarrollador limpió la carpeta principal con `git restore`.
+- **Tests:**
+  - `unit/client-community-withdraw.test.ts`, 1 `RN-22:`. Visto fallar.
+  - `api/illustrations-field-limit.test.ts`, 1 `RN-22:` y 1 `Seguridad:`. El primero, visto fallar. El segundo (un campo ajeno sigue en `fields.image`) pasó desde el principio: fija el contrato.
+  - `unit/anadir-video.test.ts`, 2 `Seguridad:`. Vistos fallar: la entrada anterior quedaba partida, y `decodeEntities` no se exportaba. El caso de la lista vacía en una línea se añadió después, porque la primera versión del arreglo lo rompía.
+  - `unit/client-maqueta-values.test.ts`, 3 `Seguridad:`. Vistos fallar los 3.
+  - `unit/client-error-message.test.ts`, 2 `Seguridad:`. Vistos fallar los 2.
+  - Ningún test existente cambió.
+- **Revisión:**
+  - **`/code-review`:** 10 candidatos, todos comprobados en el código.
+    - Corregidos: B (el texto largo), C y D (`/anadir-video`) y E (la retirada).
+    - Para probar en el navegador: A. El 403 o el 409 de «ya tienes 5 pendientes» se responde antes de que `multer` lea la imagen, y con un archivo grande el navegador podría cortar la conexión.
+    - Sin cambios: J, la guarda de `demo:activity:online`, que exige `--confirm` y la lanza el desarrollador.
+    - F, el diálogo propio de `/admin`, pasa a E2, como ya estaba previsto.
+  - **`/simplify`:**
+    - aplicado G, el mensaje de error;
+    - G2, la paginación repetida, queda fuera, porque solo está en `community.ts`, que es de Codex;
+    - sin cambios H (recuento y página en dos consultas: es lo que hacen los otros cinco repositorios paginados) e I (comprobar el disco en cada `GET /api/tutorials`: online no lo toca, y en local deja añadir un vídeo sin reiniciar).
+- **Decisiones del desarrollador:**
+  - aprobadas las correcciones propuestas;
+  - los puntos 4–6 del `frontend` (otros tamaños de la maqueta, los botones de `/perfil` a todo el ancho en móvil y los estados nuevos), para E4;
+  - Codex, en su propia carpeta.
+- **Fallos:**
+  - El primer arreglo de `insertEntries` rompía la lista vacía en una sola línea. Se cubrió en el test antes de dar el arreglo por bueno.
+  - Codex trabajaba en la misma carpeta que la IA. Su `community.html` apareció en el `git status` de `develop`, y se paró antes de `/simplify`.
+- **Aprendizaje:** cada IA en su carpeta. Con dos agentes en el mismo árbol, un cambio de rama o un commit de uno se lleva los archivos del otro.
+- **Comprobación (IA):** `npm run typecheck`, sin errores. `npm test`, 284/284. `npm run test:api`, 360/360. En `../koma-codex`, `npm test` 282/282 antes de copiar el trabajo de Codex.
+- **Pendiente (desarrollador):**
+  - A: con 5 pendientes, publicar una imagen de unos 4 MB y ver si sale «Ya tienes 5…» o un error de red;
+  - en el navegador: el hero en móvil, `/pago-simulado` a unos 800 px, el final de un capítulo, y retirar desde «Mis ilustraciones» una ilustración que el admin aprobó con la página abierta.
+
+### 2026-11-18 · Bloque 6 · Cierre del bloque
+- **Pedido a la IA:** `/cerrar-bloque` del bloque 6, Comunidad y Tutoriales: los commits `1885b03..HEAD`, del 16 al 18 de noviembre, con el pulido hecho a la vez.
+- **Resultado:**
+  - todas las tareas del calendario hechas, sin recortar nada de la contingencia del 20: la migración 010, la API de ilustraciones, `/comunidad` con el filtro y la lista de etiquetas, la sección de `/admin`, `/tutoriales` con su respaldo local, la navegación, los agentes y el despliegue online;
+  - `CLAUDE.md`: «Bloque actual» pasa al pulido, hasta el 24, con las dos ramas de Codex (`feat/e3-estudio` y `diseno-final` en `../koma-codex`), y después el bloque 7;
+  - el índice de esta bitácora, con el bloque 6 cerrado y la fila del bloque 7.
+- **Tests:** ninguno nuevo en este paso; los de las correcciones del cierre están en la entrada anterior. Hay una excepción a «Tests» sin anotar desde el 17-nov, que señaló el `auditor`: `api/demo-activity.test.ts` levanta `app` en un puerto fijo, sin `startTestServer()`, para que `Origin` coincida con `APP_URL`. Cierra el servidor y el pool en `after()`, y el motivo está en su comentario.
+- **Revisión (agentes `frontend` y `auditor`):**
+  - **`frontend`:** apto con observaciones, nada bloqueante.
+    - Corregidos 1–3 (entrada anterior).
+    - Para E4: 4–6, la `<img>` sin `src` y el lote C del 17-nov, que sigue igual.
+    - 7: entre 64 y 80rem, la barra lateral fija de `/autor` queda unos 31 px por debajo de la cabecera, frente a 16 px desde 80rem. Para mirarlo en el navegador: ajustarlo cambiaría la fórmula que fija `unit/client-header-wide.test.ts`, que ya es un test existente.
+    - 8: `safe-area-inset` fuera del lector, ya anotado.
+  - **`auditor`:** apto con observaciones, nada bloqueante y ninguna regla de seguridad incumplida.
+    - 1, las entradas de bitácora: la anterior y esta.
+    - 2, el mapeo de `LIMIT_FIELD_VALUE`: en `plan_mvp.md`.
+    - 3, los scripts y `demo:mdns`: en `ideas_base.md` y en `plan_mvp.md`.
+    - 4: la excepción de `demo-activity.test.ts`, anotada arriba.
+- **Definición de terminado:**
+
+  | Punto | Estado | Dato |
+  | --- | --- | --- |
+  | `npm run typecheck` sin errores | ✓ | sin errores, 18-nov |
+  | Funciona en local y desplegado online | ✓ | **Online:** desplegado el 18-nov. El desarrollador publicó, aprobó, rechazó y retiró ilustraciones, vio el enlace de Discord y lo probó en el móvil. **Local:** `/comunidad`, `/tutoriales` y «Ilustraciones» de `/admin` en el navegador, el 17-nov |
+  | Tests de sus RN y pruebas de API en verde | ✓ | `npm test` 284/284 y `npm run test:api` 360/360 |
+  | Diff revisado con la lista | ✓ | `auditor`: permisos, SQL parametrizado, escapado y auditoría en la misma transacción, sin nada fuera del plan |
+  | Móvil (360 px) y escritorio, con teclado | parcial | El móvil, online, lo probó el desarrollador. El teclado y lo cambiado hoy: manual |
+  | Sin errores en la consola ni en los logs | manual | — |
+  | Acciones sensibles en la auditoría | ✓ | `illustration.*` en la misma transacción, con tests. Online, el desarrollador dio por hecha la lista, que incluía verlas en `/admin` |
+  | Variables nuevas en `.env.example` y en el README | ✓ | `TUTORIAL_VIDEOS_DIR`; `DISCORD_INVITE_URL` ya estaba (bloque 5) |
+  | Entrada del bloque en la bitácora | ✓ | esta |
+
+- **Decisiones del desarrollador:**
+  - **La demo, sin Docker:** con Node directo en el portátil Windows y `demo:mdns`, probada el 17-nov.
+  - **Riesgo aceptado para ese día:** el comentario de `DISCORD_INVITE_URL` en `.env.example` impide arrancar con Docker Compose, y se deja sin corregir porque la demo no usa Compose. La red del aula se da por de confianza.
+  - **La integración del trabajo de Codex:** cuando termine, se revisan con `frontend` las dos ramas y se integran en `develop`, y después `develop` se une a `main`.
+- **Comprobación (IA):** typecheck sin errores; `npm test` 284/284; `npm run test:api` 360/360. Todos los scripts de `package.json` están en la tabla de comandos de `CLAUDE.md`, y el árbol lo comprueba su test. El hook `inicio-sesion` lee la línea nueva de «Bloque actual».
+- **Pendiente (desarrollador):**
+  - **en el navegador, a 360 px y en escritorio, con teclado y consola:**
+    - la cabecera a 1024, 1150, 1279 y 1280 px, y el hueco de la barra de `/autor` (punto 7);
+    - «Datos de la obra» con el título relleno;
+    - el hero, `/pago-simulado` y el final de un capítulo;
+    - la prueba A de los 5 pendientes con una imagen grande;
+  - en la wifi del instituto: `demo:mdns` y la entrada con sesión desde el móvil;
+  - una pasada real de `demo:activity` antes de la demo;
+  - las propuestas de Codex (E3 y `/comunidad`), revisarlas e integrarlas.

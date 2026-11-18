@@ -960,7 +960,7 @@ Ya figuran en el mapa de rutas; se implementan en este bloque.
 
 ### Errores de las subidas
 
-- Sin códigos nuevos. `error-handler` traduce los de multer: `LIMIT_FILE_SIZE` → 413 `FILE_TOO_LARGE`; `LIMIT_FILE_COUNT`, `LIMIT_UNEXPECTED_FILE`, `LIMIT_FIELD_COUNT` y `LIMIT_PART_COUNT` → 400 `VALIDATION_ERROR`. Sin archivo (incluida una petición que no es `multipart/form-data`) → 400 en `fields.image`.
+- Sin códigos nuevos. `error-handler` traduce los de multer: `LIMIT_FILE_SIZE` → 413 `FILE_TOO_LARGE`; `LIMIT_FILE_COUNT`, `LIMIT_UNEXPECTED_FILE`, `LIMIT_FIELD_COUNT` y `LIMIT_PART_COUNT` → 400 `VALIDATION_ERROR`. En las ilustraciones (bloque 6), `LIMIT_FIELD_VALUE` (un texto de más de 4 KB) → 400 en el campo que se pasa (`title`, `description` o `tags`); con otro nombre de campo, el mensaje general en `fields.image`. Sin archivo (incluida una petición que no es `multipart/form-data`) → 400 en `fields.image`.
 - Permiso y limitador van antes de multer: un 401, 403 o 429 no escribe nada en disco. Si multer corta la subida (413 o 400), no queda el archivo parcial en el temporal (lo comprueba un test).
 
 ## Contrato de la API del bloque 4
@@ -1488,7 +1488,7 @@ Al construir, cada aserción se entrega con su antes y su después, el desarroll
 
 ## Pulido (11 – 24 nov)
 
-Aprobado el 10-nov. Desde el 16-nov, con el plazo nuevo, la pasada de diseño sigue hasta el 24-nov y E2 y E4 van después del bloque 6, porque incluyen sus páginas. (Dn) remite a las decisiones de la tabla del final de esta sección. Sin migraciones, sin dependencias, sin variables nuevas y sin funciones nuevas, salvo la actividad simulada (idea 24).
+Aprobado el 10-nov. Desde el 16-nov, con el plazo nuevo, la pasada de diseño sigue hasta el 24-nov y E2 y E4 van después del bloque 6, porque incluyen sus páginas. (Dn) remite a las decisiones de la tabla del final de esta sección. Sin migraciones, sin dependencias, sin variables nuevas y sin funciones nuevas, salvo la actividad simulada (idea 24) y el respondedor mDNS para la demo en Windows sin Docker (`npm run demo:mdns`, solo local; decidido el 17-nov, `docs/comandos.md`, apartado 10.12).
 
 ### Pasada de diseño
 
