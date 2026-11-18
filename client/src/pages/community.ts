@@ -260,7 +260,8 @@ async function withdraw(illustration: OwnIllustrationDto, button: HTMLButtonElem
   setStatus(mineStatus, `«${illustration.title}» se ha retirado.`);
   await loadMine();
   focusMine();
-  if (illustration.status === 'approved') await loadBoard();
+  // Siempre: la fila se pintó con el estado de entonces, y el admin pudo aprobarla después (ya estaría en el tablero).
+  await loadBoard();
 }
 
 function ownItem(illustration: OwnIllustrationDto): HTMLLIElement {
