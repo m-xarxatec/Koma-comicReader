@@ -53,40 +53,42 @@
       <div class="work-detail__intro">
         <p class="work-detail__eyebrow">Ficha de obra</p>
         <h1 class="work-detail__title" id="work-title">{{title}}</h1>
+        <p class="work-detail__byline" id="work-author" hidden></p>
         <p class="work-detail__status" id="work-status" hidden></p>
         <!-- D10: solo para el autor dueño y el admin, con la obra en revisión o capítulos sin publicar. -->
         <p class="work-detail__status work-detail__status--preview" id="work-preview" hidden></p>
-        <dl class="work-detail__tags" id="work-tags" hidden></dl>
       </div>
 
       <div class="work-detail__body" id="work-body" hidden>
-        <h2 class="work-detail__heading">Sinopsis</h2>
-        <p class="work-detail__synopsis" id="work-synopsis"></p>
-
-        <dl class="work-detail__credits">
-          <div class="work-detail__credit"><dt class="work-detail__credit-label">Autor original</dt><dd class="work-detail__credit-value" id="work-author"></dd></div>
-          <div class="work-detail__credit"><dt class="work-detail__credit-label">Publicado por</dt><dd class="work-detail__credit-value" id="work-publisher"></dd></div>
-          <div class="work-detail__credit"><dt class="work-detail__credit-label">Licencia</dt><dd class="work-detail__credit-value" id="work-license"></dd></div>
-        </dl>
+        <!-- RN-08: el aviso precede a la entrada al lector, que pide la confirmación. -->
+        <aside class="content-warning" id="work-warning" aria-labelledby="warning-title" hidden>
+          <div class="content-warning__symbol" aria-hidden="true">!</div>
+          <div>
+            <h2 class="content-warning__title" id="warning-title">Advertencia de contenido</h2>
+            <p class="content-warning__text" id="work-warning-text"></p>
+          </div>
+        </aside>
 
         <div class="work-detail__actions">
           <a class="button button--primary button--large" id="work-read" href="#capitulos" hidden><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> <span id="work-read-label">Leer capítulo 1</span></a>
           <a class="button button--outline button--large" href="#capitulos">Ver capítulos</a>
-          <!-- D4 (contrato del bloque 4): solo para el admin; comic.ts lo muestra según GET /api/me. El permiso lo
-               decide POST /api/comics/:slug/withdraw (403 a quien no es su autor ni admin). -->
-          <button class="button button--outline button--danger button--large" type="button" id="work-withdraw" hidden>Retirar obra</button>
         </div>
+        <dl class="work-detail__tags" id="work-tags" hidden></dl>
+        <h2 class="work-detail__heading">Sinopsis</h2>
+        <p class="work-detail__synopsis" id="work-synopsis"></p>
+
+        <details class="work-detail__publication">
+          <summary class="work-detail__toggle">Publicación y licencia</summary>
+          <dl class="work-detail__credits">
+            <div class="work-detail__credit"><dt class="work-detail__credit-label">Publicado por</dt><dd class="work-detail__credit-value" id="work-publisher"></dd></div>
+            <div class="work-detail__credit"><dt class="work-detail__credit-label">Licencia</dt><dd class="work-detail__credit-value" id="work-license"></dd></div>
+          </dl>
+        </details>
+        <!-- D4 (contrato del bloque 4): solo para el admin; comic.ts lo muestra según GET /api/me. El permiso lo
+             decide POST /api/comics/:slug/withdraw (403 a quien no es su autor ni admin). -->
+        <button class="button button--outline button--danger button--large" type="button" id="work-withdraw" hidden>Retirar obra</button>
       </div>
     </article>
-
-    <!-- RN-08: aquí solo se informa; la confirmación antes de leer la pide el lector. -->
-    <aside class="content-warning" id="work-warning" aria-labelledby="warning-title" hidden>
-      <div class="content-warning__symbol" aria-hidden="true">!</div>
-      <div>
-        <h2 class="content-warning__title" id="warning-title">Advertencia de contenido</h2>
-        <p class="content-warning__text" id="work-warning-text"></p>
-      </div>
-    </aside>
 
     <p class="work-page__message" id="work-message" role="status" tabindex="-1"></p>
     <noscript><p class="work-page__message">Activa JavaScript para ver la sinopsis y los capítulos de la obra.</p></noscript>

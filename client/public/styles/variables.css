@@ -296,6 +296,7 @@
   --gradient-work-cover: linear-gradient(150deg, var(--color-work-cover-from), var(--color-work-cover-mid) 58%, var(--color-work-cover-to));
   --font-weight-label: 750; /* antetítulo de la ficha y estado de un capítulo */
   --work-page-width: 1180px;
+  --work-anchor-duration: 800ms;
   --breadcrumb-gap: 0.6rem;
   --work-cover-width: 108px;
   --work-cover-width-medium: minmax(190px, 235px);
