@@ -2046,3 +2046,47 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - `npm run typecheck`, sin errores;
   - `npm test`, 291/291;
   - `npm run test:api`, 370/370 (360 + 10).
+
+### 2026-11-18 · Pulido · Integración en `develop` de la portada, el perfil y la ficha de E4 (Codex) y carrusel del hero (D22)
+- **Pedido a la IA:** integrar la rama `diseno-final` actualizada; después, a petición del desarrollador, cambiar el hero por un carrusel de obras y el banner (`docs/plan_mvp.md`, «Pulido», E4 y D6).
+- **Resultado:**
+  - Revisión del diff antes de unir: 2 commits (`aa2be5f` portada y `292b00c` perfil). Fusión sin conflictos; typecheck, 291 unitarios y 370 de API en verde sobre el árbol fusionado, comprobado en una copia fuera del repositorio. El desarrollador unió la rama (`b802cdc`).
+  - El merge trajo un tercer commit, subido después de la revisión: `df74ba0` (ficha). Se revisó con el agente `frontend` en la segunda pasada.
+  - Carrusel del hero (D22):
+    - `client/src/utils/hero.ts` (puro: `splitHome`, `nextSlide`, `shouldRotate`), `client/src/components/hero-carousel.ts` y `home-cover.ts` (la inicial de reserva, sacada de `home.ts`).
+    - Muestra las 2 obras más nuevas y después el banner `client/public/icons/koma-hero.webp`: la mascota de `fondo.png`, 512 × 640 con transparencia, pintada desde `--image-home-hero` con `contain`.
+    - Patrón de carrusel de la APG: pausa, un botón por diapositiva, `aria-live` en «off» mientras rota. Se para con el ratón (solo puntero de ratón), con el foco, con la pestaña oculta y con movimiento reducido. Las diapositivas se apilan en una celda, con `inert` las inactivas, y el h1 queda oculto visualmente fuera de ellas.
+    - «Más para leer» muestra las 4 obras siguientes.
+  - Cada regla de `home-main.css` vuelve a su componente: `hero.css`, `genres.css`, `comic-card.css`, `quick-links.css`, `button.css` y `home-cover.css`. También los modificadores `breadcrumb--compact` y `content-warning--inline`, en lugar de reglas sobre otros componentes en `profile-page.css`, `work-page.css` y `work-detail.css`.
+  - Limpieza: se borran `scroll-lane.css`, 16 tokens sin uso y `.hero__accent`. `--home-cover-type` pasa a `--font-serif`.
+  - Perfil: `<noscript>` y botón `disabled data-needs-js` en «Cambiar contraseña» (`profile.ts` lo activa).
+  - `docs/plan_mvp.md`: D6 actualizado, D22, D23, cuatro filas de desvíos de la maqueta y el texto de RN-07.
+- **Tests:** `server/src/tests/unit/client-home-hero.test.ts`, 11 tests `Seguridad:`.
+  - Cubren el reparto de obras, la rotación, cuándo se para, el HTML sin JS, el banner por token, una regla por archivo, CSS y tokens muertos, y el perfil sin JS.
+  - Se vio fallar antes de programar: al principio el archivo no cargaba, porque faltaba `utils/hero.js`. Las tres aserciones de las correcciones de `frontend` fallaron (4 tests) antes de corregir.
+  - Ningún test existente cambió.
+- **Revisión (agente `frontend`):**
+  - Primera pasada, sobre `diseno-final`: NO APTO. El hero contradecía D6 y la maqueta, el TS cambiaba el flujo, el perfil sin JS había perdido su aviso, `home-main.css` pisaba otros componentes y quedaba CSS muerto. Lo visual lo aprobó después el desarrollador; lo demás está corregido.
+  - Segunda pasada, sobre la corrección y `df74ba0`: APTO CON OBSERVACIONES. Corregidos: reglas duplicadas o sobre otros componentes en la ficha, `aria-roledescription` solo con JS, pausa primero al tabular y con la etiqueta «Pausar el carrusel», `pointerType` en táctil y el botón de contraseña sin JS. RN-07, por decisión del desarrollador.
+- **Revisión (agente `auditor`):** APTO; repitió typecheck y tests. Corregido: los comentarios citan D22. Pendiente de OK: añadir los tres archivos nuevos del cliente a «Estructura» del `CLAUDE.md` raíz.
+- **Decisiones del desarrollador:**
+  - el hero de Codex le gusta, pero lo quiere en carrusel: las 2 obras más nuevas, porque no hay una ruta pública de «más leídas» y sería una función nueva, y después el banner, con `fondo.png` de momento (D22);
+  - todos los cambios visuales de Codex se mantienen; los cambios visuales los aprueba siempre él (D23);
+  - RN-07: se mantiene el diseño de la rama (créditos en un desplegable cerrado) y se ajusta el texto de la regla.
+- **Fallos:**
+  - Typecheck en una copia con `node_modules` enlazado: TS2883, porque la ruta salía del proyecto. Con `node_modules` copiado, sin errores.
+  - El test existente «los @media van al final» falló por el bloque de movimiento reducido de `button.css`, que se movió al final.
+  - Un `git rm` en una orden fue rechazado por los permisos; el archivo se borró con `rm`.
+- **Aprendizaje:** Codex puede subir commits entre la revisión y el merge. Antes de dar el comando, comparar `git log develop..diseno-final` con lo revisado, o fusionar el hash revisado (`git merge <hash>`).
+- **Comprobación (IA):**
+  - `npm run typecheck`, sin errores;
+  - `npm test`, 302/302 (291 + 11);
+  - `npm run test:api`, 370/370.
+- **Pendiente (desarrollador):**
+  - el carrusel en 360 px y en escritorio, con teclado y con movimiento reducido;
+  - la portada y `/perfil` sin JS;
+  - la ficha: «Publicación y licencia» con teclado;
+  - las migas («Inicio» con 44 px) en todas las páginas;
+  - consola sin errores;
+  - la portada online, con portadas desde R2;
+  - el banner definitivo, sustituyendo `koma-hero.webp`.

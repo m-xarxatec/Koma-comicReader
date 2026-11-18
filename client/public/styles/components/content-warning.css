@@ -10,6 +10,11 @@
   background: var(--color-surface);
 }
 
+/* En la ficha, dentro del cuerpo y antes del botón «Leer» (E4). */
+.content-warning--inline {
+  margin-block: 0 var(--space-4);
+}
+
 .content-warning__symbol {
   display: grid;
   place-items: center;

@@ -78,3 +78,9 @@
 .button--outline:active:not(:disabled) {
   background: var(--color-surface-soft);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .button:hover:not(:disabled) {
+    transform: none;
+  }
+}

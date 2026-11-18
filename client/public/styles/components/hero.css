@@ -1,14 +1,39 @@
+/* Hero de la portada: carrusel de las 2 obras más nuevas y el banner (D22, 18-nov: cambia D6, cuyo banner queda como última diapositiva
+   a D6). Las diapositivas se apilan en la misma celda: el hero mide lo que la más alta y no salta al rotar. */
 .hero {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: var(--gradient-home-hero);
   box-shadow: var(--shadow-panel);
 }
 
+.hero__slides {
+  display: grid;
+}
+
+.hero__slide {
+  display: grid;
+  grid-area: 1 / 1;
+  grid-template-columns: var(--home-feature-columns);
+  min-height: var(--home-hero-min-height);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--duration-hero), visibility var(--duration-hero);
+}
+
+.hero__slide--active {
+  visibility: visible;
+  opacity: 1;
+}
+
 .hero__copy {
+  min-width: 0;
+  align-self: center;
   padding: var(--home-hero-padding);
+  overflow-wrap: anywhere;
 }
 
 .hero__title {
@@ -16,10 +41,6 @@
   margin-bottom: var(--home-hero-title-gap);
   font-size: var(--font-size-2xl);
   letter-spacing: var(--letter-spacing-title);
-}
-
-.hero__accent {
-  color: var(--color-accent);
 }
 
 .hero__description {
@@ -35,29 +56,98 @@
   margin-top: var(--home-hero-actions-gap);
 }
 
+/* En móvil el botón no cabe con la flecha. */
+.hero__actions .icon--small {
+  display: none;
+}
+
 .hero__art {
   min-height: var(--home-hero-min-height);
-  background: var(--gradient-home-hero);
+  background: var(--gradient-home-cover-violet);
+}
+
+/* D6: la imagen la pone el token; se sustituye el archivo sin tocar código. contain: es una ilustración vertical
+   con fondo transparente sobre el degradado del hero. */
+.hero__art--banner {
+  background: var(--image-home-hero) center / contain no-repeat;
+}
+
+.hero__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  order: 1; /* en el DOM va antes de las diapositivas, para tabular primero (APG) */
+  padding: 0 var(--home-hero-padding) var(--space-2);
+}
+
+.hero__pause {
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.hero__pause:hover {
+  border-color: var(--color-secondary);
+}
+
+.hero__dots {
+  display: flex;
+}
+
+/* Área táctil de 44 px con un punto pequeño dentro. */
+.hero__dot {
+  display: grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hero__dot::before {
+  width: var(--home-hero-dot-size);
+  height: var(--home-hero-dot-size);
+  border: var(--border-width) solid var(--color-text-muted);
+  border-radius: var(--radius-pill);
+  content: "";
+  transition: width var(--duration-fast), background-color var(--duration-fast);
+}
+
+.hero__dot:hover::before {
+  border-color: var(--color-text);
+}
+
+.hero__dot[aria-current="true"]::before {
+  width: var(--home-hero-dot-size-active);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
 }
 
 @media (min-width: 40rem) {
-  .hero {
-    grid-template-columns: 55% 45%;
+  .hero__slide {
     min-height: var(--home-hero-min-height-medium);
-  }
-
-  .hero__copy {
-    align-self: center;
   }
 
   .hero__art {
     min-height: 100%;
   }
+
+  .hero__actions .icon--small {
+    display: block;
+  }
 }
 
 @media (min-width: 64rem) {
-  .hero {
-    grid-template-columns: 48% 52%;
+  .hero__slide {
     min-height: var(--home-hero-min-height-wide);
   }
 

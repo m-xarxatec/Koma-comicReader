@@ -3,8 +3,19 @@
   gap: var(--home-card-gap);
 }
 
+/* «Más para leer»: lista con la portada en miniatura a la izquierda (E4, 18-nov). */
 .comic-grid--trending {
-  grid-auto-columns: minmax(var(--home-card-slide-width), 46%);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.comic-grid--trending .comic-card__link {
+  display: grid;
+  grid-template-columns: var(--home-shelf-cover-width) minmax(0, 1fr);
+  align-items: center;
+}
+
+.comic-grid--trending .comic-card__cover {
+  align-self: stretch;
 }
 
 .comic-grid--catalog {
@@ -88,7 +99,7 @@
   }
 
   .comic-grid--trending {
-    grid-auto-columns: minmax(var(--home-card-slide-width-wide), 29%);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .comic-grid--catalog {
@@ -98,7 +109,7 @@
 
 @media (min-width: 64rem) {
   .comic-grid--trending {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(var(--home-card-slide-width-wide), 1fr));
     max-width: var(--home-trending-width-wide);
   }
 

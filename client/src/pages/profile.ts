@@ -67,6 +67,8 @@ if (profileForm && nameInput) {
 const passwordForm = document.querySelector<HTMLFormElement>('#password-form');
 if (passwordForm) {
   const setStatus = statusOf(passwordForm);
+  // Como el del nombre: sin JS el envío nativo mostraría la respuesta JSON como página (aviso en el noscript).
+  for (const button of passwordForm.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
   // Mismo orden que el formulario (el foco del primer error lo decide bindForm).
   const rules = {
     currentPassword: currentPasswordProblem,

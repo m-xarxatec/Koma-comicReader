@@ -59,6 +59,7 @@
 
   /* Tipografía del sistema (sin fuentes externas) */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif; /* solo la inicial de las portadas de reserva */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   --font-size-2xs: 0.65rem;
   --font-size-xs: 0.75rem;
@@ -212,8 +213,6 @@
   --color-home-cover-indigo-from: #302459;
   --color-home-cover-indigo-to: #565fa0;
   --color-home-cover-sheen: #ffffff12;
-  --color-home-genre-icon: #aa79ff16;
-  --color-home-scrollbar-track: transparent;
   --gradient-home-hero: radial-gradient(circle at 78% 20%, var(--color-home-hero-glow), transparent 35%), linear-gradient(125deg, var(--color-home-hero-from), var(--color-home-hero-mid) 62%, var(--color-home-hero-to));
   --gradient-home-cover-violet: linear-gradient(135deg, var(--color-home-cover-violet-from), var(--color-home-cover-violet-to));
   --gradient-home-cover-rose: linear-gradient(135deg, var(--color-home-cover-rose-from), var(--color-home-cover-rose-to));
@@ -229,10 +228,15 @@
   --home-hero-description-width: 32rem;
   --home-hero-actions-gap: 1.45rem;
   --home-hero-min-height: 175px; /* maqueta: .hero__art en móvil */
+  --image-home-hero: url("/icons/koma-hero.webp"); /* D6: banner; se sustituye el archivo sin tocar código */
+  --duration-hero: 0.45s;
+  --home-hero-dot-size: 0.6rem;
+  --home-hero-dot-size-active: 1.5rem;
+  --font-size-home-cover-letter: clamp(5rem, 21vw, 9rem);
+  --font-size-home-cover-letter-compact: clamp(2.3rem, 4.6vw, 4rem);
   --home-feature-columns: minmax(0, 3fr) minmax(0, 2fr);
   --home-shelf-cover-width: clamp(4.5rem, 10vw, 6rem);
   --home-cover-lines: repeating-radial-gradient(ellipse at 120% 110%, transparent 0 13%, var(--color-home-cover-sheen) 13.2% 14%, transparent 14.3% 17%);
-  --home-cover-type: Georgia, "Times New Roman", serif;
   --home-hero-min-height-medium: 280px;
   --home-hero-min-height-wide: 320px;
   --home-section-gap: clamp(1.7rem, 3vw, 2.4rem);
@@ -245,8 +249,6 @@
   --line-height-home-heading: 1.25;
   --letter-spacing-home-heading: -0.03em;
   --home-text-link-gap: 0.3rem;
-  --home-scroll-focus-padding: calc(var(--focus-ring) + var(--focus-offset));
-  --home-card-slide-width: 172px;
   --home-card-slide-width-wide: 190px;
   --home-card-gap: 0.8rem;
   --home-trending-width-wide: 1200px;
@@ -254,19 +256,8 @@
   --font-size-home-card-title: 0.94rem;
   --line-height-home-card-title: 1.35;
   --font-size-home-card-meta: var(--font-size-sm);
-  --home-genre-slide-width: 108px;
-  --home-genre-slide-width-wide: 128px;
-  --home-genre-column-share: 19%;
-  --home-genre-grid-gap: 0.65rem;
-  --home-genre-tile-gap: 0.7rem;
-  --home-genre-tile-padding-block: 0.8rem;
-  --home-genre-tile-padding-inline: 0.35rem;
-  --home-genre-height-wide: 115px;
   --font-size-home-genre: 0.76rem;
   --font-weight-home-genre: 750;
-  --home-genre-height: 112px;
-  --home-genre-art-size: 52px;
-  --radius-home-genre-icon: 0.7rem;
   --home-quick-link-height: 70px;
   --home-quick-links-gap: 0.6rem;
   --home-quick-links-padding: 0.65rem;
@@ -474,6 +465,7 @@
   --profile-page-padding-wide: 2.8rem 5rem;
   --profile-head-gap: 1rem;
   --profile-head-padding: var(--space-4);
+  --profile-head-accent-width: 3px;
   --profile-avatar-size: 70px;
   --profile-avatar-size-medium: 84px;
   --profile-avatar-radius: 22px;

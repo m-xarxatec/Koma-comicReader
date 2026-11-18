@@ -23,7 +23,7 @@
 <body>
   <!-- @header -->
   <main id="contenido" class="profile-page container">
-    <nav class="breadcrumb" aria-label="Ruta de navegación">
+    <nav class="breadcrumb breadcrumb--compact" aria-label="Ruta de navegación">
       <a class="breadcrumb__link" href="/">Inicio</a>
       <span class="breadcrumb__separator" aria-hidden="true">/</span>
       <span class="breadcrumb__current" aria-current="page">Mi perfil</span>
@@ -128,9 +128,14 @@
               <input class="form__input" id="password-confirm" name="newPasswordConfirm" type="password" placeholder="Repite la nueva contraseña" autocomplete="new-password" required aria-describedby="password-confirm-error">
               <p class="form__error" id="password-confirm-error" hidden></p>
             </div>
+            <!-- Sin JS el botón sigue desactivado (data-needs-js; profile.ts lo activa) y lo explica este noscript, que
+                 sustituye al aviso general que había encima de las tarjetas. -->
+            <noscript>
+              <p class="form__notice">Para cambiar la contraseña hace falta JavaScript.</p>
+            </noscript>
             <p class="form__error form__error--form" data-form-error role="alert" hidden></p>
             <div class="profile-card__actions">
-              <button class="button button--outline" type="submit">Cambiar contraseña</button>
+              <button class="button button--outline" type="submit" disabled data-needs-js>Cambiar contraseña</button>
               <p class="form__status" data-form-status role="status"></p>
             </div>
           </form>

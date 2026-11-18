@@ -1,4 +1,6 @@
 import { comicCard, type ComicCardDto, type TagDto } from '../components/comic-card.js';
+import { startHeroCarousel } from '../components/hero-carousel.js';
+import { prepareCover } from '../components/home-cover.js';
 import { api } from '../services/api.js';
 import {
   CATALOG_PAGE_SIZE,
@@ -7,6 +9,7 @@ import {
   readCatalogState,
   tagsProblem,
 } from '../utils/catalog.js';
+import { splitHome } from '../utils/hero.js';
 
 interface CatalogPageDto {
   comics: ComicCardDto[];
@@ -15,10 +18,9 @@ interface CatalogPageDto {
   total: number;
 }
 
-// Tendencias: las 5 primeras de la petición del catálogo; solo las 2 primeras portadas sin loading="lazy"
-// (decisión del desarrollador, 4-nov).
-const TRENDING_SIZE = 5;
-const TRENDING_EAGER_COVERS = 2;
+// Hero y «Más para leer» (antes «Tendencias»), solo en la primera página sin filtros: las 2 primeras obras van al
+// carrusel del hero, con sus portadas sin loading="lazy" (primera pantalla), y las 4 siguientes a «Más para leer»,
+// ya con loading="lazy" (utils/hero.ts; decisión del desarrollador, 18-nov).
 
 const search = new URLSearchParams(location.search);
 const store = { state: readCatalogState(search), loading: false };
@@ -138,57 +140,24 @@ function renderPagination(total: number): void {
   );
 }
 
-// La letra queda detrás de la imagen si la portada falta o su URL ya no responde.
-function prepareCover(cover: HTMLElement, title: string): void {
-  cover.classList.add('home-cover');
-  cover.dataset['letter'] = Array.from(title.trim())[0] ?? 'K';
-  cover.setAttribute('aria-hidden', 'true');
-  const image = cover.querySelector('img');
-  if (image) {
-    image.addEventListener('error', () => image.remove(), { once: true });
-    if (image.complete && image.naturalWidth === 0) image.remove();
-  }
-}
-
-function homeCard(comic: ComicCardDto, index: number, eager = false): HTMLElement {
-  const card = comicCard(comic, index, eager);
+function homeCard(comic: ComicCardDto, index: number, compact = false): HTMLElement {
+  const card = comicCard(comic, index);
   const cover = card.querySelector<HTMLElement>('.comic-card__cover');
-  if (cover) prepareCover(cover, comic.title);
-  return card;
-}
-
-function featureComic(comic: ComicCardDto): void {
-  const title = document.getElementById('hero-title');
-  const label = document.getElementById('hero-label');
-  const byline = document.getElementById('hero-byline');
-  const action = document.getElementById('hero-action');
-  const link = document.querySelector<HTMLAnchorElement>('#hero-link');
-  const cover = document.querySelector<HTMLElement>('.hero__art');
-  if (!title || !label || !byline || !action || !link || !cover) return;
-  title.textContent = comic.title;
-  label.textContent = comic.tags.find(tag => tag.type === 'genre')?.name ?? 'Cómic';
-  byline.textContent = comic.authorCredit;
-  link.href = `/obra/${encodeURIComponent(comic.slug)}`;
-  action.textContent = 'Ver obra';
-  cover.replaceChildren();
-  if (comic.coverUrl) {
-    const image = new Image();
-    image.alt = '';
-    image.className = 'home-cover__image';
-    image.src = comic.coverUrl;
-    cover.append(image);
+  if (cover) {
+    prepareCover(cover, comic.title);
+    cover.classList.toggle('home-cover--compact', compact);
   }
-  prepareCover(cover, comic.title);
+  return card;
 }
 
 function renderComics(data: CatalogPageDto): void {
   if (!grid || !trending || !trendingGrid || !message) return;
   grid.replaceChildren(...data.comics.map((comic, index) => homeCard(comic, index)));
   const isFirstUnfiltered = !store.state.q && store.state.tags.length === 0 && store.state.page === 1;
-  const [featured, ...others] = data.comics;
-  if (isFirstUnfiltered && featured) featureComic(featured);
-  trending.hidden = !isFirstUnfiltered || others.length === 0;
-  trendingGrid.replaceChildren(...(trending.hidden ? [] : others.slice(0, TRENDING_SIZE - 1).map((comic, index) => homeCard(comic, index + 1, index + 1 < TRENDING_EAGER_COVERS))));
+  const { hero, shelf } = splitHome(data.comics);
+  if (isFirstUnfiltered) startHeroCarousel(hero);
+  trending.hidden = !isFirstUnfiltered || shelf.length === 0;
+  trendingGrid.replaceChildren(...(trending.hidden ? [] : shelf.map((comic, index) => homeCard(comic, index + hero.length, true))));
   if (data.comics.length === 0) {
     const pages = Math.ceil(data.total / CATALOG_PAGE_SIZE);
     showMessage(data.total > 0

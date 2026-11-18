@@ -32,8 +32,8 @@
   <link rel="stylesheet" href="/styles/components/content-section.css">
   <link rel="stylesheet" href="/styles/components/section-heading.css">
   <link rel="stylesheet" href="/styles/components/text-link.css">
-  <link rel="stylesheet" href="/styles/components/scroll-lane.css">
   <link rel="stylesheet" href="/styles/components/comic-card.css">
+  <link rel="stylesheet" href="/styles/components/home-cover.css">
   <link rel="stylesheet" href="/styles/components/genres.css">
   <link rel="stylesheet" href="/styles/components/catalog-filters.css">
   <link rel="stylesheet" href="/styles/components/catalog-pagination.css">
@@ -44,26 +44,38 @@
 <body>
   <!-- @header -->
   <main id="contenido" class="home-main container">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero__copy">
-        <p class="eyebrow" id="hero-label">Biblioteca Koma</p>
-        <h1 class="hero__title" id="hero-title">Encuentra tu próxima lectura</h1>
-        <p class="hero__description" id="hero-byline">Explora los cómics por título, autor o género.</p>
-        <div class="hero__actions">
-          <a class="button button--primary button--large" id="hero-link" href="#catalogo"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> <span id="hero-action">Explorar cómics</span> <svg class="icon icon--small" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+    <!-- Carrusel del hero (D22, 18-nov: cambia D6, cuyo banner queda como última diapositiva): home.ts añade delante del banner las
+         2 obras más nuevas y enseña los controles. Sin JS, o sin obras, solo se ve el banner. -->
+    <section class="hero" id="hero" aria-labelledby="hero-title">
+      <h1 class="visually-hidden" id="hero-title">Koma, cómics para leer, crear y compartir</h1>
+      <!-- Primero al tabular (APG): la pausa y los puntos; visualmente van debajo (hero.css, order). -->
+      <div class="hero__controls" id="hero-controls" hidden>
+        <button class="hero__pause" type="button" id="hero-pause">Pausar el carrusel</button>
+        <div class="hero__dots" id="hero-dots"></div>
+      </div>
+      <div class="hero__slides" id="hero-slides">
+        <div class="hero__slide hero__slide--active" data-hero-slide>
+          <div class="hero__copy">
+            <p class="eyebrow">Biblioteca Koma</p>
+            <h2 class="hero__title">Encuentra tu próxima lectura</h2>
+            <p class="hero__description">Explora los cómics por título, autor o género.</p>
+            <div class="hero__actions">
+              <a class="button button--primary button--large" href="#catalogo"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-book"/></svg> Explorar cómics <svg class="icon icon--small" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a>
+            </div>
+          </div>
+          <div class="hero__art hero__art--banner" aria-hidden="true"></div>
         </div>
       </div>
-      <div class="hero__art home-cover" aria-hidden="true" data-letter="K"></div>
     </section>
 
     <section class="content-section" id="tendencias" aria-labelledby="tendencias-title" hidden>
       <div class="section-heading"><h2 class="section-heading__title" id="tendencias-title">Más para leer</h2><a class="text-link" href="#catalogo">Ver todas <svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a></div>
-      <div class="comic-grid comic-grid--trending scroll-lane" id="trending-grid"></div>
+      <div class="comic-grid comic-grid--trending" id="trending-grid"></div>
     </section>
 
     <section class="content-section" id="generos" aria-labelledby="generos-title" hidden>
       <div class="section-heading"><h2 class="section-heading__title" id="generos-title">Explorar por género</h2><a class="text-link" href="/#catalogo">Ver catálogo <svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow"/></svg></a></div>
-      <div class="genre-grid scroll-lane" id="genre-grid"></div>
+      <div class="genre-grid" id="genre-grid"></div>
     </section>
 
     <section class="content-section catalog" id="catalogo" aria-labelledby="catalogo-titulo">

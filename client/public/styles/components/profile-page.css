@@ -9,7 +9,7 @@
   gap: var(--profile-head-gap);
   padding: var(--profile-head-padding);
   border: var(--border-width) solid var(--color-border);
-  border-inline-start: var(--focus-ring) solid var(--color-secondary);
+  border-inline-start: var(--profile-head-accent-width) solid var(--color-secondary);
   border-radius: var(--radius-lg);
   background: var(--color-surface-raised);
 }
@@ -54,14 +54,6 @@
 .profile-page__meta [data-display-name] {
   color: var(--color-text);
   font-weight: var(--font-weight-bold);
-}
-
-.profile-page .breadcrumb {
-  margin-bottom: var(--space-2);
-}
-
-.profile-page .breadcrumb__link {
-  min-width: var(--touch-target);
 }
 
 .profile-page__grid {

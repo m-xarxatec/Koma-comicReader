@@ -8,9 +8,15 @@
   font-size: var(--font-size-sm);
 }
 
+/* Migas pegadas a la cabecera de la página (perfil, E4). */
+.breadcrumb--compact {
+  margin-bottom: var(--space-2);
+}
+
 .breadcrumb__link {
   display: inline-flex;
   align-items: center;
+  min-width: var(--touch-target);
   min-height: var(--touch-target);
 }
 

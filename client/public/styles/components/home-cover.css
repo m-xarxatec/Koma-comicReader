@@ -1,0 +1,39 @@
+/* Portada con una inicial impresa de reserva (components/home-cover.ts), en las tarjetas de la portada y en el hero.
+   La portada real ocupa el mismo espacio y tapa la letra; si falta o su URL ya no responde, se ve la letra. */
+.home-cover {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-cover::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--home-cover-lines);
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-home-cover-letter);
+  font-weight: var(--font-weight-black);
+  font-style: italic;
+  line-height: var(--line-height-none);
+  content: attr(data-letter);
+}
+
+.home-cover--compact::before {
+  font-size: var(--font-size-home-cover-letter-compact);
+}
+
+.home-cover__image,
+.home-cover .comic-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-cover__image {
+  object-fit: contain;
+  background: var(--color-surface);
+}

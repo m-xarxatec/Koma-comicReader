@@ -220,7 +220,7 @@ Cada regla lleva un código RN para citarla en CLAUDE.md, en commits y en tests.
 
 - **RN-05 Aprobación:** las obras nacen en `pending`; los capítulos en `draft` y pasan a `pending` con "Enviar a revisión" (requiere al menos 1 imagen). Solo `approved` es público. Rechazar exige motivo. Editar datos de una obra aprobada no requiere reaprobación y queda en auditoría. Mientras un capítulo está en `draft`, el autor puede eliminar viñetas (borrado físico, porque nunca fueron públicas) y las posiciones se recompactan, y puede cambiar su orden; desde `pending`, el capítulo no se edita: se retira y se sube otro. El contenido importado (RN-18) nace `approved`.
 - **RN-06 Obra retirada:** deja de ser visible y su URL responde 410. Sus comentarios se conservan ocultos.
-- **RN-07 Autoría y licencia:** crear obra exige declaración de autoría y licencia. La ficha muestra "Autor" (`author_credit`, el creador original), "Publicado por" (usuario autor o "la plataforma" si es importada) y la licencia con su enlace (`license_url`).
+- **RN-07 Autoría y licencia:** crear obra exige declaración de autoría y licencia. La ficha muestra el autor (`author_credit`, el creador original; desde E4, «Por …» bajo el título), "Publicado por" (usuario autor o "la plataforma" si es importada) y la licencia con su enlace (`license_url`); desde E4 (18-nov, D23), estos dos últimos van en el desplegable «Publicación y licencia», cerrado al cargar.
 - **RN-08 Advertencias:** una obra con advertencia muestra un aviso antes del primer capítulo; la aceptación se recuerda por obra en `localStorage` (una vez por dispositivo, sin tabla).
 - **RN-09 URLs y viñetas:** slug de obra generado al crearla (minúsculas, sin acentos, sufijo `-2` si existe) e inmutable. Capítulo identificado por número; el que reemplaza a uno retirado o rechazado hereda número y URL. Viñeta = cada imagen, en orden. Enlace profundo: `/leer/:slug/:numero#v-:n`.
 - **RN-10 Subidas:** JPEG, PNG o WebP comprobados por firma del archivo. Máximo 5 MB por imagen y 60 por capítulo, subidas de una en una (multer en disco temporal, nunca en memoria). Claves de almacenamiento generadas por el servidor: `UUID.ext`.
@@ -1506,7 +1506,8 @@ El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude
 - **Antes de E2**, la IA de este repositorio corrige los seis bajos funcionales de `/admin` anotados en el bloque 4 (D8): el paginador («Página 3 de 2» al vaciarse la última página), los límites escritos a mano en el HTML, `type="email"` sin `noValidate`, «Filtrar» sin `data-needs-js`, «Aprobar» en obras +18 y la entidad en crudo en la auditoría.
 - **Antes de E3**, la IA de este repositorio pasa el estudio del autor al aviso flotante y al `<dialog>` de confirmación de `/admin`, en lugar de los mensajes por sección y de `confirm()` (D2), con el agente `frontend`.
 - **Mascota (D9):** la versión con fondo transparente pasa a WebP (`client/public/icons/koma-mascota-premium.webp`) para premium, y con ella se rehace `koma-og.png` con las mismas medidas, 1200 × 630 (el test de medidas sigue igual).
-- **Banner del hero (D6):** imagen temporal en `client/public/icons/koma-hero.webp`, pintada como fondo decorativo de `.hero__art` desde un token de `variables.css`, con `cover`. La definitiva sustituye el archivo con el mismo nombre, sin tocar código.
+- **Banner del hero (D6, cambiado por D22 el 18-nov):** imagen temporal en `client/public/icons/koma-hero.webp` (la mascota con fondo transparente, 640 px de alto), pintada como fondo decorativo de `.hero__art--banner` desde el token `--image-home-hero` de `variables.css`, con `contain` (es vertical: `cover` la recortaría). La definitiva sustituye el archivo con el mismo nombre, sin tocar código.
+- **Carrusel del hero (D22):** el hero rota entre las 2 obras más nuevas del catálogo (las 2 primeras de `GET /api/comics`, solo en la primera página sin filtros) y el banner de D6, en ese orden, cada 7 s. Sin cambios en el servidor ni en la API (las «más leídas» serían una función nueva). Sin JS, o sin obras, solo se ve el banner. Patrón de carrusel de la APG: botón de pausa, un botón por diapositiva, `aria-live="off"` mientras rota; se para con el ratón o el foco dentro, con la pestaña oculta y con `prefers-reduced-motion`. El h1 de la portada queda oculto visualmente fuera de las diapositivas. «Más para leer» (antes «Tendencias») sigue con las 4 obras siguientes. Lo construye la IA de este repositorio (cambia el flujo del TS).
 
 **Desvíos de la maqueta anotados (D4, D5):**
 
@@ -1515,6 +1516,10 @@ El diseño lo escribe Codex en un worktree aparte, un encargo cada vez (`.claude
 | Ficha | «En publicación» junto al número de capítulos | No se muestra | El modelo de datos no tiene ese dato |
 | Cabecera y navegación móvil | «Comunidad» y «Tutoriales» | Están desde el bloque 6 (D10, 16-nov) | Desvío revocado: las dos tienen página |
 | Pie | «Ayuda» | No está | No tiene página |
+| Portada | Hero fijo con eslogan, «Unirme a Koma» y la ilustración | Carrusel de 2 obras y el banner (D22) | Decisión del desarrollador (18-nov) |
+| Portada | Accesos rápidos tras el hero; «Tendencias» en carril; géneros en baldosas de 112 px con icono | Accesos rápidos al final; «Más para leer» en lista con miniatura; géneros en píldoras; inicial de reserva en las portadas | Diseño de E4 (Codex), aprobado por el desarrollador (D23) |
+| Perfil | Datos, Seguridad y Premium, en ese orden; correo como campo de solo lectura | Premium primero; cabecera en tarjeta; nombre y contraseña en desplegables; correo en la cabecera | Diseño de E4 (Codex), aprobado por el desarrollador (D23) |
+| Ficha | Créditos visibles bajo la sinopsis | Autor como «Por …» bajo el título; «Publicado por» y licencia en el desplegable «Publicación y licencia» | Diseño de E4 (Codex), aprobado por el desarrollador (D23) |
 
 Se recuperan de la maqueta: «Descubrir Premium» en «¿Cómo funciona la lectura?» de la ficha, enlazado a `/premium` (D4), y «Premium» en el pie (D5).
 
@@ -1582,6 +1587,8 @@ Excepción aprobada a "los datos de demostración solo viven en local": seis cue
 | D19 | Punto de abandono solo en local; el script no crea obras |
 | D20 | Una pasada al día antes de la demo, lanzada por el desarrollador |
 | D21 | Retirada: suspensión y eliminación de comentarios desde `/admin` |
+| D22 | Hero en carrusel: las 2 obras más nuevas y el banner de D6, con `contain` (18-nov) |
+| D23 | Los cambios visuales de los encargos de Codex los aprueba el desarrollador; la IA de este repositorio corrige solo lo funcional y de reglas y anota el desvío (18-nov) |
 
 D10 y D11 no se usaron.
 

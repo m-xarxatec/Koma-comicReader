@@ -29,7 +29,7 @@
   display: grid;
   place-items: center;
   background: var(--home-cover-lines), var(--gradient-home-cover-violet);
-  font: italic var(--font-weight-black) var(--font-size-giant) / var(--line-height-none) var(--home-cover-type);
+  font: italic var(--font-weight-black) var(--font-size-home-cover-letter) / var(--line-height-none) var(--font-serif);
   content: attr(data-letter);
 }
 
@@ -125,10 +125,6 @@
   grid-area: body;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-.work-detail__body .content-warning {
-  margin-block: 0 var(--space-4);
 }
 
 .work-detail__publication {
