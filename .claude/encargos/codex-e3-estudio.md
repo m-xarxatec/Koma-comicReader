@@ -100,9 +100,9 @@ Tu tarea es **solo el diseño del cliente** de `/autor`, el estudio del autor. Y
   - **los componentes compartidos:** `button.css`, `form.css`, `panel-card.css`, `status-badge.css`, `text-link.css`, `breadcrumb.css`, `site-header.css`, `site-footer.css` y `mobile-nav.css`. Si uno se queda corto, haz un modificador en tu componente o propónlo;
   - `server/` (tampoco sus tests: ninguno se modifica ni se borra), `layout.ts`, `docs/`, los tres `CLAUDE.md`, `.claude/`, `package.json` ni las dependencias.
 - **Git:**
-  - En este encargo te autorizo a hacer commits y `push` en `feat/e3-estudio`, y solo en esa rama. Es una excepción a «Git y GitHub los maneja solo el usuario» de `CLAUDE.md`.
+  - En este encargo te autorizo a hacer commits y `push` en `diseno-final`, y solo en esa rama. Es una excepción a «Git y GitHub los maneja solo el usuario» de `CLAUDE.md`.
   - Commits en español, con el formato de `CLAUDE.md` (`style(author): … (D2)`) y sin líneas de firma: ni `Co-Authored-By` ni ninguna otra.
-  - Nunca hagas merge, rebase ni `push --force`, no toques otras ramas y no abras un PR contra `main`, `develop` ni `diseno-final`. La integración la hago yo, después de revisar el diseño.
+  - Nunca hagas merge, rebase ni `push --force`, no toques otras ramas y no abras un PR contra `main` ni `develop`. La integración la hago yo, después de revisar el diseño.
   - Ningún commit incluye `.claude/`.
   - No leas, crees ni copies `.env`, `.env.online` ni `docs/credenciales.local.md`.
 
@@ -185,5 +185,5 @@ Ninguno se modifica. Si crees que uno te impide algo, para y explícamelo: la as
    - los tokens nuevos, con su valor;
    - lo que hay que mirar en el navegador, vista por vista;
    - qué se ve sin soporte de los efectos y con el movimiento reducido;
-   - los commits que has hecho en `feat/e3-estudio`;
+   - los commits que has hecho en `diseno-final`;
    - una entrada de bitácora propuesta, como texto, sin editar `docs/bitacora.md`.
