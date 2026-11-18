@@ -1,0 +1,33 @@
+/* Controles nativos. Solo gira el indicador, también al cerrar. */
+.studio-fold {
+  min-width: 0;
+  padding-inline: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition: border-color var(--duration-fast) var(--studio-ease);
+}
+.studio-fold[open] { border-color: var(--color-border-strong); padding-bottom: var(--space-3); }
+.studio-fold__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  list-style: none;
+}
+.studio-fold__toggle::-webkit-details-marker { display: none; }
+.studio-fold__toggle::after {
+  content: "›" / "";
+  font-size: var(--font-size-xl);
+  transition: transform var(--duration-fast) var(--studio-ease);
+}
+.studio-fold[open] > .studio-fold__toggle::after { transform: rotate(var(--studio-turn)); }
+.studio-fold__toggle:hover, .studio-fold__toggle:focus-visible { color: var(--color-highlight); }
+.studio-fold[open] > :not(summary) { margin-block-start: var(--space-3); }
+.studio-fold--preview { align-self: start; }
+.studio-fold--preview .chapter-editor__preview { padding: var(--space-2); }

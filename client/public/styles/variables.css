@@ -768,3 +768,30 @@
   --floating-notice-clearance: var(--admin-feedback-clearance);
   --floating-notice-error-border: var(--color-danger);
 }
+
+/* Carril editorial de /autor. La franja y el aviso comparten el hueco de la navegación. */
+:root {
+  --studio-ink: color-mix(in srgb, var(--color-secondary) 18%, var(--color-surface));
+  --studio-rose: color-mix(in srgb, var(--color-accent) 19%, var(--color-surface));
+  --studio-cover-light: radial-gradient(ellipse at top right, var(--studio-rose), transparent 65%);
+  --studio-paper: linear-gradient(115deg, var(--studio-ink), var(--color-surface) 62%);
+  --studio-rule: linear-gradient(90deg, var(--color-accent), var(--color-secondary), var(--color-highlight));
+  --studio-rule-height: var(--nav-indicator-height);
+  --studio-hero-space: clamp(1.25rem, 4vw, 3rem);
+  --studio-dock-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + var(--space-2));
+  --studio-dock-height: calc(var(--touch-target) + var(--space-4) + var(--border-width-strong));
+  --studio-notice-bottom: calc(var(--studio-dock-bottom) + var(--studio-dock-height) + var(--space-2));
+  --studio-menu-limit: 45dvh;
+  --studio-rail-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+  --studio-pair: repeat(2, minmax(0, 1fr));
+  --studio-full-row: 1 / -1;
+  --studio-ease: cubic-bezier(.2, .7, .25, 1);
+  --studio-duration: 220ms;
+  --studio-flex: 1;
+  --studio-press: .98;
+  --studio-travel: .35rem;
+  --studio-turn: 90deg;
+  --studio-state-tint: 12%;
+  --work-tile-state: var(--color-secondary);
+  --work-tile-wash: linear-gradient(120deg, color-mix(in srgb, currentColor var(--studio-state-tint), var(--color-surface)), var(--color-surface));
+}

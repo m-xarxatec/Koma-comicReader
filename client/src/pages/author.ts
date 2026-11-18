@@ -196,8 +196,24 @@ const notice = document.querySelector<HTMLElement>('[data-notice]');
 const notify = (message: string, error = false) => announce(notice, message, error);
 const dialogParts = confirmDialogParts();
 
+// Un fragmento puede señalar el propio bloque o un elemento dentro de varios desplegables.
+function reveal(target: Element | null): void {
+  for (let fold = target?.closest('details'); fold; fold = fold.parentElement?.closest('details')) {
+    fold.open = true;
+  }
+}
+
+function revealFragment(): void {
+  const target = document.getElementById(location.hash.slice(1));
+  if (!target || target.closest('[hidden]')) return;
+  reveal(target);
+  const fold = target.querySelector<HTMLDetailsElement>(':scope > .studio-fold--target, :scope > form > .studio-fold--target');
+  if (fold) fold.open = true;
+}
+
 function focusHeading(id: string): void {
   const heading = document.getElementById(id);
+  reveal(heading);
   heading?.focus();
   heading?.scrollIntoView({ block: 'start' });
 }
@@ -259,6 +275,13 @@ function chapterReadsList(work: AuthorWorkReadsDto): HTMLOListElement {
       counts.append(pair);
     }
     item.append(counts, abandonmentText(chapter.abandonment));
+    if (chapter.abandonment.readersWithData > 0) {
+      const completion = el('meter', 'reads-table__meter reads-table__meter--completion');
+      completion.max = 100;
+      completion.value = chapter.abandonment.reachedEndPct;
+      completion.setAttribute('aria-hidden', 'true');
+      item.append(completion);
+    }
     list.append(item);
   }
   return list;
@@ -332,6 +355,7 @@ function renderComments(comments: AuthorRecentCommentDto[]): void {
     return item;
   });
   commentsList.replaceChildren(...items);
+  byId('comentarios-recientes').classList.toggle('studio__comments--empty', items.length === 0);
   commentsMessage.textContent = items.length === 0 ? 'Todavía no hay comentarios en tus obras.' : '';
 }
 
@@ -346,6 +370,7 @@ async function reloadDashboard(): Promise<void> {
     byId('reads-scroll-hint').hidden = true;
     byId('reads-today').textContent = '';
     commentsList.replaceChildren();
+    byId('comentarios-recientes').classList.remove('studio__comments--empty');
     summaryMessage.textContent = message;
     readsMessage.textContent = message;
     commentsMessage.textContent = message;
@@ -358,7 +383,7 @@ async function reloadDashboard(): Promise<void> {
 
 function workTile(comic: AuthorComicDto): HTMLLIElement {
   const item = el('li');
-  const article = el('article', 'work-tile');
+  const article = el('article', `work-tile work-tile--${comic.status}`);
   const cover = el('div', 'work-tile__cover');
   cover.setAttribute('aria-hidden', 'true');
   if (comic.coverUrl) {
@@ -377,11 +402,15 @@ function workTile(comic: AuthorComicDto): HTMLLIElement {
   // Acciones según el estado, como la maqueta: la ficha si está publicada; si está en revisión o rechazada, sus
   // revisiones (el motivo). Siempre "Gestionar →" (capítulos, portada y retirada).
   const actions = el('div', 'work-tile__actions');
+  const options = el('details', 'studio-fold work-tile__options');
+  const toggle = el('summary', 'studio-fold__toggle', '⋯');
+  toggle.setAttribute('aria-label', `Más acciones de ${comic.title}`);
+  options.append(toggle);
   const action = (label: string, href: string, name: string, className = 'button button--outline') => {
     const link = el('a', className, label);
     link.href = href;
     link.setAttribute('aria-label', name);
-    actions.append(link);
+    (label === 'Gestionar →' ? actions : options).append(link);
   };
   if (comic.status === 'approved') action('Ver ficha', `/obra/${encodeURIComponent(comic.slug)}`, `Ver ficha de ${comic.title}`);
   // D10: la ficha de una obra en revisión solo la ven su autor y el admin.
@@ -390,6 +419,7 @@ function workTile(comic: AuthorComicDto): HTMLLIElement {
   if (comic.status !== 'rejected') action('+ Nuevo capítulo', newChapterUrl(comic.slug), `Nuevo capítulo de ${comic.title}`);
   action('Gestionar →', studioUrl(comic.slug), `Gestionar ${comic.title}`, 'text-link');
   if (comic.status === 'pending') action('Revisiones →', '#revisiones', `Revisiones de ${comic.title}`, 'text-link');
+  actions.append(options);
   body.append(top, el('h3', 'work-tile__title', comic.title), el('p', 'work-tile__tags', comic.tags.map((tag) => tag.name).join(' · ')), actions);
 
   article.append(cover, body);
@@ -669,6 +699,7 @@ comicCoverInput.addEventListener('change', async () => {
   const result = await uploadCover(comic.slug, file);
   comicCoverInput.disabled = false;
   comicCoverInput.value = '';
+  reveal(comicCoverInput);
   comicCoverInput.focus(); // se desactivó con el foco dentro: se le devuelve
   if (!result.ok) {
     notify(`No se pudo cambiar la portada. ${errorText(result)}`, true);
@@ -692,6 +723,7 @@ comicWithdraw.addEventListener('click', async () => {
   const result = await api.post<void>(`/api/comics/${encodeURIComponent(comic.slug)}/withdraw`);
   comicWithdraw.disabled = false;
   if (!result.ok) {
+    reveal(comicWithdraw);
     comicWithdraw.focus();
     notify(`No se pudo retirar la obra. ${errorText(result)}`, true);
     return;
@@ -951,6 +983,7 @@ function setBusy(busy: boolean): void {
   store.busy = busy;
   syncBusy();
   if (!busy && focusBeforeBusy?.isConnected && !focusBeforeBusy.matches(':disabled') && (document.activeElement === document.body || document.activeElement === null)) {
+    reveal(focusBeforeBusy);
     focusBeforeBusy.focus();
   }
   if (!busy) focusBeforeBusy = null;
@@ -1115,6 +1148,7 @@ const newComicLink = byId<HTMLAnchorElement>('new-comic-link');
 // "+ Nuevo capítulo" de la obra abierta).
 function focusNewChapter(): void {
   if (location.hash !== '#nuevo-capitulo' || newChapter.hidden || comicSection.hidden || comicBody.hidden) return;
+  reveal(chapterNumber);
   newChapter.scrollIntoView({ block: 'start' });
   chapterNumber.focus({ preventScroll: true });
 }
@@ -1131,6 +1165,7 @@ async function route(options: RouteOptions = {}): Promise<void> {
   newComicLink.hidden = creating;
   if (creating) {
     notify(''); // el aviso de una acción del estudio no se queda flotando sobre el formulario de nueva obra
+    revealFragment();
     if (options.focus) focusHeading('crear-obra-title');
     return;
   }
@@ -1161,6 +1196,7 @@ async function route(options: RouteOptions = {}): Promise<void> {
       await loadChapter(slug, number);
     }
   }
+  revealFragment();
   if (location.hash === '#nuevo-capitulo' && !showChapter) focusNewChapter();
   else if (options.focus) focusHeading(viewHeading({ creating: false, slug, showChapter }));
 }
@@ -1176,7 +1212,59 @@ window.addEventListener('popstate', () => {
     focusHeading(viewHeading({ creating: isNewComicView(), slug: currentSlug(), showChapter: !chapterSection.hidden }));
   });
 });
-window.addEventListener('hashchange', focusNewChapter);
+window.addEventListener('hashchange', () => {
+  revealFragment();
+  focusNewChapter();
+});
+
+const wide = matchMedia('(min-width: 64rem)');
+const rail = document.querySelector<HTMLDetailsElement>('.studio-rail__sections')!;
+const preview = document.querySelector<HTMLDetailsElement>('.studio-fold--preview')!;
+function adaptLayout(): void {
+  rail.open = wide.matches;
+  preview.open = wide.matches;
+}
+adaptLayout();
+wide.addEventListener('change', adaptLayout);
+
+// Los enlaces siguen navegando de forma nativa, incluso cuando se repite el fragmento.
+studioView.addEventListener('click', (event) => {
+  const link = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
+  if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  const menu = link.closest<HTMLDetailsElement>('.work-tile__options, .studio-rail__sections');
+  if (menu && (menu !== rail || !wide.matches)) menu.open = false;
+  if (link.pathname === location.pathname && link.search === location.search && link.hash) {
+    const target = document.getElementById(link.hash.slice(1));
+    reveal(target);
+    if (target && link.hash === location.hash) {
+      revealFragment();
+      focusNewChapter();
+    }
+    if (menu && target && target.id !== 'nuevo-capitulo') {
+      target.tabIndex = -1;
+      target.focus({ preventScroll: true });
+    }
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || dialogParts?.dialog.open) return;
+  const active = document.activeElement?.closest<HTMLDetailsElement>('details[open]');
+  const fold = active ?? (!wide.matches && rail.open ? rail : null);
+  if (!fold || (fold === rail && wide.matches)) return;
+  fold.open = false;
+  fold.querySelector('summary')?.focus();
+});
+
+// bindForm pinta también errores asíncronos. Revelar el primer campo inválido
+// cuando el navegador no ha podido enfocarlo dentro de un details cerrado.
+for (const form of [comicForm, chapterForm, editForm]) {
+  new MutationObserver(() => {
+    const field = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (!field?.closest('details:not([open])')) return;
+    reveal(field);
+    if (!form.querySelector('[role="alert"]:focus')) field.focus();
+  }).observe(form, { subtree: true, attributes: true, attributeFilter: ['aria-invalid'] });
+}
 // Si la URL ya acaba en #nuevo-capitulo, el enlace no lanza hashchange: el foco se lleva igual.
 comicNewChapter.addEventListener('click', () => queueMicrotask(focusNewChapter));
 
@@ -1193,6 +1281,8 @@ if (tagsResult.ok) {
 } else {
   tagChoices.textContent = `No se pudieron cargar las etiquetas. ${errorText(tagsResult)}`;
   editTagChoices.textContent = tagChoices.textContent;
+  reveal(tagChoices);
+  reveal(editTagChoices);
 }
 // La vista de nueva obra no depende de la lista de obras: se abre aunque esta no haya cargado.
 if (loaded || isNewComicView()) await route({ focus: isNewComicView() || location.hash === '#obra' || location.hash === '#capitulo' });

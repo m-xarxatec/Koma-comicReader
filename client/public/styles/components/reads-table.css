@@ -101,6 +101,9 @@
   white-space: normal;
 }
 
+.reads-table__meter--completion::-webkit-meter-optimum-value { background: var(--color-highlight); }
+.reads-table__meter--completion::-moz-meter-bar { background: var(--color-highlight); }
+
 /* Desde 64rem la tabla cabe entera: el aviso de desplazamiento sobra. */
 @media (min-width: 64rem) {
   .reads-table__hint {
