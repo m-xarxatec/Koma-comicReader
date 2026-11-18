@@ -18,15 +18,6 @@
   overflow-wrap: anywhere;
 }
 
-.reader-screen--end {
-  margin-block: var(--reader-end-margin);
-  padding: var(--reader-end-padding);
-  border: var(--border-width) solid var(--color-border);
-  border-top: var(--border-width-strong) solid var(--color-accent);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-}
-
 /* Bloque de otro componente (advertencia, anuncio) dentro de la pantalla: mezcla BEM. */
 .reader-screen__block {
   margin-block: var(--space-4);

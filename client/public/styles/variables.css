@@ -228,7 +228,7 @@
   --home-hero-title-gap: 0.85rem;
   --home-hero-description-width: 32rem;
   --home-hero-actions-gap: 1.45rem;
-  --home-hero-min-height: var(--space-12);
+  --home-hero-min-height: 175px; /* maqueta: .hero__art en móvil */
   --home-hero-min-height-medium: 280px;
   --home-hero-min-height-wide: 320px;
   --home-section-gap: clamp(1.7rem, 3vw, 2.4rem);
@@ -363,8 +363,6 @@
   --font-size-reader-screen-title: 1.5rem; /* h2 por defecto del navegador en la maqueta (1.5em) */
   --measure-reader-screen: 43ch;
   --reader-action-basis: 220px;
-  --reader-end-padding: var(--space-6) var(--space-4);
-  --reader-end-margin: var(--space-8);
   --line-height-reader-strip: 0; /* sin huecos entre las imágenes de la tira */
   --reader-panel-scroll-margin: 72px; /* #v-N por debajo de la barra fija */
   --line-height-reader-error: 1.4;
