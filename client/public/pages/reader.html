@@ -39,7 +39,10 @@
        capítulo y la advertencia (RN-08, D7); reader.ts pide el capítulo a la API, que decide qué se muestra. -->
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <header class="reader-topbar">
-    <a class="reader-topbar__back" href="/obra/{{slug}}"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow-left"/></svg> <span>Volver a la obra</span></a>
+    <div class="reader-topbar__context">
+      <a class="reader-topbar__back" href="/obra/{{slug}}"><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-arrow-left"/></svg> <span>Volver a la obra</span></a>
+      <span class="reader-topbar__chapter">Capítulo {{number}}</span>
+    </div>
     <a class="reader-topbar__brand" href="/"><img class="reader-topbar__logo" src="/icons/koma-logo.webp" alt="Koma, ir al inicio" width="155" height="53"></a>
     <button class="button button--outline reader-topbar__expand" id="reader-fullscreen" type="button" aria-pressed="false" hidden><svg class="icon" aria-hidden="true"><use href="/icons/sprite.svg#icon-expand"/></svg> <span class="reader-topbar__expand-label" id="reader-fullscreen-label">Pantalla completa</span></button>
   </header>

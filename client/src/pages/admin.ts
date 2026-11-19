@@ -194,6 +194,7 @@ async function run(
 // --- Listas con mensaje, tabla y paginación ---
 
 interface ListView {
+  request: number;
   message: HTMLElement | null;
   table: HTMLElement | null;
   rows: HTMLElement | null;
@@ -202,12 +203,20 @@ interface ListView {
 }
 
 const listView = (name: string): ListView => ({
+  request: 0,
   message: document.querySelector<HTMLElement>(`[data-message="${name}"]`),
   table: document.querySelector<HTMLElement>(`[data-table="${name}"]`),
   rows: document.querySelector<HTMLElement>(`[data-rows="${name}"]`),
   pager: document.querySelector<HTMLElement>(`[data-pager="${name}"]`),
   count: document.querySelector<HTMLElement>(`[data-count="${name}"]`),
 });
+
+// En pantallas amplias se ven también los controles secundarios desde la primera visita.
+if (matchMedia('(min-width: 40rem)').matches) {
+  for (const group of document.querySelectorAll<HTMLDetailsElement>('.admin-page__sections, .admin-page__filter-group')) {
+    group.open = true;
+  }
+}
 
 // La tabla (región desplazable con tabindex="0") si se ve; si no, el mensaje de la sección (tabindex="-1").
 function focusList(view: ListView): void {
@@ -275,12 +284,28 @@ function updatePager(view: ListView, state: Paged, page: PageDto, load: () => Pr
 function bindFilters(name: string, state: Paged, load: () => Promise<void>): void {
   const form = document.querySelector<HTMLFormElement>(`[data-filters="${name}"]`);
   if (!form) return;
+  const summary = document.querySelector<HTMLElement>(`[data-applied="${name}"]`);
   form.noValidate = true;
   for (const button of form.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const values: Record<string, string> = {};
     for (const [key, value] of new FormData(form)) if (typeof value === 'string') values[key] = value.trim();
+    const labels: string[] = [];
+    for (const [key, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(key);
+      if (!value || !(field instanceof HTMLInputElement || field instanceof HTMLSelectElement)) continue;
+      const text = field instanceof HTMLSelectElement ? field.selectedOptions[0]?.textContent : value;
+      labels.push(`${field.labels?.[0]?.textContent ?? key}: ${text ?? value}`);
+    }
+    if (summary) summary.textContent = labels.join(' · ') || 'Sin filtros';
+    const section = form.closest('section');
+    const message = section?.querySelector<HTMLElement>('[data-message]');
+    const table = section?.querySelector<HTMLElement>('[data-table]');
+    const pager = section?.querySelector<HTMLElement>('[data-pager]');
+    if (message) message.textContent = 'Buscando resultados…';
+    if (table) table.hidden = true;
+    if (pager) pager.hidden = true;
     state.filters = values;
     state.page = 1;
     void load();
@@ -341,14 +366,19 @@ async function loadReview(): Promise<void> {
   const result = await getReviewQueue();
   if (!result.ok) {
     if (pendingTotal) pendingTotal.textContent = '—';
-    if (pendingNote) pendingNote.textContent = '';
+    if (pendingNote) pendingNote.textContent = 'No se pudo consultar la cola.';
     showError(reviewView, result.error);
     return;
   }
   const { items, counts } = result.data;
   const total = counts.comics + counts.chapters;
-  if (pendingTotal) pendingTotal.textContent = String(total);
-  if (pendingNote) pendingNote.textContent = `${counts.chapters} capítulos · ${counts.comics} obras`;
+  if (pendingTotal) {
+    const changed = pendingTotal.textContent !== '—' && pendingTotal.textContent !== String(total);
+    pendingTotal.replaceChildren(el('span', changed ? 'admin-page__count-change' : '', String(total)));
+  }
+  if (pendingNote) pendingNote.textContent = total === 0
+    ? 'Todo revisado en obras y capítulos.'
+    : `${counts.comics} ${counts.comics === 1 ? 'obra' : 'obras'} · ${counts.chapters} ${counts.chapters === 1 ? 'capítulo' : 'capítulos'}`;
   if (pendingBadge) pendingBadge.textContent = total > 0 ? `${total} ${total === 1 ? 'pendiente' : 'pendientes'}` : '';
   showRows(reviewView, items.map(reviewRow), 'No hay nada pendiente de revisión.', total);
 }
@@ -425,7 +455,9 @@ function illustrationRow(illustration: AdminIllustrationDto): HTMLTableRowElemen
 
 async function loadIllustrations(): Promise<void> {
   if (illustrationsView.count) illustrationsView.count.textContent = '';
+  const request = ++illustrationsView.request;
   const result = await listIllustrations({ ...illustrationsState.filters, page: illustrationsState.page });
+  if (request !== illustrationsView.request) return;
   if (!result.ok) {
     showError(illustrationsView, result.error);
     return;
@@ -482,7 +514,9 @@ function commentRow(comment: AdminCommentDto): HTMLTableRowElement {
 
 async function loadComments(): Promise<void> {
   if (commentsView.count) commentsView.count.textContent = '';
+  const request = ++commentsView.request;
   const result = await listComments({ ...commentsState.filters, page: commentsState.page });
+  if (request !== commentsView.request) return;
   if (!result.ok) {
     showError(commentsView, result.error);
     return;
@@ -544,7 +578,9 @@ function userRow(user: AdminUserDto): HTMLTableRowElement {
 
 async function loadUsers(): Promise<void> {
   if (usersView.count) usersView.count.textContent = '';
+  const request = ++usersView.request;
   const result = await listUsers({ ...usersState.filters, page: usersState.page });
+  if (request !== usersView.request) return;
   if (!result.ok) {
     showError(usersView, result.error);
     return;
@@ -642,7 +678,9 @@ function auditRow(entry: AuditEntryDto): HTMLTableRowElement {
 
 async function loadAudit(): Promise<void> {
   if (auditView.count) auditView.count.textContent = '';
+  const request = ++auditView.request;
   const result = await searchAudit({ ...auditState.filters, page: auditState.page });
+  if (request !== auditView.request) return;
   if (!result.ok) {
     // Un filtro no válido (400) llega con sus fields: se muestran todos en el mensaje.
     const fields = Object.values(result.error.fields ?? {});

@@ -404,7 +404,11 @@ function commentButton(position: number): HTMLButtonElement {
   count.setAttribute('aria-hidden', 'true'); // el número ya va en el aria-label
   button.append(icon, count);
   syncCommentButton(button, position, store.comments.get(position) ?? 0);
-  button.addEventListener('click', () => commentPanel?.open(position, store.comments.get(position) ?? 0));
+  button.addEventListener('click', () => {
+    // También con puntero: el diálogo nativo devolverá el foco a esta viñeta al cerrarse.
+    button.focus({ preventScroll: true });
+    commentPanel?.open(position, store.comments.get(position) ?? 0);
+  });
   return button;
 }
 

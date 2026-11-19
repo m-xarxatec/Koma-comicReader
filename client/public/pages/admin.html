@@ -36,7 +36,7 @@
        pasa a «Comentarios · 7 días», D1), la sección «Estadísticas» (CU-39), la cola solo con lo pendiente,
        comentarios recientes sin reportes, solo los tres parámetros de RN-16 y la auditoría con los filtros de CU-40.
        El aviso de demostración cambia de texto (los pagos sí son de Stripe en modo prueba). -->
-  <main id="contenido" class="author-page container">
+  <main id="contenido" class="author-page admin-page container">
     <nav class="breadcrumb" aria-label="Ruta de navegación">
       <a class="breadcrumb__link" href="/">Inicio</a>
       <span class="breadcrumb__separator" aria-hidden="true">/</span>
@@ -47,129 +47,35 @@
       <div>
         <p class="eyebrow author-page__eyebrow">Koma / Gestión interna</p>
         <h1 class="author-page__title">Panel de administración</h1>
-        <p class="author-page__subtitle">Moderación, usuarios y actividad de la plataforma. Cada acción queda en la auditoría.</p>
       </div>
+      <a class="text-link" href="#estadisticas">Estadísticas</a>
     </div>
-
-    <p class="form__notice author-page__notice"><strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba</p>
 
     <noscript>
       <p class="form__notice author-page__notice">El panel de administración necesita JavaScript.</p>
     </noscript>
 
-    <nav class="author-page__nav" aria-label="Secciones del panel">
-      <a class="author-page__nav-link" href="#estadisticas">Estadísticas</a>
-      <a class="author-page__nav-link" href="#aprobaciones">Aprobaciones</a>
-      <a class="author-page__nav-link" href="#ilustraciones">Ilustraciones</a>
-      <a class="author-page__nav-link" href="#comentarios">Comentarios</a>
-      <a class="author-page__nav-link" href="#usuarios">Usuarios</a>
-      <a class="author-page__nav-link" href="#parametros">Parámetros</a>
-      <a class="author-page__nav-link" href="#auditoria">Auditoría</a>
-    </nav>
-
     <!-- Métricas de la maqueta (bloque 5, D1–D3): cada etiqueta lleva su periodo. Las tres últimas, de /api/admin/stats. -->
     <p class="admin-stats__report">Koma · Informe de la plataforma · <span data-stats-date></span></p>
-    <section class="admin-stats__metrics" aria-label="Indicadores del panel">
-      <div class="author-page__metric">
+    <section class="admin-stats__metrics admin-stats__metrics--priority" aria-label="Revisión de obras y capítulos">
+      <div class="author-page__metric admin-page__priority">
         <span class="author-page__metric-label">Revisión pendiente</span>
         <strong class="author-page__metric-value" data-pending-total>—</strong>
-        <span class="author-page__muted" data-pending-note></span>
-      </div>
-      <div class="author-page__metric">
-        <span class="author-page__metric-label">Comentarios · 7 días</span>
-        <strong class="author-page__metric-value" data-stat="comments.last7">—</strong>
-        <span class="author-page__muted" data-moderated-note></span>
-      </div>
-      <div class="author-page__metric">
-        <span class="author-page__metric-label">Usuarios activos · 30 días</span>
-        <strong class="author-page__metric-value" data-stat="users.activeLast30">—</strong>
-        <span class="author-page__muted">Con alguna lectura</span>
-      </div>
-      <div class="author-page__metric">
-        <span class="author-page__metric-label">Eventos recientes</span>
-        <strong class="author-page__metric-value" data-stat="auditLast24h">—</strong>
-        <span class="author-page__muted">En las últimas 24 h</span>
+        <span class="author-page__muted" data-pending-note>Consultando obras y capítulos…</span>
+        <a class="button button--primary admin-page__queue-link" href="#aprobaciones">Ir a la cola</a>
       </div>
     </section>
 
-    <!-- CU-39 · RN-20. Solo agregados, sin datos personales. La vista de impresión (admin-stats.css, @media print) saca
-         solo esta sección y las métricas, con la cabecera de informe (D10). -->
-    <section id="estadisticas" class="author-page__section admin-stats" aria-labelledby="estadisticas-title">
-      <div class="author-page__heading">
-        <div>
-          <p class="eyebrow author-page__heading-eyebrow">Plataforma</p>
-          <h2 class="author-page__heading-title" id="estadisticas-title">Estadísticas</h2>
-          <p class="author-page__muted">Cifras de toda la plataforma, sin datos personales. Los días son de la hora de Madrid, con hoy incluido.</p>
-        </div>
-        <button class="button button--outline admin-stats__print" type="button" disabled aria-describedby="stats-message" data-print-stats>Imprimir o guardar como PDF</button>
-      </div>
-      <p class="author-page__message" id="stats-message" data-message="stats" role="status" tabindex="-1">Cargando las estadísticas…</p>
-      <div class="admin-stats__grid" data-stats hidden>
-        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-users-caption" tabindex="0">
-          <table class="chapter-table">
-            <caption class="chapter-table__caption" id="stats-users-caption">Cuentas, a día de hoy</caption>
-            <thead><tr>
-              <th class="chapter-table__head" scope="col">Tipo</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">Cuentas</th>
-            </tr></thead>
-            <tbody>
-              <tr><th class="chapter-table__cell" scope="row">Lectores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.readers">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Autores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.authors">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Administradores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.admins">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Suspendidas</th><td class="chapter-table__cell admin-stats__number" data-stat="users.suspended">—</td></tr>
-              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="users.total">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-activity-caption" tabindex="0">
-          <table class="chapter-table">
-            <caption class="chapter-table__caption" id="stats-activity-caption">Actividad y catálogo</caption>
-            <thead><tr>
-              <th class="chapter-table__head" scope="col">Indicador</th>
-              <th class="chapter-table__head" scope="col">Periodo</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">Valor</th>
-            </tr></thead>
-            <tbody>
-              <tr><th class="chapter-table__cell" scope="row">Premium activos</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="users.premium">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Usuarios activos</th><td class="chapter-table__cell">30 días</td><td class="chapter-table__cell admin-stats__number" data-stat="users.activeLast30">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Comentarios</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.last7">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Comentarios moderados</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.moderatedLast7">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Eventos de la auditoría</th><td class="chapter-table__cell">24 h</td><td class="chapter-table__cell admin-stats__number" data-stat="auditLast24h">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Obras publicadas</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.comics">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Capítulos publicados</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.chapters">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-reads-caption" tabindex="0">
-          <table class="chapter-table">
-            <caption class="chapter-table__caption" id="stats-reads-caption">Lecturas</caption>
-            <thead><tr>
-              <th class="chapter-table__head" scope="col">Lectores</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
-            </tr></thead>
-            <tbody>
-              <tr><th class="chapter-table__cell" scope="row">Invitados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last30">—</td></tr>
-              <tr><th class="chapter-table__cell" scope="row">Registrados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last30">—</td></tr>
-              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last30">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-top-caption" tabindex="0">
-          <table class="chapter-table">
-            <caption class="chapter-table__caption" id="stats-top-caption">Obras más leídas (por lecturas de 30 días)</caption>
-            <thead><tr>
-              <th class="chapter-table__head" scope="col">Obra</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
-              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
-            </tr></thead>
-            <tbody data-rows="top-comics"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+    <details class="admin-page__sections">
+      <summary class="admin-page__toggle">Más secciones del panel</summary>
+      <nav class="author-page__nav" aria-label="Secciones del panel">
+        <a class="author-page__nav-link" href="#ilustraciones">Ilustraciones</a>
+        <a class="author-page__nav-link" href="#comentarios">Comentarios</a>
+        <a class="author-page__nav-link" href="#usuarios">Usuarios</a>
+        <a class="author-page__nav-link" href="#parametros">Parámetros</a>
+        <a class="author-page__nav-link" href="#auditoria">Auditoría</a>
+      </nav>
+    </details>
 
     <!-- CU-32 · RN-05, RN-17 -->
     <section id="aprobaciones" class="author-page__section" aria-labelledby="aprobaciones-title">
@@ -186,7 +92,8 @@
           <p class="admin-data-panel__count" data-count="review"></p>
         </div>
         <p class="author-page__message admin-data-panel__message" data-message="review" role="status" tabindex="-1">Cargando la cola…</p>
-        <div class="chapter-table__scroll" role="region" aria-labelledby="review-caption" tabindex="0" data-table="review" hidden>
+        <p class="admin-page__table-hint" id="review-scroll-hint">Desplaza la tabla hacia la derecha para ver los avisos y las acciones.</p>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="review-caption" aria-describedby="review-scroll-hint" tabindex="0" data-table="review" hidden>
           <table class="chapter-table">
             <caption class="chapter-table__caption" id="review-caption">Envíos pendientes</caption>
             <thead><tr>
@@ -213,16 +120,20 @@
       </div>
       <div class="admin-data-panel">
         <div class="admin-data-panel__toolbar">
-          <form class="admin-page__filters" data-filters="illustrations" aria-label="Filtrar ilustraciones">
-            <div class="form__field">
-              <label class="form__label" for="illustrations-status">Estado</label>
-              <select class="form__input" id="illustrations-status" name="status">
-                <option value="pending" selected>Pendientes</option>
-                <option value="approved">Publicadas</option>
-              </select>
-            </div>
-            <button class="button button--outline" type="submit" disabled data-needs-js>Mostrar</button>
-          </form>
+          <details class="admin-page__filter-group">
+            <summary class="admin-page__toggle">Filtros</summary>
+            <form class="admin-page__filters" data-filters="illustrations" aria-label="Filtrar ilustraciones">
+              <div class="form__field">
+                <label class="form__label" for="illustrations-status">Estado</label>
+                <select class="form__input" id="illustrations-status" name="status">
+                  <option value="pending" selected>Pendientes</option>
+                  <option value="approved">Publicadas</option>
+                </select>
+              </div>
+              <button class="button button--outline" type="submit" disabled data-needs-js>Mostrar</button>
+            </form>
+          </details>
+          <p class="admin-page__applied" data-applied="illustrations">Estado: Pendientes</p>
           <p class="admin-data-panel__count" data-count="illustrations"></p>
         </div>
         <p class="author-page__message admin-data-panel__message" data-message="illustrations" role="status" tabindex="-1">Cargando ilustraciones…</p>
@@ -258,21 +169,25 @@
       </div>
       <div class="admin-data-panel">
         <div class="admin-data-panel__toolbar">
-          <form class="admin-page__filters" data-filters="comments" role="search" aria-label="Buscar comentarios">
-            <div class="form__field">
-              <label class="form__label" for="comments-q">Buscar</label>
-              <input class="form__input" id="comments-q" name="q" type="search" maxlength="100" placeholder="Texto o usuario">
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="comments-status">Estado</label>
-              <select class="form__input" id="comments-status" name="status">
-                <option value="">Todos</option>
-                <option value="visible">Visibles</option>
-                <option value="hidden">Ocultos</option>
-              </select>
-            </div>
-            <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
-          </form>
+          <details class="admin-page__filter-group">
+            <summary class="admin-page__toggle">Filtros</summary>
+            <form class="admin-page__filters" data-filters="comments" role="search" aria-label="Buscar comentarios">
+              <div class="form__field">
+                <label class="form__label" for="comments-q">Buscar</label>
+                <input class="form__input" id="comments-q" name="q" type="search" maxlength="100" placeholder="Texto o usuario">
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="comments-status">Estado</label>
+                <select class="form__input" id="comments-status" name="status">
+                  <option value="">Todos</option>
+                  <option value="visible">Visibles</option>
+                  <option value="hidden">Ocultos</option>
+                </select>
+              </div>
+              <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
+            </form>
+          </details>
+          <p class="admin-page__applied" data-applied="comments">Sin filtros</p>
           <p class="admin-data-panel__count" data-count="comments"></p>
         </div>
         <p class="author-page__message admin-data-panel__message" data-message="comments" role="status" tabindex="-1">Cargando comentarios…</p>
@@ -308,30 +223,34 @@
       </div>
       <div class="admin-data-panel">
         <div class="admin-data-panel__toolbar">
-          <form class="admin-page__filters" data-filters="users" role="search" aria-label="Buscar usuarios">
-            <div class="form__field">
-              <label class="form__label" for="users-q">Buscar</label>
-              <input class="form__input" id="users-q" name="q" type="search" maxlength="100" placeholder="Nombre o correo">
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="users-role">Rol</label>
-              <select class="form__input" id="users-role" name="role">
-                <option value="">Todos</option>
-                <option value="user">Lector</option>
-                <option value="author">Autor</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="users-status">Estado</label>
-              <select class="form__input" id="users-status" name="status">
-                <option value="">Todos</option>
-                <option value="active">Activos</option>
-                <option value="suspended">Suspendidos</option>
-              </select>
-            </div>
-            <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
-          </form>
+          <details class="admin-page__filter-group">
+            <summary class="admin-page__toggle">Filtros</summary>
+            <form class="admin-page__filters" data-filters="users" role="search" aria-label="Buscar usuarios">
+              <div class="form__field">
+                <label class="form__label" for="users-q">Buscar</label>
+                <input class="form__input" id="users-q" name="q" type="search" maxlength="100" placeholder="Nombre o correo">
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="users-role">Rol</label>
+                <select class="form__input" id="users-role" name="role">
+                  <option value="">Todos</option>
+                  <option value="user">Lector</option>
+                  <option value="author">Autor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="users-status">Estado</label>
+                <select class="form__input" id="users-status" name="status">
+                  <option value="">Todos</option>
+                  <option value="active">Activos</option>
+                  <option value="suspended">Suspendidos</option>
+                </select>
+              </div>
+              <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
+            </form>
+          </details>
+          <p class="admin-page__applied" data-applied="users">Sin filtros</p>
           <p class="admin-data-panel__count" data-count="users"></p>
         </div>
         <p class="author-page__message admin-data-panel__message" data-message="users" role="status" tabindex="-1">Cargando usuarios…</p>
@@ -413,33 +332,37 @@
       </div>
       <div class="admin-data-panel">
         <div class="admin-data-panel__toolbar">
-          <form class="admin-page__filters" data-filters="audit" role="search" aria-label="Filtrar la auditoría">
-            <div class="form__field">
-              <label class="form__label" for="audit-actor">Actor (correo)</label>
-              <input class="form__input" id="audit-actor" name="actor" type="email" autocomplete="off" maxlength="254" placeholder="admin@demo.test">
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="audit-action">Acción</label>
-              <select class="form__input" id="audit-action" name="action"><option value="">Todas</option></select>
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="audit-entity">Entidad</label>
-              <select class="form__input" id="audit-entity" name="entityType"><option value="">Todas</option></select>
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="audit-entity-id">Id de la entidad</label>
-              <input class="form__input" id="audit-entity-id" name="entityId" type="text" maxlength="40" inputmode="numeric">
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="audit-from">Desde</label>
-              <input class="form__input" id="audit-from" name="from" type="date">
-            </div>
-            <div class="form__field">
-              <label class="form__label" for="audit-to">Hasta</label>
-              <input class="form__input" id="audit-to" name="to" type="date">
-            </div>
-            <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
-          </form>
+          <details class="admin-page__filter-group">
+            <summary class="admin-page__toggle">Filtros</summary>
+            <form class="admin-page__filters" data-filters="audit" role="search" aria-label="Filtrar la auditoría">
+              <div class="form__field">
+                <label class="form__label" for="audit-actor">Actor (correo)</label>
+                <input class="form__input" id="audit-actor" name="actor" type="email" autocomplete="off" maxlength="254" placeholder="admin@demo.test">
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="audit-action">Acción</label>
+                <select class="form__input" id="audit-action" name="action"><option value="">Todas</option></select>
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="audit-entity">Entidad</label>
+                <select class="form__input" id="audit-entity" name="entityType"><option value="">Todas</option></select>
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="audit-entity-id">Id de la entidad</label>
+                <input class="form__input" id="audit-entity-id" name="entityId" type="text" maxlength="40" inputmode="numeric">
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="audit-from">Desde</label>
+                <input class="form__input" id="audit-from" name="from" type="date">
+              </div>
+              <div class="form__field">
+                <label class="form__label" for="audit-to">Hasta</label>
+                <input class="form__input" id="audit-to" name="to" type="date">
+              </div>
+              <button class="button button--outline" type="submit" disabled data-needs-js>Filtrar</button>
+            </form>
+          </details>
+          <p class="admin-page__applied" data-applied="audit">Sin filtros</p>
           <p class="admin-data-panel__count" data-count="audit"></p>
         </div>
         <p class="author-page__message admin-data-panel__message" data-message="audit" role="status" tabindex="-1">Cargando la auditoría…</p>
@@ -462,6 +385,104 @@
           <span class="author-page__muted" data-page="label"></span>
           <button class="button button--outline" type="button" data-page="next">Siguiente</button>
         </nav>
+      </div>
+    </section>
+
+    <p class="form__notice author-page__notice"><strong>Plataforma de demostración:</strong> los pagos son de Stripe en modo prueba</p>
+
+    <!-- CU-39 · RN-20. Solo agregados, sin datos personales. La vista de impresión (admin-stats.css, @media print) saca
+         solo esta sección y las métricas, con la cabecera de informe (D10). -->
+    <section id="estadisticas" class="author-page__section admin-stats" aria-labelledby="estadisticas-title">
+      <div class="author-page__heading">
+        <div>
+          <p class="eyebrow author-page__heading-eyebrow">Plataforma</p>
+          <h2 class="author-page__heading-title" id="estadisticas-title">Estadísticas</h2>
+          <p class="author-page__muted">Cifras de toda la plataforma, sin datos personales. Los días son de la hora de Madrid, con hoy incluido.</p>
+        </div>
+        <button class="button button--outline admin-stats__print" type="button" disabled aria-describedby="stats-message" data-print-stats>Imprimir o guardar como PDF</button>
+      </div>
+      <div class="admin-stats__metrics admin-stats__metrics--activity">
+        <div class="author-page__metric">
+          <span class="author-page__metric-label">Comentarios · 7 días</span>
+          <strong class="author-page__metric-value" data-stat="comments.last7">—</strong>
+          <span class="author-page__muted" data-moderated-note></span>
+        </div>
+        <div class="author-page__metric">
+          <span class="author-page__metric-label">Usuarios activos · 30 días</span>
+          <strong class="author-page__metric-value" data-stat="users.activeLast30">—</strong>
+          <span class="author-page__muted">Con alguna lectura</span>
+        </div>
+        <div class="author-page__metric">
+          <span class="author-page__metric-label">Eventos recientes</span>
+          <strong class="author-page__metric-value" data-stat="auditLast24h">—</strong>
+          <span class="author-page__muted">En las últimas 24 h</span>
+        </div>
+      </div>
+      <p class="author-page__message" id="stats-message" data-message="stats" role="status" tabindex="-1">Cargando las estadísticas…</p>
+      <div class="admin-stats__grid" data-stats hidden>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-users-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-users-caption">Cuentas, a día de hoy</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Tipo</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Cuentas</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Lectores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.readers">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Autores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.authors">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Administradores activos</th><td class="chapter-table__cell admin-stats__number" data-stat="users.admins">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Suspendidas</th><td class="chapter-table__cell admin-stats__number" data-stat="users.suspended">—</td></tr>
+              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="users.total">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-activity-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-activity-caption">Actividad y catálogo</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Indicador</th>
+              <th class="chapter-table__head" scope="col">Periodo</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Valor</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Premium activos</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="users.premium">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Usuarios activos</th><td class="chapter-table__cell">30 días</td><td class="chapter-table__cell admin-stats__number" data-stat="users.activeLast30">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Comentarios</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.last7">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Comentarios moderados</th><td class="chapter-table__cell">7 días</td><td class="chapter-table__cell admin-stats__number" data-stat="comments.moderatedLast7">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Eventos de la auditoría</th><td class="chapter-table__cell">24 h</td><td class="chapter-table__cell admin-stats__number" data-stat="auditLast24h">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Obras publicadas</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.comics">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Capítulos publicados</th><td class="chapter-table__cell">Hoy</td><td class="chapter-table__cell admin-stats__number" data-stat="catalog.chapters">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-reads-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-reads-caption">Lecturas</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Lectores</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
+            </tr></thead>
+            <tbody>
+              <tr><th class="chapter-table__cell" scope="row">Invitados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.guests.last30">—</td></tr>
+              <tr><th class="chapter-table__cell" scope="row">Registrados</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.users.last30">—</td></tr>
+              <tr class="admin-stats__total"><th class="chapter-table__cell" scope="row">Total</th><td class="chapter-table__cell admin-stats__number" data-stat="reads.total">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last7">—</td><td class="chapter-table__cell admin-stats__number" data-stat="reads.last30">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chapter-table__scroll" role="region" aria-labelledby="stats-top-caption" tabindex="0">
+          <table class="chapter-table">
+            <caption class="chapter-table__caption" id="stats-top-caption">Obras más leídas (por lecturas de 30 días)</caption>
+            <thead><tr>
+              <th class="chapter-table__head" scope="col">Obra</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">30 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">7 días</th>
+              <th class="chapter-table__head admin-stats__number" scope="col">Total</th>
+            </tr></thead>
+            <tbody data-rows="top-comics"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 

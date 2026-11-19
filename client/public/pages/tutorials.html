@@ -39,6 +39,11 @@
       <p class="tutorials__status">Para ver los tutoriales necesitas activar JavaScript en tu navegador.</p>
     </noscript>
     <ul class="tutorials__list" data-tutorials-list hidden></ul>
+    <section class="tutorial-viewer" id="tutorial-viewer" popover aria-labelledby="tutorial-viewer-title">
+      <button class="button button--outline tutorial-viewer__close" type="button" popovertarget="tutorial-viewer" popovertargetaction="hide" aria-label="Cerrar tutorial" autofocus>×</button>
+      <div class="tutorial-viewer__frame"></div>
+      <h2 class="tutorial-viewer__title" id="tutorial-viewer-title"></h2>
+    </section>
   </main>
   <!-- @footer -->
   <script type="module" src="/js/pages/tutorials.js"></script>

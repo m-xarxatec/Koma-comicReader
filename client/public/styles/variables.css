@@ -419,6 +419,10 @@
   --tutorials-card-gap: var(--space-3);
   --tutorials-card-padding: var(--space-4);
   --tutorials-player-ratio: 16 / 9;
+  --tutorials-viewer-width: 60rem;
+  --tutorials-viewer-video-height: 65dvh;
+  --tutorials-viewer-halo: 0 0 var(--space-2) color-mix(in srgb, var(--color-highlight) 35%, transparent), 0 0 var(--space-6) color-mix(in srgb, var(--color-secondary) 32%, transparent), var(--shadow-panel);
+  --tutorials-viewer-start-scale: .98;
 }
 
 /* Comunidad (/comunidad, bloque 6): tablero de ilustraciones en columnas, filtro por etiqueta, «Mis ilustraciones»,
@@ -739,6 +743,7 @@
   --admin-data-toolbar-padding-medium: 1rem;
   --admin-data-message-padding: 1rem;
   --admin-count-min-width: 75px;
+  --admin-count-duration: 800ms;
   --admin-count-font-size: 0.78rem;
   --admin-count-margin: var(--space-3); /* maqueta .table-count: alineado con el pie de los campos */
   --admin-notes-gap: var(--space-4);
