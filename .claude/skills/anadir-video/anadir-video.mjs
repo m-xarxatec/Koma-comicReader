@@ -5,14 +5,20 @@
 //
 // De cada enlace saca el id, pide a YouTube el título (oEmbed, que además confirma que el vídeo existe y se puede
 // incrustar) y la descripción (el primer párrafo de la del vídeo, sin enlaces, recortada), y añade la entrada al
-// final de TUTORIALS en server/src/config/tutorials.ts. Un vídeo que ya está en la lista se omite. Node sin
-// dependencias. A YouTube solo se le envía el id del vídeo.
+// final de TUTORIALS en server/src/config/tutorials.ts. También guarda su portada, la miniatura de YouTube en WebP
+// de 640 × 360 (client/public/icons/tutorials/<id>.webp, que pinta /tutoriales), con ffmpeg: un vídeo sin portada
+// no se añade. Un vídeo que ya está en la lista se omite. Node sin dependencias. A YouTube solo se le envía el id.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..', '..', '..');
 const LIST_FILE = path.join(ROOT, 'server', 'src', 'config', 'tutorials.ts');
+const COVERS_DIR = path.join(ROOT, 'client', 'public', 'icons', 'tutorials');
+const COVER_WIDTH = 640;
+const COVER_HEIGHT = 360;
 const ID = /^[A-Za-z0-9_-]{11}$/; // el mismo patrón que YOUTUBE_ID_PATTERN
 const DESCRIPTION_MAX = 200; // puntos de código, «…» incluido
 const TIMEOUT_MS = 20_000;
@@ -87,6 +93,40 @@ async function fetchVideo(id) {
   return { id, title: title.replace(/\s+/g, ' ').trim(), description, author: typeof author === 'string' ? author : '' };
 }
 
+// Portada de un vídeo: dónde se guarda, de dónde se baja (la primera miniatura que exista, de mayor a menor) y cómo
+// se convierte (recorte centrado a 16:9, que quita las bandas negras de sddefault y hqdefault, y WebP).
+export const coverFile = (id) => path.join(COVERS_DIR, `${id}.webp`);
+export const thumbnailUrls = (id) =>
+  ['maxresdefault', 'sddefault', 'hqdefault'].map((name) => `https://i.ytimg.com/vi/${id}/${name}.jpg`);
+export const coverFfmpegArgs = (input, output) => [
+  '-y', '-loglevel', 'error', '-i', input,
+  '-vf', `scale=${COVER_WIDTH}:${COVER_HEIGHT}:force_original_aspect_ratio=increase,crop=${COVER_WIDTH}:${COVER_HEIGHT}`,
+  '-frames:v', '1', '-c:v', 'libwebp', '-quality', '82', output,
+];
+
+// Baja la miniatura y escribe la portada. Lanza un error con el motivo si no puede.
+async function saveCover(id) {
+  let image = null;
+  for (const url of thumbnailUrls(id)) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (res.ok) {
+      image = Buffer.from(await res.arrayBuffer());
+      break;
+    }
+  }
+  if (!image) throw new Error('YouTube no da ninguna miniatura para la portada');
+  const work = mkdtempSync(path.join(tmpdir(), 'koma-portada-'));
+  try {
+    const input = path.join(work, `${id}.jpg`);
+    writeFileSync(input, image);
+    const run = spawnSync('ffmpeg', coverFfmpegArgs(input, coverFile(id)), { encoding: 'utf8' });
+    if (run.error) throw new Error('hace falta ffmpeg para la portada (no está instalado)');
+    if (run.status !== 0) throw new Error(`ffmpeg no pudo crear la portada: ${run.stderr.trim()}`);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+}
+
 // Literal de TypeScript con comillas simples.
 const literal = (text) => `'${text.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
@@ -131,8 +171,10 @@ async function main() {
     }
     try {
       const video = await fetchVideo(id);
+      if (!dryRun) await saveCover(id);
       added.push(video);
-      console.log(`✔ ${id}\n    título:      ${video.title}\n    descripción: ${video.description}\n    canal:       ${video.author}`);
+      const cover = dryRun ? '(--dry-run: no se guarda)' : path.relative(ROOT, coverFile(id));
+      console.log(`✔ ${id}\n    título:      ${video.title}\n    descripción: ${video.description}\n    canal:       ${video.author}\n    portada:     ${cover}`);
     } catch (err) {
       console.error(`✖ ${id}: ${err instanceof Error ? err.message : String(err)}`);
       failed = true;
