@@ -1,9 +1,10 @@
 import { api, errorMessage } from '../services/api.js';
-import { embedUrl, localVideoUrl } from '../utils/tutorials.js';
+import { autoplayEmbedUrl, coverLoading, coverUrl, localVideoUrl } from '../utils/tutorials.js';
 
 // /tutoriales (CU-42; contrato del bloque 6, «Tutoriales» y «Páginas»). La lista llega de GET /api/tutorials y cada
-// reproductor se crea con la API del DOM: un <iframe> de youtube-nocookie.com (D12) o, si el vídeo tiene archivo
-// local, un <video> que lee /videos/<id>.mp4 (D13: la demo sin internet).
+// tarjeta muestra su portada; al pulsarla, el visor crea el reproductor con la API del DOM: un <iframe> de
+// youtube-nocookie.com (D12) o, si el vídeo tiene archivo local, un <video> que lee /videos/<id>.mp4 (D13: la demo
+// sin internet). Al cerrar el visor se quita el reproductor.
 
 interface TutorialDto {
   id: string;
@@ -14,7 +15,9 @@ interface TutorialDto {
 
 const list = document.querySelector<HTMLElement>('[data-tutorials-list]');
 const status = document.querySelector<HTMLElement>('[data-tutorials-status]');
-const viewer = document.getElementById('tutorial-viewer');
+// Visor modal (<dialog> con showModal, como el panel de comentarios): el foco no sale de él con Tab, Esc lo cierra
+// y, al cerrarse, el foco vuelve a la tarjeta que lo abrió (lo hace el propio <dialog>).
+const viewer = document.querySelector<HTMLDialogElement>('#tutorial-viewer');
 const viewerTitle = document.getElementById('tutorial-viewer-title');
 const frame = viewer?.querySelector<HTMLElement>('.tutorial-viewer__frame');
 
@@ -41,7 +44,7 @@ function player(tutorial: TutorialDto, src: string): HTMLVideoElement | HTMLIFra
   embed.referrerPolicy = 'strict-origin-when-cross-origin';
   embed.allow = 'autoplay';
   embed.allowFullscreen = true;
-  embed.src = `${src}?autoplay=1&playsinline=1`;
+  embed.src = src;
   return embed;
 }
 
@@ -51,14 +54,33 @@ function stopPlayer(): void {
   frame?.replaceChildren();
 }
 
-viewer?.addEventListener('beforetoggle', (event) => {
-  if ((event as ToggleEvent).newState === 'closed') stopPlayer();
+// Todas las salidas (Cerrar, Esc, clic fuera, salir de la página) acaban en close, que para el vídeo.
+viewer?.addEventListener('close', stopPlayer);
+viewer?.querySelector('[data-viewer-close]')?.addEventListener('click', () => viewer.close());
+// Un clic en el fondo llega al propio <dialog>: cierra solo si la pulsación empezó y acabó fuera de su caja (un
+// arrastre desde dentro, p. ej. al seleccionar el título, no lo cierra).
+const outside = (dialog: HTMLDialogElement, event: MouseEvent) => {
+  const box = dialog.getBoundingClientRect();
+  return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+};
+let pressedOutside = false;
+viewer?.addEventListener('pointerdown', (event) => {
+  pressedOutside = event.target === viewer && outside(viewer, event);
 });
-window.addEventListener('pagehide', () => viewer?.hidePopover());
+viewer?.addEventListener('click', (event) => {
+  if (pressedOutside && event.target === viewer && outside(viewer, event)) viewer.close();
+  pressedOutside = false;
+});
+// close llega en una tarea posterior: el vídeo se para ya, antes de que la página entre en la caché de Atrás.
+window.addEventListener('pagehide', () => {
+  stopPlayer();
+  viewer?.close();
+});
 
-function tutorialCard(tutorial: TutorialDto): HTMLElement | null {
-  const src = tutorial.local ? localVideoUrl(tutorial.id) : embedUrl(tutorial.id);
-  if (!src || !viewer || !frame || !viewerTitle) return null;
+function tutorialCard(tutorial: TutorialDto, index: number): HTMLElement | null {
+  const src = tutorial.local ? localVideoUrl(tutorial.id) : autoplayEmbedUrl(tutorial.id);
+  const coverSrc = coverUrl(tutorial.id);
+  if (!src || !coverSrc || !viewer || !frame || !viewerTitle) return null;
 
   const item = document.createElement('li');
   item.className = 'tutorial-card';
@@ -78,20 +100,21 @@ function tutorialCard(tutorial: TutorialDto): HTMLElement | null {
   cover.alt = '';
   cover.width = 640;
   cover.height = 360;
-  cover.src = `/icons/tutorials/${tutorial.id}.webp`;
+  cover.loading = coverLoading(index);
+  cover.src = coverSrc;
   cover.addEventListener('error', () => cover.remove(), { once: true });
   const action = document.createElement('span');
   action.className = 'tutorial-card__action';
   action.textContent = 'Ver tutorial';
   open.append(cover, action);
   open.setAttribute('aria-label', `Ver tutorial: ${tutorial.title}`);
-  open.popoverTargetElement = viewer;
-  open.popoverTargetAction = 'show';
   open.addEventListener('click', () => {
+    if (viewer.open) return;
+    // Con puntero, algunos navegadores no enfocan el botón: así el diálogo devuelve el foco a esta tarjeta.
     open.focus({ preventScroll: true });
-    stopPlayer();
     viewerTitle.textContent = tutorial.title;
     frame.replaceChildren(player(tutorial, src));
+    viewer.showModal();
   });
   item.append(title, description, open);
   return item;

@@ -1,4 +1,4 @@
-import { textProblem } from './validate.js';
+import { textLength, textProblem } from './validate.js';
 
 // Reglas y textos del panel del admin (contrato del bloque 4). El servidor (zod) es la fuente de verdad; aquí se
 // duplican de forma explícita (tests/unit/client-parity.test.ts las compara con las del servidor).
@@ -6,6 +6,18 @@ import { textProblem } from './validate.js';
 // RN-05, D3: motivo de rechazo.
 export const REJECTION_REASON_MAX = 500;
 export const reasonProblem = (value: string) => textProblem(value, { min: 1, max: REJECTION_REASON_MAX, multiline: true });
+
+// Contador del motivo (E2): cuenta como reasonProblem (puntos de código, saltos de línea normalizados).
+export function reasonCount(value: string): { text: string; over: boolean } {
+  const length = textLength(value, true);
+  return { text: `${length} / ${REJECTION_REASON_MAX}`, over: length > REJECTION_REASON_MAX };
+}
+
+// Confirmar del diálogo (E2): una acción peligrosa, en contorno de peligro, como los «Retirar» del estudio.
+export const confirmButtonClass = (danger: boolean) => (danger ? 'button button--outline button--danger' : 'button button--primary');
+
+// Resumen de los filtros aplicados de una lista («Etiqueta: valor · …»).
+export const filtersSummary = (labels: readonly string[]) => labels.join(' · ') || 'Sin filtros';
 
 // Búsquedas de las listas (q).
 export const ADMIN_QUERY_MAX_LENGTH = 100;

@@ -82,13 +82,14 @@
   width: var(--icon-size-sm);
   height: var(--icon-size-sm);
   background: var(--color-secondary);
-  clip-path: polygon(15% 0, 100% 50%, 15% 100%);
+  clip-path: var(--tutorials-play-shape);
 }
 
 .tutorial-viewer {
   position: fixed;
   inset: 0 0 var(--scroll-bottom-offset);
   width: min(var(--tutorials-viewer-width), calc(100% - var(--space-6)));
+  max-width: none; /* sin el tope del <dialog> modal del navegador: el ancho es el de arriba */
   max-height: calc(100dvh - var(--scroll-bottom-offset) - var(--space-6));
   margin: auto;
   padding: var(--space-2);
@@ -101,7 +102,7 @@
   box-shadow: var(--tutorials-viewer-halo);
 }
 
-.tutorial-viewer:popover-open {
+.tutorial-viewer[open] {
   display: grid;
   gap: var(--space-2);
 }
@@ -138,11 +139,6 @@
   overflow-wrap: anywhere;
 }
 
-@keyframes tutorial-zoom {
-  from { transform: scale(var(--tutorials-viewer-start-scale)); }
-  to { transform: none; }
-}
-
 .tutorial-card__title {
   margin: 0;
   font-size: var(--font-size-lg);
@@ -158,6 +154,11 @@
   overflow-wrap: anywhere;
 }
 
+@keyframes tutorial-zoom {
+  from { transform: scale(var(--tutorials-viewer-start-scale)); }
+  to { transform: none; }
+}
+
 @media (min-width: 40rem) {
   .tutorials__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -171,13 +172,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .tutorial-viewer:popover-open {
+  .tutorial-viewer[open] {
     animation: tutorial-zoom var(--duration-fast) ease-out;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tutorials .button:hover:not(:disabled) {
-    transform: none;
   }
 }

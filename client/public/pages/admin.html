@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="/styles/components/admin-data-panel.css">
   <link rel="stylesheet" href="/styles/components/admin-notes.css">
   <link rel="stylesheet" href="/styles/components/admin-stats.css">
+  <link rel="stylesheet" href="/styles/components/admin-dialog.css">
   <script type="module" src="/js/pages/admin.js"></script>
 </head>
 <body>
@@ -493,8 +494,9 @@
         <p class="admin-dialog__text" id="admin-dialog-text"></p>
         <div class="form__field" data-reason-field hidden>
           <label class="form__label" for="admin-reason">Motivo (lo verá el autor)</label>
-          <textarea class="form__input form__textarea" id="admin-reason" name="reason" rows="4" aria-describedby="admin-reason-hint admin-reason-error"></textarea>
+          <textarea class="form__input form__textarea" id="admin-reason" name="reason" rows="4" aria-describedby="admin-reason-hint admin-reason-count admin-reason-error"></textarea>
           <p class="form__hint" id="admin-reason-hint">De 1 a 500 caracteres.</p>
+          <output class="admin-dialog__count" id="admin-reason-count" for="admin-reason" aria-live="off">0 / 500</output>
           <p class="form__error" id="admin-reason-error" hidden></p>
         </div>
         <div class="admin-dialog__actions">

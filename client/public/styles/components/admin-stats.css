@@ -13,25 +13,6 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-.admin-page__priority {
-  border-inline-start: var(--focus-ring) solid var(--color-secondary);
-  background: var(--gradient-admin-notes);
-  padding: var(--space-4);
-}
-
-.admin-page__priority .author-page__metric-value {
-  font-size: var(--font-size-3xl);
-  font-variant-numeric: tabular-nums;
-}
-
-.admin-page__priority .author-page__muted {
-  margin: 0;
-}
-
-.admin-page__queue-link {
-  margin-top: var(--space-2);
-}
-
 .admin-stats__grid {
   display: grid;
   gap: var(--admin-stats-gap);
@@ -62,17 +43,6 @@
 @media (min-width: 40rem) {
   .admin-stats__metrics--activity {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .admin-page__priority {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .admin-page__queue-link {
-    grid-column: 2;
-    grid-row: 1 / 4;
-    align-self: center;
-    margin: 0;
   }
 }
 

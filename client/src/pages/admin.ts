@@ -30,8 +30,11 @@ import {
   ILLUSTRATION_REVIEW_STATUSES,
   auditEntityLabel,
   canApprove,
+  confirmButtonClass,
+  filtersSummary,
   illustrationActions,
   lastPage,
+  reasonCount,
   reasonProblem,
   settingProblem,
 } from '../utils/admin.js';
@@ -92,6 +95,7 @@ const dialogText = document.querySelector<HTMLElement>('#admin-dialog-text');
 const reasonField = document.querySelector<HTMLElement>('[data-reason-field]');
 const reasonInput = document.querySelector<HTMLTextAreaElement>('#admin-reason');
 const reasonError = document.querySelector<HTMLElement>('#admin-reason-error');
+const reasonCounter = document.querySelector<HTMLOutputElement>('#admin-reason-count');
 const confirmButton = document.querySelector<HTMLButtonElement>('[data-dialog-confirm]');
 
 interface ConfirmOptions {
@@ -110,6 +114,15 @@ const showReasonError = (problem: string | null) => {
   else reasonInput.setAttribute('aria-invalid', 'true');
 };
 
+// Contador del motivo (E2): «n / 500», en color de peligro al pasarse. Sin región viva (aria-live="off"): se lee
+// con el campo (aria-describedby), no a cada tecla.
+const updateReasonCount = () => {
+  if (!reasonInput || !reasonCounter) return;
+  const { text, over } = reasonCount(reasonInput.value);
+  reasonCounter.value = text;
+  reasonCounter.classList.toggle('admin-dialog__count--over', over);
+};
+
 // Resuelve con el motivo ('' si no se pide) o null si se cancela. La única salida es el evento close, sea cual sea
 // la vía (Confirmar, Cancelar, Escape o un close() del navegador): solo cuenta como confirmación si returnValue es
 // "confirm", el value del botón de envío de method="dialog". Los listeners de cada apertura cuelgan de un
@@ -123,9 +136,10 @@ function confirmAction(options: ConfirmOptions): Promise<string | null> {
   dialogTitle.textContent = options.title;
   dialogText.textContent = options.text;
   confirmButton.textContent = options.confirm;
-  confirmButton.className = `button ${options.danger ? 'button--danger' : 'button--primary'}`;
+  confirmButton.className = confirmButtonClass(options.danger === true);
   reasonField.hidden = !options.withReason;
   reasonInput.value = '';
+  updateReasonCount();
   showReasonError(null);
   dialog.returnValue = '';
 
@@ -146,7 +160,14 @@ function confirmAction(options: ConfirmOptions): Promise<string | null> {
       },
       { signal },
     );
-    reasonInput.addEventListener('input', () => showReasonError(null), { signal });
+    reasonInput.addEventListener(
+      'input',
+      () => {
+        showReasonError(null);
+        updateReasonCount();
+      },
+      { signal },
+    );
     cancel?.addEventListener('click', () => dialog.close('cancel'), { signal });
     dialog.addEventListener(
       'close',
@@ -195,6 +216,8 @@ async function run(
 
 interface ListView {
   request: number;
+  applied: HTMLElement | null; // resumen de los filtros aplicados (data-applied)
+  pendingApplied: string | null; // el de los filtros de state.filters, hasta la primera respuesta correcta con ellos
   message: HTMLElement | null;
   table: HTMLElement | null;
   rows: HTMLElement | null;
@@ -204,6 +227,8 @@ interface ListView {
 
 const listView = (name: string): ListView => ({
   request: 0,
+  applied: document.querySelector<HTMLElement>(`[data-applied="${name}"]`),
+  pendingApplied: null,
   message: document.querySelector<HTMLElement>(`[data-message="${name}"]`),
   table: document.querySelector<HTMLElement>(`[data-table="${name}"]`),
   rows: document.querySelector<HTMLElement>(`[data-rows="${name}"]`),
@@ -229,6 +254,8 @@ function showRows(view: ListView, rows: HTMLTableRowElement[], empty: string, to
   if (view.table) view.table.hidden = rows.length === 0;
   if (view.message) view.message.textContent = rows.length === 0 ? empty : '';
   if (view.count) view.count.textContent = `${total} ${total === 1 ? 'resultado' : 'resultados'}`;
+  if (view.applied && view.pendingApplied !== null) view.applied.textContent = view.pendingApplied;
+  view.pendingApplied = null;
 }
 
 function showError(view: ListView, error: ApiError): void {
@@ -237,6 +264,8 @@ function showError(view: ListView, error: ApiError): void {
   if (view.message) view.message.textContent = errorMessage(error);
   if (view.pager) view.pager.hidden = true;
   if (view.count) view.count.textContent = '';
+  // El resumen pendiente se queda: state.filters ya guarda los filtros enviados, así que la siguiente respuesta correcta
+  // (p. ej. la recarga tras una acción) ya sale filtrada con ellos y escribe su resumen.
 }
 
 interface Paged {
@@ -280,11 +309,11 @@ function updatePager(view: ListView, state: Paged, page: PageDto, load: () => Pr
 
 // Filtros de una lista: al enviar, página 1 con los valores del formulario. Sin las burbujas del navegador (un
 // correo a medias en «Actor» no bloquea el envío): el servidor valida y su 400 se muestra con sus fields en la
-// sección. «Filtrar» llega desactivado (data-needs-js) y se activa aquí.
-function bindFilters(name: string, state: Paged, load: () => Promise<void>): void {
+// sección. «Filtrar» llega desactivado (data-needs-js) y se activa aquí. Mientras llega la respuesta, la sección dice
+// «Buscando resultados…»; el resumen de lo aplicado («Etiqueta: valor») cambia solo con una respuesta correcta.
+function bindFilters(name: string, view: ListView, state: Paged, load: () => Promise<void>): void {
   const form = document.querySelector<HTMLFormElement>(`[data-filters="${name}"]`);
   if (!form) return;
-  const summary = document.querySelector<HTMLElement>(`[data-applied="${name}"]`);
   form.noValidate = true;
   for (const button of form.querySelectorAll<HTMLButtonElement>('button[data-needs-js]')) button.disabled = false;
   form.addEventListener('submit', (event) => {
@@ -298,14 +327,10 @@ function bindFilters(name: string, state: Paged, load: () => Promise<void>): voi
       const text = field instanceof HTMLSelectElement ? field.selectedOptions[0]?.textContent : value;
       labels.push(`${field.labels?.[0]?.textContent ?? key}: ${text ?? value}`);
     }
-    if (summary) summary.textContent = labels.join(' · ') || 'Sin filtros';
-    const section = form.closest('section');
-    const message = section?.querySelector<HTMLElement>('[data-message]');
-    const table = section?.querySelector<HTMLElement>('[data-table]');
-    const pager = section?.querySelector<HTMLElement>('[data-pager]');
-    if (message) message.textContent = 'Buscando resultados…';
-    if (table) table.hidden = true;
-    if (pager) pager.hidden = true;
+    view.pendingApplied = filtersSummary(labels);
+    if (view.message) view.message.textContent = 'Buscando resultados…';
+    if (view.table) view.table.hidden = true;
+    if (view.pager) view.pager.hidden = true;
     state.filters = values;
     state.page = 1;
     void load();
@@ -784,9 +809,9 @@ printButton?.addEventListener('click', () => window.print());
 
 // --- Arranque: cada sección carga por su cuenta ---
 
-bindFilters('illustrations', illustrationsState, loadIllustrations);
-bindFilters('comments', commentsState, loadComments);
-bindFilters('users', usersState, loadUsers);
-bindFilters('audit', auditState, loadAudit);
+bindFilters('illustrations', illustrationsView, illustrationsState, loadIllustrations);
+bindFilters('comments', commentsView, commentsState, loadComments);
+bindFilters('users', usersView, usersState, loadUsers);
+bindFilters('audit', auditView, auditState, loadAudit);
 fillAuditFilters();
 void Promise.all([loadStats(), loadReview(), loadIllustrations(), loadComments(), loadUsers(), setUpSettings(), loadAudit()]);

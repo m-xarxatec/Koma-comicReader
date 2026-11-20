@@ -1,6 +1,7 @@
 /* Página /admin (pages/admin.html; maqueta koma_home/admin). La maquetación de panel es la de author-page.css (la
-   maqueta la comparte, .workspace); aquí solo lo propio: filtros, paginación, celdas, detalle de la auditoría y el
-   diálogo de confirmación. Las métricas y las estadísticas, en admin-stats.css. Todo valor visual, en variables.css. */
+   maqueta la comparte, .workspace); aquí solo lo propio: aviso de las acciones, secciones y filtros desplegables,
+   paginación, celdas, detalle de la auditoría y la tarjeta de «Revisión pendiente». La sección «Estadísticas» y su
+   vista de impresión, en admin-stats.css; el diálogo, en admin-dialog.css. Todo valor visual, en variables.css. */
 
 /* Avisos de las acciones: siempre en el árbol y último hijo de main. El desplazamiento móvil incluye la altura de
    la navegación y el área segura; el diálogo modal pertenece al top layer del navegador. */
@@ -38,10 +39,6 @@ body:has(.admin-page__feedback:not(:empty)) {
 
 .admin-page .author-page__intro {
   align-items: center;
-}
-
-.admin-page .breadcrumb__link {
-  min-width: var(--touch-target);
 }
 
 .admin-page__sections {
@@ -91,7 +88,7 @@ body:has(.admin-page__feedback:not(:empty)) {
 }
 
 .admin-page .author-page__section:target .author-page__heading-title {
-  border-inline-start: var(--focus-ring) solid var(--color-secondary);
+  border-inline-start: var(--admin-target-rule) solid var(--color-secondary);
   padding-inline-start: var(--space-2);
 }
 
@@ -205,46 +202,44 @@ body:has(.admin-page__feedback:not(:empty)) {
   overflow-wrap: anywhere;
 }
 
-/* Diálogo de confirmación (y motivo del rechazo) */
-.admin-dialog {
-  margin: auto;
-  max-height: calc(100dvh - var(--space-6));
-  width: min(100% - var(--space-8), var(--admin-dialog-width));
-  padding: var(--space-panel);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  color: var(--color-text);
+/* Tarjeta de «Revisión pendiente» (dac64b3): la cifra y «Ir a la cola», al principio del panel. */
+.admin-page__priority {
+  border-inline-start: var(--admin-priority-rule) solid var(--color-secondary);
+  background: var(--gradient-admin-priority);
+  padding: var(--space-4);
 }
 
+.admin-page__priority .author-page__metric-value {
+  font-size: var(--font-size-3xl);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-page__priority .author-page__muted {
+  margin: 0;
+}
+
+.admin-page__queue-link {
+  margin-top: var(--space-2);
+}
+
+/* La cifra de la cola cambia de color un momento al cambiar (solo sin movimiento reducido, al final). */
 @keyframes admin-count-change {
   from { color: var(--color-highlight); }
   to { color: inherit; }
 }
 
-.admin-dialog::backdrop {
-  background: var(--color-comments-backdrop);
-}
-
-.admin-dialog__title {
-  margin: 0;
-  font-size: var(--font-size-xl);
-}
-
-.admin-dialog__text {
-  margin: 0;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
-}
-
-.admin-dialog__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
 @media (min-width: 40rem) {
+  .admin-page__priority {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-page__queue-link {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: center;
+    margin: 0;
+  }
+
   .admin-page__table-hint:has(+ .chapter-table__scroll:not([hidden])) {
     display: none;
   }
@@ -263,11 +258,5 @@ body:has(.admin-page__feedback:not(:empty)) {
 @media (prefers-reduced-motion: no-preference) {
   .admin-page__count-change {
     animation: admin-count-change var(--admin-count-duration) ease-out;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .admin-page .button:hover:not(:disabled) {
-    transform: none;
   }
 }

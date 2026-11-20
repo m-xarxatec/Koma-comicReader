@@ -423,6 +423,7 @@
   --tutorials-viewer-video-height: 65dvh;
   --tutorials-viewer-halo: 0 0 var(--space-2) color-mix(in srgb, var(--color-highlight) 35%, transparent), 0 0 var(--space-6) color-mix(in srgb, var(--color-secondary) 32%, transparent), var(--shadow-panel);
   --tutorials-viewer-start-scale: .98;
+  --tutorials-play-shape: polygon(15% 0, 100% 50%, 15% 100%); /* triángulo de «Ver tutorial» */
 }
 
 /* Comunidad (/comunidad, bloque 6): tablero de ilustraciones en columnas, filtro por etiqueta, «Mis ilustraciones»,
@@ -756,6 +757,9 @@
   --admin-notes-item-padding: 0.9rem 0;
   --admin-notes-item-font-size: 0.79rem;
   --gradient-admin-notes: radial-gradient(ellipse at 90% 0%, #8b5cf62b, transparent 65%), var(--color-surface);
+  --gradient-admin-priority: var(--gradient-admin-notes); /* tarjeta de «Revisión pendiente» (dac64b3) */
+  --admin-priority-rule: 3px; /* su filete del inicio */
+  --admin-target-rule: 3px; /* filete del título de la sección enlazada (#ancla) */
   --admin-feedback-margin: 20px; /* 85px de la maqueta menos --mobile-nav-height (65px) */
   --admin-feedback-offset: calc(var(--mobile-nav-height) + var(--admin-feedback-margin) + env(safe-area-inset-bottom));
   --admin-feedback-offset-wide: 22px;

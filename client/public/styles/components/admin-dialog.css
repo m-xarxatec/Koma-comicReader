@@ -1,0 +1,49 @@
+/* Diálogo de confirmación de /admin, con el motivo del rechazo (RN-05) y su contador (E2; pages/admin.ts). Mismo
+   aspecto que el diálogo común del estudio y de /comunidad (confirm-dialog.css), que salió de este. Todo valor
+   visual, en variables.css. */
+
+.admin-dialog {
+  margin: auto;
+  max-height: calc(100dvh - var(--space-6));
+  width: min(100% - var(--space-8), var(--admin-dialog-width));
+  padding: var(--space-panel);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-dialog::backdrop {
+  background: var(--color-comments-backdrop);
+}
+
+.admin-dialog__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.admin-dialog__text {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* «n / 500» bajo el motivo, alineado al final (el mismo patrón <output> que el del panel de comentarios). */
+.admin-dialog__count {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.admin-dialog__count--over {
+  color: var(--color-danger);
+}
+
+.admin-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
