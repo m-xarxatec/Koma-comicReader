@@ -4,7 +4,7 @@
 
 **Koma**: plataforma de cómics estilo webtoon. MVP de punta a punta: un visitante encuentra una obra, la lee con límites según su rol, comenta una viñeta, paga premium en modo prueba, y un admin aprueba contenido y audita cada acción sensible. Especificaciones completas en `docs/`. Funciones congeladas el 25-nov; entrega el 30-nov (`docs/plan_mvp.md`, «Calendario»).
 
-- Bloque actual: **Pulido (hasta el 24 nov)**, con el bloque 6 cerrado el 18-nov. E3 (el estudio del autor) y el rediseño de `/comunidad` (parte de E4), de Codex, integrados en `develop` el 18-nov tras revisarlos con `frontend`; Codex sigue en `diseno-final` (carpeta `../koma-codex`). E2 y el resto de E4, del 21 al 24, y la actividad simulada (idea 24) antes de la demo. Después, **7 · Pruebas y demo (26 – 30 nov)**, con la congelación el 25. Todo en `docs/plan_mvp.md`, «Pulido» y «Calendario». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
+- Bloque actual: **Pulido (hasta el 24 nov)**, con el bloque 6 cerrado el 18-nov. De Codex, integrados en `develop`: E3 (estudio del autor) y, de E4, `/comunidad`, portada, perfil, ficha, lector, tutoriales y el admin (18 y 19-nov, revisados con `frontend` y `auditor`); Codex sigue en `diseno-final` (carpeta `../koma-codex`). E2 lo hizo la IA de este repositorio el 20-nov. Quedan de E4 cabecera, pie, auth y errores, hasta el 24, y la actividad simulada (idea 24) antes de la demo. Después, **7 · Pruebas y demo (26 – 30 nov)**, con la congelación el 25. Todo en `docs/plan_mvp.md`, «Pulido» y «Calendario». Actualizar esta línea al cambiar de bloque (calendario en `docs/plan_mvp.md`).
 - Stack: Node 24 LTS, Express 5, TypeScript estricto sin any (ESM, module: NodeNext), PostgreSQL con SQL a mano (`pg`), zod 4, HTML/CSS/TS sin frameworks. Un solo `package.json` en la raíz (`"type": "module"`, `engines.node: ">=24.2 <25"`: `import.meta.main` exige 24.2).
 - Reglas por carpeta: `client/CLAUDE.md` (HTML, CSS y TS del cliente) y `server/CLAUDE.md` (recorrido de una petición, convenciones y trampas del servidor). Claude Code los carga al leer archivos de su carpeta; antes de tocar una carpeta, lee su `CLAUDE.md`.
 
@@ -49,12 +49,12 @@
 │   ├── utils/                  # logger.ts (una línea JSON por evento), app-error.ts, html.ts (escapeHtml, fillTemplate), origin.ts (CSRF), password.ts (RN-12), page.ts (sendPage), layout.ts (head, cabecera y pie), redirect.ts (next), image.ts (firma y medidas de imagen), signing.ts (HMAC por uso), text.ts (regla común de textos), open-graph.ts (meta Open Graph), tutorials.ts (lista con respaldo local y `/videos`)
 │   └── tests/                  # unit/ y api/: <tema>.test.ts
 ├── client/
-│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium e imagen Open Graph (`koma-og.png`))
+│   ├── public/                 # pages/<página>.html, errors/<código>.html, styles/ (variables.css, layers.css, base.css, components/), icons/ (favicon.svg, sprite.svg, logo, ilustraciones de error, mascota de premium, banner del hero (`koma-hero.webp`), imagen Open Graph (`koma-og.png`) y `tutorials/<id>.webp`, la portada de cada vídeo de Tutoriales, 640 × 360, que genera `/anadir-video`)
 │   └── src/                    # TS → client/dist, servido en /js
 │       ├── pages/              # home, comic, reader, auth, profile, premium, fake-checkout, author, admin, tutorials, community
-│       ├── components/         # header, comic-card, comment-panel, ad, timer, confirm-dialog (diálogo y aviso flotante del estudio, D2)
+│       ├── components/         # header, comic-card, comment-panel, ad, timer, confirm-dialog (diálogo y aviso flotante del estudio, D2), hero-carousel y home-cover (carrusel del hero y portada de reserva, D22)
 │       ├── services/           # api.ts (todas las peticiones), auth.ts, admin.ts, payments.ts, illustrations.ts
-│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts, author.ts
+│       └── utils/              # validate.ts, redirect.ts, catalog.ts, fullscreen.ts, ratio.ts, admin.ts, tutorials.ts, illustrations.ts, author.ts, hero.ts
 ├── content/ · storage/         # obras a importar · imágenes del driver local (ignorados por git)
 └── docs/                       # plan_mvp.md, modelo_datos.md, ideas_base.md, casos_de_uso.md, bitacora.md, comandos.md, harness.md
 ```

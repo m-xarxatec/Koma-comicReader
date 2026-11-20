@@ -2090,3 +2090,35 @@ Las entradas van en orden y agrupadas por bloque. Para verlas todas con su líne
   - consola sin errores;
   - la portada online, con portadas desde R2;
   - el banner definitivo, sustituyendo `koma-hero.webp`.
+
+### 2026-11-20 · Pulido · Revisión del merge `74d53d3` (lector, tutoriales y admin de Codex)
+- **Pedido a la IA:** revisar lo que entró en `develop` y `main` el 19-nov (`e0b4a2d`, `712e119` y `dac64b3`), que el desarrollador ya había aceptado, y dejar constancia (D23).
+- **Resultado:** el estado de git está al día. `main`, `develop` y `origin` apuntaban a `74d53d3`. `diseno-final` ya estaba entera en `develop` y la rama `windows/d2-estudio-dialogo` estaba borrada en GitHub, ya unida. Lo funcional de la revisión se corrige en la entrada siguiente.
+- **Revisión (`frontend` y `auditor`):** APTO CON OBSERVACIONES, nada bloqueante.
+  - Hay flujo nuevo en el TS, sin tests. El contador `request` contra respuestas desordenadas es una mejora real y se queda.
+  - El visor `popover` no era modal.
+  - El resumen de filtros se escribía antes de la respuesta.
+  - Reglas en el archivo de otro bloque, tokens mal usados y CSS duplicado.
+  - Faltaban las portadas con `loading="lazy"`, la carpeta `icons/tutorials/` en «Estructura» y la anotación de D12 y de los desvíos.
+- **Decisiones del desarrollador:** los tres commits están aceptados (D23). `dac64b3` es E2 adelantado, no E4.
+- **Corrección:** `CLAUDE.md` (bloque actual; «Estructura» con `hero-carousel`, `home-cover`, `utils/hero.ts`, `koma-hero.webp` e `icons/tutorials/`) y `docs/plan_mvp.md` (nota de D12, filas «Admin» y «Lector» en los desvíos).
+- **Comprobación (IA):** sobre `74d53d3`, `npm test` 302/302 y `npm run test:api` 370/370.
+
+### 2026-11-20 · Pulido · Portadas de Tutoriales en `/anadir-video` y E2 en `/admin`
+- **Pedido a la IA:** que un vídeo nuevo no deje su portada en 404 (CU-42); hacer E2 (`docs/plan_mvp.md`, «Pulido») y las correcciones de la revisión anterior.
+- **Resultado:**
+  - `/anadir-video` baja la miniatura de `i.ytimg.com` y crea `icons/tutorials/<id>.webp` (640 × 360, `ffmpeg`).
+  - Visor de tutoriales con `<dialog>` y `showModal()`, más `autoplayEmbedUrl`, `coverUrl` y `coverLoading`.
+  - E2: el diálogo en `admin-dialog.css`; Confirmar en `button--outline button--danger`; el contador del motivo `#admin-reason-count` (RN-05); barra de «Admin» y «Premium» activos en la cabecera.
+  - El resumen de filtros se escribe con la primera respuesta correcta.
+- **Tests:** `tutorial-covers.test.ts` (4), `client-tutorial-viewer.test.ts` (7) y `client-admin-e2.test.ts` (7). Se vieron fallar antes de programar. Ningún test existente cambió.
+- **Revisión (`frontend`):** APTO CON OBSERVACIONES. Corregidos el resumen tras un error que no es 400, el `max-width` del `<dialog>` del navegador, `stopPlayer` en `pagehide`, que un arrastre desde dentro cierre el visor y dos comentarios. El CSS del diálogo queda duplicado con `confirm-dialog.css`, por decisión.
+- **Decisiones del desarrollador:** el diálogo de `/admin` lleva su propio CSS y no pasa al componente común. Así no cambian `pages.test.ts:428` y `:446`, y queda descartada la nota «Pendiente» del 17-nov.
+- **Fallos:** el hook `proteger-tests` bloqueó un `python3` que editaba `SKILL.md`, porque el texto nombraba la ruta de un test. Se rehízo con Edit.
+- **Comprobación (IA):** `npm run typecheck` sin errores, `npm test` 320/320 y `npm run test:api` 370/370. La conversión de `ffmpeg` se probó sin red sobre una imagen de 480 × 360.
+- **Pendiente (desarrollador):**
+  - `/tutoriales`, a 360 px y en escritorio: el ancho del visor, cerrarlo con Cerrar, con Esc y con un clic fuera, el foco al cerrar, el autoplay en Chrome, Firefox y Safari, y que el vídeo pare con Atrás.
+  - `/admin`: el contador y Confirmar.
+  - La barra activa de la cabecera a 360 px, a 64rem y a 80rem.
+  - La vista de impresión.
+  - Probar `/anadir-video` con un enlace real.
